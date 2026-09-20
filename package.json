@@ -1,0 +1,27 @@
+{
+  "name": "printkarr",
+  "version": "0.1.0",
+  "description": "Printkarr — hyperlocal print + stationery ordering and delivery (demo build, PRD Phase 1).",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "agent": "node agent/print-agent.mjs",
+    "seed": "node data/seed.js",
+    "reset-prod": "node data/reset.js",
+    "test": "node --test lib/machine.test.js"
+  },
+  "dependencies": {
+    "compression": "^1.7.4",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "multer": "^2.4.0",
+    "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

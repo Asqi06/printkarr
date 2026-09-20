@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Printkarr — Demo build</title>
+<link rel="stylesheet" href="/design.css">
+</head>
+<body>
+<div class="demoband"><span class="dot"></span> Demo Mode — no real payments, prints or deliveries</div>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="/"><i></i>Print<em>karr</em></a>
+    <nav class="snav">
+      <a href="/" class="live">Foundation <span class="n">P0</span></a>
+      <a href="/api/health">API health <span class="n">↗</span></a>
+      <a href="/api/config">Pricing config <span class="n">↗</span></a>
+    </nav>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow rv">Phase 0 — Foundation</p>
+        <h1 class="display rv" style="font-size:clamp(2.4rem,7vw,5rem)">Print it.<br><em>We bring it.</em></h1>
+      </div>
+    </div>
+    <div class="grid c3">
+      <div class="card sun rv"><div class="stat"><div class="v">18</div><div class="k">Seeded demo orders</div></div></div>
+      <div class="card rv"><div class="stat"><div class="v">9</div><div class="k">Demo users · 3 roles</div></div></div>
+      <div class="card ink rv"><div class="stat"><div class="v"><em>16</em></div><div class="k">Machine states enforced</div></div></div>
+    </div>
+    <div class="mq rv" style="margin-top:22px"><div class="track">
+      <span>Customer ordering</span><span>Rider delivery</span><span>Admin control tower</span><span>Demo mode</span>
+      <span>Customer ordering</span><span>Rider delivery</span><span>Admin control tower</span><span>Demo mode</span>
+    </div></div>
+    <div class="rv" style="margin-top:22px"><a class="btn loud big" href="/login"><span>Enter the demo →</span></a></div>
+    <p class="muted mono rv" style="margin-top:16px;font-size:12px">Role login · customer · rider · admin. Tracked in PROGRESS.md.</p>
+  </main>
+</div>
+<nav class="bottomnav">
+  <a href="/" class="live"><span class="big">✷</span>Home</a>
+  <a href="/api/health"><span class="big">✓</span>API</a>
+  <a href="/api/config"><span class="big">₹</span>Pricing</a>
+</nav>
+<div class="toast" id="toast"></div>
+<script src="/shell.js" defer></script>
+</body>
+</html>
