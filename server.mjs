@@ -25,15 +25,14 @@ import { customerDashboard, ordersList, orderDetail } from './lib/views_customer
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { landing, orderPage, phonePage, otpPage } from './lib/views_public.js';
 import QRCode from 'qrcode';
-import { riderDashboard, riderOrders, riderDetail, navigatePage, earningsPage, riderProfile, has as hasTrack } from './lib/views_rider.js';
-import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, ridersPage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
+import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
 const PORT = process.env.PORT || 3000;
-const HOME = { customer: '/customer', rider: '/rider', admin: '/admin' };
+const HOME = { customer: '/customer', admin: '/admin' };
 
 // Google sign-in (production). Set GOOGLE_CLIENT_ID/SECRET to enable;
 // the button hides itself when keys are absent (local demo unaffected).
@@ -160,7 +159,7 @@ function currentUser(req) {
   return getSessionUser(parseCookies(req.headers.cookie)[COOKIE]);
 }
 
-const LOGIN_FOR = { customer: '/login', rider: '/rider/login', admin: '/admin/login' };
+const LOGIN_FOR = { customer: '/login', admin: '/admin/login' };
 function requireRole(role) {
   return (req, res, next) => {
     const user = currentUser(req);
@@ -218,10 +217,7 @@ function staffLogin(role) {
     }
   };
 }
-const riderLogin = staffLogin('rider');
 const adminLogin = staffLogin('admin');
-app.get('/rider/login', riderLogin.show);
-app.post('/rider/login', loginLimiter, riderLogin.run);
 app.get('/admin/login', adminLogin.show);
 app.post('/admin/login', loginLimiter, adminLogin.run);
 
@@ -344,8 +340,6 @@ const FILTER_FN = {
   new: (o) => ['CREATED', 'PAYMENT_PENDING'].includes(o.status),
   printing: (o) => ['CONFIRMED', 'PRINT_QUEUE', 'PRINTING'].includes(o.status),
   ready: (o) => ['PRINTED', 'READY_FOR_PICKUP'].includes(o.status),
-  assigned: (o) => o.status === 'RIDER_ASSIGNED',
-  delivery: (o) => ['PICKED_UP', 'OUT_FOR_DELIVERY'].includes(o.status),
   completed: (o) => ['DELIVERED', 'REFUNDED'].includes(o.status),
   cancelled: (o) => ['CANCELLED', 'PAYMENT_FAILED', 'PRINT_FAILED', 'DELIVERY_FAILED'].includes(o.status)
 };
@@ -355,7 +349,6 @@ function liveCounts(orders) {
   return {
     printing: inS('PRINTING'),
     ready: inS('PRINTED', 'READY_FOR_PICKUP'),
-    ofd: inS('OUT_FOR_DELIVERY'),
     delivered: inS('DELIVERED')
   };
 }
@@ -367,7 +360,7 @@ app.get('/admin', requireRole('admin'), (req, res) => {
   const counts = liveCounts(db.orders);
   res.send(adminDashboard(req.user, {
     today: todays.length,
-    printing: counts.printing, ready: counts.ready, ofd: counts.ofd,
+    printing: counts.printing, ready: counts.ready,
     delivered: todays.filter((o) => o.status === 'DELIVERED').length,
     revenue: todays.filter((o) => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0),
     pages: todays.reduce((s, o) => s + o.pages * o.copies, 0)
@@ -389,8 +382,7 @@ app.get('/admin/orders', requireRole('admin'), (req, res) => {
     filter, q: req.query.q || '',
     rows: rows.map((o) => {
       const c = db.users.find((u) => u.id === o.customerId) || {};
-      const r = db.users.find((u) => u.id === o.riderId) || {};
-      return { ...o, cname: c.name || '?', rname: r.name || null };
+      return { ...o, cname: c.name || '?' };
     })
   }));
 });
@@ -401,11 +393,9 @@ app.get('/admin/orders/:id', requireRole('admin'), (req, res) => {
   if (!o) return res.status(404).send(oops(req.user, '/admin/orders', 'Order <em>not found.</em>'));
   const c = db.users.find((u) => u.id === o.customerId) || {};
   const a = db.addresses.find((x) => x.id === o.addressId) || {};
-  const riders = db.users.filter((u) => u.role === 'rider').sort((x, y) => (y.online - x.online) || (x.kmAway - y.kmAway));
-  const rn = db.users.find((u) => u.id === o.riderId);
   const waUrl = waForwardUrl(db, req, o);
   saveDb(db);
-  res.send(adminOrderDetail(req.user, o, c, a, riders, nextStates(o.status), rn ? rn.name : null, waUrl, agentSeenAt));
+  res.send(adminOrderDetail(req.user, o, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt));
 });
 
 app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
@@ -426,21 +416,6 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
       pr.currentJob = o.id;
     }
   }
-  saveDb(db);
-  notifyState(o);
-  res.redirect(`/admin/orders/${o.id}`);
-});
-
-app.post('/admin/orders/:id/assign', requireRole('admin'), (req, res) => {
-  const db = loadDb();
-  const o = db.orders.find((x) => x.id === req.params.id);
-  const rider = db.users.find((u) => u.id === req.body.riderId && u.role === 'rider');
-  if (!o || !rider || o.status !== 'READY_FOR_PICKUP') {
-    return res.status(400).send(oops(req.user, '/admin/orders', 'Can\'t assign <em>that.</em>'));
-  }
-  o.riderId = rider.id;
-  try { transition(o, 'RIDER_ASSIGNED', { by: req.user.id, note: rider.name }); }
-  catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>')); }
   saveDb(db);
   notifyState(o);
   res.redirect(`/admin/orders/${o.id}`);
@@ -471,46 +446,6 @@ app.get('/admin/print-queue', requireRole('admin'), (req, res) => {
   const oldest = db.orders.filter((o) => o.status === 'PRINTING').sort((a, b) => (a.updatedAt || '').localeCompare(b.updatedAt || ''))[0];
   printer.currentJob = oldest ? oldest.id : printer.currentJob;
   res.send(printQueuePage(req.user, jobs, printer));
-});
-
-app.get('/admin/riders', requireRole('admin'), (req, res) => {
-  const db = loadDb();
-  const now = new Date().toISOString();
-  const rows = db.users.filter((u) => u.role === 'rider').map((r) => ({
-    ...r,
-    active: db.orders.filter((o) => o.riderId === r.id && ['RIDER_ASSIGNED', 'PICKED_UP', 'OUT_FOR_DELIVERY'].includes(o.status)).length,
-    week: (db.riderTx || []).filter((t) => t.riderId === r.id && Date.parse(now) - Date.parse(t.at) < 7 * 864e5).reduce((s, t) => s + t.amount, 0)
-  }));
-  res.send(ridersPage(req.user, rows));
-});
-
-app.post('/admin/riders/add', requireRole('admin'), (req, res) => {
-  const db = loadDb();
-  const email = String(req.body.email || '').trim().toLowerCase();
-  const password = String(req.body.password || '');
-  if (!req.body.name || !/.+@.+\..+/.test(email) || db.users.some((u) => u.email.toLowerCase() === email)) {
-    return res.status(400).send(oops(req.user, '/admin/riders', 'Need a unique <em>email.</em>'));
-  }
-  if (password.length < 4) {
-    return res.status(400).send(oops(req.user, '/admin/riders', 'Set a rider <em>password</em> (4+ characters).'));
-  }
-  const n = db.users.filter((u) => u.role === 'rider').length + 1;
-  db.users.push({
-    id: `RID${String(n + 1).padStart(3, '0')}${Date.now().toString(36)}`.slice(0, 12),
-    role: 'rider', name: String(req.body.name).slice(0, 60), email,
-    password, phone: String(req.body.phone || '').slice(0, 20),
-    online: true, kmAway: 1 + ((n * 7) % 30) / 10
-  });
-  saveDb(db);
-  res.redirect('/admin/riders');
-});
-
-app.post('/admin/riders/toggle', requireRole('admin'), (req, res) => {
-  const db = loadDb();
-  const r = db.users.find((u) => u.id === req.body.id && u.role === 'rider');
-  if (r) r.online = !r.online;
-  saveDb(db);
-  res.redirect('/admin/riders');
 });
 
 app.get('/admin/customers', requireRole('admin'), (req, res) => {
@@ -599,7 +534,6 @@ app.get('/admin/analytics', requireRole('admin'), (req, res) => {
   const avgMs = delivs.length ? delivs.reduce((s, o) => s + (Date.parse(o.updatedAt) - Date.parse(o.createdAt)), 0) / delivs.length : 0;
   const perCust = {};
   orders.forEach((o) => { perCust[o.customerId] = (perCust[o.customerId] || 0) + 1; });
-  const riders = db.users.filter((u) => u.role === 'rider').length || 1;
   const pages = orders.filter((o) => !['CANCELLED'].includes(o.status)).reduce((s, o) => s + o.pages * o.copies, 0);
   res.send(analyticsPage(req.user, {
     salesToday: paid.filter((o) => inDay(o.createdAt)).reduce((s, o) => s + o.total, 0),
@@ -613,8 +547,7 @@ app.get('/admin/analytics', requireRole('admin'), (req, res) => {
     total: orders.length,
     repeat: Object.values(perCust).filter((n) => n > 1).length,
     customers: Object.keys(perCust).length,
-    avgHrs: Math.round((avgMs / 36e5) * 10) / 10,
-    perRider: Math.round((delivs.length / riders) * 10) / 10
+    avgHrs: Math.round((avgMs / 36e5) * 10) / 10
   }));
 });
 
@@ -1022,172 +955,7 @@ app.post('/customer/addresses/default', requireRole('customer'), (req, res) => {
   res.redirect('/customer/profile#addresses');
 });
 
-// ---- Rider (§20–§25) ----
-function myJobs(db, riderId) {
-  return db.orders
-    .filter((o) => o.riderId === riderId)
-    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-}
-function jobOf(db, id, riderId) {
-  return db.orders.find((o) => o.id === id && o.riderId === riderId) || null;
-}
-function enrich(db, o) {
-  const c = db.users.find((u) => u.id === o.customerId) || {};
-  const a = db.addresses.find((x) => x.id === o.addressId) || {};
-  return { ...o, cname: c.name || 'Customer', short: a.area ? `${a.label || ''} · ${a.area}`.trim() : (o.slot || '') };
-}
-function track(order, key, by, note) {
-  order.tracking ||= [];
-  if (!order.tracking.some((t) => t.key === key)) {
-    order.tracking.push({ key, at: new Date().toISOString(), by, note: note || null });
-  }
-}
-function estFor(order) {
-  let h = 0;
-  for (const ch of order.id) h += ch.charCodeAt(0);
-  const km = 1 + ((h % 40) / 10);
-  return { km: km.toFixed(1), mins: Math.round(km * 4) + 3 };
-}
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
-
-app.get('/rider', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const mine = myJobs(db, req.user.id);
-  const pending = mine.filter((o) => ['RIDER_ASSIGNED', 'PICKED_UP', 'OUT_FOR_DELIVERY'].includes(o.status));
-  const now = new Date().toISOString();
-  const doneToday = mine.filter((o) => o.status === 'DELIVERED' && sameDay(o.updatedAt, now)).length;
-  const earnedToday = (db.riderTx || [])
-    .filter((t) => t.riderId === req.user.id && sameDay(t.at, now))
-    .reduce((s, t) => s + t.amount, 0);
-  const nextRaw = [...pending].sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))[0];
-  res.send(riderDashboard(req.user, {
-    pending: pending.length, doneToday, earnedToday,
-    next: nextRaw ? enrich(db, nextRaw) : null
-  }));
-});
-
-app.get('/rider/orders', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const tab = ['assigned', 'active', 'completed'].includes(req.query.tab) ? req.query.tab : 'assigned';
-  const mine = myJobs(db, req.user.id);
-  const groups = {
-    assigned: mine.filter((o) => o.status === 'RIDER_ASSIGNED'),
-    active: mine.filter((o) => ['PICKED_UP', 'OUT_FOR_DELIVERY'].includes(o.status)),
-    completed: mine.filter((o) => o.status === 'DELIVERED')
-  };
-  res.send(riderOrders(req.user, {
-    tab,
-    counts: { assigned: groups.assigned.length, active: groups.active.length, completed: groups.completed.length },
-    orders: groups[tab].map((o) => enrich(db, o))
-  }));
-});
-
-app.get('/rider/orders/:id', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o) return res.status(404).send(oops(req.user, '/rider/orders', 'Job <em>not found.</em>'));
-  const c = db.users.find((u) => u.id === o.customerId) || {};
-  const a = db.addresses.find((x) => x.id === o.addressId) || { address: o.slot || '', area: '', pin: '' };
-  res.send(riderDetail(req.user, o, c, a));
-});
-
-app.post('/rider/orders/:id/accept', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o || o.status !== 'RIDER_ASSIGNED') return res.redirect('/rider/orders');
-  track(o, 'accepted', req.user.id);
-  saveDb(db);
-  res.redirect(`/rider/orders/${o.id}`);
-});
-
-app.post('/rider/orders/:id/at-pickup', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o || o.status !== 'RIDER_ASSIGNED' || !hasTrack(o, 'accepted')) return res.redirect('/rider/orders');
-  track(o, 'at-pickup', req.user.id);
-  saveDb(db);
-  res.redirect(`/rider/orders/${o.id}`);
-});
-
-app.post('/rider/orders/:id/picked-up', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o) return res.redirect('/rider/orders');
-  try {
-    if (!hasTrack(o, 'accepted') || !hasTrack(o, 'at-pickup')) return res.redirect(`/rider/orders/${o.id}`);
-    transition(o, 'PICKED_UP', { by: req.user.id });
-  } catch { return res.redirect(`/rider/orders/${o.id}`); }
-  saveDb(db);
-  notifyState(o);
-  res.redirect(`/rider/orders/${o.id}`);
-});
-
-app.post('/rider/orders/:id/start-delivery', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o) return res.redirect('/rider/orders');
-  try { transition(o, 'OUT_FOR_DELIVERY', { by: req.user.id }); }
-  catch { return res.redirect(`/rider/orders/${o.id}`); }
-  saveDb(db);
-  notifyState(o);
-  res.redirect(`/rider/orders/${o.id}`);
-});
-
-app.post('/rider/orders/:id/arrived', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o || o.status !== 'OUT_FOR_DELIVERY') return res.redirect('/rider/orders');
-  track(o, 'arrived', req.user.id);
-  saveDb(db);
-  res.redirect(`/rider/orders/${o.id}`);
-});
-
-app.post('/rider/orders/:id/deliver', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o || o.status !== 'OUT_FOR_DELIVERY' || !hasTrack(o, 'arrived')) {
-    return res.redirect(o ? `/rider/orders/${o.id}` : '/rider/orders');
-  }
-  track(o, 'proof', req.user.id, `${req.body.handover === 'security' ? 'Left at security' : 'Customer received'}${req.body.note ? ' — ' + String(req.body.note).slice(0, 140) : ''}`);
-  try { transition(o, 'DELIVERED', { by: req.user.id }); }
-  catch { return res.redirect(`/rider/orders/${o.id}`); }
-  db.riderTx ||= [];
-  db.riderTx.push({ id: `RTX-${o.id}`, riderId: req.user.id, orderId: o.id, amount: o.deliveryFee, at: new Date().toISOString() });
-  saveDb(db);
-  notifyState(o);
-  res.redirect(`/rider/orders/${o.id}`);
-});
-
-app.get('/rider/orders/:id/navigate', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const o = jobOf(db, req.params.id, req.user.id);
-  if (!o) return res.status(404).send(oops(req.user, '/rider/orders', 'Job <em>not found.</em>'));
-  const c = db.users.find((u) => u.id === o.customerId) || {};
-  const a = db.addresses.find((x) => x.id === o.addressId) || { address: o.slot || '', area: '', pin: '' };
-  res.send(navigatePage(req.user, o, a, c, estFor(o)));
-});
-
-app.get('/rider/earnings', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const now = new Date().toISOString();
-  const mine = (db.riderTx || []).filter((t) => t.riderId === req.user.id).sort((a, b) => b.at.localeCompare(a.at));
-  const today = mine.filter((t) => sameDay(t.at, now)).reduce((s, t) => s + t.amount, 0);
-  const week = mine.filter((t) => Date.parse(now) - Date.parse(t.at) < 7 * 864e5).reduce((s, t) => s + t.amount, 0);
-  const count = myJobs(db, req.user.id).filter((o) => o.status === 'DELIVERED').length;
-  res.send(earningsPage(req.user, { today, week, count, rows: mine.slice(0, 30) }));
-});
-
-app.get('/rider/profile', requireRole('rider'), (req, res) => {
-  res.send(riderProfile(req.user));
-});
-
-app.post('/rider/online', requireRole('rider'), (req, res) => {
-  const db = loadDb();
-  const u = db.users.find((x) => x.id === req.user.id);
-  if (u) u.online = req.body.online === 'on';
-  saveDb(db);
-  res.redirect('/rider/profile');
-});
 
 // ---- Public guest funnel: price before identity, OTP at the end ----
 function guestToken(req, res) {
@@ -1632,50 +1400,7 @@ app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), (req, 
   res.redirect(`/customer/orders/${o.id}`);
 });
 
-// Rider shares phone GPS while on a job. Own fix only, validated ranges.
-app.post('/api/rider/location', (req, res) => {
-  const user = currentUser(req);
-  if (!user) return res.status(401).json({ error: 'Not signed in.' });
-  if (user.role !== 'rider') return res.status(403).json({ error: 'Riders only.' });
-  const lat = Number(req.body.lat), lng = Number(req.body.lng);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-    return res.status(400).json({ error: 'Bad coordinates.' });
-  }
-  const db = loadDb();
-  db.locations ||= {};
-  db.locations[user.id] = {
-    lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5,
-    at: new Date().toISOString(), orderId: String(req.body.orderId || '').slice(0, 20) || null
-  };
-  saveDb(db);
-  res.json({ ok: true, at: db.locations[user.id].at });
-});
-
-// Live tracking for one order. Visible only to its customer, its rider,
-// or an admin — and only while the order is on the road.
-app.get('/api/orders/:id/location', (req, res) => {
-  const user = currentUser(req);
-  if (!user) return res.status(401).json({ error: 'Not signed in.' });
-  const db = loadDb();
-  const o = db.orders.find((x) => x.id === req.params.id);
-  const allowed = o && (user.role === 'admin' || o.customerId === user.id || o.riderId === user.id);
-  if (!allowed) return res.status(404).json({ error: 'Not found.' });
-  if (!['RIDER_ASSIGNED', 'PICKED_UP', 'OUT_FOR_DELIVERY'].includes(o.status)) {
-    return res.status(410).json({ error: 'No live tracking for this order.' });
-  }
-  const a = db.addresses.find((x) => x.id === o.addressId) || {};
-  const fix = (db.locations || {})[o.riderId] || null;
-  res.json({
-    orderId: o.id, status: o.status,
-    hub: HUB,
-    drop: {
-      ...pseudoDrop(a, o.id),
-      label: [a.address, a.area, a.pin].filter(Boolean).join(', ') || o.slot
-    },
-    rider: fix,
-    riderAgoSec: fix ? Math.max(0, Math.round((Date.now() - Date.parse(fix.at)) / 1000)) : null
-  });
-});
+// Kiosk pickup — no rider tracking. Orders are collected at the counter.
 
 // Product root: signed in → role home; strangers get the conversion
 // landing (one CTA, live stats), never a login wall.

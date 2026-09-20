@@ -13,16 +13,13 @@ function money(n) {
 
 const db = blankDb();
 
-// ---- Users (§3 demo logins + §43 people) ----
+// ---- Users (§3 demo logins + §43 people) — kiosk mode: customers + admin only ----
 db.users = [
   { id: 'CUS001', role: 'customer', name: 'Ani', email: 'customer@demo.printkarr.in', password: 'customer123', phone: '+91 98250 11111', student: true },
   { id: 'CUS002', role: 'customer', name: 'Riya', email: 'riya@demo.printkarr.in', password: 'customer123', phone: '+91 98250 22222', student: true },
   { id: 'CUS003', role: 'customer', name: 'Dev', email: 'dev@demo.printkarr.in', password: 'customer123', phone: '+91 98250 33333', student: false },
   { id: 'CUS004', role: 'customer', name: 'Priya', email: 'priya@demo.printkarr.in', password: 'customer123', phone: '+91 98250 44444', student: true },
   { id: 'CUS005', role: 'customer', name: 'Karan', email: 'karan@demo.printkarr.in', password: 'customer123', phone: '+91 98250 55555', student: false },
-  { id: 'RID001', role: 'rider', name: 'Rahul', email: 'rider@demo.printkarr.in', password: 'rider123', phone: '+91 98250 66666', online: true, kmAway: 1.2 },
-  { id: 'RID002', role: 'rider', name: 'Amit', email: 'amit@demo.printkarr.in', password: 'rider123', phone: '+91 98250 77777', online: false, kmAway: 2.1 },
-  { id: 'RID003', role: 'rider', name: 'Vikas', email: 'vikas@demo.printkarr.in', password: 'rider123', phone: '+91 98250 88888', online: true, kmAway: 3.4 },
   { id: 'ADM001', role: 'admin', name: 'Printer Admin', email: 'admin@demo.printkarr.in', password: 'admin123', phone: '+91 98250 99999' }
 ];
 
@@ -65,13 +62,13 @@ db.coupons = [
 const P = db.pricing;
 const zoneFee = (z) => P.delivery[z];
 const plan = [
-  ['PK-1024', 'CUS001', 'DBMS_Assignment_Final.pdf', 24, 1, 'bw', 'double', 'campus', 300, 'OUT_FOR_DELIVERY', 'RID001', true],
+  ['PK-1024', 'CUS001', 'DBMS_Assignment_Final.pdf', 24, 1, 'bw', 'double', 'campus', 300, 'READY_FOR_PICKUP', null, true],
   ['PK-1025', 'CUS002', 'Design_Portfolio.pdf', 12, 1, 'color', 'single', 'sarigam', 240, 'READY_FOR_PICKUP', null, false],
   ['PK-1026', 'CUS003', 'GST_Invoice_Set.pdf', 8, 3, 'bw', 'single', 'vapi', 200, 'PRINTING', null, false],
   ['PK-1027', 'CUS001', 'Question_Bank_Unit3.pdf', 40, 1, 'bw', 'double', 'campus', 150, 'PRINT_QUEUE', null, true],
   ['PK-1028', 'CUS004', 'Seminar_Poster.pdf', 4, 5, 'color', 'single', 'sarigam', 120, 'CONFIRMED', null, false],
-  ['PK-1029', 'CUS005', ' tender_docs.pdf'.trim(), 30, 2, 'bw', 'double', 'bhilad', 100, 'RIDER_ASSIGNED', 'RID003', false],
-  ['PK-1030', 'CUS002', 'Practical_File_Chem.pdf', 18, 1, 'bw', 'single', 'campus', 90, 'PICKED_UP', 'RID001', true],
+  ['PK-1029', 'CUS005', ' tender_docs.pdf'.trim(), 30, 2, 'bw', 'double', 'bhilad', 100, 'READY_FOR_PICKUP', null, false],
+  ['PK-1030', 'CUS002', 'Practical_File_Chem.pdf', 18, 1, 'bw', 'single', 'campus', 90, 'READY_FOR_PICKUP', null, true],
   ['PK-1031', 'CUS001', 'Resume_Ani_2026.pdf', 2, 10, 'color', 'single', 'campus', 70, 'PRINTED', null, false],
   ['PK-1032', 'CUS003', 'Site_Plan_A3.pdf', 6, 2, 'color', 'double', 'vapi', 60, 'CONFIRMED', null, false],
   ['PK-1033', 'CUS004', 'Notes_Physics.pdf', 52, 1, 'bw', 'double', 'sarigam', 50, 'CREATED', null, true],
@@ -80,10 +77,10 @@ const plan = [
   ['PK-1036', 'CUS001', 'Maths_Notes.pdf', 16, 1, 'bw', 'single', 'campus', 20, 'READY_FOR_PICKUP', null, true],
   ['PK-1037', 'CUS004', 'Art_Submission.pdf', 10, 1, 'color', 'single', 'sarigam', 15, 'CANCELLED', null, false],
   ['PK-1038', 'CUS001', 'assignment.pdf', 24, 1, 'bw', 'double', 'campus', 8, 'PRINTING', null, true],
-  ['PK-1039', 'CUS003', 'Quotation_Q3.pdf', 5, 2, 'bw', 'single', 'vapi', 1500, 'DELIVERED', 'RID002', false],
-  ['PK-1040', 'CUS002', 'Thesis_Chapter2.pdf', 34, 1, 'bw', 'double', 'sarigam', 2900, 'DELIVERED', 'RID001', true],
-  ['PK-1041', 'CUS005', 'Safety_Manual.pdf', 44, 1, 'bw', 'single', 'bhilad', 4300, 'DELIVERED', 'RID003', false],
-  ['PK-1042', 'CUS004', 'Essay_Companion.pdf', 14, 1, 'bw', 'double', 'sarigam', 12, 'RIDER_ASSIGNED', 'RID001', true]
+  ['PK-1039', 'CUS003', 'Quotation_Q3.pdf', 5, 2, 'bw', 'single', 'vapi', 1500, 'DELIVERED', null, false],
+  ['PK-1040', 'CUS002', 'Thesis_Chapter2.pdf', 34, 1, 'bw', 'double', 'sarigam', 2900, 'DELIVERED', null, true],
+  ['PK-1041', 'CUS005', 'Safety_Manual.pdf', 44, 1, 'bw', 'single', 'bhilad', 4300, 'DELIVERED', null, false],
+  ['PK-1042', 'CUS004', 'Essay_Companion.pdf', 14, 1, 'bw', 'double', 'sarigam', 12, 'READY_FOR_PICKUP', null, true]
 ];
 
 const PATH_TO = {
@@ -133,11 +130,8 @@ const noteFor = (o) => {
     CONFIRMED: `Order #${o.id} confirmed.`,
     PRINTING: `Order #${o.id} has started printing.`,
     PRINTED: `Order #${o.id} is printed and packed.`,
-    READY_FOR_PICKUP: `Order #${o.id} is ready for pickup.`,
-    RIDER_ASSIGNED: `Rider has been assigned to order #${o.id}.`,
-    PICKED_UP: `Rider has picked up order #${o.id}.`,
-    OUT_FOR_DELIVERY: `Order #${o.id} is out for delivery.`,
-    DELIVERED: `Order #${o.id} has been delivered.`,
+    READY_FOR_PICKUP: `Order #${o.id} is ready for pickup at the kiosk.`,
+    DELIVERED: `Order #${o.id} has been collected.`,
     CANCELLED: `Order #${o.id} was cancelled.`
   };
   return map[o.status] || null;
@@ -147,10 +141,8 @@ db.orders.forEach((o, i) => {
   if (text) db.notifications.push({ id: `NT${i}`, customerId: o.customerId, orderId: o.id, text, at: o.updatedAt, read: o.status === 'DELIVERED' });
 });
 
-// ---- Rider earnings ledger (§25): one entry per delivered order ----
-db.riderTx = db.orders
-  .filter((o) => o.status === 'DELIVERED' && o.riderId)
-  .map((o) => ({ id: `RTX-${o.id}`, riderId: o.riderId, orderId: o.id, amount: o.deliveryFee, at: o.updatedAt }));
+// Kiosk mode: no rider earnings — pickup only.
+db.riderTx = [];
 
 saveDb(db);
 const counts = {};
