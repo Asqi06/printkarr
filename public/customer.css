@@ -46,8 +46,7 @@ details summary { cursor: pointer; }
 .how3 div { border: 2px solid var(--ink); border-radius: 12px; padding: 14px 10px; text-align: center; }
 .how3 b { display: block; font-weight: 900; font-size: 1.5rem; }
 .how3 span { font-family: var(--font-m); font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.pub-sticky { position: fixed; left: var(--pad); right: var(--pad); bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 200; display: none; }
-@media (max-width: 700px) { .pub-sticky { display: inline-flex; } }
+.pub-sticky { display: none !important; }
 .pub-wrap { max-width: 720px; margin: 0 auto; padding: 26px var(--pad) 60px; }
 .filechip { display: flex; flex-direction: column; gap: 4px; margin: 16px 0; }
 .livetotal { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 150; display: flex; justify-content: space-between; align-items: center; border: 2px solid var(--ink); border-radius: 14px; background: var(--ink); color: var(--paper); padding: 14px 18px; margin-top: 14px; box-shadow: 6px 6px 0 var(--tang); }
