@@ -412,7 +412,7 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
 
 function safeOrderId(id) {
   const s = String(id || '').trim();
-  if (!/^PK-\d{3,}$/.test(s)) return null;
+  if (!/^(PK-[A-Z0-9-]{3,}|D[A-Za-z0-9]{6,})$/.test(s)) return null;
   return s;
 }
 app.get('/admin/orders/:id/file', requireRole('admin'), (req, res) => {
