@@ -180,13 +180,14 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 /* ---------- toast ---------- */
 .toast {
   position: fixed; left: 50%; bottom: 24px; z-index: 3000;
-  transform: translate(-50%, 200%);
+  transform: translate(-50%, 160%);
   background: var(--ink); color: var(--paper);
   font-family: var(--font-m); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   padding: 13px 22px; border: 2px solid var(--sun); border-radius: 12px;
-  transition: transform 0.5s var(--ez-out); max-width: calc(100vw - 32px);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: transform 0.5s var(--ez-out), opacity 0.35s var(--ez-out), visibility 0.35s var(--ez-out); max-width: calc(100vw - 32px);
 }
-.toast.show { transform: translate(-50%, 0); }
+.toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; pointer-events: auto; }
 
 /* ---------- reveal on scroll ---------- */
 .rv { opacity: 0; transform: translateY(26px); transition: opacity 0.8s var(--ez-out), transform 0.8s var(--ez-out); }
