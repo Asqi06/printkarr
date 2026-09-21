@@ -189,7 +189,23 @@ function sessionCookie(req, token) {
   return `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`;
 }
 
+const isAdminEmail = (email) => {
+  const norm = String(email||'').trim().toLowerCase();
+  const envAdmin = String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
+  return envAdmin && norm === envAdmin;
+};
 app.post('/login', loginLimiter, (req, res) => {
+  const emailNorm = String(req.body.email||'').trim().toLowerCase();
+  // If this email is the configured owner admin, force admin session (even if a customer copy exists)
+  if (isAdminEmail(emailNorm)) {
+    const db = loadDb();
+    const admin = db.users.find(u => u.role === 'admin' && u.email.toLowerCase() === emailNorm);
+    if (admin && admin.password === String(req.body.password||'')) {
+      const token = createSession(admin.id);
+      res.setHeader('Set-Cookie', sessionCookie(req, token));
+      return res.redirect('/admin');
+    }
+  }
   const user = verifyCredentials(req.body.email, req.body.password);
   if (!user) {
     return res.status(401).send(loginView(demoLoginOn() ? 'No match in demo accounts — tap a role card above.' : 'No match — check your email and password.'));
@@ -265,7 +281,16 @@ app.get('/auth/google/callback', async (req, res) => {
     const email = String(info.email || '').toLowerCase();
     if (!email || info.email_verified === false) return fail();
     const db = loadDb();
-    // Customers only: staff accounts sign in on their own login pages.
+    if (isAdminEmail(email)) {
+      let admin = db.users.find(u => u.role === 'admin' && u.email.toLowerCase() === email);
+      if (!admin) {
+        admin = { id: 'ADM-' + Date.now().toString(36), role: 'admin', name: String(info.name || email.split('@')[0]).slice(0,60), email, password: null, phone: '', student: false };
+        db.users.push(admin); saveDb(db);
+      }
+      const token = createSession(admin.id);
+      res.setHeader('Set-Cookie', sessionCookie(req, token));
+      return res.redirect('/admin');
+    }
     let user = db.users.find((u) => u.email.toLowerCase() === email);
 
     if (!user) {
