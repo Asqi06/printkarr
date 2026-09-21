@@ -195,26 +195,13 @@ const isAdminEmail = (email) => {
   return envAdmin && norm === envAdmin;
 };
 app.post('/login', loginLimiter, (req, res) => {
-  const emailNorm = String(req.body.email||'').trim().toLowerCase();
-  // If this email is the configured owner admin, force admin session (even if a customer copy exists)
-  if (isAdminEmail(emailNorm)) {
-    const db = loadDb();
-    const admin = db.users.find(u => u.role === 'admin' && u.email.toLowerCase() === emailNorm);
-    if (admin && admin.password === String(req.body.password||'')) {
-      const token = createSession(admin.id);
-      res.setHeader('Set-Cookie', sessionCookie(req, token));
-      return res.redirect('/admin');
-    }
-  }
   const user = verifyCredentials(req.body.email, req.body.password);
-  if (!user) {
-    return res.status(401).send(loginView(demoLoginOn() ? 'No match in demo accounts — tap a role card above.' : 'No match — check your email and password.'));
+  if (!user || user.role !== 'customer') {
+    return res.status(401).send(loginView(demoLoginOn() ? 'No match in demo accounts — tap a role card above.' : 'No match — check your email and password. (Admins use /admin/login)'));
   }
-  // Admin emails always land as admin, regardless of which login form was used
-  const target = user.role === 'admin' ? '/admin' : '/customer';
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
-  res.redirect(target);
+  res.redirect('/customer');
 });
 
 function staffLogin(role) {
