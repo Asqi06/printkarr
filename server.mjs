@@ -822,7 +822,8 @@ app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   saveDb(db);
   const short = Math.round((o.total - w.balance) * 100) / 100;
   const top = !LIVE_PAY && short > 0 ? { short, bonus: bonusFor(short, db.pricing).bonus } : null;
-  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: !!(RAZORPAY.id && RAZORPAY.secret), waUrl, walletTopup: top, livePay: LIVE_PAY }));
+  const isOwner = isAdminEmail(req.user.email) || req.user.role === 'admin';
+  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: !!(RAZORPAY.id && RAZORPAY.secret), waUrl, walletTopup: top, livePay: LIVE_PAY, isOwner }));
 });
 
 app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
@@ -866,6 +867,26 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   // Order: both transitions, ONE save, then both pings. (A saveDb between the
   // notifies would clobber the first ping with a stale in-memory snapshot.)
   try { transition(o, 'PRINT_QUEUE', { by: 'system', note: 'auto-queued on payment' }); } catch {}
+  saveDb(db);
+  notifyState({ ...o, status: 'CONFIRMED' });
+  if (o.status === 'PRINT_QUEUE') notifyState(o);
+  res.redirect(`/customer/orders/${o.id}`);
+});
+
+// Owner-only demo payout — bypasses Razorpay to test the Epson end-to-end (no charge, no wallet change)
+app.post('/customer/orders/:id/demo-pay', requireRole('customer'), (req, res) => {
+  if (!isAdminEmail(req.user.email) && req.user.role !== 'admin') {
+    return res.status(403).send(oops(req.user, `/customer/orders/${req.params.id}/pay`, 'Demo pay is <em>owner only.</em>'));
+  }
+  const db = loadDb();
+  const o = db.orders.find(x => x.id === req.params.id && x.customerId === req.user.id);
+  if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
+  if (!['CREATED','PAYMENT_PENDING'].includes(o.status)) return res.redirect(`/customer/orders/${o.id}`);
+  if (o.status === 'CREATED') transition(o, 'PAYMENT_PENDING', { by: req.user.id });
+  o.paymentStatus = 'paid';
+  o.paymentMethod = 'demo';
+  transition(o, 'CONFIRMED', { by: req.user.id, note: 'demo pay (owner test)' });
+  try { transition(o, 'PRINT_QUEUE', { by: 'system', note: 'auto-queued on demo pay' }); } catch {}
   saveDb(db);
   notifyState({ ...o, status: 'CONFIRMED' });
   if (o.status === 'PRINT_QUEUE') notifyState(o);
