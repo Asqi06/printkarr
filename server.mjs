@@ -329,6 +329,13 @@ function validateCoupon(db, code, subtotal) {
   return { ok: true, discount, code: c.code };
 }
 
+const isDemoUser = (u) => u && String(u.email||'').toLowerCase().endsWith('@demo.printkarr.in');
+const visibleOrders = (db, orders) => demoLoginOn() ? orders : orders.filter(o => {
+  const u = db.users.find(x => x.id === o.customerId);
+  return !isDemoUser(u);
+});
+const visibleCustomers = (db) => demoLoginOn() ? db.users.filter(u=>u.role==='customer') : db.users.filter(u=>u.role==='customer' && !isDemoUser(u));
+
 const FILTER_FN = {
   all: () => true,
   new: (o) => ['CREATED', 'PAYMENT_PENDING'].includes(o.status),
@@ -349,9 +356,10 @@ function liveCounts(orders) {
 
 app.get('/admin', requireRole('admin'), (req, res) => {
   const db = loadDb();
+  const all = visibleOrders(db, db.orders);
   const now = new Date().toISOString();
-  const todays = db.orders.filter((o) => sameDay(o.createdAt, now));
-  const counts = liveCounts(db.orders);
+  const todays = all.filter((o) => sameDay(o.createdAt, now));
+  const counts = liveCounts(all);
   res.send(adminDashboard(req.user, {
     today: todays.length,
     printing: counts.printing, ready: counts.ready,
@@ -365,7 +373,7 @@ app.get('/admin/orders', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const filter = FILTER_FN[req.query.filter] ? req.query.filter : 'all';
   const q = String(req.query.q || '').trim().toLowerCase();
-  let rows = [...db.orders].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).filter(FILTER_FN[filter]);
+  let rows = visibleOrders(db, [...db.orders].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))).filter(FILTER_FN[filter]);
   if (q) {
     rows = rows.filter((o) => {
       const c = db.users.find((u) => u.id === o.customerId) || {};
@@ -440,18 +448,18 @@ app.get('/admin/qr', requireRole('admin'), (req, res) => {
 app.get('/admin/print-queue', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const rank = { PRINTING: 0, PRINT_QUEUE: 1, CONFIRMED: 2 };
-  const jobs = db.orders
+  const jobs = visibleOrders(db, db.orders)
     .filter((o) => ['CONFIRMED', 'PRINT_QUEUE', 'PRINTING'].includes(o.status))
     .sort((a, b) => (rank[a.status] - rank[b.status]) || (a.createdAt || '').localeCompare(b.createdAt || ''));
   const printer = db.printers[0] || { name: 'Epson L3250', online: true, ink: 80, paper: 70, currentJob: null };
-  const oldest = db.orders.filter((o) => o.status === 'PRINTING').sort((a, b) => (a.updatedAt || '').localeCompare(b.updatedAt || ''))[0];
+  const oldest = visibleOrders(db, db.orders).filter((o) => o.status === 'PRINTING').sort((a, b) => (a.updatedAt || '').localeCompare(b.updatedAt || ''))[0];
   printer.currentJob = oldest ? oldest.id : printer.currentJob;
   res.send(printQueuePage(req.user, jobs, printer));
 });
 
 app.get('/admin/customers', requireRole('admin'), (req, res) => {
   const db = loadDb();
-  const rows = db.users.filter((u) => u.role === 'customer').map((c) => {
+  const rows = visibleCustomers(db).map((c) => {
     const co = db.orders.filter((o) => o.customerId === c.id);
     const w = db.wallets.find((x) => x.customerId === c.id);
     return {
@@ -531,7 +539,7 @@ app.post('/admin/coupons/toggle', requireRole('admin'), (req, res) => {
 app.get('/admin/analytics.csv', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const header = 'orderId,customer,document,pages,copies,type,sides,status,total,createdAt\n';
-  const rows = db.orders.map(o => {
+  const rows = visibleOrders(db, db.orders).map(o => {
     const c = db.users.find(u => u.id === o.customerId) || {};
     const escCsv = s => `"${String(s||'').replace(/"/g,'""')}"`;
     return [o.id, c.name||c.email||'', o.document, o.pages, o.copies, o.printType, o.sides, o.status, o.total, o.createdAt].map(escCsv).join(',');
@@ -544,9 +552,9 @@ app.get('/admin/analytics.csv', requireRole('admin'), (req, res) => {
 app.get('/admin/analytics', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const now = new Date().toISOString();
-  const paid = db.orders.filter((o) => o.paymentStatus === 'paid');
+  const orders = visibleOrders(db, db.orders);
+  const paid = orders.filter((o) => o.paymentStatus === 'paid');
   const inDay = (at) => sameDay(at, now);
-  const orders = db.orders;
   const delivs = orders.filter((o) => o.status === 'DELIVERED');
   const avgMs = delivs.length ? delivs.reduce((s, o) => s + (Date.parse(o.updatedAt) - Date.parse(o.createdAt)), 0) / delivs.length : 0;
   const perCust = {};
@@ -954,9 +962,25 @@ app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
 
 app.get('/customer/profile', requireRole('customer'), (req, res) => {
   const db = loadDb();
+  // Re-read user from DB so profile always reflects latest edits (session may be stale)
+  const fresh = db.users.find(u => u.id === req.user.id) || req.user;
   const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
   const notes = (db.notifications || []).filter((n) => n.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
-  res.send(profilePage(req.user, addresses, notes));
+  res.send(profilePage(fresh, addresses, notes));
+});
+
+app.post('/customer/profile', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const u = db.users.find(x => x.id === req.user.id);
+  if (!u) return res.redirect('/customer/profile');
+  const name = String(req.body.name || '').trim().slice(0, 60);
+  const phone = String(req.body.phone || '').trim().slice(0, 20);
+  if (name) u.name = name;
+  if (phone) u.phone = phone;
+  // Sync default address name/phone so order slips stay consistent
+  db.addresses.filter(a => a.customerId === u.id && a.isDefault).forEach(a => { if (name) a.name = name; if (phone) a.phone = phone; });
+  saveDb(db);
+  res.redirect('/customer/profile');
 });
 
 app.post('/customer/addresses/add', requireRole('customer'), (req, res) => {
