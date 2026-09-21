@@ -203,16 +203,16 @@ app.post('/login', loginLimiter, (req, res) => {
 
 function staffLogin(role) {
   const home = HOME[role];
-  const page = staffLoginPage.bind(null, role);
+  const mkPage = (err) => staffLoginPage(role, err, !!GOOGLE.id);
   return {
     show: (req, res) => {
       const user = currentUser(req);
       if (user) return res.redirect(HOME[user.role] || '/');
-      res.send(page(null));
+      res.send(mkPage(null));
     },
     run: (req, res) => {
       const user = verifyCredentials(req.body.email, req.body.password);
-      if (!user || user.role !== role) return res.status(401).send(page('No match — check your email and password.'));
+      if (!user || user.role !== role) return res.status(401).send(mkPage('No match — check your email and password.'));
       const token = createSession(user.id);
       res.setHeader('Set-Cookie', sessionCookie(req, token));
       res.redirect(home);
