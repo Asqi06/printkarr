@@ -191,12 +191,14 @@ function sessionCookie(req, token) {
 
 app.post('/login', loginLimiter, (req, res) => {
   const user = verifyCredentials(req.body.email, req.body.password);
-  if (!user || user.role !== 'customer') {
-    return res.status(401).send(loginView(demoLoginOn() ? 'No match in demo accounts — tap a role card above.' : 'No customer match — riders and staff use their own login pages below.'));
+  if (!user) {
+    return res.status(401).send(loginView(demoLoginOn() ? 'No match in demo accounts — tap a role card above.' : 'No match — check your email and password.'));
   }
+  // Admin emails always land as admin, regardless of which login form was used
+  const target = user.role === 'admin' ? '/admin' : '/customer';
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
-  res.redirect('/customer');
+  res.redirect(target);
 });
 
 function staffLogin(role) {
@@ -221,38 +223,7 @@ const adminLogin = staffLogin('admin');
 app.get('/admin/login', adminLogin.show);
 app.post('/admin/login', loginLimiter, adminLogin.run);
 
-// Customer OTP login: phone → code → session (no passwords for customers).
-app.post('/login/otp-request', otpLimiter, async (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer');
-  const phone = normPhone(req.body.phone);
-  if (!phone) return res.status(400).send(loginOtpPage(String(req.body.phone || ''), null, 'Enter a valid 10-digit mobile number.'));
-  const otp = await requestOtp(phone);
-  if (!otp.ok) return res.status(429).send(loginOtpPage(phone, null, otp.error));
-  res.send(loginOtpPage(phone, otp.demo, null));
-});
 
-app.post('/login/otp-verify', otpLimiter, (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer');
-  const phone = normPhone(req.body.phone);
-  if (!phone) return res.status(400).send(loginOtpPage(String(req.body.phone || ''), null, 'Enter a valid 10-digit mobile number.'));
-  const v = verifyOtp(phone, req.body.code);
-  if (!v.ok) return res.status(401).send(loginOtpPage(phone, null, v.error));
-  const db = loadDb();
-  let user = db.users.find((u) => (u.phone || '').replace(/\D/g, '').slice(-10) === phone && u.role === 'customer');
-  if (!user) {
-    user = {
-      id: 'CUS-' + Date.now().toString(36), role: 'customer', name: 'Customer',
-      email: `ph${phone}@guest.printkarr.in`, password: null,
-      phone: '+91 ' + phone, student: false
-    };
-    db.users.push(user);
-    db.wallets.push({ customerId: user.id, balance: 0 });
-    saveDb(db);
-  }
-  const token = createSession(user.id);
-  res.setHeader('Set-Cookie', sessionCookie(req, token));
-  res.redirect('/customer');
-});
 
 app.get('/auth/google', (req, res) => {
   if (!GOOGLE.id) return res.redirect('/login');
@@ -296,9 +267,7 @@ app.get('/auth/google/callback', async (req, res) => {
     const db = loadDb();
     // Customers only: staff accounts sign in on their own login pages.
     let user = db.users.find((u) => u.email.toLowerCase() === email);
-    if (user && user.role !== 'customer') {
-      return res.status(401).send(loginView('That Google account belongs to staff — use the rider or admin login page.'));
-    }
+
     if (!user) {
       user = {
         id: 'CUS-g' + Date.now().toString(36), role: 'customer',
