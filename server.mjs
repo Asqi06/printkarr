@@ -421,10 +421,17 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   res.redirect(`/admin/orders/${o.id}`);
 });
 
+function safeOrderId(id) {
+  const s = String(id || '').trim();
+  if (!/^PK-\d{3,}$/.test(s)) return null;
+  return s;
+}
 app.get('/admin/orders/:id/file', requireRole('admin'), (req, res) => {
-  const p = path.join(ROOT, 'data', 'uploads', `${req.params.id}.pdf`);
+  const safe = safeOrderId(req.params.id);
+  if (!safe) return res.status(400).send(oops(req.user, '/admin/orders', 'Bad <em>ID.</em>'));
+  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
   if (!fs.existsSync(p)) return res.status(404).send(oops(req.user, '/admin/orders', 'File <em>missing.</em>'));
-  res.download(p, `${req.params.id}.pdf`);
+  res.download(p, `${safe}.pdf`);
 });
 
 // §47 route map: printer status lives inside the print queue — canonical redirect.
@@ -502,12 +509,15 @@ app.post('/admin/coupons', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const code = String(req.body.code || '').trim().toUpperCase().slice(0, 20);
   const value = Number(req.body.value);
+  const type = req.body.type === 'fixed' ? 'fixed' : 'percent';
   if (!/^[A-Z0-9]{3,20}$/.test(code) || !(value > 0) || (db.coupons || []).some((c) => c.code === code)) {
     return res.status(400).send(oops(req.user, '/admin/coupons', 'Bad or duplicate <em>code.</em>'));
   }
+  if (type === 'percent' && value > 100) return res.status(400).send(oops(req.user, '/admin/coupons', 'Percent must be <em>≤100.</em>'));
+  if (type === 'fixed' && value > 500) return res.status(400).send(oops(req.user, '/admin/coupons', 'Fixed discount max <em>₹500.</em>'));
   db.coupons ||= [];
   db.coupons.push({
-    code, type: req.body.type === 'fixed' ? 'fixed' : 'percent',
+    code, type,
     value: Math.round(value * 100) / 100,
     minOrder: Math.max(0, Number(req.body.minOrder) || 0),
     expiry: req.body.expiry || '2099-12-31', active: true
@@ -522,6 +532,19 @@ app.post('/admin/coupons/toggle', requireRole('admin'), (req, res) => {
   if (c) c.active = !c.active;
   saveDb(db);
   res.redirect('/admin/coupons');
+});
+
+app.get('/admin/analytics.csv', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  const header = 'orderId,customer,document,pages,copies,type,sides,status,total,createdAt\n';
+  const rows = db.orders.map(o => {
+    const c = db.users.find(u => u.id === o.customerId) || {};
+    const escCsv = s => `"${String(s||'').replace(/"/g,'""')}"`;
+    return [o.id, c.name||c.email||'', o.document, o.pages, o.copies, o.printType, o.sides, o.status, o.total, o.createdAt].map(escCsv).join(',');
+  }).join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="printkarr-orders.csv"');
+  res.send(header + rows);
 });
 
 app.get('/admin/analytics', requireRole('admin'), (req, res) => {
@@ -851,10 +874,20 @@ app.get('/customer/orders/:id', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
-  const rider = o.riderId ? db.users.find((u) => u.id === o.riderId) : null;
   const waUrl = waForwardUrl(db, req, o);
   saveDb(db);
-  res.send(orderDetail(req.user, o, rider, waUrl));
+  res.send(orderDetail(req.user, o, null, waUrl));
+});
+
+// Kiosk live status for polling (no rider)
+app.get('/api/orders/:id/status', (req, res) => {
+  const user = currentUser(req);
+  if (!user) return res.status(401).json({ error: 'Not signed in.' });
+  const db = loadDb();
+  const o = db.orders.find(x => x.id === req.params.id);
+  if (!o || (o.customerId !== user.id && user.role !== 'admin')) return res.status(404).json({ error: 'Not found.' });
+  const friendly = { CREATED:'Draft', PAYMENT_PENDING:'Awaiting payment', CONFIRMED:'Confirmed', PRINT_QUEUE:'In print queue', PRINTING:'Printing', PRINTED:'Printed', READY_FOR_PICKUP:'Ready for pickup', DELIVERED:'Collected', CANCELLED:'Cancelled', PRINT_FAILED:'Print failed' }[o.status] || o.status;
+  res.json({ status: o.status, friendly, updatedAt: o.updatedAt });
 });
 
 app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => {
@@ -1116,7 +1149,12 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
 app.use((err, req, res, _next) => {
   if (!err || !/multer|Only PDF|File too large/i.test(err.message)) throw err;
   const user = currentUser(req);
-  if (!user) return res.redirect('/login');
+  if (!user) {
+    // Guest funnel: show the public order page error, not a login redirect
+    const isGuestOrder = req.path === '/order/upload';
+    if (isGuestOrder) return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That file won\'t print — PDF only, check size.', maxMb: loadDb().settings.order.maxFileMb }));
+    return res.redirect('/login');
+  }
   res.status(400).send(oops(user, '/customer/orders/new', 'That file <em>won\'t print.</em>'));
 });
 
@@ -1170,12 +1208,14 @@ app.get('/api/agent/next', agentAuth, (_req, res) => {
 });
 
 app.get('/api/agent/file/:id', agentAuth, (req, res) => {
+  const safe = safeOrderId(req.params.id);
+  if (!safe) return res.status(400).json({ error: 'Bad ID.' });
   const db = loadDb();
-  const o = db.orders.find((x) => x.id === req.params.id);
+  const o = db.orders.find((x) => x.id === safe);
   if (!o || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
     return res.status(404).json({ error: 'Not printable right now.' });
   }
-  const p = path.join(ROOT, 'data', 'uploads', `${o.id}.pdf`);
+  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
   if (!fs.existsSync(p)) return res.status(404).json({ error: 'File missing.' });
   res.setHeader('Content-Type', 'application/pdf');
   res.sendFile(p);
@@ -1183,8 +1223,10 @@ app.get('/api/agent/file/:id', agentAuth, (req, res) => {
 
 function agentStep(to, note) {
   return (req, res) => {
+    const safe = safeOrderId(req.params.id);
+    if (!safe) return res.status(400).json({ error: 'Bad ID.' });
     const db = loadDb();
-    const o = db.orders.find((x) => x.id === req.params.id);
+    const o = db.orders.find((x) => x.id === safe);
     if (!o) return res.status(404).json({ error: 'Unknown order.' });
     try {
       transition(o, to, { by: 'agent', note: note || req.body.note || null });
@@ -1199,8 +1241,10 @@ function agentStep(to, note) {
 app.post('/api/agent/:id/started', agentAuth, agentStep('PRINTING', 'agent picked up'));
 app.post('/api/agent/:id/done', agentAuth, agentStep('PRINTED', 'agent finished'));
 app.post('/api/agent/:id/failed', agentAuth, (req, res) => {
+  const safe = safeOrderId(req.params.id);
+  if (!safe) return res.status(400).json({ error: 'Bad ID.' });
   const db = loadDb();
-  const o = db.orders.find((x) => x.id === req.params.id);
+  const o = db.orders.find((x) => x.id === safe);
   if (!o) return res.status(404).json({ error: 'Unknown order.' });
   if (!['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
     return res.status(409).json({ error: `Cannot fail from ${o.status}.` });
@@ -1238,18 +1282,31 @@ app.get('/qr.png', async (req, res) => {
 // history stay — only the document files are wiped.
 setInterval(() => janitor(ROOT), 300e3).unref();
 
+function safeToken(t) {
+  return /^[a-f0-9]{32}$/.test(String(t || '')) ? String(t) : null;
+}
 // Public, expiring PDF link for one order. No login — the token IS the key.
 app.get('/share/:token', (req, res) => {
+  const tok = safeToken(req.params.token);
+  if (!tok) return res.status(400).send('Bad link.');
   const db = loadDb();
-  const t = (db.shareTokens || []).find((x) => x.token === req.params.token);
+  const t = (db.shareTokens || []).find((x) => x.token === tok);
   if (!t || Date.parse(t.expiresAt) < Date.now()) {
     return res.status(410).send('This link has expired. Ask the shop for a fresh one.');
   }
-  const p = path.join(ROOT, 'data', 'uploads', `${t.orderId}.pdf`);
+  const safe = safeOrderId(t.orderId);
+  if (!safe) return res.status(410).send('Bad link.');
+  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
   if (!fs.existsSync(p)) return res.status(404).send('File not found.');
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${t.orderId}.pdf"`);
+  res.setHeader('Content-Disposition', `inline; filename="${safe}.pdf"`);
   res.sendFile(p);
+});
+
+app.get('/api/agent/health', (_req, res) => {
+  const db = loadDb();
+  const queueDepth = db.orders.filter(o => ['PRINT_QUEUE','PRINTING'].includes(o.status)).length;
+  res.json({ ok: true, agentSeenAt: agentSeenAt || null, queueDepth, secondsSinceSeen: agentSeenAt ? Math.round((Date.now()-agentSeenAt)/1000) : null });
 });
 
 // Readiness probe for production debugging: counts + capability flags,
@@ -1273,12 +1330,13 @@ app.get('/api/ready', (_req, res) => {
       razorpay: !!(RAZORPAY.id && RAZORPAY.secret),
       whatsappForward: !!OWNER_WA,
       google: !!GOOGLE.id
-    }
+    },
+    kiosk: { queueDepth: db.orders.filter(o=>['PRINT_QUEUE','PRINTING'].includes(o.status)).length, agentSeenAt: agentSeenAt||null }
   });
 });
 
 // Razorpay: create a gateway order for a payable customer order.
-app.post('/api/razorpay/order', async (req, res) => {
+app.post('/api/razorpay/order', apiLimiter, async (req, res) => {
   const user = currentUser(req);
   if (!user) return res.status(401).json({ error: 'Not signed in.' });
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
@@ -1311,7 +1369,7 @@ app.post('/api/razorpay/order', async (req, res) => {
 
 // Real wallet top-up via Razorpay: pending record first (amount stays
 // server-side so the verify step can never be told a bigger number).
-app.post('/api/wallet/topup-order', async (req, res) => {
+app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
   const user = currentUser(req);
   if (!user || user.role !== 'customer') return res.status(401).json({ error: 'Not signed in.' });
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
