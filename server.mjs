@@ -1503,18 +1503,24 @@ function bootstrap() {
     console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
   }
   const db = loadDb();
-  if (db.users.length === 0) {
-    if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-      db.users.push({
-        id: 'ADM-OWNER', role: 'admin', name: 'Owner',
-        email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD,
-        phone: '', online: true
-      });
+  // Always ensure the .env owner admin exists and has the current password
+  // (covers the case where .env was updated after the DB was seeded)
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    const normOwner = String(process.env.ADMIN_EMAIL).trim().toLowerCase();
+    let owner = db.users.find(u => u.email.toLowerCase() === normOwner);
+    if (!owner) {
+      owner = { id: 'ADM-OWNER', role: 'admin', name: 'Owner', email: process.env.ADMIN_EMAIL.trim(), password: process.env.ADMIN_PASSWORD, phone: '', online: true };
+      db.users.push(owner);
       saveDb(db);
       console.log(`Bootstrapped owner admin ${process.env.ADMIN_EMAIL}`);
-    } else {
-      console.warn('⚠ No users and no ADMIN_EMAIL/ADMIN_PASSWORD — nobody can log in. Set the env vars and restart.');
+    } else if (owner.password !== process.env.ADMIN_PASSWORD || owner.role !== 'admin') {
+      owner.password = process.env.ADMIN_PASSWORD;
+      owner.role = 'admin';
+      saveDb(db);
+      console.log(`Updated owner admin ${process.env.ADMIN_EMAIL} password/role`);
     }
+  } else if (db.users.length === 0) {
+    console.warn('⚠ No users and no ADMIN_EMAIL/ADMIN_PASSWORD — nobody can log in. Set the env vars and restart.');
   }
   if (process.env.NODE_ENV === 'production') {
     const weak = db.users.find((u) => u.email === 'admin@demo.printkarr.in' && u.password === 'admin123');
