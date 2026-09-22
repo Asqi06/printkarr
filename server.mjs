@@ -23,7 +23,7 @@ import {
 import { layout, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { customerDashboard, ordersList, orderDetail } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
-import { landing, orderPage, phonePage, otpPage } from './lib/views_public.js';
+import { landing, orderPage, phonePage, otpPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
 
@@ -1499,6 +1499,26 @@ app.get('/', (req, res) => {
   const queueDepth = db.orders.filter((o) => ['PRINT_QUEUE', 'PRINTING'].includes(o.status)).length;
   res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth }));
 });
+
+// Marketing pages — Grok workspace port (server-rendered, no auth).
+app.get('/how-it-works', (_req, res) => res.send(howItWorksPage()));
+app.get('/about', (_req, res) => res.send(aboutPage()));
+app.get('/franchise', (_req, res) => res.send(franchisePage()));
+app.get('/xerox', (_req, res) => res.send(xeroxPage()));
+app.get('/contact', (req, res) => res.send(contactPage({ sent: req.query.sent === '1' })));
+app.post('/contact', express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const db = loadDb();
+    db.leads = db.leads || [];
+    db.leads.unshift({ at: new Date().toISOString(), ...(req.body || {}) });
+    saveDb(db);
+  } catch {}
+  res.redirect('/contact?sent=1');
+});
+app.get('/blogs', (_req, res) => res.send(blogsPage()));
+app.get('/blogs/:slug', (req, res) => res.send(blogArticlePage(req.params.slug)));
+app.get('/terms', (_req, res) => res.send(termsPage()));
+app.get('/privacy', (_req, res) => res.send(privacyPage()));
 
 // ---- Static (production surface = public/ only) ----
 app.use(express.static(PUBLIC, { maxAge: '1h', extensions: ['html'] }));
