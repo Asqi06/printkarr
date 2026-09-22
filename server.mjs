@@ -13,7 +13,7 @@ import { loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates } from './lib/machine.js';
 import { quote, rangePages } from './lib/pricing.js';
 import { notifyState } from './lib/notify.js';
-import { requestOtp, verifyOtp, normPhone } from './lib/otp.js';
+import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, normEmail } from './lib/otp.js';
 import { bonusFor, isFirstOrder } from './lib/pricing.js';
 import { janitor } from './lib/janitor.js';
 import {
@@ -198,6 +198,36 @@ app.post('/login', loginLimiter, (req, res) => {
   const user = verifyCredentials(req.body.email, req.body.password);
   if (!user || user.role !== 'customer') {
     return res.status(401).send(loginView(demoLoginOn() ? 'No match in demo accounts — tap a role card above.' : 'No match — check your email and password. (Admins use /admin/login)'));
+  }
+  const token = createSession(user.id);
+  res.setHeader('Set-Cookie', sessionCookie(req, token));
+  res.redirect('/customer');
+});
+
+// Passwordless customer login: email → 6-digit code → dashboard.
+// This is how guest-order customers (no password on file) get back in.
+app.post('/login/code-request', loginLimiter, async (req, res) => {
+  if (currentUser(req)) return res.redirect('/');
+  const email = normEmail(req.body.email);
+  const db = loadDb();
+  const user = email && db.users.find((u) => String(u.email || '').toLowerCase() === email);
+  if (!user || user.role !== 'customer') {
+    return res.status(404).send(loginView('No customer account on that email yet — print something first, or continue with Google.'));
+  }
+  const otp = await requestEmailOtp(email);
+  if (!otp.ok) return res.status(429).send(loginView(otp.error));
+  res.send(loginOtpPage(email, otp.mailed ? null : otp.demo, otp.mailed ? null : otp.error, null));
+});
+
+app.post('/login/code-verify', loginLimiter, (req, res) => {
+  if (currentUser(req)) return res.redirect('/');
+  const email = normEmail(req.body.email);
+  const v = email ? verifyEmailOtp(email, req.body.code) : { ok: false, error: 'Enter the email you requested the code for.' };
+  if (!v.ok) return res.status(401).send(loginOtpPage(email || '', null, null, v.error));
+  const db = loadDb();
+  const user = db.users.find((u) => String(u.email || '').toLowerCase() === email);
+  if (!user || user.role !== 'customer') {
+    return res.status(401).send(loginView('That account can\'t sign in here — shop staff use /admin/login.'));
   }
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
@@ -1103,22 +1133,28 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
   const d = list.find((x) => x.id === (req.body.draft || req.query.draft) && x.guest === parseCookies(req.headers.cookie).pk_guest);
   if (!d || !d.selections) return res.redirect('/order');
   if (!req.body.resend) {
-    const phone = normPhone(req.body.phone);
-    if (!req.body.name || !phone || !req.body.address || !req.body.pin) {
-      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Name, valid 10-digit phone, address and PIN — that is all.' }));
+    const email = normEmail(req.body.email);
+    const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
+    const phone = phoneRaw ? normPhone(phoneRaw) : '';
+    if (!req.body.name || !email || !req.body.address || !req.body.pin) {
+      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Name, valid email, address and PIN — that is all.' }));
+    }
+    if (phoneRaw && !phone) {
+      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — 10 digits, or leave it blank.' }));
     }
     d.contact = {
-      name: String(req.body.name).slice(0, 60), phone,
+      name: String(req.body.name).slice(0, 60), email,
+      phone: phone ? '+91 ' + phone : '',
       address: String(req.body.address).slice(0, 200),
       landmark: String(req.body.landmark || '').slice(0, 100),
       pin: String(req.body.pin).slice(0, 10)
     };
     saveDb(db);
   }
-  const phone = d.contact.phone;
-  const otp = await requestOtp(phone);
+  const email = d.contact.email;
+  const otp = await requestEmailOtp(email);
   if (!otp.ok) return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: otp.error }));
-  res.send(otpPage({ draft: d, phone: '+91 ' + phone, demoCode: otp.demo, error: null }));
+  res.send(otpPage({ draft: d, email, demoCode: otp.mailed ? null : otp.demo, mailError: otp.mailed ? null : otp.error, error: null }));
 });
 
 app.post('/order/otp-verify', otpLimiter, (req, res) => {
@@ -1127,15 +1163,15 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.guest === parseCookies(req.headers.cookie).pk_guest);
   if (di < 0 || !db.drafts[di].selections || !db.drafts[di].contact) return res.redirect('/order');
   const d = db.drafts[di];
-  const v = verifyOtp(d.contact.phone, req.body.code);
-  if (!v.ok) return res.send(otpPage({ draft: d, phone: '+91 ' + d.contact.phone, demoCode: null, error: v.error }));
-  // Action becomes identity: find by phone or create the account.
-  let user = db.users.find((u) => (u.phone || '').replace(/\D/g, '').slice(-10) === d.contact.phone);
+  const v = verifyEmailOtp(d.contact.email, req.body.code);
+  if (!v.ok) return res.send(otpPage({ draft: d, email: d.contact.email, demoCode: null, mailError: null, error: v.error }));
+  // Action becomes identity: find by email or create the account.
+  let user = db.users.find((u) => String(u.email || '').toLowerCase() === d.contact.email.toLowerCase());
   if (!user) {
     user = {
       id: 'CUS-' + Date.now().toString(36), role: 'customer', name: d.contact.name,
-      email: `ph${d.contact.phone}@guest.printkarr.in`, password: null,
-      phone: '+91 ' + d.contact.phone, student: false
+      email: d.contact.email, password: null,
+      phone: d.contact.phone || '', student: false
     };
     db.users.push(user);
     db.wallets.push({ customerId: user.id, balance: 0 });
@@ -1143,7 +1179,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   const s = d.selections;
   const address = {
     id: 'ADR' + Date.now().toString(36), customerId: user.id, label: 'Home',
-    name: d.contact.name, phone: '+91 ' + d.contact.phone, address: d.contact.address,
+    name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
     area: s.area, landmark: d.contact.landmark, pin: d.contact.pin, isDefault: true
   };
   db.addresses.push(address);
