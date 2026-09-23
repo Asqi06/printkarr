@@ -262,7 +262,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; pointer-events: auto; }
 
 /* ---------- reveal ---------- */
-.rv { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ez-out), transform 0.7s var(--ez-out); }
+.rv { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ez-out), transform 0.7s var(--ez-out); transition-delay: var(--d, 0s); }
 .rv.in { opacity: 1; transform: none; }
 
 /* ---------- workspace patterns ---------- */
@@ -322,18 +322,37 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .pk-kiosk3d .kiosk-img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; }
 .kiosk-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
 
-/* step phone shots — identical frames so every phone looks equal */
-.step-shot { margin-top: 16px; border-radius: 18px; overflow: hidden; aspect-ratio: 9 / 18.5; background: rgb(255 255 255 / .12); }
-.step-shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
-
-/* steps — simple clean cards */
+/* steps — library glass cards: gradient number, glass panel, pill footer */
 .pk-steps { display: grid; gap: 16px; margin: 48px 0 0; }
 @media (min-width: 640px) { .pk-steps { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1100px) { .pk-steps { grid-template-columns: repeat(4, 1fr); } }
-.pk-step { background: var(--paper); border: 1px solid var(--line); border-radius: 28px; padding: 24px 20px 20px; text-align: center; box-shadow: 0 1px 0 rgb(12 28 51 / 0.04); }
-.pk-step .n { font-size: 11px; letter-spacing: 0.22em; font-weight: 800; color: var(--primary); }
-.pk-step h3 { font-size: 18px; margin-top: 8px; }
-.pk-step p { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+.pk-step {
+  display: flex; flex-direction: column; gap: 16px; height: 100%;
+  padding: 32px 30px; border-radius: 38px;
+  background: rgb(255 255 255 / 0.62);
+  -webkit-backdrop-filter: blur(20px) saturate(1.7);
+  backdrop-filter: blur(20px) saturate(1.7);
+  border: 1px solid rgb(255 255 255 / 0.92);
+  box-shadow: 0 28px 56px -36px rgb(9 90 160 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.95);
+  transition: box-shadow 0.6s var(--ez-out), background 0.6s var(--ez-out);
+}
+.pk-step:hover { background: rgb(255 255 255 / 0.78); box-shadow: 0 44px 80px -40px rgb(9 90 160 / 0.62), inset 0 1px 0 #fff; }
+.pk-step .n {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: 17px; flex: none;
+  font-size: 15px; font-weight: 800; letter-spacing: -0.02em; color: #fff;
+  background: linear-gradient(140deg, var(--blue-bright), var(--primary));
+  box-shadow: 0 14px 26px -14px rgb(26 91 255 / 0.95), inset 0 1px 0 rgb(255 255 255 / 0.45);
+}
+.pk-step h3 { font-size: 19px; line-height: 1.2; letter-spacing: -0.02em; }
+.pk-step p { font-size: 14.5px; color: var(--muted); line-height: 1.65; }
+.pk-step .tag {
+  align-self: flex-start; margin-top: auto;
+  padding: 7px 14px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--primary); background: rgb(232 240 255 / 0.7);
+  border: 1px solid rgb(255 255 255 / 0.9);
+}
 
 /* feature cards — desktop grid on wide screens, swipeable desktop-size cards on phones */
 .pk-features { display: flex; gap: 12px; margin: 40px -16px 0; padding: 4px 16px 12px; overflow-x: auto; scroll-snap-type: x mandatory; }
