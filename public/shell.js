@@ -155,7 +155,7 @@
     flow.addEventListener('transitionend', function (e) { if (e.propertyName === 'transform') beamSync(); });
   });
 
-  var CONF_COLORS = ['#1a5bff', '#4d86ff', '#6cc1fb', '#a4d9ff', '#ffffff'];
+  var CONF_COLORS = ['#1a5bff', '#33a6f4', '#FFD400', '#FA3D1D', '#FD02F5', '#22c55e'];
   function burst(nx, ny, count) {
     if (reduceMotion) return;
     var cv = document.createElement('canvas');
@@ -169,7 +169,7 @@
     var ox = nx * window.innerWidth, oy = ny * window.innerHeight;
     var ps = [];
     for (var i = 0; i < count; i++) {
-      var a = (-90 + (Math.random() - 0.5) * 65) * Math.PI / 180;
+      var a = (-90 + (Math.random() - 0.5) * 100) * Math.PI / 180;
       var sp = 380 + Math.random() * 420;
       ps.push({
         x: ox, y: oy,
@@ -177,7 +177,8 @@
         w: 5 + Math.random() * 5, h: 8 + Math.random() * 7,
         r: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 12,
         c: CONF_COLORS[(Math.random() * CONF_COLORS.length) | 0],
-        life: 1.5 + Math.random() * 0.9, age: 0,
+        life: 1.8 + Math.random() * 1, age: 0,
+        sd: Math.random() * 6.2832,
         dot: Math.random() < 0.3
       });
     }
@@ -198,6 +199,7 @@
         p.vx *= (1 - 1.6 * dt);
         p.vy *= (1 - 0.4 * dt);
         p.x += p.vx * dt;
+        p.x += Math.sin(p.age * 5 + p.sd) * 24 * dt;
         p.y += p.vy * dt;
         p.r += p.vr * dt;
         ctx.save();
@@ -226,7 +228,7 @@
       es.forEach(function (en) {
         if (!en.isIntersecting) return;
         cio.unobserve(en.target);
-        burstAt(en.target, parseInt(en.target.getAttribute('data-confetti'), 10) || 55);
+        burstAt(en.target, parseInt(en.target.getAttribute('data-confetti'), 10) || 70);
       });
     }, { threshold: 0.35 });
     document.querySelectorAll('[data-confetti]').forEach(function (el) { cio.observe(el); });
