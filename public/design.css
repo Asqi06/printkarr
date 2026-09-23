@@ -152,7 +152,7 @@ p { text-wrap: pretty; }
 .pk-glow svg { height: 100%; width: 100%; display: block; }
 
 /* offer ribbon (marquee divider below hero) */
-.ribbon { width: auto; max-width: 100%; overflow: hidden; background: #facc15; color: #000; font-size: 18px; padding: 4px 0; margin: 28px -16px 0; }
+.ribbon { width: auto; max-width: none; overflow: hidden; background: var(--primary); color: #fff; font-size: 18px; padding: 4px 0; margin: 28px calc(50% - 50vw) 0; }
 .ribbon-track { display: flex; width: max-content; white-space: nowrap; animation: ribbon-scroll var(--ribbon-duration, 30s) linear infinite; }
 .ribbon-track span { display: inline-block; margin-right: 2rem; user-select: none; }
 @keyframes ribbon-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
