@@ -479,6 +479,9 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .dock-icon:hover { background: var(--pale); color: var(--primary); }
 .dock-icon svg { width: 16px; height: 16px; flex: none; }
 .dock-sep { width: 1px; align-self: stretch; background: var(--line); margin: 6px 2px; }
+
+/* celebration confetti — fullscreen canvas, brand palette, auto-removed when done */
+.confetti-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 200; }
 @media (min-width: 768px) { .bottomnav { display: none; } .pk-header { padding: 16px 24px 0; } }
 
 @media (max-width: 900px) {

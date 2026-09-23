@@ -887,7 +887,7 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   saveDb(db);
   notifyState({ ...o, status: 'CONFIRMED' });
   if (o.status === 'PRINT_QUEUE') notifyState(o);
-  res.redirect(`/customer/orders/${o.id}`);
+  res.redirect(`/customer/orders/${o.id}?fresh=1`);
 });
 
 // Owner-only demo payout — bypasses Razorpay to test the Epson end-to-end (no charge, no wallet change)
@@ -907,7 +907,7 @@ app.post('/customer/orders/:id/demo-pay', requireRole('customer'), (req, res) =>
   saveDb(db);
   notifyState({ ...o, status: 'CONFIRMED' });
   if (o.status === 'PRINT_QUEUE') notifyState(o);
-  res.redirect(`/customer/orders/${o.id}`);
+  res.redirect(`/customer/orders/${o.id}?fresh=1`);
 });
 
 app.get('/customer/orders/:id', requireRole('customer'), (req, res) => {
@@ -916,7 +916,7 @@ app.get('/customer/orders/:id', requireRole('customer'), (req, res) => {
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   const waUrl = waForwardUrl(db, req, o);
   saveDb(db);
-  res.send(orderDetail(req.user, o, null, waUrl));
+  res.send(orderDetail(req.user, o, null, waUrl, req.query.fresh === '1'));
 });
 
 // Kiosk live status for polling (no rider)
