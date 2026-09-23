@@ -370,7 +370,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   opacity: .45;
   transition: opacity .5s cubic-bezier(.22,.68,.24,1), background .5s cubic-bezier(.22,.68,.24,1), box-shadow .5s cubic-bezier(.22,.68,.24,1); }
 .pk-feed-row.lit { opacity: 1; background: rgba(255,255,255,.85);
-  box-shadow: 0 28px 56px -36px rgba(9,90,160,.55), inset 0 1px 0 #fff, inset 3px 0 0 #0d86e0; }
+  box-shadow: 0 28px 56px -36px rgba(9,90,160,.55), inset 0 1px 0 #fff, inset 3px 0 0 #1a5bff; }
 .pk-feed-ic { display: inline-flex; align-items: center; justify-content: center;
   width: 44px; height: 44px; border-radius: 15px; flex: none;
   font-size: 14px; font-weight: 800; letter-spacing: -.02em; color: #fff;
@@ -378,8 +378,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   box-shadow: 0 12px 22px -12px rgba(9,90,160,.5), inset 0 1px 0 rgba(255,255,255,.45);
   transition: background .5s, box-shadow .5s; }
 .pk-feed-row.lit .pk-feed-ic {
-  background: linear-gradient(140deg, #6cc1fb, #0d86e0);
-  box-shadow: 0 14px 26px -14px rgba(13,134,224,.95), inset 0 1px 0 rgba(255,255,255,.45); }
+  background: linear-gradient(140deg, #4d86ff, #1a5bff);
+  box-shadow: 0 14px 26px -14px rgba(26,91,255,.95), inset 0 1px 0 rgba(255,255,255,.45); }
 .pk-feed-tx { min-width: 0; }
 .pk-feed-tx b { display: block; font-size: 17px; letter-spacing: -.02em; line-height: 1.25; }
 .pk-feed-tx b i { font-style: normal; font-size: 11px; font-weight: 800; letter-spacing: .14em; color: #7b95ab; margin-left: 8px; }
@@ -387,7 +387,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .pk-feed-row .tag { align-self: flex-start; flex: none; margin-left: auto;
   padding: 6px 12px; border-radius: 999px; white-space: nowrap;
   font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-  color: #0a6ab2; background: rgba(214,238,255,.7);
+  color: #1a5bff; background: rgba(232,240,255,.75);
   border: 1px solid rgba(255,255,255,.9); }
 @media (max-width: 560px) { .pk-feed-row { flex-wrap: wrap; } .pk-feed-row .tag { margin-left: 58px; } }
 
