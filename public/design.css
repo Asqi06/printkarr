@@ -184,6 +184,18 @@ p { text-wrap: pretty; }
 .btn.big { font-size: 14px; padding: 15px 24px; }
 .btn[disabled] { opacity: 0.5; pointer-events: none; }
 
+/* interactive hover button (magicui port): dot blooms, label slides out, arrow rides in */
+.ihb { position: relative; display: inline-block; width: auto; cursor: pointer; overflow: hidden; border-radius: 999px; border: 1px solid currentColor; background: var(--paper); padding: 8px 24px; text-align: center; font-weight: 600; font-size: 15px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.ihb-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ihb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex: none; transition: transform .3s; }
+.ihb-t1 { display: inline-block; transition: transform .3s, opacity .3s; }
+.ihb-t2 { position: absolute; top: 0; left: 0; z-index: 10; display: flex; height: 100%; width: 100%; transform: translateX(48px); align-items: center; justify-content: center; gap: 8px; opacity: 0; color: var(--primary-fg); transition: transform .3s, opacity .3s; }
+.ihb-arrow { width: 24px; height: 24px; flex: none; }
+.ihb:hover .ihb-dot { transform: scale(100.8); }
+.ihb:hover .ihb-t1 { transform: translateX(48px); opacity: 0; }
+.ihb:hover .ihb-t2 { transform: translateX(-20px); opacity: 1; }
+.ihb:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 /* ---------- cards / grids ---------- */
 .grid { display: grid; gap: 16px; }
 .grid.c2 { grid-template-columns: repeat(2, 1fr); }
