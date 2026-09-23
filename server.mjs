@@ -197,7 +197,7 @@ const isAdminEmail = (email) => {
 app.post('/login', loginLimiter, (req, res) => {
   const user = verifyCredentials(req.body.email, req.body.password);
   if (!user || user.role !== 'customer') {
-    return res.status(401).send(loginView(demoLoginOn() ? 'No match in demo accounts — tap a role card above.' : 'No match — check your email and password. (Admins use /admin/login)'));
+    return res.status(401).send(loginView(demoLoginOn() ? 'No match — check your email and password, or try a demo account below.' : 'No match — check your email and password. (Admins use /admin/login)'));
   }
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));

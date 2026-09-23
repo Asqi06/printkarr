@@ -43,6 +43,28 @@ const pages = new Map([
   ['/admin/settings', admin.settingsPage(staff, settings, [])],
   ['/admin/analytics', admin.analyticsPage(staff, { salesToday: 24, salesWeek: 120, pages: 60, bw: 60, color: 0, done: 5, cancelled: 0, live: 1, total: 6, repeat: 1, customers: 5, avgHrs: 1 })],
 ]);
+assert.match(pages.get('/login'), /<details class="login-password-options">/);
+assert.match(pages.get('/login'), /<details class="login-demo-options">/);
+const demoScript = pages.get('/login').match(/<script>\s*(document\.querySelectorAll\('\.demo-card'\)[\s\S]*?)<\/script>/)?.[1];
+let demoClick, demoToast, scrollBlock;
+const demoFields = { email: { value: '' }, password: { value: '' } };
+const passwordOptions = { open: false, scrollIntoView: ({ block }) => { scrollBlock = block; } };
+const demoOptions = { open: true };
+runInNewContext(demoScript, {
+  document: {
+    querySelectorAll: () => [{ dataset: { email: 'demo@example.com', pass: 'demo123' }, addEventListener: (event, handler) => { demoClick = handler; } }],
+    querySelector: (selector) => selector === '.login-password-options' ? passwordOptions : demoOptions,
+    getElementById: (id) => demoFields[id]
+  },
+  toast: (message) => { demoToast = message; }
+});
+demoClick();
+assert.equal(demoFields.email.value, 'demo@example.com');
+assert.equal(demoFields.password.value, 'demo123');
+assert.equal(passwordOptions.open, true);
+assert.equal(demoOptions.open, false);
+assert.equal(scrollBlock, 'center');
+assert.match(demoToast, /Demo account filled/);
 for (const [route, html] of pages) {
   assert.equal((html.match(/<header\b/g) || []).length, 1, `${route}: one header`);
   assert.equal((html.match(/<main\b/g) || []).length, 1, `${route}: one main landmark`);
