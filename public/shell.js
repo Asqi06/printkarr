@@ -244,4 +244,17 @@
     }
     box.innerHTML = html;
   });
+  var glow = document.querySelector('.pk-glow');
+  if (glow && !reduceMotion) {
+    var gmin = 0.045;
+    function glowMeasure() {
+      var gh = glow.offsetHeight || 1;
+      var left = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+      var t = Math.min(1, Math.max(0, (gh - left) / gh));
+      glow.style.transform = 'scaleY(' + (gmin + (1 - gmin) * t).toFixed(4) + ')';
+    }
+    glowMeasure();
+    window.addEventListener('scroll', glowMeasure, { passive: true });
+    window.addEventListener('resize', glowMeasure);
+  }
 })();
