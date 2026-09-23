@@ -287,6 +287,17 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .igp-cell { fill: transparent; stroke: rgb(156 163 175 / 0.3); transition: fill .1s ease-in-out; }
 .igp-cell:not(:hover) { transition-duration: 1s; }
 .igp-cell:hover { fill: #3b82f6; }
+
+/* headline sparkles (magicui SparklesText port: twinkling stars around the brand) */
+.sparkles { position: relative; display: inline-block; }
+.sparkle { position: absolute; width: 21px; height: 21px; opacity: 0; pointer-events: none;
+  transform-box: fill-box; transform-origin: center;
+  animation: sparkle-twinkle .8s ease-in-out infinite; }
+@keyframes sparkle-twinkle {
+  0% { opacity: 0; transform: scale(0) rotate(75deg); }
+  50% { opacity: 1; transform: scale(var(--ss, 1)) rotate(120deg); }
+  100% { opacity: 0; transform: scale(0) rotate(150deg); } }
+@media (prefers-reduced-motion: reduce) { .sparkle { animation: none; } }
 .phone-screen { background: linear-gradient(180deg, #1a5bff 0%, #123fc0 100%); }
 
 /* hero */
