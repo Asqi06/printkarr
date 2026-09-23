@@ -235,4 +235,13 @@
     var n = parseInt(el.getAttribute('data-confetti-load'), 10) || 85;
     setTimeout(function () { burstAt(el, n); }, 350);
   });
+  document.querySelectorAll('[data-meteors]').forEach(function (box) {
+    if (reduceMotion) return;
+    var total = parseInt(box.getAttribute('data-meteors'), 10) || 14;
+    var html = '';
+    for (var mi = 0; mi < total; mi++) {
+      html += '<span class="meteor" style="--angle:-215deg;top:-5%;left:calc(0% + ' + Math.floor(Math.random() * window.innerWidth) + 'px);animation-delay:' + (Math.random() * 1 + 0.2).toFixed(2) + 's;animation-duration:' + Math.floor(Math.random() * 8 + 2) + 's"><span class="meteor-tail"></span></span>';
+    }
+    box.innerHTML = html;
+  });
 })();
