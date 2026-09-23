@@ -446,6 +446,13 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .bottomnav a { flex: 1; text-align: center; text-decoration: none; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 8px 2px; border-radius: 999px; color: var(--muted); }
 .bottomnav a.live { background: var(--pale); color: var(--primary); }
 .bottomnav .big { font-size: 16px; display: block; }
+
+/* floating quick-action dock (magicui Dock port): frosted bar, magnifying icons */
+.dock { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; justify-content: center; gap: 8px; height: 58px; width: max-content; max-width: calc(100vw - 24px); padding: 8px; border-radius: 22px; border: 1px solid var(--line); background: rgb(255 255 255 / .72); -webkit-backdrop-filter: blur(12px) saturate(1.6); backdrop-filter: blur(12px) saturate(1.6); box-shadow: var(--shadow-card); }
+.dock-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 8px; border-radius: 50%; color: var(--muted); transition: width .15s ease-out, height .15s ease-out, background .2s, color .2s; }
+.dock-icon:hover { background: var(--pale); color: var(--primary); }
+.dock-icon svg { width: 16px; height: 16px; flex: none; }
+.dock-sep { width: 1px; align-self: stretch; background: var(--line); margin: 6px 2px; }
 @media (min-width: 768px) { .bottomnav { display: none; } .pk-header { padding: 16px 24px 0; } }
 
 @media (max-width: 900px) {

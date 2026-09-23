@@ -67,4 +67,21 @@
     });
     tio.observe(el);
   });
+
+  document.querySelectorAll('.dock').forEach(function (dock) {
+    if (reduceMotion) return;
+    var icons = Array.prototype.slice.call(dock.querySelectorAll('.dock-icon'));
+    dock.addEventListener('mousemove', function (e) {
+      icons.forEach(function (ic) {
+        var r = ic.getBoundingClientRect();
+        var t = Math.max(0, 1 - Math.abs(e.clientX - (r.left + r.width / 2)) / 140);
+        var s = 40 + (60 - 40) * t;
+        ic.style.width = s + 'px';
+        ic.style.height = s + 'px';
+      });
+    });
+    dock.addEventListener('mouseleave', function () {
+      icons.forEach(function (ic) { ic.style.width = ''; ic.style.height = ''; });
+    });
+  });
 })();
