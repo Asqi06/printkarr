@@ -36,4 +36,35 @@
       });
     });
   }
+
+  document.querySelectorAll('[data-tick]').forEach(function (el) {
+    var value = parseFloat(el.getAttribute('data-tick')) || 0;
+    var startAttr = parseFloat(el.getAttribute('data-tick-from'));
+    var start0 = isNaN(startAttr) ? 0 : startAttr;
+    var down = el.getAttribute('data-tick-dir') === 'down';
+    var dec = parseInt(el.getAttribute('data-tick-decimals') || '0', 10) || 0;
+    var delayMs = (parseFloat(el.getAttribute('data-tick-delay') || '0') || 0) * 1000;
+    var from = down ? value : start0;
+    var target = down ? start0 : value;
+    function fmt(n) {
+      return Intl.NumberFormat('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(Number(n.toFixed(dec)));
+    }
+    if (reduceMotion) { el.textContent = fmt(target); return; }
+    var x = from, v = 0, raf = 0, timer = 0, last = 0;
+    function step(now) {
+      var dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      v += (-100 * (x - target) - 60 * v) * dt;
+      x += v * dt;
+      el.textContent = fmt(x);
+      if (Math.abs(x - target) < 0.5 * Math.pow(10, -dec) && Math.abs(v) < 0.05) { el.textContent = fmt(target); return; }
+      raf = requestAnimationFrame(step);
+    }
+    var tio = new IntersectionObserver(function (es) {
+      if (!es[0].isIntersecting) return;
+      tio.disconnect();
+      timer = setTimeout(function () { last = performance.now(); raf = requestAnimationFrame(step); }, delayMs);
+    });
+    tio.observe(el);
+  });
 })();
