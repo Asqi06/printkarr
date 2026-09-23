@@ -270,8 +270,8 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .agp {
   position: absolute; left: 0; right: 0; top: -30%; height: 200%;
   transform: skewY(12deg); pointer-events: none; color: var(--ink);
-  -webkit-mask-image: radial-gradient(500px circle at center, #fff, transparent);
-  mask-image: radial-gradient(500px circle at center, #fff, transparent);
+  -webkit-mask-image: radial-gradient(80% 70% at 50% 38%, #fff 55%, transparent 100%);
+  mask-image: radial-gradient(80% 70% at 50% 38%, #fff 55%, transparent 100%);
 }
 .agp path { stroke: rgb(156 163 175 / 0.3); }
 .agp-cell { fill: currentColor; opacity: 0; }
