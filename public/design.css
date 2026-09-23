@@ -193,7 +193,7 @@ p { text-wrap: pretty; }
 .ihb-arrow { width: 24px; height: 24px; flex: none; }
 .ihb:hover .ihb-dot { transform: scale(100.8); }
 .ihb:hover .ihb-t1 { transform: translateX(48px); opacity: 0; }
-.ihb:hover .ihb-t2 { transform: translateX(-20px); opacity: 1; }
+.ihb:hover .ihb-t2 { transform: translateX(0); opacity: 1; }
 .ihb:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* ---------- cards / grids ---------- */
