@@ -1,6 +1,6 @@
 /* PrintKarr design system — ported from Yxx1UbwMGrpapxo2-grok-workspace.
    Blue SaaS kiosk system: Bricolage Grotesque + Plus Jakarta Sans,
-   rounded-28 cards, grid-veil hero, floating dock nav. */
+   rounded-28 cards, animated-grid hero, floating dock nav. */
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
@@ -266,12 +266,15 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .rv.in { opacity: 1; transform: none; }
 
 /* ---------- workspace patterns ---------- */
-.grid-veil {
-  background-image:
-    linear-gradient(to right, rgb(12 28 51 / 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(12 28 51 / 0.045) 1px, transparent 1px);
-  background-size: 56px 56px;
+/* hero animated grid (magicui AnimatedGridPattern port: 40px lattice + blinking cells) */
+.agp {
+  position: absolute; left: 0; right: 0; top: -30%; height: 200%;
+  transform: skewY(12deg); pointer-events: none; color: var(--ink);
+  -webkit-mask-image: radial-gradient(500px circle at center, #fff, transparent);
+  mask-image: radial-gradient(500px circle at center, #fff, transparent);
 }
+.agp path { stroke: rgb(156 163 175 / 0.3); }
+.agp-cell { fill: currentColor; opacity: 0; }
 .phone-screen { background: linear-gradient(180deg, #1a5bff 0%, #123fc0 100%); }
 
 /* hero */
