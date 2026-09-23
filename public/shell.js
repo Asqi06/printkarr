@@ -1,4 +1,4 @@
-// Tiny shell runtime: reveal-on-scroll, toast, clock. No dependencies.
+// Shared interactions: reveals, print illustration, kiosk demo, and feedback. No dependencies.
 (function () {
   var io = new IntersectionObserver(function (es) {
     es.forEach(function (en) {
@@ -18,6 +18,65 @@
   };
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Finite, user-triggered animation: no printing requests are made by this demo.
+  document.querySelectorAll('[data-print-demo]').forEach(function (demo) {
+    var button = demo.querySelector('.demo-trigger');
+    var status = demo.querySelector('.demo-status');
+    button.addEventListener('click', function () {
+      if (button.disabled) return;
+      button.disabled = true;
+      demo.classList.remove('is-printed');
+      demo.classList.add('is-printing');
+      status.textContent = 'A little ink. A little paper. Here it comes…';
+      setTimeout(function () {
+        demo.classList.remove('is-printing');
+        demo.classList.add('is-printed');
+        button.disabled = false;
+        button.textContent = 'Print it again ↗';
+        status.textContent = 'Fresh off the press! Sample only — no real print job.';
+      }, reduceMotion ? 0 : 1600);
+    });
+  });
+
+  document.querySelectorAll('form').forEach(function (form) {
+    if (!form.querySelector('input[name="printType"]')) return;
+    var look = document.createElement('div');
+    look.className = 'print-look';
+    look.innerHTML = '<div class="print-look-paper" aria-hidden="true"></div><div><b>Your print, your way.</b><p role="status"></p><small>Settings illustration · not a document preview</small></div>';
+    form.prepend(look);
+    function updateLook() {
+      var colour = form.querySelector('input[name="printType"]:checked');
+      var sides = form.querySelector('input[name="sides"]:checked');
+      var copies = form.querySelector('[name="copies"]');
+      var orientation = form.querySelector('[name="orientation"]');
+      var isColour = colour && colour.value === 'color';
+      var isDouble = sides && sides.value === 'double';
+      look.classList.toggle('color', !!isColour);
+      look.classList.toggle('double', !!isDouble);
+      look.classList.toggle('landscape', !!orientation && orientation.value === 'landscape');
+      look.querySelector('p').textContent = (isColour ? 'Full colour' : 'Black & white') + ' · ' + (isDouble ? 'Double-sided' : 'Single-sided') + ' · Copies: ' + (copies ? copies.value : '1');
+    }
+    form.addEventListener('input', updateLook);
+    form.addEventListener('change', updateLook);
+    form.addEventListener('click', updateLook);
+    updateLook();
+  });
+
+  if (!reduceMotion && window.matchMedia('(hover: hover)').matches) {
+    document.querySelectorAll('.pk-feature').forEach(function (card) {
+      card.addEventListener('pointermove', function (event) {
+        var bounds = card.getBoundingClientRect();
+        card.style.setProperty('--px', (event.clientX - bounds.left) + 'px');
+        card.style.setProperty('--py', (event.clientY - bounds.top) + 'px');
+      });
+    });
+  }
+  if (!reduceMotion) {
+    document.querySelectorAll('.rv').forEach(function (el) {
+      if (el.getBoundingClientRect().top > window.innerHeight) el.classList.add('reveal-ready');
+    });
+  }
 
   document.querySelectorAll('[data-tick]').forEach(function (el) {
     var value = parseFloat(el.getAttribute('data-tick')) || 0;
@@ -50,112 +109,7 @@
     tio.observe(el);
   });
 
-  document.querySelectorAll('.dock').forEach(function (dock) {
-    if (reduceMotion) return;
-    var icons = Array.prototype.slice.call(dock.querySelectorAll('.dock-icon'));
-    dock.addEventListener('mousemove', function (e) {
-      icons.forEach(function (ic) {
-        var r = ic.getBoundingClientRect();
-        var t = Math.max(0, 1 - Math.abs(e.clientX - (r.left + r.width / 2)) / 140);
-        var s = 40 + (60 - 40) * t;
-        ic.style.width = s + 'px';
-        ic.style.height = s + 'px';
-      });
-    });
-    dock.addEventListener('mouseleave', function () {
-      icons.forEach(function (ic) { ic.style.width = ''; ic.style.height = ''; });
-    });
-  });
-
-  if ('IntersectionObserver' in window) {
-    var lio = new IntersectionObserver(function (es) {
-      es.forEach(function (en) {
-        if (en.isIntersecting) { en.target.classList.add('lit'); lio.unobserve(en.target); }
-      });
-    }, { threshold: 0.55, rootMargin: '-8% 0px' });
-    document.querySelectorAll('.pk-feed-row').forEach(function (el) { lio.observe(el); });
-  } else {
-    document.querySelectorAll('.pk-feed-row').forEach(function (el) { el.classList.add('lit'); });
-  }
-
-  function mkstop(grad, o, c, op) {
-    var st = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-    st.setAttribute('offset', o);
-    st.setAttribute('stop-color', c);
-    if (op !== undefined) st.setAttribute('stop-opacity', op);
-    grad.appendChild(st);
-  }
-
-  document.querySelectorAll('.pk-flow').forEach(function (flow) {
-    var NS = 'http://www.w3.org/2000/svg';
-    var svg = flow.querySelector('svg.pk-beam');
-    var nodes = Array.prototype.slice.call(flow.querySelectorAll('.pk-node'));
-    if (!svg || nodes.length < 2) return;
-    var defs = document.createElementNS(NS, 'defs');
-    svg.appendChild(defs);
-    var pairs = [];
-    for (var bi = 0; bi + 1 < nodes.length; bi++) {
-      var base = document.createElementNS(NS, 'path');
-      base.setAttribute('stroke', '#808080');
-      base.setAttribute('stroke-width', '2');
-      base.setAttribute('stroke-opacity', '0.2');
-      base.setAttribute('stroke-linecap', 'round');
-      base.setAttribute('fill', 'none');
-      svg.appendChild(base);
-      var grad = document.createElementNS(NS, 'linearGradient');
-      grad.setAttribute('id', 'pk-beam-g' + bi);
-      grad.setAttribute('gradientUnits', 'userSpaceOnUse');
-      mkstop(grad, '0%', '#6cc1fb', '0');
-      mkstop(grad, '0%', '#6cc1fb');
-      mkstop(grad, '32.5%', '#0d86e0');
-      mkstop(grad, '100%', '#0d86e0', '0');
-      defs.appendChild(grad);
-      var pulse = document.createElementNS(NS, 'path');
-      pulse.setAttribute('stroke', 'url(#pk-beam-g' + bi + ')');
-      pulse.setAttribute('stroke-width', '2');
-      pulse.setAttribute('stroke-linecap', 'round');
-      pulse.setAttribute('fill', 'none');
-      svg.appendChild(pulse);
-      if (!reduceMotion) {
-        var a1 = document.createElementNS(NS, 'animate');
-        a1.setAttribute('attributeName', 'x1');
-        a1.setAttribute('values', '10%;110%');
-        a1.setAttribute('dur', '3s');
-        a1.setAttribute('repeatCount', 'indefinite');
-        grad.appendChild(a1);
-        var a2 = document.createElementNS(NS, 'animate');
-        a2.setAttribute('attributeName', 'x2');
-        a2.setAttribute('values', '0%;100%');
-        a2.setAttribute('dur', '3s');
-        a2.setAttribute('repeatCount', 'indefinite');
-        grad.appendChild(a2);
-      }
-      pairs.push({ base: base, pulse: pulse });
-    }
-    function beamSync() {
-      var r = flow.getBoundingClientRect();
-      svg.setAttribute('width', Math.round(r.width));
-      svg.setAttribute('height', Math.round(r.height));
-      svg.setAttribute('viewBox', '0 0 ' + Math.round(r.width) + ' ' + Math.round(r.height));
-      for (var k = 0; k + 1 < nodes.length; k++) {
-        var na = nodes[k].querySelector('.ball'), nb = nodes[k + 1].querySelector('.ball');
-        if (!na || !nb) continue;
-        var x1 = nodes[k].offsetLeft + na.offsetLeft + na.offsetWidth / 2;
-        var y1 = nodes[k].offsetTop + na.offsetTop + na.offsetHeight / 2;
-        var x2 = nodes[k + 1].offsetLeft + nb.offsetLeft + nb.offsetWidth / 2;
-        var y2 = nodes[k + 1].offsetTop + nb.offsetTop + nb.offsetHeight / 2;
-        var d = 'M ' + x1 + ',' + y1 + ' Q ' + ((x1 + x2) / 2) + ',' + y1 + ' ' + x2 + ',' + y2;
-        pairs[k].base.setAttribute('d', d);
-        pairs[k].pulse.setAttribute('d', d);
-      }
-    }
-    beamSync();
-    if ('ResizeObserver' in window) { new ResizeObserver(beamSync).observe(flow); }
-    window.addEventListener('load', beamSync);
-    flow.addEventListener('transitionend', function (e) { if (e.propertyName === 'transform') beamSync(); });
-  });
-
-  var CONF_COLORS = ['#1a5bff', '#33a6f4', '#FFD400', '#FA3D1D', '#FD02F5', '#22c55e'];
+  var CONF_COLORS = ['#1557ff', '#75b8ff', '#b8d8ff', '#ffffff', '#1239b2'];
   function burst(nx, ny, count) {
     if (reduceMotion) return;
     var cv = document.createElement('canvas');
@@ -237,26 +191,4 @@
     var n = parseInt(el.getAttribute('data-confetti-load'), 10) || 85;
     setTimeout(function () { burstAt(el, n); }, 350);
   });
-  document.querySelectorAll('[data-meteors]').forEach(function (box) {
-    if (reduceMotion) return;
-    var total = parseInt(box.getAttribute('data-meteors'), 10) || 14;
-    var html = '';
-    for (var mi = 0; mi < total; mi++) {
-      html += '<span class="meteor" style="--angle:-215deg;top:-5%;left:calc(0% + ' + Math.floor(Math.random() * window.innerWidth) + 'px);animation-delay:' + (Math.random() * 1 + 0.2).toFixed(2) + 's;animation-duration:' + Math.floor(Math.random() * 8 + 2) + 's"><span class="meteor-tail"></span></span>';
-    }
-    box.innerHTML = html;
-  });
-  var glow = document.querySelector('.pk-glow');
-  if (glow && !reduceMotion) {
-    var gmin = 0.045;
-    function glowMeasure() {
-      var gh = glow.offsetHeight || 1;
-      var left = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
-      var t = Math.min(1, Math.max(0, (gh - left) / gh));
-      glow.style.transform = 'scaleY(' + (gmin + (1 - gmin) * t).toFixed(4) + ')';
-    }
-    glowMeasure();
-    window.addEventListener('scroll', glowMeasure, { passive: true });
-    window.addEventListener('resize', glowMeasure);
-  }
 })();

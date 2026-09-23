@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import multer from 'multer';
 import { loadDb, saveDb } from './lib/db.js';
-import { transition, canTransition, nextStates } from './lib/machine.js';
+import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
 import { quote, rangePages } from './lib/pricing.js';
 import { notifyState } from './lib/notify.js';
 import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, normEmail } from './lib/otp.js';
@@ -376,13 +376,14 @@ app.get('/admin', requireRole('admin'), (req, res) => {
   const all = visibleOrders(db, db.orders);
   const now = new Date().toISOString();
   const todays = all.filter((o) => sameDay(o.createdAt, now));
+  const printedToday = all.filter((o) => sameDay(printedAt(o), now));
   const counts = liveCounts(all);
   res.send(adminDashboard(req.user, {
     today: todays.length,
     printing: counts.printing, ready: counts.ready,
     delivered: todays.filter((o) => o.status === 'DELIVERED').length,
     revenue: todays.filter((o) => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0),
-    pages: todays.reduce((s, o) => s + o.pages * o.copies, 0)
+    pages: printedToday.reduce((s, o) => s + o.pages * o.copies, 0)
   }));
 });
 
@@ -555,11 +556,11 @@ app.post('/admin/coupons/toggle', requireRole('admin'), (req, res) => {
 
 app.get('/admin/analytics.csv', requireRole('admin'), (req, res) => {
   const db = loadDb();
-  const header = 'orderId,customer,document,pages,copies,type,sides,status,total,createdAt\n';
+  const header = 'orderId,customer,document,pages,copies,type,sides,status,total,createdAt,printedAt\n';
   const rows = visibleOrders(db, db.orders).map(o => {
     const c = db.users.find(u => u.id === o.customerId) || {};
     const escCsv = s => `"${String(s||'').replace(/"/g,'""')}"`;
-    return [o.id, c.name||c.email||'', o.document, o.pages, o.copies, o.printType, o.sides, o.status, o.total, o.createdAt].map(escCsv).join(',');
+    return [o.id, c.name||c.email||'', o.document, o.pages, o.copies, o.printType, o.sides, o.status, o.total, o.createdAt, printedAt(o) || ''].map(escCsv).join(',');
   }).join('\n');
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="printkarr-orders.csv"');
@@ -570,19 +571,20 @@ app.get('/admin/analytics', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const now = new Date().toISOString();
   const orders = visibleOrders(db, db.orders);
+  const printed = orders.filter((o) => printedAt(o));
   const paid = orders.filter((o) => o.paymentStatus === 'paid');
   const inDay = (at) => sameDay(at, now);
   const delivs = orders.filter((o) => o.status === 'DELIVERED');
   const avgMs = delivs.length ? delivs.reduce((s, o) => s + (Date.parse(o.updatedAt) - Date.parse(o.createdAt)), 0) / delivs.length : 0;
   const perCust = {};
   orders.forEach((o) => { perCust[o.customerId] = (perCust[o.customerId] || 0) + 1; });
-  const pages = orders.filter((o) => !['CANCELLED'].includes(o.status)).reduce((s, o) => s + o.pages * o.copies, 0);
+  const pages = printed.reduce((s, o) => s + o.pages * o.copies, 0);
   res.send(analyticsPage(req.user, {
     salesToday: paid.filter((o) => inDay(o.createdAt)).reduce((s, o) => s + o.total, 0),
     salesWeek: paid.filter((o) => Date.parse(now) - Date.parse(o.createdAt) < 7 * 864e5).reduce((s, o) => s + o.total, 0),
     pages,
-    bw: orders.filter((o) => o.printType === 'bw').reduce((s, o) => s + o.pages * o.copies, 0),
-    color: orders.filter((o) => o.printType === 'color').reduce((s, o) => s + o.pages * o.copies, 0),
+    bw: printed.filter((o) => o.printType === 'bw').reduce((s, o) => s + o.pages * o.copies, 0),
+    color: printed.filter((o) => o.printType === 'color').reduce((s, o) => s + o.pages * o.copies, 0),
     done: orders.filter((o) => ['DELIVERED', 'REFUNDED'].includes(o.status)).length,
     cancelled: orders.filter((o) => o.status === 'CANCELLED').length,
     live: orders.filter((o) => !['DELIVERED', 'REFUNDED', 'CANCELLED'].includes(o.status)).length,

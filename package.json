@@ -10,7 +10,8 @@
     "test:print": "node scripts/test-print.mjs",
     "seed": "node data/seed.js",
     "reset-prod": "node data/reset.js",
-    "test": "node --test lib/machine.test.js"
+    "test": "node --test lib/machine.test.js",
+    "test:design": "node scripts/design-check.mjs"
   },
   "dependencies": {
     "compression": "^1.7.4",
