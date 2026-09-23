@@ -278,15 +278,15 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .rv.in { opacity: 1; transform: none; }
 
 /* ---------- workspace patterns ---------- */
-/* hero animated grid (magicui AnimatedGridPattern port: 40px lattice + blinking cells) */
-.agp {
-  position: absolute; left: 0; right: 0; top: -30%; height: 200%;
-  transform: skewY(12deg); pointer-events: none; color: var(--ink);
-  -webkit-mask-image: radial-gradient(80% 70% at 50% 38%, #fff 55%, transparent 100%);
-  mask-image: radial-gradient(80% 70% at 50% 38%, #fff 55%, transparent 100%);
+/* hero interactive grid (magicui InteractiveGridPattern port: 20px lattice, hover cells) */
+.igp {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  -webkit-mask-image: radial-gradient(85% 75% at 50% 42%, #fff 55%, transparent 100%);
+  mask-image: radial-gradient(85% 75% at 50% 42%, #fff 55%, transparent 100%);
 }
-.agp path { stroke: rgb(156 163 175 / 0.3); }
-.agp-cell { fill: currentColor; opacity: 0; }
+.igp-cell { fill: transparent; stroke: rgb(156 163 175 / 0.3); transition: fill .1s ease-in-out; }
+.igp-cell:not(:hover) { transition-duration: 1s; }
+.igp-cell:hover { fill: #3b82f6; }
 .phone-screen { background: linear-gradient(180deg, #1a5bff 0%, #123fc0 100%); }
 
 /* hero */
