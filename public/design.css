@@ -150,6 +150,13 @@ p { text-wrap: pretty; }
 /* footer glow band (Ruixen port): pinned glow rising with end-of-page scroll */
 .pk-glow { position: fixed; left: 0; right: 0; bottom: 0; height: 40vh; pointer-events: none; transform-origin: bottom; transform: scaleY(.045); will-change: transform; }
 .pk-glow svg { height: 100%; width: 100%; display: block; }
+
+/* offer ribbon (marquee divider below hero) */
+.ribbon { width: auto; max-width: 100%; overflow: hidden; background: #facc15; color: #000; font-size: 18px; padding: 4px 0; margin: 28px -16px 0; }
+.ribbon-track { display: flex; width: max-content; white-space: nowrap; animation: ribbon-scroll var(--ribbon-duration, 30s) linear infinite; }
+.ribbon-track span { display: inline-block; margin-right: 2rem; user-select: none; }
+@keyframes ribbon-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ribbon-track { animation-duration: 1ms !important; animation-iteration-count: 1 !important; } }
 @media (min-width: 640px) { .pk-footer-bottom { flex-direction: row; justify-content: space-between; align-items: center; } }
 
 @keyframes throb { 50% { transform: scale(1.35); } }
