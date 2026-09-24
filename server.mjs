@@ -11,10 +11,9 @@ import fs from 'node:fs';
 import multer from 'multer';
 import { loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
-import { quote, rangePages } from './lib/pricing.js';
+import { quote, rangePages, activePrintJobs, surchargeFees, bonusFor, isFirstOrder } from './lib/pricing.js';
 import { notifyState } from './lib/notify.js';
 import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, normEmail } from './lib/otp.js';
-import { bonusFor, isFirstOrder } from './lib/pricing.js';
 import { janitor } from './lib/janitor.js';
 import {
   COOKIE, verifyCredentials, createSession, getSessionUser,
@@ -517,6 +516,13 @@ app.post('/admin/pricing', requireRole('admin'), (req, res) => {
     p.delivery[z] = num(req.body['dz_' + z], p.delivery[z]);
   }
   p.freeAbove = num(req.body.freeAbove, p.freeAbove);
+  const validTime = (v, fb) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) ? String(v) : fb;
+  p.surcharges.lateNight.start = validTime(req.body.nightStart, p.surcharges.lateNight.start);
+  p.surcharges.lateNight.end = validTime(req.body.nightEnd, p.surcharges.lateNight.end);
+  p.surcharges.lateNight.fee = num(req.body.nightFee, p.surcharges.lateNight.fee);
+  const surgeJobs = Number(req.body.surgeJobs);
+  if (Number.isSafeInteger(surgeJobs) && surgeJobs >= 0 && surgeJobs <= 10000) p.surcharges.surge.activeJobs = surgeJobs;
+  p.surcharges.surge.fee = num(req.body.surgeFee, p.surcharges.surge.fee);
   saveDb(db);
   res.redirect('/admin/pricing');
 });
@@ -828,9 +834,9 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, slot: s.slot,
-    subtotal: q.subtotal, deliveryFee: q.deliveryFee, discount: q.studentDiscount,
+    subtotal: q.subtotal, deliveryFee: q.deliveryFee, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode, couponDiscount, firstFree,
-    total: Math.round((q.subtotal - couponDiscount + q.deliveryFee) * 100) / 100,
+    total: Math.round((q.subtotal - couponDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
@@ -958,6 +964,10 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   const db = loadDb();
   const src = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!src) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
+  const address = db.addresses.find((x) => x.id === src.addressId && x.customerId === req.user.id);
+  const extra = surchargeFees(db.pricing, activePrintJobs(db));
+  const lateNightFee = address && zoneOf(address.area) !== 'pickup' ? extra.lateNightFee : 0;
+  const surgeFee = extra.surgeFee;
   const id = nextOrderId(db);
   try { fs.copyFileSync(`data/uploads/${src.id}.pdf`, `data/uploads/${id}.pdf`); } catch {}
   const now = new Date().toISOString();
@@ -966,7 +976,9 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
     printType: src.printType, sides: src.sides, paper: src.paper || 'A4', orientation: src.orientation || 'auto',
     binding: src.binding || 'none', notes: src.notes || '', pageRange: src.pageRange || null,
     addressId: src.addressId, slot: src.slot,
-    subtotal: src.subtotal, deliveryFee: src.deliveryFee, discount: src.discount, total: src.total,
+    subtotal: src.subtotal, deliveryFee: src.deliveryFee, lateNightFee, surgeFee,
+    discount: src.discount, couponCode: src.couponCode, couponDiscount: src.couponDiscount || 0,
+    total: Math.round(((src.total || 0) - (src.lateNightFee || 0) - (src.surgeFee || 0) + lateNightFee + surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: now, by: req.user.id, note: `reorder of ${src.id}` }],
     riderId: null, createdAt: now, updatedAt: now
@@ -1090,7 +1102,8 @@ app.get('/order', (req, res) => {
   const db = loadDb();
   const d = req.query.draft ? guestDraft(db, req) : null;
   if (req.query.draft && !d) return res.redirect('/order');
-  res.send(orderPage({ draft: d, pricing: db.pricing, error: null, maxMb: db.settings.order.maxFileMb }));
+  const jobs = activePrintJobs(db);
+  res.send(orderPage({ draft: d, pricing: db.pricing, error: null, maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
 });
 
 app.post('/order/upload', upload.single('doc'), (req, res) => {
@@ -1129,7 +1142,10 @@ app.post('/order/options', (req, res) => {
   const printType = req.body.printType === 'color' ? 'color' : 'bw';
   const sides = req.body.sides === 'single' ? 'single' : 'double';
   const r = rangePages(req.body.range, d.pages);
-  if (!r.valid) return res.send(orderPage({ draft: d, pricing: db.pricing, error: 'Page range confused us — try 1-12.', maxMb: db.settings.order.maxFileMb }));
+  if (!r.valid) {
+    const jobs = activePrintJobs(db);
+    return res.send(orderPage({ draft: d, pricing: db.pricing, error: 'Page range confused us — try 1-12.', maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
+  }
   const area = ['Sarigam', 'Vapi', 'Bhilad', 'Pickup'].includes(req.body.area) ? req.body.area : 'Sarigam';
   const slot = req.body.slot === 'Evening' ? 'Today, 7:00 PM' : req.body.slot === 'Morning' ? 'Tomorrow, 9:00 AM' : 'ASAP';
   d.selections = {
@@ -1216,7 +1232,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: 'auto',
     binding: 'none', notes: '', pageRange: s.range,
     addressId: address.id, slot: s.slot,
-    subtotal: q.subtotal, deliveryFee: q.deliveryFee, discount: q.studentDiscount,
+    subtotal: q.subtotal, deliveryFee: q.deliveryFee, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode: null, couponDiscount: 0, firstFree,
     total: q.total,
     paymentStatus: 'pending', paymentMethod: null,
