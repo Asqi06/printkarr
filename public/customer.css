@@ -48,3 +48,32 @@ details summary { cursor: pointer; color: var(--primary); font-weight: 600; }
 .ladder .tier { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--line); border-radius: 16px; padding: 10px 14px; font-size: 13.5px; background: var(--paper); }
 .ladder .tier.best { border-color: var(--primary); background: var(--pale); font-weight: 700; }
 .ladder .nudge { font-size: 12px; font-weight: 600; color: var(--leaf); }
+
+/* Checkout receipt feeds from a compact kiosk printer housing. */
+.checkout-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .82fr); align-items: start; gap: clamp(18px, 4vw, 38px); margin-top: 24px; }
+.receipt-printer { position: relative; isolation: isolate; padding: 0; }
+.printer-slot { position: relative; z-index: 2; height: 96px; margin: 0 4px; border: 1px solid #415986; border-radius: 20px 20px 10px 10px; background: linear-gradient(160deg, #25477f 0%, #172f5c 55%, #0d2045 100%); box-shadow: 0 13px 20px #152d572e, inset 0 1px #ffffff40, inset 0 -4px 8px #07152c; }
+.printer-slot::before { position: absolute; content: ""; inset: 12px 15px auto; height: 42px; border-radius: 10px; background: linear-gradient(110deg, #31558f, #1c396d); box-shadow: inset 0 2px 4px #091a39a3, 0 1px #ffffff1c; }
+.printer-slot::after { position: absolute; content: ""; left: 9%; right: 9%; bottom: 0; height: 15px; border-radius: 3px 3px 10px 10px; background: linear-gradient(#07162f, #0d1d3c); box-shadow: inset 0 3px 5px #000a, 0 2px #ffffff40; }
+.printer-slot span { position: absolute; z-index: 1; left: 13%; right: 13%; bottom: 7px; height: 1px; background: #8398bb; }
+.receipt-output { position: relative; width: 80%; margin: -7px auto 0; clip-path: inset(0 -40px -60px); }
+.receipt-output::after { content: ""; position: absolute; z-index: 2; inset: 0 0 auto; height: 25px; pointer-events: none; background: linear-gradient(#09183470, transparent); }
+.receipt-paper { position: relative; width: 100%; margin: 0; padding: 27px clamp(18px, 3vw, 30px) 46px; color: #18305a; border-radius: 0 0 45% 8% / 0 0 12px 4px; background: linear-gradient(177deg, transparent 55%, #b5b2a11c 77%, #ffffff80 91%, #d9d5c633), linear-gradient(95deg, #f2f0e9 0%, #fffefb 9%, #fff 47%, #fbfaf4 89%, #eae8df 100%); box-shadow: 0 18px 22px -15px #0616309e, 0 2px 5px #06163026; animation: receipt-feed 1.8s linear both; }
+.receipt-paper::before { position: absolute; content: ""; inset: 0; pointer-events: none; opacity: .42; background: linear-gradient(90deg, #52617d12, transparent 12% 83%, #52617d14), repeating-linear-gradient(0deg, transparent 0 4px, rgb(22 47 87 / .025) 4px 5px); }
+.receipt-paper::after { position: absolute; content: ""; right: 0; bottom: 0; width: 100%; height: 25px; border-radius: 0 0 45% 8% / 0 0 12px 4px; background: linear-gradient(175deg, transparent 10%, #ffffffb3 48%, #d0cbbc80 100%); transform-origin: 50% 0; animation: receipt-curl 1.8s linear both; }
+.receipt-brand, .receipt-id, .receipt-paper h2, .receipt-document, .receipt-paper .sumrow, .receipt-thanks, .receipt-rule, .receipt-perf { position: relative; }
+.receipt-brand { margin: 0; color: #1760ed; font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.receipt-brand span { color: #8fa0bc; }
+.receipt-paper h2 { margin: 18px 0 3px; font: 700 clamp(1.55rem, 4vw, 2.15rem)/1.05 var(--font-d); letter-spacing: -.045em; }
+.receipt-id { margin: 0 0 18px; color: #6b7a92; font: 10px var(--font-m); letter-spacing: .12em; }
+.receipt-rule { border-top: 1px dashed #a9b6ca; }
+.receipt-document { margin: 17px 0 5px; font-weight: 700; overflow-wrap: anywhere; }
+.receipt-paper .sumrow { border-bottom: 1px dashed #d8deea; font-size: 12px; }
+.receipt-paper .sumrow.total { margin-top: 4px; padding-top: 13px; border-bottom: 0; color: #1559df; font-size: 1rem; }
+.receipt-perf { height: 10px; margin: 18px -30px 0; background: radial-gradient(circle at 5px 0, transparent 5px, #fff 5.5px) 0 0 / 10px 10px repeat-x; }
+.receipt-thanks { margin: 9px 0 0; color: #74829a; text-align: center; font-size: 10px; letter-spacing: .06em; }
+.checkout-payment { margin: 4px 0 0; }
+@keyframes receipt-feed { 0% { transform: translateY(-100%); } 8% { transform: translateY(-97%); } 80% { transform: translateY(-8%); } 92% { transform: translateY(-1%); } 100% { transform: translateY(0); } }
+@keyframes receipt-curl { 0%, 12% { transform: perspective(180px) rotateX(-42deg); } 55% { transform: perspective(180px) rotateX(-18deg); } 85% { transform: perspective(180px) rotateX(7deg); } 100% { transform: perspective(180px) rotateX(0); } }
+@media (max-width: 680px) { .checkout-layout { grid-template-columns: minmax(0, 1fr); } .receipt-printer { max-width: 480px; width: 100%; margin-inline: auto; } .checkout-payment { margin-top: 0; } }
+@media (prefers-reduced-motion: reduce) { .receipt-paper, .receipt-paper::after { animation: none; } }

@@ -45,6 +45,8 @@ const pages = new Map([
 ]);
 assert.match(pages.get('/login'), /<details class="login-password-options">/);
 assert.match(pages.get('/login'), /<details class="login-demo-options">/);
+assert.match(pages.get('/customer/orders/preview/pay'), /class="receipt-paper"[\s\S]*ORDER #preview[\s\S]*₹24/);
+assert.match(pages.get('/customer/orders/preview/pay'), /id="payForm"[\s\S]*name="method"/);
 const demoScript = pages.get('/login').match(/<script>\s*(document\.querySelectorAll\('\.demo-card'\)[\s\S]*?)<\/script>/)?.[1];
 let demoClick, demoToast, scrollBlock;
 const demoFields = { email: { value: '' }, password: { value: '' } };
@@ -76,6 +78,7 @@ for (const [route, html] of pages) {
   for (const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new Script(script[1], { filename: route });
 }
 assert.match(readFileSync(new URL('../public/design.css', import.meta.url), 'utf8'), /\.step-detail img \{[^}]*object-fit: contain/);
+assert.match(readFileSync(new URL('../public/customer.css', import.meta.url), 'utf8'), /prefers-reduced-motion: reduce[^}]*receipt-paper/);
 console.log(`${pages.size} page renders passed: landmarks, headings, theme and inline scripts.`);
 // Exercise the actual browser handlers without a browser dependency or real side effects.
 for (const reducedMotion of [false, true]) {
