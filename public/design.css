@@ -588,6 +588,12 @@ img { max-width: 100%; }
 .home-v2 .pk-host .sub { margin-top: 12px; }
 .home-v2 .pk-host .img { height: 340px; min-height: 0; overflow: hidden; }
 .home-v2 .pk-host .img img { width: 100%; height: 100%; object-fit: cover; object-position: center 35%; display: block; }
+.delivery-picker { margin: 20px 0; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--pale-2); }
+.delivery-picker[hidden] { display: none; }
+.delivery-picker > p.muted { margin: 6px 0 14px; font-size: 13px; }
+.delivery-map { height: 300px; border: 1px solid #bfd2fc; border-radius: 12px; overflow: hidden; background: #e5edff; }
+.delivery-picker [data-use-location] { margin-top: 12px; background: transparent; border: 0; color: var(--primary); font-weight: 700; }
+.delivery-picker [data-delivery-status] { margin-top: 8px; }
 @media (max-width: 900px) {
   .home-v2 .studio-hero { gap: 3%; }
   .home-v2 .hero-copy h1 { font-size: clamp(58px, 8vw, 82px); }

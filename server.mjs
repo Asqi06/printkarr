@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import multer from 'multer';
 import { loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
-import { quote, rangePages, activePrintJobs, surchargeFees, bonusFor, isFirstOrder } from './lib/pricing.js';
+import { quote, rangePages, activePrintJobs, surchargeFees, bonusFor, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
 import { notifyState } from './lib/notify.js';
 import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, normEmail } from './lib/otp.js';
 import { janitor } from './lib/janitor.js';
@@ -124,11 +124,13 @@ function waForwardUrl(db, req, order) {
     `- ${order.document} (${order.pages} pages x${order.copies})`,
     `- ${order.printType === 'bw' ? 'B&W' : 'Color'}, ${order.sides}, ${order.paper || 'A4'}${order.pageRange ? `, pages ${order.pageRange}` : ''}`,
     `- Customer: ${c.name || ''} ${c.phone || ''}`,
-    `- Drop: ${[a.address, a.area, a.pin].filter(Boolean).join(', ') || order.slot || ''}`,
+    `- ${zoneOf(a.area) === 'pickup' ? 'Kiosk collection' : 'Drop'}: ${[a.address, a.area, a.pin].filter(Boolean).join(', ') || order.slot || ''}`,
     `- Slot: ${order.slot || ''}`,
     `- Printing Rs.${order.subtotal}, Delivery Rs.${order.deliveryFee}${order.couponDiscount ? `, Coupon -Rs.${order.couponDiscount}` : ''}, Total Rs.${order.total} (${order.paymentStatus})`,
     `- PDF: ${baseUrl(req)}/share/${tok}`
   ];
+  const point = deliveryPoint(a.lat, a.lng);
+  if (point && zoneOf(a.area) !== 'pickup') lines.splice(5, 0, `- Map: https://www.google.com/maps?q=${point.lat},${point.lng}`);
   if (order.notes) lines.splice(4, 0, `- Note: ${order.notes}`);
   return `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
@@ -512,10 +514,9 @@ app.post('/admin/pricing', requireRole('admin'), (req, res) => {
   p.color = num(req.body.color, p.color);
   p.studentBw = num(req.body.studentBw, p.studentBw);
   p.studentColor = num(req.body.studentColor, p.studentColor);
-  for (const z of ['sarigam', 'campus', 'vapi', 'bhilad', 'pickup']) {
+  for (const z of ['sarigam', 'bhilad']) {
     p.delivery[z] = num(req.body['dz_' + z], p.delivery[z]);
   }
-  p.freeAbove = num(req.body.freeAbove, p.freeAbove);
   const validTime = (v, fb) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) ? String(v) : fb;
   p.surcharges.lateNight.start = validTime(req.body.nightStart, p.surcharges.lateNight.start);
   p.surcharges.lateNight.end = validTime(req.body.nightEnd, p.surcharges.lateNight.end);
@@ -667,11 +668,13 @@ function walletOf(db, customerId) {
   return w;
 }
 function zoneOf(area) {
-  const a = String(area || '').toLowerCase();
-  if (a.includes('vapi')) return 'vapi';
-  if (a.includes('bhilad')) return 'bhilad';
-  if (a.includes('pickup') || a.includes('classroom')) return 'pickup';
-  return 'sarigam';
+  const a = String(area || '').toLowerCase().trim();
+  if (a === 'vapi') return 'vapi';
+  if (a === 'bhilad') return 'bhilad';
+  if (a === 'daman') return 'daman';
+  if (a === 'sarigam') return 'sarigam';
+  if (a === 'pickup' || a === 'kiosk pickup' || a === 'classroom pickup') return 'pickup';
+  return null;
 }
 function custOrders(db, customerId) {
   return db.orders
@@ -764,13 +767,14 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   if (!r.valid) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Page range <em>confused us.</em>'));
   let address;
   if (req.body.addressId === '__new') {
-    if (!req.body.nn_address || !req.body.nn_phone || !req.body.nn_pin) {
+    const newZone = zoneOf(req.body.nn_area);
+    if (!newZone || !req.body.nn_phone || (newZone !== 'pickup' && (!req.body.nn_address || !req.body.nn_pin))) {
       return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'New address needs <em>address, phone, PIN.</em>'));
     }
     address = {
       id: 'ADR' + Date.now().toString(36), customerId: req.user.id,
       label: 'Home', name: req.body.nn_name || req.user.name, phone: req.body.nn_phone,
-      address: req.body.nn_address, area: req.body.nn_area || 'Sarigam',
+      address: newZone === 'pickup' ? 'Kiosk collection' : req.body.nn_address, area: req.body.nn_area || 'Vapi',
       landmark: req.body.nn_landmark || '', pin: req.body.nn_pin, isDefault: false
     };
     db.addresses.push(address);
@@ -778,7 +782,13 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     address = db.addresses.find((a) => a.id === req.body.addressId && a.customerId === req.user.id);
     if (!address) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Pick a <em>delivery address.</em>'));
   }
-  const zone = zoneOf(address.area);
+  let zone = zoneOf(address.area);
+  const point = zone === 'pickup' ? null : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+  try { zone = deliveryFeeFor(db.pricing, zone, point).zone; }
+  catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point and area.</em>')); }
+  address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone];
+  address.lat = point?.lat ?? null;
+  address.lng = point?.lng ?? null;
   const slotKind = ['ASAP', 'Today', 'Tomorrow', 'Schedule'].includes(req.body.slotKind) ? req.body.slotKind : 'Today';
   d.selections = {
     effPages: r.pages, range: (req.body.range || '').slice(0, 60) || null,
@@ -786,8 +796,8 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto',
     binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none',
     notes: String(req.body.notes || '').slice(0, 300),
-    addressId: address.id, zone,
-    zoneLabel: { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', pickup: 'Classroom pickup' }[zone],
+    addressId: address.id, zone, deliveryPoint: point,
+    zoneLabel: { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone],
     slot: slotKind === 'ASAP' ? 'ASAP' : `${slotKind}, ${req.body.slotTime || '6:30 PM'}`
   };
   saveDb(db);
@@ -799,8 +809,9 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
   if (!d || !d.selections) return res.redirect('/customer/orders/new');
   const s = d.selections;
-  const firstFree = db.pricing.firstDeliveryFree !== false && isFirstOrder(db, req.user.id);
-  const q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, freeDelivery: firstFree });
+  let q;
+  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   res.send(summaryStep(req.user, d, s, q));
 });
 
@@ -820,8 +831,9 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   if (di < 0 || !db.drafts[di].selections) return res.redirect('/customer/orders/new');
   const d = db.drafts[di];
   const s = d.selections;
-  const firstFree = db.pricing.firstDeliveryFree !== false && isFirstOrder(db, req.user.id);
-  const q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, freeDelivery: firstFree });
+  let q;
+  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const id = nextOrderId(db);
   let couponCode = null, couponDiscount = 0;
   if (req.body.coupon && String(req.body.coupon).trim()) {
@@ -834,8 +846,8 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, slot: s.slot,
-    subtotal: q.subtotal, deliveryFee: q.deliveryFee, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
-    couponCode, couponDiscount, firstFree,
+    subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
+    couponCode, couponDiscount,
     total: Math.round((q.subtotal - couponDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
@@ -965,9 +977,11 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   const src = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!src) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   const address = db.addresses.find((x) => x.id === src.addressId && x.customerId === req.user.id);
-  const extra = surchargeFees(db.pricing, activePrintJobs(db));
-  const lateNightFee = address && zoneOf(address.area) !== 'pickup' ? extra.lateNightFee : 0;
-  const surgeFee = extra.surgeFee;
+  const zone = zoneOf(address?.area);
+  const point = zone === 'pickup' ? null : deliveryPoint(address?.lat, address?.lng);
+  let q;
+  try { q = quote({ pages: src.pages, copies: src.copies, printType: src.printType, student: !!req.user.student, zone, point }); }
+  catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Start a new order to <em>pin your delivery point.</em>')); }
   const id = nextOrderId(db);
   try { fs.copyFileSync(`data/uploads/${src.id}.pdf`, `data/uploads/${id}.pdf`); } catch {}
   const now = new Date().toISOString();
@@ -976,9 +990,9 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
     printType: src.printType, sides: src.sides, paper: src.paper || 'A4', orientation: src.orientation || 'auto',
     binding: src.binding || 'none', notes: src.notes || '', pageRange: src.pageRange || null,
     addressId: src.addressId, slot: src.slot,
-    subtotal: src.subtotal, deliveryFee: src.deliveryFee, lateNightFee, surgeFee,
-    discount: src.discount, couponCode: src.couponCode, couponDiscount: src.couponDiscount || 0,
-    total: Math.round(((src.total || 0) - (src.lateNightFee || 0) - (src.surgeFee || 0) + lateNightFee + surgeFee) * 100) / 100,
+    subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee,
+    discount: q.studentDiscount, couponCode: null, couponDiscount: 0,
+    total: q.total,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: now, by: req.user.id, note: `reorder of ${src.id}` }],
     riderId: null, createdAt: now, updatedAt: now
@@ -1146,7 +1160,8 @@ app.post('/order/options', (req, res) => {
     const jobs = activePrintJobs(db);
     return res.send(orderPage({ draft: d, pricing: db.pricing, error: 'Page range confused us — try 1-12.', maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
   }
-  const area = ['Sarigam', 'Vapi', 'Bhilad', 'Pickup'].includes(req.body.area) ? req.body.area : 'Sarigam';
+  const area = ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
+  if (!area) return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, error: 'Choose a valid delivery area or kiosk collection.', maxMb: db.settings.order.maxFileMb }));
   const slot = req.body.slot === 'Evening' ? 'Today, 7:00 PM' : req.body.slot === 'Morning' ? 'Tomorrow, 9:00 AM' : 'ASAP';
   d.selections = {
     effPages: r.pages, range: (req.body.range || '').slice(0, 60) || null,
@@ -1176,18 +1191,24 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
     const email = normEmail(req.body.email);
     const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
     const phone = phoneRaw ? normPhone(phoneRaw) : '';
-    if (!req.body.name || !email || !req.body.address || !req.body.pin) {
-      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Name, valid email, address and PIN — that is all.' }));
+    if (!req.body.name || !email || (d.selections.zone !== 'pickup' && (!req.body.address || !req.body.pin))) {
+      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Add your name and email, plus an address and PIN for delivery.' }));
     }
     if (phoneRaw && !phone) {
       return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — 10 digits, or leave it blank.' }));
     }
+    const point = d.selections.zone === 'pickup' ? null : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+    try {
+      d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point).zone;
+      d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
+    }
+    catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point in the area you chose.' })); }
     d.contact = {
       name: String(req.body.name).slice(0, 60), email,
       phone: phone ? '+91 ' + phone : '',
-      address: String(req.body.address).slice(0, 200),
+      address: d.selections.zone === 'pickup' ? 'Kiosk collection' : String(req.body.address).slice(0, 200),
       landmark: String(req.body.landmark || '').slice(0, 100),
-      pin: String(req.body.pin).slice(0, 10)
+      pin: String(req.body.pin || '').slice(0, 10), deliveryPoint: point
     };
     saveDb(db);
   }
@@ -1203,6 +1224,8 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.guest === parseCookies(req.headers.cookie).pk_guest);
   if (di < 0 || !db.drafts[di].selections || !db.drafts[di].contact) return res.redirect('/order');
   const d = db.drafts[di];
+  try { deliveryFeeFor(db.pricing, d.selections.zone, d.contact.deliveryPoint); }
+  catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point before confirming.' })); }
   const v = verifyEmailOtp(d.contact.email, req.body.code);
   if (!v.ok) return res.send(otpPage({ draft: d, email: d.contact.email, demoCode: null, mailError: null, error: v.error }));
   // Action becomes identity: find by email or create the account.
@@ -1220,11 +1243,11 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   const address = {
     id: 'ADR' + Date.now().toString(36), customerId: user.id, label: 'Home',
     name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
-    area: s.area, landmark: d.contact.landmark, pin: d.contact.pin, isDefault: true
+    area: s.area, landmark: d.contact.landmark, pin: d.contact.pin,
+    lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: true
   };
   db.addresses.push(address);
-  const firstFree = db.pricing.firstDeliveryFree !== false && isFirstOrder(db, user.id);
-  const q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!user.student, zone: s.zone, freeDelivery: firstFree });
+  const q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!user.student, zone: s.zone, point: d.contact.deliveryPoint });
   const id = nextOrderId(db);
   try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
   db.orders.push({
@@ -1232,8 +1255,8 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: 'auto',
     binding: 'none', notes: '', pageRange: s.range,
     addressId: address.id, slot: s.slot,
-    subtotal: q.subtotal, deliveryFee: q.deliveryFee, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
-    couponCode: null, couponDiscount: 0, firstFree,
+    subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
+    couponCode: null, couponDiscount: 0,
     total: q.total,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: user.id, note: 'guest otp order' }],
