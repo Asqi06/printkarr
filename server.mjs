@@ -798,6 +798,16 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   res.send(summaryStep(req.user, d, s, q));
 });
 
+app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const d = (db.drafts || []).find((x) => x.id === req.params.draftId && x.customerId === req.user.id);
+  if (!d || !d.stored || path.basename(d.stored) !== d.stored) return res.sendStatus(404);
+  const p = path.join(ROOT, 'data', 'uploads', d.stored);
+  if (!fs.existsSync(p)) return res.sendStatus(404);
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.type('pdf').sendFile(p);
+});
+
 app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.customerId === req.user.id);
@@ -814,7 +824,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   }
   try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
   const order = {
-    id, customerId: req.user.id, document: d.document, pages: s.effPages, copies: s.copies,
+    id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, copies: s.copies,
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, slot: s.slot,
@@ -829,6 +839,18 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   db.drafts.splice(di, 1);
   saveDb(db);
   res.redirect(`/customer/orders/${id}/pay`);
+});
+
+app.get('/customer/orders/:id/preview.pdf', requireRole('customer'), (req, res) => {
+  const safe = safeOrderId(req.params.id);
+  if (!safe) return res.sendStatus(404);
+  const db = loadDb();
+  const o = db.orders.find((x) => x.id === safe && x.customerId === req.user.id);
+  if (!o) return res.sendStatus(404);
+  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
+  if (!fs.existsSync(p)) return res.sendStatus(404);
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.type('pdf').sendFile(p);
 });
 
 app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
@@ -940,7 +962,7 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   try { fs.copyFileSync(`data/uploads/${src.id}.pdf`, `data/uploads/${id}.pdf`); } catch {}
   const now = new Date().toISOString();
   db.orders.push({
-    id, customerId: src.customerId, document: src.document, pages: src.pages, copies: src.copies,
+    id, customerId: src.customerId, document: src.document, pages: src.pages, filePages: src.filePages || src.pages, copies: src.copies,
     printType: src.printType, sides: src.sides, paper: src.paper || 'A4', orientation: src.orientation || 'auto',
     binding: src.binding || 'none', notes: src.notes || '', pageRange: src.pageRange || null,
     addressId: src.addressId, slot: src.slot,
@@ -1190,7 +1212,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   const id = nextOrderId(db);
   try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
   db.orders.push({
-    id, customerId: user.id, document: d.document, pages: s.effPages, copies: s.copies,
+    id, customerId: user.id, document: d.document, pages: s.effPages, filePages: d.pages, copies: s.copies,
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: 'auto',
     binding: 'none', notes: '', pageRange: s.range,
     addressId: address.id, slot: s.slot,

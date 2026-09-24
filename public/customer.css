@@ -70,6 +70,18 @@ details summary { cursor: pointer; color: var(--primary); font-weight: 600; }
 .receipt-document { margin: 17px 0 5px; font-weight: 700; overflow-wrap: anywhere; }
 .receipt-paper .sumrow { border-bottom: 1px dashed #d8deea; font-size: 12px; }
 .receipt-paper .sumrow.total { margin-top: 4px; padding-top: 13px; border-bottom: 0; color: #1559df; font-size: 1rem; }
+.document-preview { margin: 14px 0; border: 1px solid #dce5f4; border-radius: 13px; background: #f6f9ff; overflow: hidden; }
+.document-preview > summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; color: #164fc1; cursor: pointer; font-weight: 700; list-style: none; }
+.document-preview > summary::-webkit-details-marker { display: none; }
+.document-preview > summary::after { content: "+"; font-size: 19px; line-height: 1; }
+.document-preview[open] > summary::after { content: "−"; }
+.document-preview > summary small { color: #63718a; font-size: 10px; font-weight: 500; text-align: right; }
+.document-preview-body { padding: 0 10px 12px; }
+.document-preview-pages { margin: 0 4px 8px; color: #52617a; font-size: 11px; }
+.document-preview-pages b { color: #164fc1; }
+.document-preview iframe { display: block; width: 100%; height: min(55vh, 560px); min-height: 300px; border: 1px solid #d6dfec; border-radius: 8px; background: white; }
+.document-preview-body > a { display: inline-block; margin: 8px 4px 0; font-size: 11px; font-weight: 600; }
+.document-preview > summary:focus-visible { outline: 3px solid #4d86ff; outline-offset: -3px; }
 .receipt-perf { height: 10px; margin: 18px -30px 0; background: radial-gradient(circle at 5px 0, transparent 5px, #fff 5.5px) 0 0 / 10px 10px repeat-x; }
 .receipt-thanks { margin: 9px 0 0; color: #74829a; text-align: center; font-size: 10px; letter-spacing: .06em; }
 .checkout-payment { margin: 4px 0 0; }
