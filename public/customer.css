@@ -6,15 +6,16 @@
 .card.ink .pbar span { background: var(--blue-bright); }
 .sumrow { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .sumrow.total { font-weight: 700; font-size: 1.15rem; border-bottom: none; padding-top: 12px; }
-.sumrow.disc { color: var(--leaf); font-weight: 700; }
+.sumrow.total span:last-child { color: var(--primary); }
+.sumrow.disc { color: var(--tang-deep); font-weight: 700; }
 .notes { display: flex; flex-direction: column; gap: 10px; }
 .note { border-left: 3px solid var(--primary); padding-left: 12px; font-size: 13.5px; }
 .note .at, .sumrow .at { display: block; font-size: 11px; color: var(--muted); }
 .rowlink { font-weight: 600; color: var(--primary); text-decoration: none; background: none; border: none; padding: 0; font-size: inherit; cursor: pointer; }
 .rowlink:hover { text-decoration: underline; }
-.drop { display: flex; flex-direction: column; align-items: center; gap: 6px; border: 2px dashed var(--line); border-radius: 24px; padding: 40px 20px; cursor: pointer; text-align: center; transition: border-color .2s, background .2s; background: var(--paper); }
-.drop:hover { border-color: var(--primary); background: var(--pale-2); }
-.drop-arrow { font-size: 32px; color: var(--primary); animation: bob 1.6s ease-in-out infinite; }
+.drop { display: flex; flex-direction: column; align-items: center; gap: 6px; border: 2px dashed var(--tang); border-radius: 24px; padding: 40px 20px; cursor: pointer; text-align: center; transition: border-color .2s, background .2s; background: var(--tang-soft); color: var(--on-tang); }
+.drop:hover { border-color: var(--tang-deep); background: #ffe4c7; }
+.drop-arrow { font-size: 32px; color: var(--on-tang); background: var(--tang); border-radius: 17px; width: 56px; height: 56px; display: grid; place-items: center; margin-bottom: 10px; animation: bob 1.6s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(-6px); } }
 .pick { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; cursor: pointer; font-size: 13.5px; transition: border-color .15s, background .15s; background: var(--paper); }
 .pick:hover { border-color: var(--primary); }
@@ -29,7 +30,7 @@ details summary { cursor: pointer; color: var(--primary); font-weight: 600; }
 .pub-top { position: fixed; inset: 0 0 auto 0; z-index: 40; padding: 16px; pointer-events: none; }
 .pub-top-inner { max-width: 72rem; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
 .pub-top .brand { pointer-events: auto; background: var(--navy); color: #fff; border-radius: 999px; padding: 8px 14px; font-size: 18px; }
-.pub-top .brand em { color: var(--blue-bright); }
+.pub-top .brand em { color: var(--tang); }
 .pub-top-r { pointer-events: auto; display: flex; align-items: center; gap: 8px; }
 .walchip { font-size: 12px; font-weight: 700; border: 1px solid var(--line); border-radius: 999px; padding: 9px 15px; background: var(--paper); text-decoration: none; white-space: nowrap; }
 .walchip:hover { border-color: var(--primary); color: var(--primary); }
@@ -47,7 +48,7 @@ details summary { cursor: pointer; color: var(--primary); font-weight: 600; }
 .ladder { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .ladder .tier { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--line); border-radius: 16px; padding: 10px 14px; font-size: 13.5px; background: var(--paper); }
 .ladder .tier.best { border-color: var(--primary); background: var(--pale); font-weight: 700; }
-.ladder .nudge { font-size: 12px; font-weight: 600; color: var(--leaf); }
+.ladder .nudge { font-size: 12px; font-weight: 600; color: var(--tang-deep); }
 
 /* Checkout receipt feeds from a compact kiosk printer housing. */
 .checkout-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .82fr); align-items: start; gap: clamp(18px, 4vw, 38px); margin-top: 24px; }
