@@ -109,7 +109,7 @@
     tio.observe(el);
   });
 
-  var CONF_COLORS = ['#1557ff', '#75b8ff', '#b8d8ff', '#ffffff', '#1239b2'];
+  var CONF_COLORS = ['#1746E0', '#FF6B00', '#75b8ff', '#ffffff', '#1238B8'];
   function burst(nx, ny, count) {
     if (reduceMotion) return;
     var cv = document.createElement('canvas');
