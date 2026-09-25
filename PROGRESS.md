@@ -80,6 +80,7 @@ Out of scope (PRD Phase 2/3): real DB, real auth, Razorpay, WAHA, Epson integrat
 | §4 | First-delivery-free trial | verified | auto on first order, shown everywhere |
 | §6 | Reorder-first returning home | verified | one-tap reprint card |
 | §7 | No catalog/wizard/progress-bar clutter | verified | guest flow is one scroll, no progress bar |
+| §packs | Semester print packs (₹329/₹499/₹725, ₹199 booking + installments, dashboard quota) | verified | `lib/packs.js`, 3 tests green + live order loop (cover → pay → deduct → cancel → restore) |
 
 ## V0 prototype (classroom pilot: laptop + Epson L3250, Hindi PRD)
 | V0 PRD | Item | Status | Note |

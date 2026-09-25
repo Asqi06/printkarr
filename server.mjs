@@ -22,6 +22,8 @@ import {
 import { layout, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { customerDashboard, ordersList, orderDetail } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
+import { packsPage, packDashboardHtml, adminPacksPage } from './lib/views_packs.js';
+import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
 import { landing, orderPage, phonePage, otpPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
@@ -496,7 +498,7 @@ app.get('/admin/customers/:id', requireRole('admin'), (req, res) => {
   if (!c) return res.status(404).send(oops(req.user, '/admin/customers', 'Customer <em>unknown.</em>'));
   const orders = db.orders.filter((o) => o.customerId === c.id).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const wallet = db.wallets.find((x) => x.customerId === c.id) || { balance: 0 };
-  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id)));
+  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id)));
 });
 
 app.get('/admin/pricing', requireRole('admin'), (req, res) => {
@@ -691,13 +693,32 @@ function oops(user, active, msg) {
 }
 const ACTIVE = (o) => !['DELIVERED', 'REFUNDED', 'CANCELLED'].includes(o.status);
 
+// ---- Semester packs: quota unlocks at ₹199, printing covered per order ----
+function consumePackQuota(db, order) {
+  if (!order.packSubId) return;
+  const sub = (db.packSubs || []).find((s) => s.id === order.packSubId && s.customerId === order.customerId);
+  if (!sub) return;
+  deductSides(sub, order.printType, (order.pages || 0) * (order.copies || 1));
+  sub.updatedAt = new Date().toISOString();
+}
+
+function restorePackQuota(db, order) {
+  if (!order.packSubId || order.packRestored) return;
+  const sub = (db.packSubs || []).find((s) => s.id === order.packSubId && s.customerId === order.customerId);
+  if (!sub) return;
+  const sides = Math.max(1, Math.ceil((order.pages || 0) * (order.copies || 1)));
+  if (order.printType === 'color') sub.colorUsed = Math.max(0, (sub.colorUsed || 0) - sides);
+  else sub.bwUsed = Math.max(0, (sub.bwUsed || 0) - sides);
+  order.packRestored = true;
+}
+
 app.get('/customer', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const mine = custOrders(db, req.user.id);
   const current = mine.find(ACTIVE) || mine[0] || null;
   const notes = (db.notifications || []).filter((n) => n.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at));
   const lastDoc = mine.find((o) => !current || o.id !== current.id) || null;
-  res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc }));
+  res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc, packsHtml: packDashboardHtml(mySubs(db, req.user.id)) }));
 });
 
 app.get('/customer/orders', requireRole('customer'), (req, res) => {
@@ -812,7 +833,9 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   let q;
   try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
-  res.send(summaryStep(req.user, d, s, q));
+  const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
+  const qShow = packCover ? { ...q, total: Math.round((q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100 } : q;
+  res.send(summaryStep(req.user, d, s, qShow, packCover));
 });
 
 app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (req, res) => {
@@ -835,11 +858,13 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const id = nextOrderId(db);
+  const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
   let couponCode = null, couponDiscount = 0;
-  if (req.body.coupon && String(req.body.coupon).trim()) {
+  if (!packCover && req.body.coupon && String(req.body.coupon).trim()) {
     const vc = validateCoupon(db, req.body.coupon, q.subtotal);
     if (vc.ok) { couponCode = vc.code; couponDiscount = vc.discount; }
   }
+  const packDiscount = packCover ? q.subtotal : 0;
   try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
   const order = {
     id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, copies: s.copies,
@@ -847,8 +872,8 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, slot: s.slot,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
-    couponCode, couponDiscount,
-    total: Math.round((q.subtotal - couponDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
+    couponCode, couponDiscount, packSubId: packCover ? packCover.id : null, packDiscount,
+    total: Math.round((q.subtotal - packDiscount - couponDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
@@ -926,6 +951,7 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   // Order: both transitions, ONE save, then both pings. (A saveDb between the
   // notifies would clobber the first ping with a stale in-memory snapshot.)
   try { transition(o, 'PRINT_QUEUE', { by: 'system', note: 'auto-queued on payment' }); } catch {}
+  consumePackQuota(db, o);
   saveDb(db);
   notifyState({ ...o, status: 'CONFIRMED' });
   if (o.status === 'PRINT_QUEUE') notifyState(o);
@@ -946,6 +972,7 @@ app.post('/customer/orders/:id/demo-pay', requireRole('customer'), (req, res) =>
   o.paymentMethod = 'demo';
   transition(o, 'CONFIRMED', { by: req.user.id, note: 'demo pay (owner test)' });
   try { transition(o, 'PRINT_QUEUE', { by: 'system', note: 'auto-queued on demo pay' }); } catch {}
+  consumePackQuota(db, o);
   saveDb(db);
   notifyState({ ...o, status: 'CONFIRMED' });
   if (o.status === 'PRINT_QUEUE') notifyState(o);
@@ -985,14 +1012,16 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   const id = nextOrderId(db);
   try { fs.copyFileSync(`data/uploads/${src.id}.pdf`, `data/uploads/${id}.pdf`); } catch {}
   const now = new Date().toISOString();
+  const packCover = coverFor(db, req.user.id, src.printType, src.pages * src.copies);
+  const packDiscount = packCover ? q.subtotal : 0;
   db.orders.push({
     id, customerId: src.customerId, document: src.document, pages: src.pages, filePages: src.filePages || src.pages, copies: src.copies,
     printType: src.printType, sides: src.sides, paper: src.paper || 'A4', orientation: src.orientation || 'auto',
     binding: src.binding || 'none', notes: src.notes || '', pageRange: src.pageRange || null,
     addressId: src.addressId, slot: src.slot,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee,
-    discount: q.studentDiscount, couponCode: null, couponDiscount: 0,
-    total: q.total,
+    discount: q.studentDiscount, couponCode: null, couponDiscount: 0, packSubId: packCover ? packCover.id : null, packDiscount,
+    total: Math.round((q.subtotal - packDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: now, by: req.user.id, note: `reorder of ${src.id}` }],
     riderId: null, createdAt: now, updatedAt: now
@@ -1015,6 +1044,8 @@ app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
     w.balance = Math.round((w.balance + o.total) * 100) / 100;
     db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: o.total, kind: 'credit', label: `Refund #${o.id}`, at: new Date().toISOString() });
   }
+  // Quota is consumed at payment — only restore when the order was paid.
+  if (o.paymentStatus === 'paid') restorePackQuota(db, o);
   o.paymentStatus = 'refunded';
   saveDb(db);
   notifyState(o);
@@ -1046,6 +1077,97 @@ app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
   if (b.bonus) db.walletTx.push({ id: `WTX-${Date.now()}b`, customerId: req.user.id, amount: b.bonus, kind: 'credit', label: `Top-up bonus +${b.pct}%`, at: now });
   saveDb(db);
   res.redirect('/customer/wallet');
+});
+
+// ---- Semester packs (§-packs): ₹199 secures, rest in installments ----
+app.get('/customer/packs', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const w = walletOf(db, req.user.id);
+  saveDb(db);
+  res.send(packsPage(req.user, { subs: mySubs(db, req.user.id), walletBalance: w.balance, livePay: LIVE_PAY }));
+});
+
+app.post('/customer/packs/:id/subscribe', requireRole('customer'), (req, res) => {
+  const pack = packById(req.params.id);
+  if (!pack) return res.status(404).send(oops(req.user, '/customer/packs', 'Pack <em>not found.</em>'));
+  const plan = req.body.plan === 'full' ? 'full' : 'booking';
+  const charge = plan === 'full' ? pack.price : Math.min(pack.price, BOOKING_FEE);
+  let method = req.body.method === 'wallet' ? 'wallet' : 'upi';
+  if (LIVE_PAY && method === 'upi') {
+    return res.status(400).send(oops(req.user, '/customer/packs', 'That method is <em>demo-only.</em>'));
+  }
+  const db = loadDb();
+  ensurePackSubs(db);
+  const now = new Date().toISOString();
+  if (method === 'wallet') {
+    const w = walletOf(db, req.user.id);
+    if (w.balance < charge) {
+      saveDb(db);
+      return res.status(402).send(oops(req.user, '/customer/packs', 'Wallet too <em>light.</em>'));
+    }
+    w.balance = Math.round((w.balance - charge) * 100) / 100;
+    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: -charge, kind: 'debit', label: `${pack.name} ${plan}`, at: now });
+  }
+  const sub = newSub(pack, req.user.id, charge);
+  sub.payments[0].method = method === 'wallet' ? 'wallet' : 'upi-sim';
+  db.packSubs.push(sub);
+  db.notifications ||= [];
+  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `${pack.name} secured — ${charge >= pack.price ? 'fully paid' : `₹${charge} booking, ₹${pack.price - charge} in installments`}.`, at: now, read: false });
+  saveDb(db);
+  res.redirect('/customer/packs');
+});
+
+app.post('/customer/packs/:subId/pay', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const sub = (db.packSubs || []).find((s) => s.id === req.params.subId && s.customerId === req.user.id);
+  if (!sub) return res.status(404).send(oops(req.user, '/customer/packs', 'Subscription <em>not found.</em>'));
+  const due = dueOf(sub);
+  if (due <= 0) return res.redirect('/customer/packs');
+  const amount = Math.round(Number(req.body.amount) || 0);
+  if (!(amount >= 1) || amount > due) {
+    return res.status(400).send(oops(req.user, '/customer/packs', 'Amount must be <em>₹1 – due.</em>'));
+  }
+  let method = req.body.method === 'wallet' ? 'wallet' : 'upi';
+  if (LIVE_PAY && method === 'upi') {
+    return res.status(400).send(oops(req.user, '/customer/packs', 'That method is <em>demo-only.</em>'));
+  }
+  const now = new Date().toISOString();
+  if (method === 'wallet') {
+    const w = walletOf(db, req.user.id);
+    if (w.balance < amount) {
+      saveDb(db);
+      return res.status(402).send(oops(req.user, '/customer/packs', 'Wallet too <em>light.</em>'));
+    }
+    w.balance = Math.round((w.balance - amount) * 100) / 100;
+    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: -amount, kind: 'debit', label: `${sub.packName} installment`, at: now });
+  }
+  sub.paidTotal = Math.round((sub.paidTotal + amount) * 100) / 100;
+  sub.payments.push({ amount, method: method === 'wallet' ? 'wallet' : 'upi-sim', at: now });
+  sub.updatedAt = now;
+  saveDb(db);
+  res.redirect('/customer/packs');
+});
+
+app.post('/customer/packs/:subId/files/claim', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const sub = (db.packSubs || []).find((s) => s.id === req.params.subId && s.customerId === req.user.id);
+  if (!sub) return res.status(404).send(oops(req.user, '/customer/packs', 'Subscription <em>not found.</em>'));
+  const l = leftOf(sub);
+  if (l.files <= 0) return res.status(400).send(oops(req.user, '/customer/packs', 'No free files <em>left.</em>'));
+  if ((sub.paidTotal || 0) < BOOKING_FEE) return res.status(400).send(oops(req.user, '/customer/packs', 'Quota unlocks at <em>₹199.</em>'));
+  sub.filesUsed = (sub.filesUsed || 0) + 1;
+  sub.updatedAt = new Date().toISOString();
+  db.notifications ||= [];
+  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `Free file claimed (${sub.filesUsed}/${sub.filesTotal}) — collect at the kiosk.`, at: new Date().toISOString(), read: false });
+  saveDb(db);
+  res.redirect('/customer/packs');
+});
+
+app.get('/admin/packs', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  ensurePackSubs(db);
+  saveDb(db);
+  res.send(adminPacksPage(req.user, { subs: [...db.packSubs].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')), users: db.users }));
 });
 
 app.get('/customer/profile', requireRole('customer'), (req, res) => {
@@ -1577,6 +1699,7 @@ app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), (req, 
   // V0 pilot: a paid order goes straight to the print queue — no human click.
   // (Both transitions first, one save, then both pings — see note above.)
   try { transition(o, 'PRINT_QUEUE', { by: 'system', note: 'auto-queued on payment' }); } catch {}
+  consumePackQuota(db, o);
   saveDb(db);
   notifyState({ ...o, status: 'CONFIRMED' });
   if (o.status === 'PRINT_QUEUE') notifyState(o);
