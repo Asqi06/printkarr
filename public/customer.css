@@ -72,7 +72,7 @@ details summary { cursor: pointer; color: var(--primary); font-weight: 600; }
 .receipt-document { margin: 17px 0 5px; font-weight: 700; overflow-wrap: anywhere; }
 .receipt-paper .sumrow { border-bottom: 1px dashed #d8deea; font-size: 12px; }
 .receipt-paper .sumrow.total { margin-top: 4px; padding-top: 13px; border-bottom: 0; color: #1559df; font-size: 1rem; }
-.document-preview { margin: 14px 0; border: 1px solid #dce5f4; border-radius: 13px; background: #f6f9ff; overflow: hidden; }
+.document-preview { margin: 14px 0; border: 1px solid var(--pale-deep); border-radius: 13px; background: var(--pale); overflow: hidden; }
 .document-preview > summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; color: #164fc1; cursor: pointer; font-weight: 700; list-style: none; }
 .document-preview > summary::-webkit-details-marker { display: none; }
 .document-preview > summary::after { content: "+"; font-size: 19px; line-height: 1; }
