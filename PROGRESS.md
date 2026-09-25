@@ -82,6 +82,7 @@ Out of scope (PRD Phase 2/3): real DB, real auth, Razorpay, WAHA, Epson integrat
 | §7 | No catalog/wizard/progress-bar clutter | verified | guest flow is one scroll, no progress bar |
 | §packs | Semester print packs (₹329/₹499/₹725, ₹199 booking + installments, dashboard quota) | verified | `lib/packs.js`, 3 tests green + live order loop (cover → pay → deduct → cancel → restore) |
 | §referral | Refer & Earn (friend ₹10 off ₹79+, referrer ₹20 cash on delivery, milestones, ₹50 min UPI withdrawal, ₹500/mo cap) | verified | `lib/referrals.js`, 7 tests green + live loop (code → order → deliver → credit → withdraw → pay) |
+| §convert | Conversion-first homepage (functional hero + in-hero upload, pricing/FAQ/referral/final-CTA sections, nav, sticky mobile CTA, orange-money) | done | design-check green + live audit (nav/hero/pricing/faq/badges/sticky); needs push |
 
 ## V0 prototype (classroom pilot: laptop + Epson L3250, Hindi PRD)
 | V0 PRD | Item | Status | Note |

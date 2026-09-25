@@ -1897,7 +1897,7 @@ app.get('/', (req, res) => {
     .filter((o) => Date.parse(o.createdAt) >= weekAgo && o.status !== 'CANCELLED')
     .reduce((s, o) => s + o.pages * o.copies, 0);
   const queueDepth = db.orders.filter((o) => ['PRINT_QUEUE', 'PRINTING'].includes(o.status)).length;
-  res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth }));
+  res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb }));
 });
 
 // Marketing pages — Grok workspace port (server-rendered, no auth).
