@@ -23,6 +23,12 @@ import { layout, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js'
 import { customerDashboard, ordersList, orderDetail } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { packsPage, packDashboardHtml, adminPacksPage } from './lib/views_packs.js';
+import { referralsPage, adminReferralsPage } from './lib/views_referrals.js';
+import {
+  getConfig as referralConfig, codeFor as referralCodeFor, findReferrer,
+  validateReferral, referralDiscountFor, createReferral, voidPendingForOrder,
+  cashWalletOf, monthEarned, monthKey, qualifyForOrder, validUpiId
+} from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
 import { landing, orderPage, phonePage, otpPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import QRCode from 'qrcode';
@@ -321,6 +327,7 @@ app.get('/auth/google/callback', async (req, res) => {
       };
       db.users.push(user);
       if (!db.wallets.some((w) => w.customerId === user.id)) db.wallets.push({ customerId: user.id, balance: 0 });
+      referralCodeFor(db, user);
       saveDb(db);
     }
     const token = createSession(user.id);
@@ -431,6 +438,7 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   }
   try { transition(o, to, { by: req.user.id }); }
   catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>')); }
+  if (to === 'DELIVERED') qualifyForOrder(db, o);
   if (to === 'PRINTED') {
     const pr = db.printers[0];
     if (pr) {
@@ -834,8 +842,18 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
-  const qShow = packCover ? { ...q, total: Math.round((q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100 } : q;
-  res.send(summaryStep(req.user, d, s, qShow, packCover));
+  const packDiscount = packCover ? q.subtotal : 0;
+  const refCode = String(req.query.referral || '').trim().toUpperCase().slice(0, 12);
+  let ref = { code: refCode, error: req.query.referrError || null, discount: 0 };
+  if (refCode && !ref.error) {
+    const v = validateReferral(db, req.user, refCode, q.subtotal);
+    if (!v.ok) ref = { code: refCode, error: v.error, discount: 0 };
+    else ref.discount = referralDiscountFor(db, q.subtotal, packDiscount, 0);
+  }
+  const qShow = (packCover || ref.discount)
+    ? { ...q, total: Math.round((q.total - packDiscount - ref.discount) * 100) / 100 }
+    : q;
+  res.send(summaryStep(req.user, d, s, qShow, packCover, ref));
 });
 
 app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (req, res) => {
@@ -865,6 +883,16 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     if (vc.ok) { couponCode = vc.code; couponDiscount = vc.discount; }
   }
   const packDiscount = packCover ? q.subtotal : 0;
+  let referralCode = null, referralDiscount = 0;
+  const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
+  if (refIn) {
+    const v = validateReferral(db, req.user, refIn, q.subtotal);
+    if (!v.ok) {
+      return res.redirect(`/customer/orders/new/summary?draft=${d.id}&referral=${encodeURIComponent(refIn)}&referrError=${encodeURIComponent(v.error)}`);
+    }
+    referralCode = refIn;
+    referralDiscount = referralDiscountFor(db, q.subtotal, packDiscount, couponDiscount);
+  }
   try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
   const order = {
     id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, copies: s.copies,
@@ -873,12 +901,22 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     addressId: s.addressId, slot: s.slot,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode, couponDiscount, packSubId: packCover ? packCover.id : null, packDiscount,
-    total: Math.round((q.subtotal - packDiscount - couponDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
+    referralCode, referralDiscount,
+    total: Math.round((q.subtotal - packDiscount - couponDiscount - referralDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   };
   db.orders.push(order);
+  if (referralCode) {
+    const referrer = findReferrer(db, referralCode);
+    if (referrer) {
+      createReferral(db, {
+        referrerId: referrer.id, refereeId: req.user.id, orderId: id,
+        code: referralCode, friendDiscount: referralDiscount
+      });
+    }
+  }
   db.drafts.splice(di, 1);
   saveDb(db);
   res.redirect(`/customer/orders/${id}/pay`);
@@ -1046,6 +1084,7 @@ app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
   }
   // Quota is consumed at payment — only restore when the order was paid.
   if (o.paymentStatus === 'paid') restorePackQuota(db, o);
+  voidPendingForOrder(db, o.id);
   o.paymentStatus = 'refunded';
   saveDb(db);
   notifyState(o);
@@ -1061,7 +1100,9 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const w = walletOf(db, req.user.id);
   const tx = (db.walletTx || []).filter((t) => t.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: LIVE_PAY, razorpay: !!(RAZORPAY.id && RAZORPAY.secret) }));
+  const cash = cashWalletOf(db, req.user.id).balance;
+  saveDb(db);
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: LIVE_PAY, razorpay: !!(RAZORPAY.id && RAZORPAY.secret), cash }));
 });
 
 app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
@@ -1168,6 +1209,111 @@ app.get('/admin/packs', requireRole('admin'), (req, res) => {
   ensurePackSubs(db);
   saveDb(db);
   res.send(adminPacksPage(req.user, { subs: [...db.packSubs].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')), users: db.users }));
+});
+
+// ---- Referrals: give ₹10, get ₹20 cash on delivery + milestones ----
+function referralStats(db, customerId) {
+  const mine = (db.referrals || []).filter((r) => r.referrerId === customerId);
+  return {
+    joined: mine.filter((r) => r.status !== 'void').length,
+    qualified: mine.filter((r) => r.status === 'qualified').length,
+    earned: (db.cashTx || []).filter((t) => t.customerId === customerId && t.kind === 'credit').reduce((s, t) => s + t.amount, 0)
+  };
+}
+
+app.get('/customer/referrals', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const cfg = referralConfig(db);
+  const code = referralCodeFor(db, db.users.find((u) => u.id === req.user.id) || req.user);
+  const cash = cashWalletOf(db, req.user.id);
+  const payouts = (db.payouts || []).filter((p) => p.customerId === req.user.id)
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  saveDb(db);
+  res.send(referralsPage(req.user, {
+    cfg, code,
+    stats: referralStats(db, req.user.id),
+    cash, payouts,
+    shareText: `Print on paper in Vapi, 24/7. Use my PrintKarr code ${code} for ₹${cfg.friendOff} OFF your first ₹${cfg.friendMinOrder}+ order: ${req.protocol}://${req.get('host')}/order`
+  }));
+});
+
+app.post('/customer/referrals/withdraw', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const cfg = referralConfig(db);
+  const cash = cashWalletOf(db, req.user.id);
+  const amount = Math.round(Number(req.body.amount) || 0);
+  const upiId = validUpiId(req.body.upiId);
+  if (!upiId) return res.status(400).send(oops(req.user, '/customer/referrals', 'That UPI ID <em>looks off.</em>'));
+  if (!(amount >= cfg.minWithdrawal)) {
+    return res.status(400).send(oops(req.user, '/customer/referrals', `Minimum withdrawal is <em>₹${cfg.minWithdrawal}.</em>`));
+  }
+  if (amount > cash.balance) {
+    return res.status(402).send(oops(req.user, '/customer/referrals', 'More than your <em>cash balance.</em>'));
+  }
+  const now = new Date().toISOString();
+  cash.balance = Math.round((cash.balance - amount) * 100) / 100;
+  db.cashTx ||= [];
+  db.cashTx.push({ id: `CTX-${Date.now()}`, customerId: req.user.id, amount: -amount, kind: 'debit', label: `Withdrawal to ${upiId}`, at: now });
+  db.payouts ||= [];
+  db.payouts.push({ id: 'PAY-' + Date.now().toString(36).toUpperCase(), customerId: req.user.id, amount, upiId, status: 'requested', createdAt: now, decidedAt: null });
+  db.notifications ||= [];
+  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: null, text: `Withdrawal of ₹${amount} requested — the shop sends it on UPI shortly.`, at: now, read: false });
+  saveDb(db);
+  res.redirect('/customer/referrals');
+});
+
+app.get('/admin/referrals', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  const cfg = referralConfig(db);
+  saveDb(db);
+  res.send(adminReferralsPage(req.user, {
+    cfg,
+    referrals: [...(db.referrals || [])].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')),
+    users: db.users,
+    payouts: [...(db.payouts || [])].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+  }));
+});
+
+app.post('/admin/referrals/config', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  const cfg = referralConfig(db);
+  const num = (v, fb, max) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 && n <= (max || 100000) ? Math.round(n * 100) / 100 : fb;
+  };
+  cfg.enabled = req.body.enabled === '1';
+  cfg.friendOff = num(req.body.friendOff, cfg.friendOff, 500);
+  cfg.friendMinOrder = num(req.body.friendMinOrder, cfg.friendMinOrder, 100000);
+  cfg.referrerCash = num(req.body.referrerCash, cfg.referrerCash, 500);
+  cfg.minWithdrawal = num(req.body.minWithdrawal, cfg.minWithdrawal, 100000);
+  cfg.monthlyCap = num(req.body.monthlyCap, cfg.monthlyCap, 100000);
+  saveDb(db);
+  res.redirect('/admin/referrals');
+});
+
+app.post('/admin/referrals/payouts/:id/pay', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  const p = (db.payouts || []).find((x) => x.id === req.params.id && x.status === 'requested');
+  if (!p) return res.status(404).send(oops(req.user, '/admin/referrals', 'Payout <em>unknown.</em>'));
+  p.status = 'paid';
+  p.decidedAt = new Date().toISOString();
+  db.notifications ||= [];
+  db.notifications.push({ id: `NT-${Date.now()}`, customerId: p.customerId, orderId: null, text: `₹${p.amount} sent to ${p.upiId} — spend it well.`, at: p.decidedAt, read: false });
+  saveDb(db);
+  res.redirect('/admin/referrals');
+});
+
+app.post('/admin/referrals/payouts/:id/reject', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  const p = (db.payouts || []).find((x) => x.id === req.params.id && x.status === 'requested');
+  if (!p) return res.status(404).send(oops(req.user, '/admin/referrals', 'Payout <em>unknown.</em>'));
+  p.status = 'rejected';
+  p.decidedAt = new Date().toISOString();
+  const w = cashWalletOf(db, p.customerId);
+  w.balance = Math.round((w.balance + p.amount) * 100) / 100;
+  db.cashTx.push({ id: `CTX-${Date.now()}`, customerId: p.customerId, amount: p.amount, kind: 'credit', label: `Withdrawal to ${p.upiId} rejected — refunded`, at: p.decidedAt });
+  saveDb(db);
+  res.redirect('/admin/referrals');
 });
 
 app.get('/customer/profile', requireRole('customer'), (req, res) => {
@@ -1330,8 +1476,19 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
       phone: phone ? '+91 ' + phone : '',
       address: d.selections.zone === 'pickup' ? 'Kiosk collection' : String(req.body.address).slice(0, 200),
       landmark: String(req.body.landmark || '').slice(0, 100),
-      pin: String(req.body.pin || '').slice(0, 10), deliveryPoint: point
+      pin: String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
+      referral: String(req.body.referral || '').trim().toUpperCase().slice(0, 12)
     };
+    if (d.contact.referral) {
+      // Preliminary check now (phone page can show the error); re-validated
+      // strictly at verify time once the account is resolved.
+      const existing = db.users.find((u) => String(u.email || '').toLowerCase() === email);
+      const q0 = quote({ pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, student: !!(existing && existing.student), zone: d.selections.zone, point });
+      const pv = validateReferral(db, existing || { id: '__new__' }, d.contact.referral, q0.subtotal);
+      if (!pv.ok) {
+        return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: pv.error }));
+      }
+    }
     saveDb(db);
   }
   const email = d.contact.email;
@@ -1361,6 +1518,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
     db.users.push(user);
     db.wallets.push({ customerId: user.id, balance: 0 });
   }
+  referralCodeFor(db, user);
   const s = d.selections;
   const address = {
     id: 'ADR' + Date.now().toString(36), customerId: user.id, label: 'Home',
@@ -1371,6 +1529,16 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   db.addresses.push(address);
   const q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!user.student, zone: s.zone, point: d.contact.deliveryPoint });
   const id = nextOrderId(db);
+  let referralCode = null, referralDiscount = 0;
+  if (d.contact.referral) {
+    const v = validateReferral(db, user, d.contact.referral, q.subtotal);
+    if (v.ok) {
+      referralCode = d.contact.referral;
+      referralDiscount = referralDiscountFor(db, q.subtotal, 0, 0);
+    }
+    // else: silently drop — request-time check already caught typos; only a
+    // race (second order placed in between) lands here.
+  }
   try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
   db.orders.push({
     id, customerId: user.id, document: d.document, pages: s.effPages, filePages: d.pages, copies: s.copies,
@@ -1378,12 +1546,22 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
     binding: 'none', notes: '', pageRange: s.range,
     addressId: address.id, slot: s.slot,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
-    couponCode: null, couponDiscount: 0,
-    total: q.total,
+    couponCode: null, couponDiscount: 0, packSubId: null, packDiscount: 0,
+    referralCode, referralDiscount,
+    total: Math.round((q.subtotal - referralDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: user.id, note: 'guest otp order' }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   });
+  if (referralCode) {
+    const referrer = findReferrer(db, referralCode);
+    if (referrer) {
+      createReferral(db, {
+        referrerId: referrer.id, refereeId: user.id, orderId: id,
+        code: referralCode, friendDiscount: referralDiscount
+      });
+    }
+  }
   db.drafts.splice(di, 1);
   saveDb(db);
   const token = createSession(user.id);
@@ -1777,6 +1955,16 @@ function bootstrap() {
     console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
   }
   const db = loadDb();
+  // Backfill referral codes + config for databases created before referrals.
+  let touched = false;
+  for (const u of db.users) {
+    if (u.role === 'customer' && !u.referralCode) {
+      referralCodeFor(db, u);
+      touched = true;
+    }
+  }
+  referralConfig(db);
+  if (touched) saveDb(db);
   // Always ensure the .env owner admin exists and has the current password
   // (covers the case where .env was updated after the DB was seeded)
   if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
