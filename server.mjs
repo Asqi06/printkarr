@@ -30,6 +30,8 @@ import {
   cashWalletOf, monthEarned, monthKey, qualifyForOrder, validUpiId
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
+import { kioskLive, effectiveLive } from './lib/kiosk.js';
+import { emailConfigured } from './lib/email.js';
 import { landing, orderPage, phonePage, otpPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
@@ -62,6 +64,16 @@ const RAZORPAY = {
 // Live mode: production + real gateway keys. Only real money moves —
 // Razorpay and cash on delivery. Simulated UPI/wallet top-ups are refused.
 const LIVE_PAY = process.env.NODE_ENV === 'production' && !!(RAZORPAY.id && RAZORPAY.secret);
+const gatewayOn = () => !!(RAZORPAY.id && RAZORPAY.secret);
+// Runtime kiosk switch (admin toggle): live when the env forces it, or the
+// admin switched it on with a real gateway behind it.
+const livePayFor = (db) => effectiveLive({ envLive: LIVE_PAY, gatewayOn: gatewayOn(), kioskLive: kioskLive(db) });
+function kioskBlockers() {
+  const missing = [];
+  if (!gatewayOn()) missing.push('Razorpay keys (RAZORPAY_KEY_ID/SECRET)');
+  if (!emailConfigured()) missing.push('a mailer (RESEND_API_KEY or SMTP_USER/SMTP_PASS) for OTP codes');
+  return missing;
+}
 
 const oauthStates = new Map(); // state -> expiresAt (CSRF guard, 10 min)
 
@@ -615,7 +627,22 @@ app.get('/admin/analytics', requireRole('admin'), (req, res) => {
 app.get('/admin/settings', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const demos = db.users.filter((u) => u.email.toLowerCase().endsWith('@demo.printkarr.in'));
-  res.send(settingsPage(req.user, db.settings, demos));
+  res.send(settingsPage(req.user, db.settings, demos, { live: kioskLive(db), envLive: LIVE_PAY, blockers: kioskBlockers() }));
+});
+
+app.post('/admin/settings/kiosk', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  const wantLive = req.body.live === '1';
+  if (wantLive) {
+    const missing = kioskBlockers();
+    if (missing.length) {
+      return res.status(400).send(oops(req.user, '/admin/settings', `Can't go live yet — missing: <em>${missing.join(' · ')}</em>.`));
+    }
+  }
+  db.settings.kiosk ||= {};
+  db.settings.kiosk.live = wantLive;
+  saveDb(db);
+  res.redirect('/admin/settings');
 });
 
 // Remove one demo account. Never yourself (no lockouts); orders are kept.
@@ -943,9 +970,9 @@ app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   const waUrl = waForwardUrl(db, req, o);
   saveDb(db);
   const short = Math.round((o.total - w.balance) * 100) / 100;
-  const top = !LIVE_PAY && short > 0 ? { short, bonus: bonusFor(short, db.pricing).bonus } : null;
+  const top = !livePayFor(db) && short > 0 ? { short, bonus: bonusFor(short, db.pricing).bonus } : null;
   const isOwner = isAdminEmail(req.user.email) || req.user.role === 'admin';
-  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: !!(RAZORPAY.id && RAZORPAY.secret), waUrl, walletTopup: top, livePay: LIVE_PAY, isOwner }));
+  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: gatewayOn(), waUrl, walletTopup: top, livePay: livePayFor(db), isOwner }));
 });
 
 app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
@@ -954,7 +981,7 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   if (!['CREATED', 'PAYMENT_PENDING'].includes(o.status)) return res.redirect(`/customer/orders/${o.id}`);
   let method = ['upi', 'wallet', 'wallet_topup'].includes(req.body.method) ? req.body.method : 'upi';
-  if (LIVE_PAY && method !== 'wallet') {
+  if (livePayFor(db) && method !== 'wallet') {
     return res.status(400).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'That method is <em>demo-only.</em>'));
   }
   if (method === 'wallet_topup') {
@@ -1102,12 +1129,12 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const tx = (db.walletTx || []).filter((t) => t.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
   const cash = cashWalletOf(db, req.user.id).balance;
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: LIVE_PAY, razorpay: !!(RAZORPAY.id && RAZORPAY.secret), cash }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash }));
 });
 
 app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
-  if (LIVE_PAY) return res.status(400).send(oops(req.user, '/customer/wallet', 'Demo top-ups are <em>off</em> in live mode.'));
   const db = loadDb();
+  if (livePayFor(db)) return res.status(400).send(oops(req.user, '/customer/wallet', 'Demo top-ups are <em>off</em> in live mode.'));
   const amount = Math.max(10, Math.min(10000, Math.round(Number(req.body.amount) || 0)));
   if (!amount) return res.redirect('/customer/wallet');
   const w = walletOf(db, req.user.id);
@@ -1125,7 +1152,7 @@ app.get('/customer/packs', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const w = walletOf(db, req.user.id);
   saveDb(db);
-  res.send(packsPage(req.user, { subs: mySubs(db, req.user.id), walletBalance: w.balance, livePay: LIVE_PAY }));
+  res.send(packsPage(req.user, { subs: mySubs(db, req.user.id), walletBalance: w.balance, livePay: livePayFor(db) }));
 });
 
 app.post('/customer/packs/:id/subscribe', requireRole('customer'), (req, res) => {
@@ -1134,11 +1161,11 @@ app.post('/customer/packs/:id/subscribe', requireRole('customer'), (req, res) =>
   const plan = req.body.plan === 'full' ? 'full' : 'booking';
   const charge = plan === 'full' ? pack.price : Math.min(pack.price, BOOKING_FEE);
   let method = req.body.method === 'wallet' ? 'wallet' : 'upi';
-  if (LIVE_PAY && method === 'upi') {
-    return res.status(400).send(oops(req.user, '/customer/packs', 'That method is <em>demo-only.</em>'));
-  }
   const db = loadDb();
   ensurePackSubs(db);
+  if (livePayFor(db) && method === 'upi') {
+    return res.status(400).send(oops(req.user, '/customer/packs', 'That method is <em>demo-only.</em>'));
+  }
   const now = new Date().toISOString();
   if (method === 'wallet') {
     const w = walletOf(db, req.user.id);
@@ -1169,7 +1196,7 @@ app.post('/customer/packs/:subId/pay', requireRole('customer'), (req, res) => {
     return res.status(400).send(oops(req.user, '/customer/packs', 'Amount must be <em>₹1 – due.</em>'));
   }
   let method = req.body.method === 'wallet' ? 'wallet' : 'upi';
-  if (LIVE_PAY && method === 'upi') {
+  if (livePayFor(db) && method === 'upi') {
     return res.status(400).send(oops(req.user, '/customer/packs', 'That method is <em>demo-only.</em>'));
   }
   const now = new Date().toISOString();
