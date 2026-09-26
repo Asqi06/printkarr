@@ -60,6 +60,12 @@ when the pilot outgrows Atlas Free.
 
 ## Going live (production)
 
+### Search visibility for Vapi
+
+The public site serves `/printing-in-vapi`, `/sitemap.xml`, `/robots.txt`, and `/llms.txt`. Canonical URLs and the sitemap use `PUBLIC_SITE_URL` (default `https://printkarr.onrender.com`). Set it to the final HTTPS domain only after that domain serves the site. Run `npm run test:seo` when changing public pages or posts; the sitemap is generated from the same page list as the metadata.
+
+After deployment, verify the live sitemap and service page, then verify the site in [Google Search Console](https://search.google.com/search-console/about) and submit `/sitemap.xml`. Add the site to [Bing Webmaster Tools](https://www.bing.com/webmasters/) too. The owner must complete account verification. Create a Google Business Profile only when the business meets Google's eligibility rules and has a verifiable real business presence; enter the real location, phone, delivery area and hours, then maintain them as service changes. Do not list a kiosk pickup address until it opens. Search placement and AI citations depend on crawlers and search systems; these files do not guarantee a ranking.
+
 The app needs durable storage for its JSON database and customer uploads.
 
 **Option A — MongoDB Atlas Free with Render Free:**

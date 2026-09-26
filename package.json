@@ -13,7 +13,8 @@
     "init:atlas": "node scripts/init-atlas.mjs",
     "test:atlas": "node scripts/test-atlas.mjs",
     "test": "node --test agent/print-settings.test.js lib/machine.test.js lib/packs.test.js lib/referrals.test.js lib/kiosk.test.js lib/collect.test.js lib/files.test.js lib/db.test.js",
-    "test:design": "node scripts/design-check.mjs"
+    "test:design": "node scripts/design-check.mjs",
+    "test:seo": "node scripts/seo-check.mjs"
   },
   "dependencies": {
     "compression": "^1.7.4",

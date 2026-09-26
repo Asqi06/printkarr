@@ -22,7 +22,7 @@ const pages = new Map([
   ['/order/options', publicViews.orderPage({ pricing, draft })],
   ['/order/phone', publicViews.phonePage({ draft })],
   ['/order/verify', publicViews.otpPage({ draft, email: user.email })],
-  ...[['about', 'aboutPage'], ['how-it-works', 'howItWorksPage'], ['franchise', 'franchisePage'], ['xerox', 'xeroxPage'], ['contact', 'contactPage'], ['blogs', 'blogsPage'], ['terms', 'termsPage'], ['privacy', 'privacyPage']].map(([route, fn]) => ['/' + route, publicViews[fn]()]),
+  ...[['printing-in-vapi', 'vapiPage'], ['about', 'aboutPage'], ['how-it-works', 'howItWorksPage'], ['franchise', 'franchisePage'], ['xerox', 'xeroxPage'], ['contact', 'contactPage'], ['blogs', 'blogsPage'], ['terms', 'termsPage'], ['privacy', 'privacyPage']].map(([route, fn]) => ['/' + route, publicViews[fn]()]),
   ...publicViews.POSTS.map(post => ['/blogs/' + post.slug, publicViews.blogArticlePage(post.slug)]),
   ['/login', loginPage(null, false)],
   ['/login/code', loginOtpPage(user.email)],
@@ -52,7 +52,7 @@ for (const route of ['/customer', '/customer/orders/new']) {
 }
 assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">Dashboard<\/a>/);
 assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">Print<\/a>/);
-assert.match(pages.get('/'), /Need it on paper\?/);
+assert.match(pages.get('/'), /Printing in Vapi/);
 assert.match(pages.get('/order/options'), /name="area" value="Pickup" checked/);
 assert.match(pages.get('/order/options'), /<details class="order-more">/);
 assert.match(pages.get('/customer/referrals'), /₹20 print credit/);
@@ -88,7 +88,10 @@ for (const [route, html] of pages) {
   if (route === '/' || route === '/how-it-works') {
     assert.doesNotMatch(html, /pk-flow|Your file’s journey/, `${route}: removed crossed-out file journey`);
   }
-  for (const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new Script(script[1], { filename: route });
+  for (const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+    if (script[0].includes('application/ld+json')) JSON.parse(script[1]);
+    else new Script(script[1], { filename: route });
+  }
 }
 assert.match(readFileSync(new URL('../public/design.css', import.meta.url), 'utf8'), /\.step-detail img \{[^}]*object-fit: contain/);
 assert.match(readFileSync(new URL('../public/customer.css', import.meta.url), 'utf8'), /prefers-reduced-motion: reduce[^}]*receipt-paper/);

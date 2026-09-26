@@ -37,7 +37,8 @@ import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
-import { landing, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { POSTS, vapiPage, landing, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { discoveryRoutes } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
 
@@ -165,6 +166,12 @@ app.disable('x-powered-by');
 app.set('trust proxy', 1); // correct req.protocol/secure cookies behind Render/Railway/nginx
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(compression());
+discoveryRoutes(app, POSTS);
+app.use(['/admin', '/customer', '/order', '/login', '/logout', '/auth', '/api', '/share', '/c', '/qr.png'], (_req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  next();
+});
+app.get('/index.html', (_req, res) => res.redirect(301, '/'));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'tiny'));
 
 // Brute-force guard on the front door; generous API ceiling for normal use.
@@ -2182,6 +2189,7 @@ app.get('/', (req, res) => {
 });
 
 // Marketing pages — Grok workspace port (server-rendered, no auth).
+app.get('/printing-in-vapi', (_req, res) => res.send(vapiPage()));
 app.get('/how-it-works', (_req, res) => res.send(howItWorksPage()));
 app.get('/about', (_req, res) => res.send(aboutPage()));
 app.get('/franchise', (_req, res) => res.send(franchisePage()));
@@ -2197,7 +2205,7 @@ app.post('/contact', express.urlencoded({ extended: true }), (req, res) => {
   res.redirect('/contact?sent=1');
 });
 app.get('/blogs', (_req, res) => res.send(blogsPage()));
-app.get('/blogs/:slug', (req, res) => res.send(blogArticlePage(req.params.slug)));
+app.get('/blogs/:slug', (req, res) => res.status(POSTS.some(p => p.slug === req.params.slug) ? 200 : 404).send(blogArticlePage(req.params.slug)));
 app.get('/terms', (_req, res) => res.send(termsPage()));
 app.get('/privacy', (_req, res) => res.send(privacyPage()));
 
@@ -2205,7 +2213,7 @@ app.get('/privacy', (_req, res) => res.send(privacyPage()));
 app.use(express.static(PUBLIC, { maxAge: '1h', extensions: ['html'] }));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(PUBLIC, 'index.html'));
+  res.status(404).set('X-Robots-Tag', 'noindex').send('<!doctype html><html lang="en"><title>Page not found — PrintKarr</title><main><h1>Page not found</h1><a href="/">Go to PrintKarr</a></main></html>');
 });
 
 // Production bootstrap: on a fresh volume (no users yet), create the owner
