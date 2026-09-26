@@ -75,6 +75,14 @@ ADMIN_PASSWORD=<long-random-password>
 Deploy the repo as a Node service (`npm ci && node server.mjs`),
 attach a **persistent disk mounted at `/app/data`** (or the host's
 equivalent) so `db.json` and uploaded PDFs survive restarts.
+
+> ⚠ Without that disk, **every redeploy wipes the live database**:
+> coupons, customers, orders and uploads vanish, and the owner admin is
+> silently recreated on the empty DB — which looks exactly like "my data
+> got replaced". If the boot log says `Fresh data volume on boot` on a
+> shop that already had data, the disk is missing. After attaching it,
+> the next deploy logs `Data volume survived redeploy`, and
+> `/api/ready` reports the volume marker as proof.
 On first boot with an empty database, the owner admin is created from
 the env vars above — the demo accounts are *not* created in production.
 

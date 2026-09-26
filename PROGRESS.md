@@ -92,7 +92,7 @@ Out of scope (PRD Phase 2/3): real DB, real auth, Razorpay, WAHA, Epson integrat
 | §7,9,17 | Laptop agent (Node, poll-print-report) | verified | DRY_RUN cycle: cover + serial copies → PRINTED |
 | §13 | Cover page identification | verified | hand-built PDF, xref-validated, no deps |
 | §15 | PK-*.pdf filenames, PDF-only | verified | pre-existing; enforced per settings cap |
-| §16 | Auto-delete (6h default) | verified | janitor sweeps old terminal files only |
+| §16 | Auto-delete (15 min default) | verified | janitor sweeps old terminal files only |
 | §11 | QR entry | verified | /qr.png encodes live host URL + printable page |
 | §10 V0-A | Test payments | verified | simulated paths intact for pilot |
 | §8,22 | Status + acceptance | verified live | real paper proven: upload → auto-queue → agent → Epson, PK-1043/1045/1046 PRINTED on hardware |

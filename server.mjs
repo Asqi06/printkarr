@@ -1746,11 +1746,16 @@ app.get('/api/ready', (_req, res) => {
     fs.unlinkSync(probe);
     uploadsWritable = true;
   } catch { uploadsWritable = false; }
+  let volumeMarker = null;
+  try { volumeMarker = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', '.diskid'), 'utf8')); } catch {}
   res.json({
     ok: true,
     users: db.users.length,
     orders: db.orders.length,
     uploadsWritable,
+    volume: volumeMarker
+      ? { marker: true, since: volumeMarker.createdAt, lastCommit: volumeMarker.lastCommit }
+      : { marker: false },
     capabilities: {
       razorpay: !!(RAZORPAY.id && RAZORPAY.secret),
       whatsappForward: !!OWNER_WA,
@@ -1946,6 +1951,32 @@ function storageCheck() {
   }
 }
 
+// Volume-wipe detector: data/.diskid is written once and must survive every
+// redeploy. A missing marker means this boot sees a fresh volume — on a live
+// shop that means the disk was wiped (no persistent disk attached) and every
+// coupon, customer and order created in production is already gone.
+function diskCheck() {
+  const p = path.join(ROOT, 'data', '.diskid');
+  const commit = process.env.RENDER_GIT_COMMIT || null;
+  try {
+    const prev = JSON.parse(fs.readFileSync(p, 'utf8'));
+    if (commit && prev.lastCommit && prev.lastCommit !== commit) {
+      console.log(`Data volume survived redeploy (${String(prev.lastCommit).slice(0, 7)} → ${String(commit).slice(0, 7)}) — coupons, customers and orders intact.`);
+    }
+    if (commit && prev.lastCommit !== commit) {
+      prev.lastCommit = commit;
+      fs.writeFileSync(p, JSON.stringify(prev));
+    }
+    return { fresh: false };
+  } catch {
+    try {
+      fs.mkdirSync(path.dirname(p), { recursive: true });
+      fs.writeFileSync(p, JSON.stringify({ id: crypto.randomBytes(8).toString('hex'), createdAt: new Date().toISOString(), lastCommit: commit }));
+    } catch {}
+    return { fresh: true };
+  }
+}
+
 function bootstrap() {
   const store = storageCheck();
   if (!store.ok) {
@@ -1953,6 +1984,10 @@ function bootstrap() {
     console.error('⚠ Fix the /app/data volume (writable persistent disk), then restart. Nothing that saves will work until then.');
   } else {
     console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
+  }
+  const vol = diskCheck();
+  if (vol.fresh && process.env.NODE_ENV === 'production') {
+    console.warn('⚠ Fresh data volume on boot. If this shop already had coupons, customers or orders, they were just wiped: attach a persistent disk at /app/data or every redeploy resets the database. First-ever launch? Ignore this line.');
   }
   const db = loadDb();
   // Backfill referral codes + config for databases created before referrals.
