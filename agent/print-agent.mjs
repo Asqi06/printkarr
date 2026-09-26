@@ -76,7 +76,8 @@ async function processJob(order) {
   try {
     const dl = await fetch(`${BASE}/api/agent/file/${order.id}`, { headers: { Authorization: 'Bearer ' + TOKEN } });
     if (!dl.ok) throw new Error(`download -> ${dl.status}`);
-    const srcPdf = path.join(workDir, `${order.id}.pdf`);
+    const ext = /^(png|jpe?g)$/i.test(order.fileExt || '') ? String(order.fileExt).toLowerCase() : 'pdf';
+    const srcPdf = path.join(workDir, `${order.id}.${ext}`);
     fs.writeFileSync(srcPdf, Buffer.from(await dl.arrayBuffer()));
     printSettings(order, process.env.PRINT_SETTINGS); // Reject a bad range before any paper moves.
     const cover = buildCoverPdf(`PRINTKARR ${order.id}`, [

@@ -20,6 +20,7 @@ import {
   destroySession, parseCookies, demoLoginOn
 } from './lib/auth.js';
 import { layout, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
+import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
 import { customerDashboard, ordersList, orderDetail } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { packsPage, packDashboardHtml, adminPacksPage } from './lib/views_packs.js';
@@ -31,6 +32,7 @@ import {
   qualifyForTopup, validUpiId
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
+import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
@@ -500,9 +502,11 @@ function safeOrderId(id) {
 app.get('/admin/orders/:id/file', requireRole('admin'), (req, res) => {
   const safe = safeOrderId(req.params.id);
   if (!safe) return res.status(400).send(oops(req.user, '/admin/orders', 'Bad <em>ID.</em>'));
-  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
+  const db = loadDb();
+  const o = db.orders.find((x) => x.id === safe);
+  const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o && o.fileExt));
   if (!fs.existsSync(p)) return res.status(404).send(oops(req.user, '/admin/orders', 'File <em>missing.</em>'));
-  res.download(p, `${safe}.pdf`);
+  res.download(p, orderFile(safe, o && o.fileExt));
 });
 
 // §47 route map: printer status lives inside the print queue — canonical redirect.
@@ -710,7 +714,7 @@ const upload = multer({
   dest: 'data/uploads/',
   limits: { fileSize: 200 * 1024 * 1024, files: 1 },
   fileFilter: (_req, file, cb) => {
-    if (!/\.pdf$/i.test(file.originalname)) return cb(new Error('Only PDF files for now — DOCX, JPG and PPTX come later.'));
+    if (!/\.(pdf|png|jpe?g)$/i.test(file.originalname)) return cb(new Error('PDF, PNG or JPG only — DOCX and PPTX are not supported yet.'));
     cb(null, true);
   }
 });
@@ -731,6 +735,13 @@ function walletOf(db, customerId) {
   let w = db.wallets.find((x) => x.customerId === customerId);
   if (!w) { w = { customerId, balance: 0 }; db.wallets.push(w); }
   return w;
+}
+function offerDevice(req, res) {
+  const token = parseCookies(req.headers.cookie).pk_offer_device;
+  if (/^[a-f0-9]{32}$/.test(token || '')) return token;
+  const fresh = crypto.randomBytes(16).toString('hex');
+  res.append('Set-Cookie', `pk_offer_device=${fresh}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${req.protocol === 'https' ? '; Secure' : ''}`);
+  return fresh;
 }
 function zoneOf(area) {
   const a = String(area || '').toLowerCase().trim();
@@ -800,6 +811,7 @@ app.get('/customer/orders', requireRole('customer'), (req, res) => {
 });
 
 app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
+  offerDevice(req, res);
   if (req.query.draft) {
     const db = loadDb();
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
@@ -816,15 +828,14 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
     try { fs.unlinkSync(req.file.path); } catch {}
     return res.status(400).send(oops(req.user, '/customer/orders/new', 'File too <em>heavy.</em>'));
   }
-  let pages = 0;
+  let file = null;
   try {
-    pages = countPdfPages(fs.readFileSync(req.file.path));
-  } catch { pages = 0; }
-  if (!pages) {
+    file = analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
+  } catch (e) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send(oops(req.user, '/customer/orders/new', 'Empty or unreadable <em>PDF.</em>'));
+    return res.status(400).send(oops(req.user, '/customer/orders/new', 'That file <em>won\'t print.</em>'));
   }
-  if (pages > 1000) {
+  if (file.pages > 1000) {
     try { fs.unlinkSync(req.file.path); } catch {}
     return res.status(400).send(oops(req.user, '/customer/orders/new', 'Over 1000 pages — <em>split it.</em>'));
   }
@@ -833,7 +844,8 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   const draft = {
     id: 'D' + Date.now().toString(36), customerId: req.user.id,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
-    pages, createdAt: new Date().toISOString()
+    pages: file.pages, fileType: file.fileType, fileExt: file.ext,
+    createdAt: new Date().toISOString()
   };
   db.drafts.push(draft);
   saveDb(db);
@@ -847,7 +859,8 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   const copies = Math.max(1, Math.min(200, parseInt(req.body.copies, 10) || 1));
   const printType = req.body.printType === 'color' ? 'color' : 'bw';
   const sides = req.body.sides === 'double' ? 'double' : 'single';
-  const r = rangePages(req.body.range, d.pages);
+  // Single-page images have no range to select — the whole photo prints.
+  const r = d.fileType === 'image' ? { pages: 1, valid: true } : rangePages(req.body.range, d.pages);
   if (!r.valid) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Page range <em>confused us.</em>'));
   let address;
   if (req.body.addressId === '__new') {
@@ -875,7 +888,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   address.lng = point?.lng ?? null;
   const slotKind = ['ASAP', 'Today', 'Tomorrow', 'Schedule'].includes(req.body.slotKind) ? req.body.slotKind : 'Today';
   d.selections = {
-    effPages: r.pages, range: (req.body.range || '').slice(0, 60) || null,
+    effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
     copies, printType, sides,
     orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto',
     binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none',
@@ -898,16 +911,19 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
   const packDiscount = packCover ? q.subtotal : 0;
+  const offers = firstOffers(db, req.user, parseCookies(req.headers.cookie).pk_offer_device, {
+    pages: s.effPages, copies: s.copies, printType: s.printType, rate: q.rate,
+    zone: s.zone, deliveryFee: q.deliveryFee, subtotal: q.subtotal, packDiscount
+  });
   const refCode = String(req.query.referral || '').trim().toUpperCase().slice(0, 12);
   let ref = { code: refCode, error: req.query.referrError || null, discount: 0 };
   if (refCode && !ref.error) {
     const v = validateReferral(db, req.user, refCode, q.subtotal);
     if (!v.ok) ref = { code: refCode, error: v.error, discount: 0 };
-    else ref.discount = referralDiscountFor(db, q.subtotal, packDiscount, 0);
+    else ref.discount = referralDiscountFor(db, q.subtotal, packDiscount + offers.print, 0);
   }
-  const qShow = (packCover || ref.discount)
-    ? { ...q, total: Math.round((q.total - packDiscount - ref.discount) * 100) / 100 }
-    : q;
+  const qShow = { ...q, firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
+    total: Math.round((q.total - packDiscount - offers.print - offers.delivery - ref.discount) * 100) / 100 };
   res.send(summaryStep(req.user, d, s, qShow, packCover, ref));
 });
 
@@ -918,7 +934,7 @@ app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (r
   const p = path.join(ROOT, 'data', 'uploads', d.stored);
   if (!fs.existsSync(p)) return res.sendStatus(404);
   res.setHeader('Cache-Control', 'private, no-store');
-  res.type('pdf').sendFile(p);
+  res.type(mimeFor(d.fileExt)).sendFile(p);
 });
 
 app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
@@ -932,12 +948,16 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const id = nextOrderId(db);
   const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
+  const packDiscount = packCover ? q.subtotal : 0;
+  const offers = firstOffers(db, req.user, parseCookies(req.headers.cookie).pk_offer_device, {
+    pages: s.effPages, copies: s.copies, printType: s.printType, rate: q.rate,
+    zone: s.zone, deliveryFee: q.deliveryFee, subtotal: q.subtotal, packDiscount
+  });
   let couponCode = null, couponDiscount = 0;
   if (!packCover && req.body.coupon && String(req.body.coupon).trim()) {
     const vc = validateCoupon(db, req.body.coupon, q.subtotal);
-    if (vc.ok) { couponCode = vc.code; couponDiscount = vc.discount; }
+    if (vc.ok) { couponCode = vc.code; couponDiscount = Math.min(vc.discount, q.subtotal - offers.print); }
   }
-  const packDiscount = packCover ? q.subtotal : 0;
   let referralCode = null, referralDiscount = 0;
   const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
   if (refIn) {
@@ -946,18 +966,21 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
       return res.redirect(`/customer/orders/new/summary?draft=${d.id}&referral=${encodeURIComponent(refIn)}&referrError=${encodeURIComponent(v.error)}`);
     }
     referralCode = refIn;
-    referralDiscount = referralDiscountFor(db, q.subtotal, packDiscount, couponDiscount);
+    referralDiscount = referralDiscountFor(db, q.subtotal, packDiscount + offers.print, couponDiscount);
   }
-  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
+  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); } catch {}
   const order = {
-    id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, copies: s.copies,
+    id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, slot: s.slot,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode, couponDiscount, packSubId: packCover ? packCover.id : null, packDiscount,
+    firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
+    offerDevice: parseCookies(req.headers.cookie).pk_offer_device || null,
+    campus: s.zone === 'pickup' ? 'LIT Sarigam' : null,
     referralCode, referralDiscount,
-    total: Math.round((q.subtotal - packDiscount - couponDiscount - referralDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
+    total: Math.round((q.subtotal - packDiscount - offers.print - couponDiscount - referralDiscount + q.deliveryFee - offers.delivery + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
@@ -983,10 +1006,10 @@ app.get('/customer/orders/:id/preview.pdf', requireRole('customer'), (req, res) 
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe && x.customerId === req.user.id);
   if (!o) return res.sendStatus(404);
-  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
+  const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o.fileExt));
   if (!fs.existsSync(p)) return res.sendStatus(404);
   res.setHeader('Cache-Control', 'private, no-store');
-  res.type('pdf').sendFile(p);
+  res.type(mimeFor(o.fileExt)).sendFile(p);
 });
 
 app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
@@ -1103,12 +1126,12 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   try { q = quote({ pages: src.pages, copies: src.copies, printType: src.printType, student: !!req.user.student, zone, point }); }
   catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Start a new order to <em>pin your delivery point.</em>')); }
   const id = nextOrderId(db);
-  try { fs.copyFileSync(`data/uploads/${src.id}.pdf`, `data/uploads/${id}.pdf`); } catch {}
+  try { fs.copyFileSync(`data/uploads/${orderFile(src.id, src.fileExt)}`, `data/uploads/${orderFile(id, src.fileExt)}`); } catch {}
   const now = new Date().toISOString();
   const packCover = coverFor(db, req.user.id, src.printType, src.pages * src.copies);
   const packDiscount = packCover ? q.subtotal : 0;
   db.orders.push({
-    id, customerId: src.customerId, document: src.document, pages: src.pages, filePages: src.filePages || src.pages, copies: src.copies,
+    id, customerId: src.customerId, document: src.document, pages: src.pages, filePages: src.filePages || src.pages, fileType: src.fileType || 'pdf', fileExt: src.fileExt || 'pdf', copies: src.copies,
     printType: src.printType, sides: src.sides, paper: src.paper || 'A4', orientation: src.orientation || 'auto',
     binding: src.binding || 'none', notes: src.notes || '', pageRange: src.pageRange || null,
     addressId: src.addressId, slot: src.slot,
@@ -1484,6 +1507,7 @@ function guestDraft(db, req) {
 
 app.get('/order', (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
+  offerDevice(req, res);
   const db = loadDb();
   const ref = String(req.query.ref || '').trim().toUpperCase();
   if (/^[A-Z2-9]{6,12}$/.test(ref) && findReferrer(db, ref)) {
@@ -1503,11 +1527,16 @@ app.post('/order/upload', upload.single('doc'), (req, res) => {
     try { fs.unlinkSync(req.file.path); } catch {}
     return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'File too heavy for the pilot (see limit on this page).', maxMb: loadDb().settings.order.maxFileMb }));
   }
-  let pages = 0;
-  try { pages = countPdfPages(fs.readFileSync(req.file.path)); } catch { pages = 0; }
-  if (!pages || pages > 1000) {
+  let file = null;
+  try {
+    file = analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
+  } catch {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That PDF has no readable pages (or over 1000).', maxMb: loadDb().settings.order.maxFileMb }));
+    return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That file won\'t print — PDF, PNG or JPG only.', maxMb: loadDb().settings.order.maxFileMb }));
+  }
+  if (file.pages > 1000) {
+    try { fs.unlinkSync(req.file.path); } catch {}
+    return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'Over 1000 pages — split it.', maxMb: loadDb().settings.order.maxFileMb }));
   }
   const db = loadDb();
   db.drafts ||= [];
@@ -1516,7 +1545,8 @@ app.post('/order/upload', upload.single('doc'), (req, res) => {
   const draft = {
     id: 'D' + Date.now().toString(36), guest: t, customerId: null,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
-    pages, createdAt: new Date().toISOString()
+    pages: file.pages, fileType: file.fileType, fileExt: file.ext,
+    createdAt: new Date().toISOString()
   };
   db.drafts.push(draft);
   saveDb(db);
@@ -1531,7 +1561,7 @@ app.post('/order/options', (req, res) => {
   const copies = Math.max(1, Math.min(200, parseInt(req.body.copies, 10) || 1));
   const printType = req.body.printType === 'color' ? 'color' : 'bw';
   const sides = req.body.sides === 'double' ? 'double' : 'single';
-  const r = rangePages(req.body.range, d.pages);
+  const r = d.fileType === 'image' ? { pages: 1, valid: true } : rangePages(req.body.range, d.pages);
   if (!r.valid) {
     const jobs = activePrintJobs(db);
     return res.send(orderPage({ draft: d, pricing: db.pricing, error: 'Page range confused us — try 1-12.', maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
@@ -1540,7 +1570,7 @@ app.post('/order/options', (req, res) => {
   if (!area) return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, error: 'Choose a valid delivery area or kiosk collection.', maxMb: db.settings.order.maxFileMb }));
   const slot = req.body.slot === 'Evening' ? 'Today, 7:00 PM' : req.body.slot === 'Morning' ? 'Tomorrow, 9:00 AM' : 'ASAP';
   d.selections = {
-    effPages: r.pages, range: (req.body.range || '').slice(0, 60) || null,
+    effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
     copies, printType, sides, orientation: 'auto', binding: 'none', notes: '',
     area, zone: zoneOf(area), zoneLabel: area, slot
   };
@@ -1647,9 +1677,9 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
     // else: silently drop — request-time check already caught typos; only a
     // race (second order placed in between) lands here.
   }
-  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${id}.pdf`); } catch {}
+  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); } catch {}
   db.orders.push({
-    id, customerId: user.id, document: d.document, pages: s.effPages, filePages: d.pages, copies: s.copies,
+    id, customerId: user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: 'auto',
     binding: 'none', notes: '', pageRange: s.range,
     addressId: address.id, slot: s.slot,
@@ -1680,12 +1710,12 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
 app.use((err, req, res, _next) => {
-  if (!err || !/multer|Only PDF|File too large/i.test(err.message)) throw err;
+  if (!err || !/multer|PDF, PNG or JPG|Only PDF|File too large/i.test(err.message)) throw err;
   const user = currentUser(req);
   if (!user) {
     // Guest funnel: show the public order page error, not a login redirect
     const isGuestOrder = req.path === '/order/upload';
-    if (isGuestOrder) return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That file won\'t print — PDF only, check size.', maxMb: loadDb().settings.order.maxFileMb }));
+    if (isGuestOrder) return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That file won\'t print — PDF, PNG or JPG only, check size.', maxMb: loadDb().settings.order.maxFileMb }));
     return res.redirect('/login');
   }
   res.status(400).send(oops(user, '/customer/orders/new', 'That file <em>won\'t print.</em>'));
@@ -1728,7 +1758,8 @@ function agentAuth(req, res, next) {
 const agentJob = (o) => ({
   id: o.id, document: o.document, pages: o.pages, copies: o.copies,
   printType: o.printType, sides: o.sides, paper: o.paper || 'A4',
-  pageRange: o.pageRange || null, status: o.status
+  pageRange: o.pageRange || null, fileType: o.fileType || 'pdf', fileExt: o.fileExt || 'pdf',
+  status: o.status
 });
 
 app.get('/api/agent/next', agentAuth, (_req, res) => {
@@ -1748,9 +1779,9 @@ app.get('/api/agent/file/:id', agentAuth, (req, res) => {
   if (!o || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
     return res.status(404).json({ error: 'Not printable right now.' });
   }
-  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
+  const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o.fileExt));
   if (!fs.existsSync(p)) return res.status(404).json({ error: 'File missing.' });
-  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Type', mimeFor(o.fileExt));
   res.sendFile(p);
 });
 
@@ -1841,10 +1872,12 @@ app.get('/share/:token', (req, res) => {
   }
   const safe = safeOrderId(t.orderId);
   if (!safe) return res.status(410).send('Bad link.');
-  const p = path.join(ROOT, 'data', 'uploads', `${safe}.pdf`);
+  const o = db.orders.find((x) => x.id === safe);
+  const fname = orderFile(safe, o && o.fileExt);
+  const p = path.join(ROOT, 'data', 'uploads', fname);
   if (!fs.existsSync(p)) return res.status(404).send('File not found.');
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${safe}.pdf"`);
+  res.setHeader('Content-Type', mimeFor(o && o.fileExt));
+  res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
   res.sendFile(p);
 });
 
