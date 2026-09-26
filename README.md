@@ -215,8 +215,9 @@ take longer to put the sheet in the tray.
 ### Slow printing? (Epson L3250 is an inkjet, ~10 pages/min in Draft)
 
 1. Windows Settings → Printers → Epson L3250 → Printing preferences →
-   Quality **Fast/Draft**, grayscale default. Photo-quality defaults spool
-   huge jobs and crawl.
+   Quality **Standard (Normal)**, grayscale default. Draft mode prints
+   faint slips that look half-missing; photo quality spools huge jobs and
+   crawls. Standard is the pilot setting.
 2. Keep B&W orders monochrome (the agent already sends `monochrome` for
    B&W) and close other apps competing for USB/spool.
 3. The agent prints serially by design (one job at a time so files never
@@ -225,11 +226,14 @@ take longer to put the sheet in the tray.
 ### Pickup flow (no Pi yet)
 
 Printed jobs auto-advance to **Ready for pickup**, which the customer sees
-live with a kiosk chime. The admin order page shows a **pickup QR** while
+live with a kiosk chime. The agent also prints the pickup QR as its own
+page after the document, and the admin order page shows the same QR while
 the order awaits collection: the customer scans it with their phone and
 taps "I collected my prints", flipping the order to **Collected**. The
 link is single-use and expires in 7 days — it is the same mechanism the
-Pi screen will display later.
+Pi screen will display later. Customers can also open the scanner from
+their order page (camera permission + on-device QR decode, with a
+"just use your phone camera" fallback).
 
 ### Pilot day (two terminals)
 ```bash

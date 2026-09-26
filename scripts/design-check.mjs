@@ -30,6 +30,7 @@ const pages = new Map([
   ['/customer', customer.customerDashboard(user, { pricing, notes: [] })],
   ['/customer/orders', customer.ordersList(user, { tab: 'active', counts: { active: 1, completed: 0, cancelled: 0 }, orders: [order] })],
   ['/customer/orders/preview', customer.orderDetail(user, order)],
+  ['/customer/orders/preview/scan', customer.scanPage(user, { ...order, id: 'preview', status: 'READY_FOR_PICKUP' })],
   ['/customer/orders/new', account.uploadStep(user)],
   ['/customer/options', account.optionsStep(user, draft, [])],
   ['/customer/orders/preview/pay', account.payStep(user, order)],

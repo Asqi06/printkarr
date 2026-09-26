@@ -21,7 +21,7 @@ import {
 } from './lib/auth.js';
 import { layout, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
-import { customerDashboard, ordersList, orderDetail } from './lib/views_customer.js';
+import { customerDashboard, ordersList, orderDetail, scanPage } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { packsPage, packDashboardHtml, adminPacksPage } from './lib/views_packs.js';
 import { referralsPage, adminReferralsPage } from './lib/views_referrals.js';
@@ -1104,6 +1104,16 @@ app.get('/customer/orders/:id', requireRole('customer'), (req, res) => {
   res.send(orderDetail(req.user, o, null, waUrl, req.query.fresh === '1'));
 });
 
+// In-page pickup scanner: camera permission + QR decode happen here, then
+// the customer lands on the token collect page and still taps to confirm.
+app.get('/customer/orders/:id/scan', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
+  if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
+  if (o.status !== 'READY_FOR_PICKUP') return res.redirect(`/customer/orders/${o.id}`);
+  res.send(scanPage(req.user, o));
+});
+
 // Kiosk live status for polling (no rider)
 app.get('/api/orders/:id/status', (req, res) => {
   const user = currentUser(req);
@@ -1814,7 +1824,11 @@ app.post('/api/agent/:id/done', agentAuth, (req, res) => {
   } catch {
     return res.status(409).json({ error: `Cannot move to PRINTED from ${o.status}.` });
   }
-  res.json({ ok: true, order: agentJob(o) });
+  // Pickup QR for the printed slip: minted now that the order is READY, so
+  // the agent can print it as its own page straight from this response.
+  const url = collectUrl(req, collectTokenFor(db, o.id));
+  saveDb(db);
+  res.json({ ok: true, order: agentJob(o), collectUrl: url });
 });
 app.post('/api/agent/:id/failed', agentAuth, (req, res) => {
   const safe = safeOrderId(req.params.id);

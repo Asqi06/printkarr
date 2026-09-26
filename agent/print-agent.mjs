@@ -16,6 +16,7 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { buildCoverPdf, validatePdf } from './cover.js';
 import { printSettings } from './print-settings.js';
+import QRCode from 'qrcode';
 
 const BASE = process.env.PRINTKARR_URL || 'http://localhost:3000';
 const TOKEN = process.env.AGENT_TOKEN || '';
@@ -96,7 +97,14 @@ async function processJob(order) {
     // document would share its sheet with page 1. Two jobs, correct output.
     await printFile(coverPdf, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'cover');
     await printFile(srcPdf, order, 'document');
-    await api(`/api/agent/${order.id}/done`, { method: 'POST', body: '{}' });
+    const doneRes = await api(`/api/agent/${order.id}/done`, { method: 'POST', body: '{}' });
+    // Pickup QR as its own page, last in the tray: the customer scans it
+    // with their phone to confirm collection (Pi screen shows it later).
+    if (doneRes && doneRes.collectUrl) {
+      const qrPng = path.join(workDir, `${order.id}-qr.png`);
+      await QRCode.toFile(qrPng, doneRes.collectUrl, { width: 640, margin: 2 });
+      await printFile(qrPng, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'qr-slip');
+    }
     console.log(`job ${order.id}: READY`);
   } catch (e) {
     console.log(`job ${order.id}: FAILED — ${e.message}`);
