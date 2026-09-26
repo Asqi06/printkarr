@@ -31,8 +31,9 @@ import {
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
+import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
-import { landing, orderPage, phonePage, otpPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { landing, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
 
@@ -429,16 +430,37 @@ app.get('/admin/orders', requireRole('admin'), (req, res) => {
   }));
 });
 
-app.get('/admin/orders/:id', requireRole('admin'), (req, res) => {
+app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === req.params.id);
   if (!o) return res.status(404).send(oops(req.user, '/admin/orders', 'Order <em>not found.</em>'));
   const c = db.users.find((u) => u.id === o.customerId) || {};
   const a = db.addresses.find((x) => x.id === o.addressId) || {};
   const waUrl = waForwardUrl(db, req, o);
+  // Kiosk counter QR: shown while the order awaits pickup so the customer
+  // can scan it with their phone to confirm collection (Pi screen later).
+  let collectQr = null;
+  if (o.status === 'READY_FOR_PICKUP') {
+    try {
+      collectQr = {
+        url: collectUrl(req, collectTokenFor(db, o.id)),
+        img: null
+      };
+      collectQr.img = await QRCode.toDataURL(collectQr.url, { width: 360, margin: 2 });
+    } catch { collectQr = null; }
+  }
   saveDb(db);
-  res.send(adminOrderDetail(req.user, o, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt));
+  res.send(adminOrderDetail(req.user, o, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt, collectQr));
 });
+
+function finishPrintAtKiosk(db, order, by) {
+  transition(order, 'PRINTED', { by, note: 'printing finished' });
+  const printed = { ...order };
+  transition(order, 'READY_FOR_PICKUP', { by, note: 'ready at kiosk' });
+  saveDb(db);
+  notifyState(printed);
+  notifyState(order);
+}
 
 app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   const db = loadDb();
@@ -448,9 +470,6 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   if (!canTransition(o.status, to) || to === 'RIDER_ASSIGNED') {
     return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>'));
   }
-  try { transition(o, to, { by: req.user.id }); }
-  catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>')); }
-  if (to === 'DELIVERED') qualifyForOrder(db, o);
   if (to === 'PRINTED') {
     const pr = db.printers[0];
     if (pr) {
@@ -459,8 +478,16 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
       pr.currentJob = o.id;
     }
   }
-  saveDb(db);
-  notifyState(o);
+  try {
+    if (to === 'PRINTED') finishPrintAtKiosk(db, o, req.user.id);
+    else transition(o, to, { by: req.user.id });
+  }
+  catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>')); }
+  if (to === 'DELIVERED') qualifyForOrder(db, o);
+  if (to !== 'PRINTED') {
+    saveDb(db);
+    notifyState(o);
+  }
   res.redirect(`/admin/orders/${o.id}`);
 });
 
@@ -1691,7 +1718,19 @@ function agentStep(to, note) {
   };
 }
 app.post('/api/agent/:id/started', agentAuth, agentStep('PRINTING', 'agent picked up'));
-app.post('/api/agent/:id/done', agentAuth, agentStep('PRINTED', 'agent finished'));
+app.post('/api/agent/:id/done', agentAuth, (req, res) => {
+  const safe = safeOrderId(req.params.id);
+  if (!safe) return res.status(400).json({ error: 'Bad ID.' });
+  const db = loadDb();
+  const o = db.orders.find((x) => x.id === safe);
+  if (!o) return res.status(404).json({ error: 'Unknown order.' });
+  try {
+    finishPrintAtKiosk(db, o, 'agent');
+  } catch {
+    return res.status(409).json({ error: `Cannot move to PRINTED from ${o.status}.` });
+  }
+  res.json({ ok: true, order: agentJob(o) });
+});
 app.post('/api/agent/:id/failed', agentAuth, (req, res) => {
   const safe = safeOrderId(req.params.id);
   if (!safe) return res.status(400).json({ error: 'Bad ID.' });
@@ -1753,6 +1792,58 @@ app.get('/share/:token', (req, res) => {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${safe}.pdf"`);
   res.sendFile(p);
+});
+
+// Kiosk collection: the QR on the counter encodes one of these links. The
+// customer scans it with their phone and confirms pickup — no login, the
+// token IS the key. Single-use, order must still await pickup.
+function collectUrl(req, token) {
+  return `${req.protocol}://${req.get('host')}/c/${token}`;
+}
+app.get('/c/:token', (req, res) => {
+  const tok = safeToken(req.params.token);
+  const db = loadDb();
+  const found = tok ? findCollectToken(db, tok) : { ok: false, error: 'bad-link' };
+  if (!found.ok) {
+    const msg = { used: 'These prints were already collected. Enjoy!', expired: 'This pickup link has expired. Ask the kiosk counter for help.' }[found.error];
+    saveDb(db);
+    return res.status(found.error === 'bad-link' ? 400 : 410).send(collectPage({ state: 'dead', message: msg }));
+  }
+  const o = db.orders.find((x) => x.id === found.token.orderId);
+  if (!o || o.status !== 'READY_FOR_PICKUP') {
+    saveDb(db);
+    return res.status(410).send(collectPage({ state: 'dead', message: 'These prints are no longer awaiting pickup.' }));
+  }
+  const c = db.users.find((u) => u.id === o.customerId) || {};
+  saveDb(db);
+  res.send(collectPage({ state: 'ready', order: { ...o, collectToken: tok }, customerName: c.name }));
+});
+
+app.post('/c/:token/collect', (req, res) => {
+  const tok = safeToken(req.params.token);
+  const db = loadDb();
+  const found = tok ? findCollectToken(db, tok) : { ok: false, error: 'bad-link' };
+  if (!found.ok) {
+    const msg = { used: 'These prints were already collected. Enjoy!', expired: 'This pickup link has expired. Ask the kiosk counter for help.' }[found.error]
+      || 'This pickup link is no longer valid.';
+    saveDb(db);
+    return res.status(410).send(collectPage({ state: 'dead', message: msg }));
+  }
+  const o = db.orders.find((x) => x.id === found.token.orderId);
+  const done = consumeCollectToken(db, tok, o);
+  if (!done.ok) {
+    saveDb(db);
+    return res.status(410).send(collectPage({ state: 'dead', message: 'These prints are no longer awaiting pickup.' }));
+  }
+  try {
+    transition(o, 'DELIVERED', { by: o.customerId, note: 'collected via kiosk QR' });
+  } catch {
+    saveDb(db);
+    return res.status(409).send(collectPage({ state: 'dead', message: 'These prints were already collected. Enjoy!' }));
+  }
+  saveDb(db);
+  notifyState(o);
+  res.send(collectPage({ state: 'dead', message: `Order #${o.id} marked collected. Enjoy your prints!` }));
 });
 
 app.get('/api/agent/health', (_req, res) => {

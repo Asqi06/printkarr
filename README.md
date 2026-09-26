@@ -208,17 +208,39 @@ FILE_RETENTION_MINUTES=15
 DEMO_LOGIN=on
 ```
 No Razorpay/Google/WhatsApp keys needed for V0-A.
+The agent sends page ranges and copy count directly to SumatraPDF. Its log
+shows how long each cover and document took to spool; printer hardware may
+take longer to put the sheet in the tray.
+
+### Slow printing? (Epson L3250 is an inkjet, ~10 pages/min in Draft)
+
+1. Windows Settings → Printers → Epson L3250 → Printing preferences →
+   Quality **Fast/Draft**, grayscale default. Photo-quality defaults spool
+   huge jobs and crawl.
+2. Keep B&W orders monochrome (the agent already sends `monochrome` for
+   B&W) and close other apps competing for USB/spool.
+3. The agent prints serially by design (one job at a time so files never
+   mix) — a queue of big jobs is supposed to take minutes, not seconds.
+
+### Pickup flow (no Pi yet)
+
+Printed jobs auto-advance to **Ready for pickup**, which the customer sees
+live with a kiosk chime. The admin order page shows a **pickup QR** while
+the order awaits collection: the customer scans it with their phone and
+taps "I collected my prints", flipping the order to **Collected**. The
+link is single-use and expires in 7 days — it is the same mechanism the
+Pi screen will display later.
 
 ### Pilot day (two terminals)
 ```bash
 npm install
 npm start            # terminal 1: app + queue on http://localhost:3000
-npm run agent        # terminal 2: print agent (polls every 15s)
+npm run agent        # terminal 2: print agent (polls every 2s)
 ```
 1. Open `http://localhost:3000/admin/qr`, print the page, paste in classroom.
 2. QR encodes `http://<laptop-LAN-IP>:3000/order` — students scan, upload,
    pick Classroom pickup (₹0 delivery), test-pay, watch status.
-   Paid orders auto-queue: the agent grabs them within ~15 seconds and
+   Paid orders auto-queue: the agent grabs them within ~2 seconds and
    prints with no clicks from you. (Manual queue buttons remain for
    requeues and failures.)
 3. Collect printed bundles at the counter, matched by the cover slip

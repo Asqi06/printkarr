@@ -136,14 +136,14 @@ async function pipelineTest() {
   const combined = (out.stdout || '') + (out.stderr || '');
   console.log(combined.split('\n').slice(0, 20).join('\n'));
   if (out.status !== 0) fail(`Agent exited with ${out.status}. Output above.`);
-  // Verify order moved to PRINTED
+  // Verify order moved through PRINTED to READY_FOR_PICKUP
   const { loadDb: reload } = await import('../lib/db.js');
   // Need fresh read (import cache holds old db object) — read file directly
   const fresh = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/db.json'), 'utf8'));
   const order = fresh.orders.find(o => o.id === id);
   if (!order) fail('Test order vanished from DB');
-  if (order.status !== 'PRINTED') fail(`Pipeline failed — order ${id} is ${order.status} (expected PRINTED). Check agent log above and printer.`);
-  ok(`Pipeline OK — order ${id} is PRINTED; cover + document should be in the kiosk tray.`);
+  if (order.status !== 'READY_FOR_PICKUP') fail(`Pipeline failed — order ${id} is ${order.status} (expected READY_FOR_PICKUP). Check agent log above and printer.`);
+  ok(`Pipeline OK — order ${id} is READY_FOR_PICKUP; cover + document should be in the kiosk tray.`);
   console.log('\n  Clean up: order stays as proof; file auto-deletes in 15 min. Delete manually if needed:');
   console.log(`    data/uploads/${id}.pdf`);
 }

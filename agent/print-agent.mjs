@@ -14,16 +14,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
-import { buildCoverPdf } from './cover.js';
+import { buildCoverPdf, validatePdf } from './cover.js';
+import { printSettings } from './print-settings.js';
 
 const BASE = process.env.PRINTKARR_URL || 'http://localhost:3000';
 const TOKEN = process.env.AGENT_TOKEN || '';
 const PRINTER = process.env.PRINTER_NAME || 'Epson L3250';
 const SUMATRA = process.env.SUMATRA_PDF || 'SumatraPDF.exe';
 const DRY = process.env.DRY_RUN === '1';
-const POLL = Math.max(2000, Number(process.env.POLL_MS) || 15000);
+const POLL = Math.max(2000, Number(process.env.POLL_MS) || 2000);
 const RUN_ONCE = process.env.RUN_ONCE === '1';
-const QPDF = process.env.QPDF_BIN || '';
 const TMP = path.join(os.tmpdir(), 'printkarr-agent');
 
 if (!TOKEN) {
@@ -57,40 +57,15 @@ function run(cmd, args, timeoutMs = 180000) {
   });
 }
 
-function printSettings(order) {
-  if (process.env.PRINT_SETTINGS) return process.env.PRINT_SETTINGS;
-  const duplex = order.sides === 'double' ? 'duplexlong' : 'simplex';
-  const tone = order.printType === 'color' ? 'color' : 'monochrome';
-  return `${duplex},${tone}`;
-}
-
 async function printFile(file, order, tag) {
-  const settings = printSettings(order);
+  const settings = printSettings(order, tag === 'cover' ? '' : process.env.PRINT_SETTINGS);
   if (DRY) {
     console.log(`DRY-PRINT [${tag}] ${path.basename(file)} -> "${PRINTER}" (${settings})`);
     return;
   }
+  const started = Date.now();
   await run(SUMATRA, ['-print-to', PRINTER, '-print-settings', settings, '-silent', file]);
-  console.log(`printed [${tag}] ${path.basename(file)} (${settings})`);
-}
-
-async function maybeSubset(srcPdf, order, workDir) {
-  // Page ranges need a real PDF splitter. If qpdf is present we subset;
-  // otherwise the whole document prints (noted on the cover + in logs).
-  if (!order.pageRange || !QPDF) return { file: srcPdf, ranged: false };
-  const out = path.join(workDir, `${order.id}-range.pdf`);
-  const spec = order.pageRange.replace(/\s+/g, '').split(',').join(',');
-  try {
-    if (DRY) {
-      console.log(`DRY-SUBSET [${order.id}] pages ${spec} (qpdf)`);
-      return { file: srcPdf, ranged: false };
-    }
-    await run(QPDF, ['--empty', '--pages', srcPdf, spec, '--', out]);
-    return { file: out, ranged: true };
-  } catch (e) {
-    console.log(`subset failed for ${order.id}, printing whole document: ${e.message}`);
-    return { file: srcPdf, ranged: false };
-  }
+  console.log(`spooled [${tag}] ${path.basename(file)} (${settings}) in ${Date.now() - started}ms`);
 }
 
 async function processJob(order) {
@@ -103,20 +78,23 @@ async function processJob(order) {
     if (!dl.ok) throw new Error(`download -> ${dl.status}`);
     const srcPdf = path.join(workDir, `${order.id}.pdf`);
     fs.writeFileSync(srcPdf, Buffer.from(await dl.arrayBuffer()));
-    const { file: docPdf, ranged } = await maybeSubset(srcPdf, order, workDir);
+    printSettings(order, process.env.PRINT_SETTINGS); // Reject a bad range before any paper moves.
     const cover = buildCoverPdf(`PRINTKARR ${order.id}`, [
       ['Document', order.document],
-      ['Pages x copies', `${order.pages} x ${order.copies}${order.pageRange ? ` (${order.pageRange}${ranged ? '' : ', full doc printed'})` : ''}`],
+      ['Pages x copies', `${order.pages} x ${order.copies}${order.pageRange ? ` (${order.pageRange})` : ''}`],
       ['Spec', `${order.printType === 'bw' ? 'B&W' : 'Colour'} / ${order.sides}-sided / ${order.paper}`],
       ['Printer', PRINTER],
       ['Queued', new Date().toLocaleString('en-IN')]
     ]);
     const coverPdf = path.join(workDir, `${order.id}-cover.pdf`);
     fs.writeFileSync(coverPdf, cover);
-    await printFile(coverPdf, { ...order, sides: 'single', printType: 'bw' }, 'cover');
-    for (let c = 1; c <= Math.max(1, Math.min(200, order.copies)); c++) {
-      await printFile(docPdf, order, `copy ${c}/${order.copies}`);
-    }
+    const cv = validatePdf(cover);
+    console.log(`job ${order.id}: cover slip ${cover.length} bytes (${cv.ok ? 'xref ok' : 'INVALID: ' + cv.error})`);
+    if (!cv.ok) throw new Error(`Invalid cover PDF: ${cv.error}`);
+    // Cover stays its own single-sided job: merging it into a duplexed
+    // document would share its sheet with page 1. Two jobs, correct output.
+    await printFile(coverPdf, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'cover');
+    await printFile(srcPdf, order, 'document');
     await api(`/api/agent/${order.id}/done`, { method: 'POST', body: '{}' });
     console.log(`job ${order.id}: READY`);
   } catch (e) {
