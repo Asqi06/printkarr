@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import multer from 'multer';
+import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas } from './lib/atlas.js';
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
 import { quote, rangePages, activePrintJobs, surchargeFees, bonusFor, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
@@ -173,6 +174,30 @@ const apiLimiter = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: 'dra
 app.use('/api/', apiLimiter);
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false }));
+app.use((req, res, next) => {
+  if (!atlasEnabled || (['GET', 'HEAD'].includes(req.method) && /\.(?:css|js|png|jpe?g|svg|webp|ico|woff2?)$/i.test(req.path))) return next();
+  refreshAtlas().then(() => {
+    const end = res.end;
+    let ending = false;
+    res.end = function (...args) {
+      if (ending) return this;
+      ending = true;
+      flushAtlas().then(() => end.apply(this, args)).catch((error) => {
+        console.error('Atlas write failed:', error.message);
+        if (this.headersSent) return this.destroy(error);
+        this.removeHeader('Content-Length');
+        this.removeHeader('Content-Type');
+        this.statusCode = 503;
+        end.call(this, 'Storage temporarily unavailable. Please retry.');
+      });
+      return this;
+    };
+    next();
+  }).catch((error) => {
+    console.error('Atlas read failed:', error.message);
+    res.status(503).send('Storage temporarily unavailable. Please retry.');
+  });
+});
 app.use(['/admin', '/customer', '/order'], (_req, res, next) => {
   res.set('Cache-Control', 'private, no-store');
   next();
@@ -1874,7 +1899,10 @@ app.get('/qr.png', async (req, res) => {
 // File janitor (V0 §16): every 5 minutes, delete PDFs of terminal orders
 // older than FILE_RETENTION_MINUTES (default 15). Order records and
 // history stay — only the document files are wiped.
-setInterval(() => janitor(ROOT), 300e3).unref();
+setInterval(() => {
+  janitor(ROOT);
+  if (atlasEnabled) flushAtlas().catch((error) => console.error('Atlas file cleanup failed:', error.message));
+}, 300e3).unref();
 
 function safeToken(t) {
   return /^[a-f0-9]{32}$/.test(String(t || '')) ? String(t) : null;
@@ -1976,7 +2004,7 @@ app.get('/api/ready', (_req, res) => {
     users: db.users.length,
     orders: db.orders.length,
     uploadsWritable,
-    volume: volumeMarker
+    volume: atlasEnabled ? { remote: true, provider: 'mongodb-atlas' } : volumeMarker
       ? { marker: true, since: volumeMarker.createdAt, lastCommit: volumeMarker.lastCommit }
       : { marker: false },
     capabilities: {
@@ -2225,9 +2253,10 @@ function diskCheck() {
   }
 }
 
-function bootstrap() {
+async function bootstrap() {
   assertPersistentStorage();
-  if (process.env.NODE_ENV === 'production' && !fs.existsSync(DATA_FILE) && process.env.INIT_EMPTY_DB === 'yes') {
+  await initAtlas(DATA_FILE, path.join(DATA_DIR, 'uploads'));
+  if (!atlasEnabled && process.env.NODE_ENV === 'production' && !fs.existsSync(DATA_FILE) && process.env.INIT_EMPTY_DB === 'yes') {
     if (fs.existsSync(path.join(DATA_DIR, '.diskid'))) throw new Error('Previously initialized data volume has no database; restore its backup before starting.');
     saveDb(blankDb());
   }
@@ -2236,7 +2265,7 @@ function bootstrap() {
     throw new Error(`Storage unavailable: ${store.error}`);
   }
   console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
-  const vol = diskCheck();
+  const vol = atlasEnabled ? { fresh: false } : diskCheck();
   if (vol.fresh && process.env.NODE_ENV === 'production') {
     console.warn('Fresh data marker created. Confirm this is the intended data directory and verify customer, order, coupon and pricing records before accepting traffic.');
   }
@@ -2279,9 +2308,11 @@ function bootstrap() {
     if (!(RAZORPAY.id && RAZORPAY.secret)) console.warn('⚠ RAZORPAY_KEY_ID/SECRET not set — only simulated payments offered.');
     if (!GOOGLE.id) console.warn('⚠ GOOGLE_CLIENT_ID not set — no Google sign-in button.');
   }
+  await flushAtlas();
 }
-bootstrap();
-
-app.listen(PORT, () =>
+bootstrap().then(() => app.listen(PORT, () =>
   console.log(`Printkarr (${process.env.NODE_ENV === 'production' ? 'production' : 'demo'}) live on port ${PORT}`)
-);
+)).catch((error) => {
+  console.error('Startup refused:', error.message);
+  process.exitCode = 1;
+});

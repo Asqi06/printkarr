@@ -1,4 +1,5 @@
 node_modules/
+.atlas-smoke-*/
 data/db*.json
 data/.diskid
 data/uploads/

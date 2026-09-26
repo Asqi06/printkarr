@@ -54,17 +54,35 @@ Only `public/` is served statically — `*.md`, `/data/*`, `/lib/*`,
 
 ## Deliberately simulated (PRD Phase 2/3 later)
 
-Real database, real auth, Razorpay, WhatsApp API, Epson integration,
-live maps. The API and module boundaries are kept clean so each can be
-swapped without touching the workflows: `lib/db.js` → real DB,
-`lib/auth.js` → real auth, `lib/notify.js` → WhatsApp/SMS/push,
-uploads → S3-compatible storage, navigate sim → Mapbox/Google.
+The Atlas deployment persists the existing JSON data model and print files.
+A relational data model, stronger auth and larger file storage can follow
+when the pilot outgrows Atlas Free.
 
 ## Going live (production)
 
 The app needs durable storage for its JSON database and customer uploads.
 
-**Option A — host with a persistent disk:**
+**Option A — MongoDB Atlas Free with Render Free:**
+
+Atlas stores the complete database and customer uploads in GridFS. Create
+a Free/M0 cluster, a database user, and allow your computer's IP and the
+[Render service's outbound IP ranges](https://render.com/docs/outbound-ip-addresses)
+in Atlas Network Access. Keep the connection string secret. Set
+`MONGODB_URI` in a local `.env`, then initialize a **new empty shop** once:
+
+```bash
+CONFIRM=INIT_EMPTY_ATLAS npm run init:atlas
+```
+
+On PowerShell, set `$env:CONFIRM='INIT_EMPTY_ATLAS'` before the command.
+The initializer refuses to overwrite an existing Atlas database. Add
+`MONGODB_URI` to Render's Environment page using **Save only**, then deploy
+the code. The app refuses to start if Atlas is unavailable or uninitialized;
+`/api/ready` reports `mongodb-atlas` when connected. Remove any old
+`INIT_EMPTY_DB` variable. Atlas Free has a 512 MB hard storage limit, so
+monitor usage and export regular backups as the shop grows.
+
+**Option B — host with a persistent disk:**
 
 ```bash
 NODE_ENV=production
@@ -101,7 +119,7 @@ should restore their database instead. After the next deploy,
 survived. The owner admin is created from the env vars above on an
 empty database; demo accounts are not created in production.
 
-**Option B — Docker / VPS:**
+**Option C — Docker / VPS:**
 
 ```bash
 docker build -t printkarr .
@@ -115,8 +133,7 @@ docker run -d -p 3000:3000 \
 ```
 
 Use `INIT_EMPTY_DB=yes` only for a new shop with no existing records, then
-remove it. For an Oracle Cloud Always Free VM deployment, follow
-[deploy/README.md](deploy/README.md) instead.
+remove it. A VM setup is described in [deploy/README.md](deploy/README.md).
 
 **Before sharing the URL:**
 
@@ -125,7 +142,7 @@ remove it. For an Oracle Cloud Always Free VM deployment, follow
 2. Kill the demo: set `DEMO_LOGIN=off` (demo passwords stop working and
    the demo cards vanish from `/login`), then open Admin → Settings →
    **Demo access** and remove each demo account. Orders are kept.
-3. If the live DB still holds demo data, wipe it clean once:
+3. For **disk-backed deployments only**, if the live DB still holds demo data, wipe it clean once:
    back up `data/db.json`, run `CONFIRM=RESET npm run reset-prod`,
    restart with `ADMIN_EMAIL`/`ADMIN_PASSWORD` set. Never run
    `npm run seed` on the live server — it restores demo data.
@@ -134,7 +151,8 @@ remove it. For an Oracle Cloud Always Free VM deployment, follow
 5. Serve behind HTTPS (Render/Railway do this automatically; on a VPS
    put nginx/Caddy in front). Secure cookies and proxy handling are
    already wired — no code change needed. Rider GPS also requires HTTPS.
-6. Back up `/app/data/db.json` regularly; it is the whole database.
+6. Export the Atlas database and uploads regularly, or back up the entire
+   `data/` directory on a disk-backed deployment.
 
 ### Google sign-in (production)
 
