@@ -29,14 +29,18 @@ marked **Always Free** before creating them. A running VM still needs backups.
    counts or recent orders, pause the migration until those missing records
    can be recovered. This repository has no full data export endpoint on
    Render Free.
-5. Set the domain's DNS A record to the VM's public IP. From the checkout,
-   run `docker compose --env-file .env -f deploy/compose.yaml up -d --build`
-   and then `docker compose --env-file .env -f deploy/compose.yaml logs --tail=100 app`. The app
-   refuses to start if a production database is missing or corrupt.
-6. Compare `/api/ready` counts with the backup and check a recent price,
-   coupon, customer, order and uploaded PDF in the new Admin UI. Only then
-   accept new orders on the new host. Keep the old service available until
-   the check is complete, but avoid taking orders on both hosts at once.
+5. From the checkout, run
+   `docker compose --env-file .env -f deploy/compose.yaml up -d --build`
+   and then `docker compose --env-file .env -f deploy/compose.yaml logs --tail=100 app`.
+   The app refuses to start if a production database is missing or corrupt.
+   Check its local readiness with
+   `docker compose --env-file .env -f deploy/compose.yaml exec app wget -qO- http://localhost:3000/api/ready`
+   and compare customer and order counts with the backup.
+6. Once the app has passed that check, set the domain's DNS A record to the
+   VM's public IP. Check a recent price, coupon, customer, order and
+   uploaded PDF in the new Admin UI. Only then accept new orders on the new
+   host. Keep the old service available until the check is complete, but
+   avoid taking orders on both hosts at once.
 
 For a **brand-new shop with no prior data**, add `INIT_EMPTY_DB=yes` to
 `.env` for the first boot only. Remove it immediately after the database
