@@ -62,9 +62,9 @@ uploads → S3-compatible storage, navigate sim → Mapbox/Google.
 
 ## Going live (production)
 
-The app is deploy-ready: no build step, no external services required.
+The app needs durable storage for its JSON database and customer uploads.
 
-**Option A — Render / Railway / any host (easiest):**
+**Option A — host with a persistent disk:**
 
 ```bash
 NODE_ENV=production
@@ -72,19 +72,34 @@ ADMIN_EMAIL=you@yourdomain.in
 ADMIN_PASSWORD=<long-random-password>
 ```
 
-Deploy the repo as a Node service (`npm ci && node server.mjs`),
-attach a **persistent disk mounted at `/app/data`** (or the host's
-equivalent) so `db.json` and uploaded PDFs survive restarts.
+Attach a **persistent disk at the app's `data` directory** so `db.json`
+and uploaded files survive restarts. The exact Render mount path is
+`/app/data` for this Dockerfile, or `/opt/render/project/src/data` if
+the service uses Render's native Node runtime. A Dockerfile `VOLUME`
+declaration alone does not provision a Render persistent disk.
 
-> ⚠ Without that disk, **every redeploy wipes the live database**:
-> coupons, customers, orders and uploads vanish, and the owner admin is
-> silently recreated on the empty DB — which looks exactly like "my data
-> got replaced". If the boot log says `Fresh data volume on boot` on a
-> shop that already had data, the disk is missing. After attaching it,
-> the next deploy logs `Data volume survived redeploy`, and
-> `/api/ready` reports the volume marker as proof.
-On first boot with an empty database, the owner admin is created from
-the env vars above — the demo accounts are *not* created in production.
+> ⚠ Render's default filesystem loses changes on every deploy or restart.
+> Production now refuses to start unless its `data` directory is an
+> actual mount. It also refuses a missing or unreadable database instead
+> of replacing customers, orders, coupons or prices with defaults.
+
+**If the shop already has live data, back it up before changing the disk
+or deploying again.** Copy both `data/db.json` and the entire
+`data/uploads/` directory from the currently running instance to a safe
+location, then restore them onto the new disk before starting the new
+version. Verify the customer and order counts against `/api/ready` and
+check a recent admin price and coupon. Do not run `npm run seed` or
+`npm run reset-prod` during this migration. On a paid Render web service,
+use its Shell/SSH access to export the current files. Free Render web
+services do not provide Shell/SSH or persistent disks, so preserve any
+still-running data before upgrading or redeploying.
+
+For a genuinely new empty shop, set `INIT_EMPTY_DB=yes` for its first
+boot on the mounted disk, then remove that variable. Existing shops
+should restore their database instead. After the next deploy,
+`/api/ready` and the boot log should show that the same volume marker
+survived. The owner admin is created from the env vars above on an
+empty database; demo accounts are not created in production.
 
 **Option B — Docker / VPS:**
 
@@ -94,9 +109,14 @@ docker run -d -p 3000:3000 \
   -e NODE_ENV=production \
   -e ADMIN_EMAIL=you@yourdomain.in \
   -e ADMIN_PASSWORD=<long-random-password> \
+  -e INIT_EMPTY_DB=yes \
   -v printkarr-data:/app/data \
   printkarr
 ```
+
+Use `INIT_EMPTY_DB=yes` only for a new shop with no existing records, then
+remove it. For an Oracle Cloud Always Free VM deployment, follow
+[deploy/README.md](deploy/README.md) instead.
 
 **Before sharing the URL:**
 

@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import multer from 'multer';
-import { loadDb, saveDb } from './lib/db.js';
+import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
 import { quote, rangePages, activePrintJobs, surchargeFees, bonusFor, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
 import { notifyState } from './lib/notify.js';
@@ -173,6 +173,10 @@ const apiLimiter = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: 'dra
 app.use('/api/', apiLimiter);
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false }));
+app.use(['/admin', '/customer', '/order'], (_req, res, next) => {
+  res.set('Cache-Control', 'private, no-store');
+  next();
+});
 
 // ---- Never serve internals: only public/ reaches the user ----
 app.get(['/*.md', '/server.mjs', '/package.json', '/package-lock.json'], (_req, res) =>
@@ -2222,16 +2226,19 @@ function diskCheck() {
 }
 
 function bootstrap() {
+  assertPersistentStorage();
+  if (process.env.NODE_ENV === 'production' && !fs.existsSync(DATA_FILE) && process.env.INIT_EMPTY_DB === 'yes') {
+    if (fs.existsSync(path.join(DATA_DIR, '.diskid'))) throw new Error('Previously initialized data volume has no database; restore its backup before starting.');
+    saveDb(blankDb());
+  }
   const store = storageCheck();
   if (!store.ok) {
-    console.error(`⚠ STORAGE FAILURE: ${store.error}`);
-    console.error('⚠ Fix the /app/data volume (writable persistent disk), then restart. Nothing that saves will work until then.');
-  } else {
-    console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
+    throw new Error(`Storage unavailable: ${store.error}`);
   }
+  console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
   const vol = diskCheck();
   if (vol.fresh && process.env.NODE_ENV === 'production') {
-    console.warn('⚠ Fresh data volume on boot. If this shop already had coupons, customers or orders, they were just wiped: attach a persistent disk at /app/data or every redeploy resets the database. First-ever launch? Ignore this line.');
+    console.warn('Fresh data marker created. Confirm this is the intended data directory and verify customer, order, coupon and pricing records before accepting traffic.');
   }
   const db = loadDb();
   // Backfill referral codes + config for databases created before referrals.
