@@ -41,6 +41,19 @@ details summary { cursor: pointer; color: var(--primary); font-weight: 600; }
 .livetotal { position: sticky; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 20; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; border-radius: 20px; background: var(--navy); color: #fff; padding: 16px 20px; margin-top: 14px; box-shadow: var(--shadow-card); }
 .livetotal span { flex: 1 1 100%; font-size: 11px; line-height: 1.5; letter-spacing: .04em; opacity: .8; }
 .livetotal b { font-family: var(--font-d); font-weight: 600; font-size: 1.9rem; letter-spacing: -.02em; }
+.quick-print { margin-top: 16px; }
+.quick-order .livetotal { position: static; }
+.quick-print-default { font: 600 clamp(18px, 3vw, 24px) var(--font-d); margin: 7px 0 24px; }
+.route-picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.route-picks .pick { min-height: 78px; }
+.route-picks .pick span { display: grid; gap: 3px; }
+.route-picks .pick small { color: var(--muted); line-height: 1.35; }
+.order-more { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; }
+.order-more summary { list-style: none; color: var(--primary); font-weight: 700; }
+.order-more summary::after { content: ' ＋'; }
+.order-more[open] summary::after { content: ' −'; }
+.order-more-body { padding-top: 20px; }
+@media (max-width: 540px) { .route-picks { grid-template-columns: 1fr; } }
 .stepper { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; max-width: 220px; background: var(--paper); }
 .stepper button { width: 46px; font-size: 20px; font-weight: 700; background: var(--paper); border: none; color: var(--primary); }
 .stepper button:hover { background: var(--pale); }

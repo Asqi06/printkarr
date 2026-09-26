@@ -27,7 +27,8 @@ import { referralsPage, adminReferralsPage } from './lib/views_referrals.js';
 import {
   getConfig as referralConfig, codeFor as referralCodeFor, findReferrer,
   validateReferral, referralDiscountFor, createReferral, voidPendingForOrder,
-  cashWalletOf, monthEarned, monthKey, qualifyForOrder, validUpiId
+  cashWalletOf, monthEarned, monthKey, qualifyForOrder, qualifyForPack,
+  qualifyForTopup, validUpiId
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
@@ -845,7 +846,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
   const copies = Math.max(1, Math.min(200, parseInt(req.body.copies, 10) || 1));
   const printType = req.body.printType === 'color' ? 'color' : 'bw';
-  const sides = req.body.sides === 'single' ? 'single' : 'double';
+  const sides = req.body.sides === 'double' ? 'double' : 'single';
   const r = rangePages(req.body.range, d.pages);
   if (!r.valid) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Page range <em>confused us.</em>'));
   let address;
@@ -1155,8 +1156,9 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const w = walletOf(db, req.user.id);
   const tx = (db.walletTx || []).filter((t) => t.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
   const cash = cashWalletOf(db, req.user.id).balance;
+  const rcfg = referralConfig(db);
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, refErr: req.query.referrError || null, refMin: rcfg.friendMinOrder, refBonus: rcfg.friendOff }));
 });
 
 app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
@@ -1164,12 +1166,33 @@ app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
   if (livePayFor(db)) return res.status(400).send(oops(req.user, '/customer/wallet', 'Demo top-ups are <em>off</em> in live mode.'));
   const amount = Math.max(10, Math.min(10000, Math.round(Number(req.body.amount) || 0)));
   if (!amount) return res.redirect('/customer/wallet');
+  let referralCode = null, refBonus = 0, referrerId = null;
+  const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
+  if (refIn) {
+    const v = validateReferral(db, req.user, refIn, amount);
+    if (!v.ok) {
+      return res.redirect(`/customer/wallet?referrError=${encodeURIComponent(v.error)}`);
+    }
+    referralCode = refIn;
+    referrerId = v.referrer.id;
+    refBonus = referralDiscountFor(db, amount, 0, 0);
+  }
   const w = walletOf(db, req.user.id);
   const b = bonusFor(amount, db.pricing);
   const now = new Date().toISOString();
-  w.balance = Math.round((w.balance + amount + b.bonus) * 100) / 100;
-  db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount, kind: 'credit', label: 'Added (demo)', at: now });
+  w.balance = Math.round((w.balance + amount + b.bonus + refBonus) * 100) / 100;
+  const topTx = { id: `WTX-${Date.now()}`, customerId: req.user.id, amount, kind: 'credit', label: 'Added (demo)', at: now };
+  db.walletTx.push(topTx);
   if (b.bonus) db.walletTx.push({ id: `WTX-${Date.now()}b`, customerId: req.user.id, amount: b.bonus, kind: 'credit', label: `Top-up bonus +${b.pct}%`, at: now });
+  if (referralCode) {
+    db.walletTx.push({ id: `WTX-${Date.now()}r`, customerId: req.user.id, amount: refBonus, kind: 'credit', label: `Referral bonus ${referralCode}`, at: now });
+    createReferral(db, {
+      referrerId, refereeId: req.user.id, orderId: null,
+      code: referralCode, friendDiscount: refBonus,
+      sourceKind: 'topup', sourceId: topTx.id
+    });
+    qualifyForTopup(db, topTx.id, req.user.id);
+  }
   saveDb(db);
   res.redirect('/customer/wallet');
 });
@@ -1179,7 +1202,7 @@ app.get('/customer/packs', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const w = walletOf(db, req.user.id);
   saveDb(db);
-  res.send(packsPage(req.user, { subs: mySubs(db, req.user.id), walletBalance: w.balance, livePay: livePayFor(db) }));
+  res.send(packsPage(req.user, { subs: mySubs(db, req.user.id), walletBalance: w.balance, livePay: livePayFor(db), refErr: req.query.referrError || null, refOff: referralConfig(db).friendOff }));
 });
 
 app.post('/customer/packs/:id/subscribe', requireRole('customer'), (req, res) => {
@@ -1193,21 +1216,46 @@ app.post('/customer/packs/:id/subscribe', requireRole('customer'), (req, res) =>
   if (livePayFor(db) && method === 'upi') {
     return res.status(400).send(oops(req.user, '/customer/packs', 'That method is <em>demo-only.</em>'));
   }
+  let referralCode = null, referralDiscount = 0, referrerId = null;
+  const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
+  if (refIn) {
+    const v = validateReferral(db, req.user, refIn, charge);
+    if (!v.ok) {
+      return res.redirect(`/customer/packs?referral=${encodeURIComponent(refIn)}&referrError=${encodeURIComponent(v.error)}`);
+    }
+    referralCode = refIn;
+    referrerId = v.referrer.id;
+    referralDiscount = referralDiscountFor(db, charge, 0, 0);
+  }
+  const due = Math.round((charge - referralDiscount) * 100) / 100;
   const now = new Date().toISOString();
   if (method === 'wallet') {
     const w = walletOf(db, req.user.id);
-    if (w.balance < charge) {
+    if (w.balance < due) {
       saveDb(db);
       return res.status(402).send(oops(req.user, '/customer/packs', 'Wallet too <em>light.</em>'));
     }
-    w.balance = Math.round((w.balance - charge) * 100) / 100;
-    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: -charge, kind: 'debit', label: `${pack.name} ${plan}`, at: now });
+    w.balance = Math.round((w.balance - due) * 100) / 100;
+    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: -due, kind: 'debit', label: `${pack.name} ${plan}`, at: now });
   }
-  const sub = newSub(pack, req.user.id, charge);
+  const sub = newSub(pack, req.user.id, due);
   sub.payments[0].method = method === 'wallet' ? 'wallet' : 'upi-sim';
+  if (referralDiscount) sub.price = Math.round((sub.price - referralDiscount) * 100) / 100;
+  if (referralCode) {
+    sub.referralCode = referralCode;
+    sub.referralDiscount = referralDiscount;
+  }
   db.packSubs.push(sub);
+  if (referralCode) {
+    createReferral(db, {
+      referrerId, refereeId: req.user.id, orderId: null,
+      code: referralCode, friendDiscount: referralDiscount,
+      sourceKind: 'pack', sourceId: sub.id
+    });
+    qualifyForPack(db, sub);
+  }
   db.notifications ||= [];
-  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `${pack.name} secured — ${charge >= pack.price ? 'fully paid' : `₹${charge} booking, ₹${pack.price - charge} in installments`}.`, at: now, read: false });
+  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `${pack.name} secured — ${due >= sub.price ? 'fully paid' : `₹${due} booking, ₹${Math.round((sub.price - due) * 100) / 100} in installments`}.`, at: now, read: false });
   saveDb(db);
   res.redirect('/customer/packs');
 });
@@ -1265,13 +1313,13 @@ app.get('/admin/packs', requireRole('admin'), (req, res) => {
   res.send(adminPacksPage(req.user, { subs: [...db.packSubs].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')), users: db.users }));
 });
 
-// ---- Referrals: give ₹10, get ₹20 cash on delivery + milestones ----
+// ---- Referrals: first-order discount, print credit after collection ----
 function referralStats(db, customerId) {
   const mine = (db.referrals || []).filter((r) => r.referrerId === customerId);
   return {
     joined: mine.filter((r) => r.status !== 'void').length,
     qualified: mine.filter((r) => r.status === 'qualified').length,
-    earned: (db.cashTx || []).filter((t) => t.customerId === customerId && t.kind === 'credit').reduce((s, t) => s + t.amount, 0)
+    earned: (db.walletTx || []).filter((t) => t.customerId === customerId && t.source === 'referral' && t.amount > 0).reduce((s, t) => s + t.amount, 0)
   };
 }
 
@@ -1280,14 +1328,15 @@ app.get('/customer/referrals', requireRole('customer'), (req, res) => {
   const cfg = referralConfig(db);
   const code = referralCodeFor(db, db.users.find((u) => u.id === req.user.id) || req.user);
   const cash = cashWalletOf(db, req.user.id);
+  const credit = walletOf(db, req.user.id);
   const payouts = (db.payouts || []).filter((p) => p.customerId === req.user.id)
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   saveDb(db);
   res.send(referralsPage(req.user, {
     cfg, code,
     stats: referralStats(db, req.user.id),
-    cash, payouts,
-    shareText: `Print on paper in Vapi, 24/7. Use my PrintKarr code ${code} for ₹${cfg.friendOff} OFF your first ₹${cfg.friendMinOrder}+ order: ${req.protocol}://${req.get('host')}/order`
+    cash, credit, payouts,
+    shareText: `Assignment ka print chahiye? PrintKarr pe PDF upload karo. My link gives you ₹${cfg.friendOff} off your first eligible print: ${req.protocol}://${req.get('host')}/order?ref=${code}`
   }));
 });
 
@@ -1338,7 +1387,7 @@ app.post('/admin/referrals/config', requireRole('admin'), (req, res) => {
   cfg.enabled = req.body.enabled === '1';
   cfg.friendOff = num(req.body.friendOff, cfg.friendOff, 500);
   cfg.friendMinOrder = num(req.body.friendMinOrder, cfg.friendMinOrder, 100000);
-  cfg.referrerCash = num(req.body.referrerCash, cfg.referrerCash, 500);
+  cfg.referrerCredit = num(req.body.referrerCredit, cfg.referrerCredit, 500);
   cfg.minWithdrawal = num(req.body.minWithdrawal, cfg.minWithdrawal, 100000);
   cfg.monthlyCap = num(req.body.monthlyCap, cfg.monthlyCap, 100000);
   saveDb(db);
@@ -1436,6 +1485,11 @@ function guestDraft(db, req) {
 app.get('/order', (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
   const db = loadDb();
+  const ref = String(req.query.ref || '').trim().toUpperCase();
+  if (/^[A-Z2-9]{6,12}$/.test(ref) && findReferrer(db, ref)) {
+    const secure = req.protocol === 'https' ? '; Secure' : '';
+    res.append('Set-Cookie', `pk_ref=${ref}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
+  }
   const d = req.query.draft ? guestDraft(db, req) : null;
   if (req.query.draft && !d) return res.redirect('/order');
   const jobs = activePrintJobs(db);
@@ -1476,7 +1530,7 @@ app.post('/order/options', (req, res) => {
   if (!d) return res.redirect('/order');
   const copies = Math.max(1, Math.min(200, parseInt(req.body.copies, 10) || 1));
   const printType = req.body.printType === 'color' ? 'color' : 'bw';
-  const sides = req.body.sides === 'single' ? 'single' : 'double';
+  const sides = req.body.sides === 'double' ? 'double' : 'single';
   const r = rangePages(req.body.range, d.pages);
   if (!r.valid) {
     const jobs = activePrintJobs(db);
@@ -1500,7 +1554,7 @@ app.get('/order/phone', (req, res) => {
   const d = guestDraft(db, req);
   if (!d || !d.selections) return res.redirect('/order');
   // carry the guest cookie (area preselect) — no-op read, keeps flow honest
-  res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: null }));
+  res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: null, referral: parseCookies(req.headers.cookie).pk_ref }));
 });
 
 app.post('/order/otp-request', otpLimiter, async (req, res) => {
@@ -1923,6 +1977,12 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
   const amount = Math.max(10, Math.min(10000, Math.round(Number(req.body.amount) || 0)));
   if (!amount) return res.status(400).json({ error: 'Enter an amount between ₹10 and ₹10,000.' });
+  const db0 = loadDb();
+  const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
+  if (refIn) {
+    const v = validateReferral(db0, user, refIn, amount);
+    if (!v.ok) return res.status(400).json({ error: v.error });
+  }
   try {
     const r = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
@@ -1941,7 +2001,7 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
     if (!r.ok || !d.id) return res.status(502).json({ error: 'Gateway refused the order.' });
     const db = loadDb();
     db.topups ||= [];
-    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, used: false, at: new Date().toISOString() });
+    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, referral: refIn || null, used: false, at: new Date().toISOString() });
     saveDb(db);
     res.json({ keyId: RAZORPAY.id, rzpOrderId: d.id, amount: d.amount });
   } catch {
@@ -1970,9 +2030,28 @@ app.post('/customer/wallet/topup-verify', requireRole('customer'), (req, res) =>
   const b = bonusFor(pending.amount, db.pricing);
   const w = walletOf(db, req.user.id);
   const now = new Date().toISOString();
-  w.balance = Math.round((w.balance + pending.amount + b.bonus) * 100) / 100;
-  db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: pending.amount, kind: 'credit', label: `Top-up via Razorpay (${razorpay_payment_id.slice(0, 14)})`, at: now });
+  let refBonus = 0;
+  if (pending.referral) {
+    const v = validateReferral(db, req.user, pending.referral, pending.amount);
+    if (v.ok) refBonus = referralDiscountFor(db, pending.amount, 0, 0);
+    // else: silently drop — validated at order time; only a race lands here.
+  }
+  w.balance = Math.round((w.balance + pending.amount + b.bonus + refBonus) * 100) / 100;
+  const topTx = { id: `WTX-${Date.now()}`, customerId: req.user.id, amount: pending.amount, kind: 'credit', label: `Top-up via Razorpay (${razorpay_payment_id.slice(0, 14)})`, at: now };
+  db.walletTx.push(topTx);
   if (b.bonus) db.walletTx.push({ id: `WTX-${Date.now()}b`, customerId: req.user.id, amount: b.bonus, kind: 'credit', label: `Top-up bonus +${b.pct}%`, at: now });
+  if (refBonus) {
+    const referrer = findReferrer(db, pending.referral);
+    db.walletTx.push({ id: `WTX-${Date.now()}r`, customerId: req.user.id, amount: refBonus, kind: 'credit', label: `Referral bonus ${pending.referral}`, at: now });
+    if (referrer) {
+      createReferral(db, {
+        referrerId: referrer.id, refereeId: req.user.id, orderId: null,
+        code: pending.referral, friendDiscount: refBonus,
+        sourceKind: 'topup', sourceId: topTx.id
+      });
+      qualifyForTopup(db, topTx.id, req.user.id);
+    }
+  }
   saveDb(db);
   res.redirect('/customer/wallet');
 });

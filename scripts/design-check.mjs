@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import * as publicViews from '../lib/views_public.js';
 import * as account from '../lib/views_order.js';
 import * as customer from '../lib/views_customer.js';
+import { referralsPage } from '../lib/views_referrals.js';
 import * as admin from '../lib/views_admin.js';
 import { loginPage, loginOtpPage, staffLoginPage } from '../lib/views.js';
 import { blankDb } from '../lib/db.js';
@@ -33,6 +34,7 @@ const pages = new Map([
   ['/customer/options', account.optionsStep(user, draft, [])],
   ['/customer/orders/preview/pay', account.payStep(user, order)],
   ['/customer/wallet', account.walletPage(user, { balance: 150 }, [], pricing)],
+  ['/customer/referrals', referralsPage(user, { cfg: { friendOff: 20, friendMinOrder: 79, referrerCredit: 20, monthlyCap: 500, minWithdrawal: 50, milestones: [{ n: 3, bonus: 10 }] }, code: 'ABC234', stats: { joined: 1, qualified: 0, earned: 0 }, credit: { balance: 0 }, cash: { balance: 0 }, payouts: [], shareText: 'PrintKarr it' })],
   ['/customer/profile', account.profilePage(user, [], [])],
   ['/admin', admin.adminDashboard(staff, { today: 8, printing: 1, ready: 2, revenue: 240, pages: 120, delivered: 5 })],
   ['/admin/orders', admin.orderQueue(staff, { filter: 'all', q: '', rows: [{ ...order, cname: 'Ani' }] })],
@@ -44,6 +46,11 @@ const pages = new Map([
   ['/admin/analytics', admin.analyticsPage(staff, { salesToday: 24, salesWeek: 120, pages: 60, bw: 60, color: 0, done: 5, cancelled: 0, live: 1, total: 6, repeat: 1, customers: 5, avgHrs: 1 })],
 ]);
 assert.match(pages.get('/login'), /<details class="login-password-options">/);
+assert.match(pages.get('/'), /Need it on paper\?/);
+assert.match(pages.get('/order/options'), /name="area" value="Pickup" checked/);
+assert.match(pages.get('/order/options'), /<details class="order-more">/);
+assert.match(pages.get('/customer/referrals'), /₹20 print credit/);
+assert.doesNotMatch(pages.get('/customer/referrals'), /withdraw|real cash/i);
 assert.match(pages.get('/login'), /<details class="login-demo-options">/);
 assert.match(pages.get('/customer/orders/preview/pay'), /class="receipt-paper"[\s\S]*ORDER #preview[\s\S]*₹24/);
 assert.match(pages.get('/customer/orders/preview/pay'), /id="payForm"[\s\S]*name="method"/);

@@ -40,7 +40,7 @@
   });
 
   document.querySelectorAll('form').forEach(function (form) {
-    if (!form.querySelector('input[name="printType"]')) return;
+    if (!form.querySelector('input[name="printType"]') || form.classList.contains('quick-order')) return;
     var look = document.createElement('div');
     look.className = 'print-look';
     look.innerHTML = '<div class="print-look-paper" aria-hidden="true"></div><div><b>Your print, your way.</b><p role="status"></p><small>Settings illustration · not a document preview</small></div>';
