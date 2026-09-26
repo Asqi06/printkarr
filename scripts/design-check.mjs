@@ -47,6 +47,11 @@ const pages = new Map([
   ['/admin/analytics', admin.analyticsPage(staff, { salesToday: 24, salesWeek: 120, pages: 60, bw: 60, color: 0, done: 5, cancelled: 0, live: 1, total: 6, repeat: 1, customers: 5, avgHrs: 1 })],
 ]);
 assert.match(pages.get('/login'), /<details class="login-password-options">/);
+for (const route of ['/customer', '/customer/orders/new']) {
+  assert.match(pages.get(route), /<nav class="snav"[^>]*>[\s\S]*?<a href="\/customer"[^>]*>Dashboard<\/a>[\s\S]*?<a href="\/customer\/orders\/new"[^>]*>Print<\/a>/);
+}
+assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">Dashboard<\/a>/);
+assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">Print<\/a>/);
 assert.match(pages.get('/'), /Need it on paper\?/);
 assert.match(pages.get('/order/options'), /name="area" value="Pickup" checked/);
 assert.match(pages.get('/order/options'), /<details class="order-more">/);
