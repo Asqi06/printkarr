@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "PrintKarr",
+      "hasCanvas": false,
+      "bodyTextLen": 3007,
+      "bodyTextHash": "e5baa35c1290387a6a3b98ca4c693cdafcb7281521b57bc421851ee721690027",
+      "bodyTextPrefix": "Skip to content PrintKarr Contact Us India's First, Smartest, Fa",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "PrintKarr",
+      "hasCanvas": true,
+      "bodyTextLen": 2876,
+      "bodyTextHash": "d0a8b335a1a1734e6d1c6654754f17af7e3043d0ac4bfcf231f3c060d491a18a",
+      "bodyTextPrefix": "Skip to content PrintKarr India's First, Smartest, Fastest & Onl",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}

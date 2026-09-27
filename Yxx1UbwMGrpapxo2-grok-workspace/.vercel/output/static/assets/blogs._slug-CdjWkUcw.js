@@ -1,0 +1,1 @@
+import{n as e}from"./site-BTbJergO.js";import{s as t,t as n}from"./index-BmpwFe3l.js";var r=t();function i(){let{slug:t}=n.useParams();return(0,r.jsx)(e,{slug:t})}export{i as component};

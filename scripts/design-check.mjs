@@ -55,6 +55,9 @@ assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-cur
 assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">[\s\S]*?<span>Print<\/span><\/a>/);
 assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);
+assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /A4 black &amp; white<\/span><strong>₹7<\/strong>[\s\S]*A4 colour<\/span><strong>₹11<\/strong>/);
+for (const id of ['how-it-works', 'features', 'pricing', 'compare', 'kiosks', 'packs', 'referrals', 'faq']) assert.match(pages.get('/'), new RegExp(`id="${id}"`));
+assert.match(pages.get('/'), /no pickup address has been announced yet/i);
 assert.match(pages.get('/order/options'), /name="area" value="Pickup" checked/);
 assert.match(pages.get('/order/options'), /<details class="order-more">/);
 assert.match(pages.get('/customer/referrals'), /₹20 print credit/);
@@ -136,6 +139,30 @@ for (const reducedMotion of [false, true]) {
   assert.equal(look.classList.contains('double'), false);
 }
 console.log('Interaction checks passed: demo replay guard, reduced motion and live paper settings.');
+{
+  let image;
+  const attrs = {};
+  const headerClasses = new Set();
+  const glass = { clientWidth: 102, clientHeight: 42, closest: () => ({ classList: { add: name => headerClasses.add(name) } }) };
+  const map = { setAttribute: (name, value) => { attrs[name] = value; } };
+  const canvas = { getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData: value => { image = value; } }), toDataURL: () => 'data:image/png;base64,test' };
+  runInNewContext(readFileSync(new URL('../public/shell.js', import.meta.url), 'utf8'), {
+    document: { querySelectorAll: () => [], querySelector: () => glass, getElementById: () => map, createElement: () => canvas },
+    window: { matchMedia: () => ({ matches: false }), CSS: { supports: () => true }, ResizeObserver: class { observe() {} } },
+    IntersectionObserver: class { observe() {} }
+  });
+  assert.equal(attrs.width, 100);
+  assert.equal(attrs.height, 40);
+  assert.equal(image.data[(20 * 100 + 50) * 4 + 1], 128, 'Pill centre must stay undistorted');
+  assert.ok(image.data[(10 * 100 + 50) * 4 + 1] < 120, 'Pill bezel must refract toward its edge');
+  for (let x = 1; x < 100; x++) {
+    const red = column => image.data[(19 * 100 + column) * 4];
+    assert.equal(red(x) + red(99 - x), 256, 'Rounded ends must mirror each other');
+    assert.ok(x + 42 * (red(x) / 255 - 0.5) > x - 1 + 42 * (red(x - 1) / 255 - 0.5), 'Rounded-end refraction must not fold or reverse the background');
+  }
+  assert.ok(headerClasses.has('liquid-ready'));
+}
+console.log('Liquid glass pill map checked: neutral centre and refracting bezel.');
 if (process.argv.includes('--serve')) {
   const app = express();
   app.use(express.static('public', { index: false }));
