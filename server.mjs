@@ -24,6 +24,7 @@ import { layout, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js'
 import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
 import { customerDashboard, ordersList, orderDetail, scanPage } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
+import { canUseOwnerTestPrint } from './lib/owner-test.js';
 import { packsPage, packDashboardHtml, adminPacksPage } from './lib/views_packs.js';
 import { referralsPage, adminReferralsPage } from './lib/views_referrals.js';
 import {
@@ -1058,8 +1059,8 @@ app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   saveDb(db);
   const short = Math.round((o.total - w.balance) * 100) / 100;
   const top = !livePayFor(db) && short > 0 ? { short, bonus: bonusFor(short, db.pricing).bonus } : null;
-  const isOwner = isAdminEmail(req.user.email) || req.user.role === 'admin';
-  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: gatewayOn(), waUrl, walletTopup: top, livePay: livePayFor(db), isOwner }));
+  const testPrintsLeft = canUseOwnerTestPrint(req.user, o) ? req.user.ownerTestPrintsLeft : 0;
+  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: gatewayOn(), waUrl, walletTopup: top, livePay: livePayFor(db), testPrintsLeft }));
 });
 
 app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
@@ -1110,21 +1111,22 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   res.redirect(`/customer/orders/${o.id}?fresh=1`);
 });
 
-// Owner-only demo payout — bypasses Razorpay to test the Epson end-to-end (no charge, no wallet change)
+// Capped owner test prints use a separate payment status so they never count as sales.
 app.post('/customer/orders/:id/demo-pay', requireRole('customer'), (req, res) => {
-  if (!isAdminEmail(req.user.email) && req.user.role !== 'admin') {
-    return res.status(403).send(oops(req.user, `/customer/orders/${req.params.id}/pay`, 'Demo pay is <em>owner only.</em>'));
-  }
   const db = loadDb();
+  const tester = db.users.find((u) => u.id === req.user.id);
   const o = db.orders.find(x => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   if (!['CREATED','PAYMENT_PENDING'].includes(o.status)) return res.redirect(`/customer/orders/${o.id}`);
+  if (!canUseOwnerTestPrint(tester, o)) {
+    return res.status(403).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'Test prints require an owner test credit, kiosk pickup and at most five sheets.'));
+  }
   if (o.status === 'CREATED') transition(o, 'PAYMENT_PENDING', { by: req.user.id });
-  o.paymentStatus = 'paid';
-  o.paymentMethod = 'demo';
-  transition(o, 'CONFIRMED', { by: req.user.id, note: 'demo pay (owner test)' });
+  tester.ownerTestPrintsLeft--;
+  o.paymentStatus = 'demo';
+  o.paymentMethod = 'owner-test';
+  transition(o, 'CONFIRMED', { by: req.user.id, note: 'owner test print (no charge)' });
   try { transition(o, 'PRINT_QUEUE', { by: 'system', note: 'auto-queued on demo pay' }); } catch {}
-  consumePackQuota(db, o);
   saveDb(db);
   notifyState({ ...o, status: 'CONFIRMED' });
   if (o.status === 'PRINT_QUEUE') notifyState(o);
