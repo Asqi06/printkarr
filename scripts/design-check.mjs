@@ -48,10 +48,11 @@ const pages = new Map([
 ]);
 assert.match(pages.get('/login'), /<details class="login-password-options">/);
 for (const route of ['/customer', '/customer/orders/new']) {
-  assert.match(pages.get(route), /<nav class="snav"[^>]*>[\s\S]*?<a href="\/customer"[^>]*>Dashboard<\/a>[\s\S]*?<a href="\/customer\/orders\/new"[^>]*>Print<\/a>/);
+  assert.match(pages.get(route), /<nav class="snav"[^>]*>[\s\S]*?<a href="\/customer"[^>]*>[\s\S]*?<span>Dashboard<\/span><\/a>[\s\S]*?<a href="\/customer\/orders\/new"[^>]*>[\s\S]*?<span>Print<\/span><\/a>/);
+  assert.match(pages.get(route), /<a href="\/customer\/referrals"[^>]*>[\s\S]*?<span>Refer &amp; Earn<\/span><\/a>/);
 }
-assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">Dashboard<\/a>/);
-assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">Print<\/a>/);
+assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">[\s\S]*?<span>Dashboard<\/span><\/a>/);
+assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">[\s\S]*?<span>Print<\/span><\/a>/);
 assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);
 assert.match(pages.get('/order/options'), /name="area" value="Pickup" checked/);
