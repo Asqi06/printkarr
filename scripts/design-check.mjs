@@ -52,6 +52,7 @@ for (const route of ['/customer', '/customer/orders/new']) {
 }
 assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">Dashboard<\/a>/);
 assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">Print<\/a>/);
+assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);
 assert.match(pages.get('/order/options'), /name="area" value="Pickup" checked/);
 assert.match(pages.get('/order/options'), /<details class="order-more">/);
