@@ -41,7 +41,6 @@
 .public-site { --qk-blue:#1746e0; --qk-orange:#ff6b00; }
 .public-site .site-header { position:sticky; top:12px; height:0; z-index:80; border:0; background:transparent; }
 .public-site .site-header-inner { position:relative; isolation:isolate; width:max-content; max-width:calc(100vw - 24px); min-height:64px; display:flex; align-items:center; justify-content:center; gap:32px; margin:20px auto 0; padding:10px 30px; border:1px solid #e5e9f2; border-radius:999px; background:#fff; box-shadow:0 8px 24px #10234d12; }
-@supports (  } }
 .public-site .site-header-inner > * { z-index:1; }
 .public-site .site-links { display:flex; align-items:center; gap:30px; margin:0; white-space:nowrap; }
 .public-site .site-links a { font-size:13px; font-weight:600; color:#14233b;  transition:color .2s; }
@@ -138,27 +137,26 @@
 }
 @media (prefers-reduced-motion:reduce) { .qk-button { transition:none; }.qk-kiosk,.qk-float { animation:none; } }
 @media (forced-colors:active) { .public-site .site-links a { color:LinkText; }.public-site .site-header .pk-logo .w,.public-site .mobile-menu summary { color:CanvasText; } }
-/* The intro stays a normal, compact section until WebGL is ready. */
-.kiosk-intro { position:relative; background:#f6f8ff; }
-.kiosk-sticky { position:relative; height:100svh; min-height:620px; max-height:1000px; overflow:hidden; background:radial-gradient(ellipse at 65% 60%,#dfe8ff 0,transparent 58%); }
-.kiosk-title { position:absolute; z-index:2; top:125px; left:6%; pointer-events:none; }
-.kiosk-title h1 { margin:16px 0 10px; font-size:clamp(58px,11vw,150px); line-height:.91; letter-spacing:-.065em; }
+/* Reserve the same scroll space before and after the model loads. */
+.kiosk-intro { position:relative; height:190svh; background:#f6f8ff; overflow-anchor:none; }
+.kiosk-sticky { position:sticky; top:0; height:100svh; min-height:560px; overflow:hidden; background:radial-gradient(ellipse at 65% 60%,#dfe8ff 0,transparent 58%); }
+.kiosk-title { position:absolute; z-index:2; top:110px; left:6%; right:6%; pointer-events:none; }
+.kiosk-title h1 { margin:16px 0 10px; font-size:clamp(46px,8vw,112px); line-height:.91; letter-spacing:-.065em; }
 .kiosk-title p { font-size:13px; color:#667189; }
-#qk-stage { position:absolute; inset:0; }
+#qk-stage { position:absolute; inset:270px 6% 75px; min-width:0; min-height:0; contain:size layout; }
 .qk-canvas[hidden] { display:none; }
-.qk-canvas { display:block; width:100%; height:100%; }
-.qk-fallback { position:absolute; width:auto; height:60%; max-width:80%; object-fit:contain; right:5%; bottom:8%; }
+.qk-canvas { position:absolute; inset:0; display:block; width:100%; height:100%; }
+.qk-fallback { display:block; width:100%; height:100%; object-fit:contain; }
 .kiosk-caption { position:absolute; inset:45% 20px auto; text-align:center; opacity:0; pointer-events:none; }
 .kiosk-caption span,.kiosk-caption strong { display:block; font-size:clamp(36px,7vw,88px); letter-spacing:-.05em; line-height:1.05; }
 .kiosk-caption strong { color:#1746e0; }
 .kiosk-intro-bottom { position:absolute; z-index:3; bottom:28px; left:6%; right:6%; display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#526078; }
 .kiosk-intro-bottom span { color:#ff6b00; margin-left:8px; font-size:22px; }
 .kiosk-intro-bottom a { padding:12px 16px; border:1px solid #d5dded; border-radius:999px; background:#fff; color:#1746e0; text-decoration:none; }
-.kiosk-intro.is-3d { height:280svh; }
-.is-3d .kiosk-sticky { position:sticky; top:0; max-height:none; }
 .is-3d .qk-fallback { display:none; }
 .public-site #printing.qk-hero { min-height:0; padding:85px 0 100px; scroll-margin-top:90px; }
 #home-title { max-width:850px; margin:16px auto 0; font-size:clamp(38px,7vw,70px); line-height:1.05; }
 .qk-ribbons { overflow:clip; }
-@media(min-width:850px) { .kiosk-title { top:26%; }.qk-fallback { height:85%; right:13%; bottom:1%; } }
-@media(prefers-reduced-motion:reduce) { .kiosk-intro.is-3d { height:auto; }.is-3d .kiosk-sticky { position:relative; }.kiosk-title,.kiosk-caption { opacity:1!important; transform:none!important; }.kiosk-caption { display:none; }.qk-canvas { filter:none!important; } }
+@media(min-width:850px) { .kiosk-title { top:30%; right:52%; } #qk-stage { inset:110px 5% 75px 48%; } }
+@media(max-height:650px) and (min-width:850px) { .kiosk-title h1 { font-size:clamp(46px,7vw,88px); } }
+@media(prefers-reduced-motion:reduce) { .kiosk-intro { height:auto; }.kiosk-sticky { position:relative; }.kiosk-title,.kiosk-caption { opacity:1!important; transform:none!important; }.kiosk-caption { display:none; }.qk-canvas { filter:none!important; } }

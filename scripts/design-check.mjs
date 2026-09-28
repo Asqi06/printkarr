@@ -143,6 +143,18 @@ assert.match(pages.get('/'), /Future of<br><em>printing/);
 assert.match(pages.get('/'), /type="module" src="\/kiosk-3d.js/);
 for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);
+// A broken at-rule once swallowed every layout rule after the navigation.
+for (const file of ['qk-landing.css', 'design.css', 'customer.css']) {
+  const css = readFileSync(new URL('../public/' + file, import.meta.url), 'utf8');
+  const tokens = css.replace(/\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, '');
+  const stack = [], pairs = { ')': '(', '}': '{', ']': '[' };
+  for (const token of tokens) {
+    if ('({['.includes(token)) stack.push(token);
+    else if (')}]'.includes(token)) assert.equal(stack.pop(), pairs[token], `${file}: unmatched CSS delimiter`);
+  }
+  assert.equal(stack.length, 0, `${file}: unclosed CSS rule`);
+}
+console.log('Shared styles checked: balanced rules and media queries.');
 // Exercise the production timeline and OBJ parser without needing a GPU.
 {
   const source = readFileSync(new URL('../public/kiosk-3d.js', import.meta.url), 'utf8');
@@ -153,8 +165,24 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
     Mesh: class { constructor(geometry, material) { this.geometry = geometry; this.material = material; } }
   } };
   runInNewContext(source.replace(/^import .*;$/m, '').replace('export function', 'function').replace(/boot\(\);\s*$/, ''), scope);
+  // Repeated ResizeObserver notifications must not resize the canvas again.
+  let sizes = 0;
+  const layout = {
+    failed: false, stage: { clientWidth: 360, clientHeight: 320 }, radius: 2.8,
+    kioskFrame: scope.kioskFrame, update() {},
+    renderer: { setSize() { sizes++; } },
+    camera: { fov:38, position:{ set(x, y, z) { assert.ok(Number.isFinite(z) && z > 0); } }, lookAt() {}, updateProjectionMatrix() {} }
+  };
+  const resizing = source.slice(source.indexOf('    let lastWidth'), source.indexOf('    // Loading swaps'));
+  runInNewContext(resizing, layout);
+  layout.resize(); layout.resize();
+  assert.equal(sizes, 1, 'Unchanged dimensions must not feed back into layout');
+  layout.stage.clientHeight = 0; layout.resize();
+  assert.equal(sizes, 1, 'A zero-sized stage must not change the camera');
+  layout.stage.clientHeight = 500; layout.resize();
+  assert.equal(sizes, 2);
   const start = scope.kioskFrame(0), end = scope.kioskFrame(1);
-  assert.equal(start.scale, 1.6); assert.equal(start.dissolve, 0); assert.equal(start.title, 1);
+  assert.equal(start.scale, 1.15); assert.equal(start.dissolve, 0); assert.equal(start.title, 1);
   assert.ok(Math.abs(end.scale - .65) < 1e-9); assert.equal(end.dissolve, 1); assert.equal(end.caption, 1);
   let previous = start;
   for (let i = 1; i <= 100; i++) {

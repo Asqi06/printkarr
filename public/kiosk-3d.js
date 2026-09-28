@@ -3,7 +3,7 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 export function kioskFrame(progress) {
   const ease = (a, b) => { const t = Math.max(0, Math.min(1, (progress - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return { scale: 1.6 - .95 * ease(0, .65), rotation: -.35 + 1.25 * ease(0, .8), dissolve: ease(.48, .92), title: 1 - ease(.03, .24), caption: ease(.84, 1) };
+  return { scale: 1.15 - .5 * ease(0, .65), rotation: -.35 + 1.25 * ease(0, .8), dissolve: ease(.48, .92), title: 1 - ease(.03, .24), caption: ease(.84, 1) };
 }
 
 function parseObj(text, materials) {
@@ -38,6 +38,8 @@ function parseObj(text, materials) {
 async function boot() {
   const stage = document.getElementById('qk-stage');
   if (!stage || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Never let intrinsic canvas dimensions drive the layout if the stylesheet fails.
+  if (getComputedStyle(stage).position !== 'absolute') return;
   const intro = stage.closest('.kiosk-intro');
   let renderer;
   try {
@@ -66,7 +68,9 @@ async function boot() {
     }
     await Promise.all(textures);
     const model = parseObj(obj, materials);
-    const center = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
+    const bounds = new THREE.Box3().setFromObject(model);
+    const center = bounds.getCenter(new THREE.Vector3());
+    const radius = bounds.getBoundingSphere(new THREE.Sphere()).radius;
     model.position.copy(center).negate();
     const pivot = new THREE.Group(); pivot.add(model);
     const scene = new THREE.Scene(); scene.add(pivot);
@@ -133,7 +137,7 @@ async function boot() {
       if (Math.abs(target - progress) < .0001) progress = target;
       const f = kioskFrame(progress);
       pivot.scale.setScalar(f.scale); pivot.rotation.set(.05 * Math.sin(progress * Math.PI), f.rotation, -.04 * Math.sin(progress * Math.PI));
-      pivot.position.set((camera.aspect > 1.1 ? 1.65 : .15) * (1 - Math.min(1, progress * 2)), (camera.aspect > 1.1 ? -.4 : -1.15) * (1 - progress), 0);
+      pivot.position.set(0, 0, 0);
       dissolve.value = f.dissolve;
       title.style.opacity = f.title; title.style.transform = `translateY(${-progress * 120}px)`;
       caption.style.opacity = f.caption;
@@ -144,17 +148,22 @@ async function boot() {
     function update() {
       if (failed || document.hidden || reduced.matches) return;
       const rect = intro.getBoundingClientRect();
-      target = Math.max(0, Math.min(1, -rect.top / Math.max(1, intro.offsetHeight - stage.clientHeight)));
+      target = Math.max(0, Math.min(1, -rect.top / Math.max(1, intro.offsetHeight - intro.querySelector('.kiosk-sticky').clientHeight)));
       if (!frameId) { lastTime = 0; frameId = requestAnimationFrame(render); }
     }
+    let lastWidth = 0, lastHeight = 0;
     function resize() {
       if (failed) return;
       const w = stage.clientWidth, h = stage.clientHeight;
+      if (!w || !h || (w === lastWidth && h === lastHeight)) return;
+      lastWidth = w; lastHeight = h;
       renderer.setSize(w, h, false); camera.aspect = w / h;
-      camera.position.set(0, .4, camera.aspect < 1 ? 14 : 11); camera.lookAt(0, .2, 0); camera.updateProjectionMatrix(); update();
+      const halfFov = Math.atan(Math.tan(camera.fov * Math.PI / 360) * Math.min(1, camera.aspect));
+      camera.position.set(0, 0, radius * kioskFrame(0).scale / Math.sin(halfFov) * 1.08);
+      camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); update();
     }
-    // Expand the scroll section only after a successful first GPU frame.
-    resize(); renderer.render(scene, camera); intro.classList.add('is-3d'); resize();
+    // Loading swaps only the artwork; section geometry and scroll position stay fixed.
+    resize(); renderer.render(scene, camera); intro.classList.add('is-3d'); update();
     addEventListener('scroll', update, {passive:true});
     new ResizeObserver(resize).observe(stage);
     document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(frameId); frameId=0; } else update(); });
