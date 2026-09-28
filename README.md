@@ -300,3 +300,26 @@ npm run agent        # terminal 2: print agent (polls every 2s)
 50–100 test orders with zero manual Ctrl+P before even discussing
 Raspberry Pi. Print files auto-delete 15 minutes after terminal state
 (`FILE_RETENTION_MINUTES`); order records and history are kept.
+
+
+### Automatic Windows print agent
+
+Run `npm run agent:install` once on the computer connected to the printer.
+This installs a hidden Windows Scheduled Task for the current user and starts
+it immediately (if a manual agent is running, the task waits for it to exit before taking over).
+It uses this checkout's `.env`, polls the existing queue, restarts after crashes,
+and starts again each time this Windows user signs in. Keep the checkout at
+its installed path; rerun installation if you move it or change Node's path.
+The task uses your normal user account so the installed printer is available.
+
+- `npm run agent:status` shows the task state and log path.
+- Logs: `%LOCALAPPDATA%\PrintKarr\logs\agent.log` (5 MB plus one archive).
+- `npm run agent:uninstall` removes future startup; it does not kill an active print.
+- Windows allows only one local agent through an OS-managed lock, including
+  accidental manual `npm run agent` launches.
+
+The PC must be awake, signed in, connected to the internet, and able to reach
+the printer. Locking the screen is fine; signing out or shutting down stops
+printing. No Windows password is stored and power settings are not changed.
+Already-started jobs are not automatically reprinted after a crash; inspect
+failed/stuck orders and the output tray before retrying from the admin page.

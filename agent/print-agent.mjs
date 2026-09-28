@@ -17,6 +17,7 @@ import { execFile } from 'node:child_process';
 import { buildCoverPdf, validatePdf } from './cover.js';
 import { printSettings } from './print-settings.js';
 import QRCode from 'qrcode';
+import { acquireAgentLock } from './instance-lock.js';
 
 const BASE = process.env.PRINTKARR_URL || 'http://localhost:3000';
 const TOKEN = process.env.AGENT_TOKEN || '';
@@ -30,6 +31,11 @@ const TMP = path.join(os.tmpdir(), 'printkarr-agent');
 if (!TOKEN) {
   console.error('AGENT_TOKEN is not set — refusing to start.');
   process.exit(1);
+}
+const instanceLock = process.platform === 'win32' ? await acquireAgentLock() : null;
+if (process.platform === 'win32' && !instanceLock) {
+  console.log('Another PrintKarr agent is already running; leaving it in control.');
+  process.exit(0);
 }
 fs.mkdirSync(TMP, { recursive: true });
 
@@ -155,5 +161,5 @@ process.on('SIGINT', () => {
 
 main().catch((e) => {
   console.error('agent crashed:', e.message);
-  process.exit(1);
-});
+  process.exitCode = 1;
+}).finally(() => instanceLock?.close());

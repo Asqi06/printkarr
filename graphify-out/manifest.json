@@ -906,9 +906,9 @@
     "semantic_hash": "edfebb5f854ade06768e1f27115ea241"
   },
   "agent/print-agent.mjs": {
-    "mtime": 1790426489.7906902,
-    "seen": 1790429877.984658,
-    "ast_hash": "7a4f67ff30b2e60ac8792133df2d926f",
+    "mtime": 1790572912.0443091,
+    "seen": 1790572975.9976935,
+    "ast_hash": "1831227f0e4cd15de0e4af46a6803a4f",
     "semantic_hash": ""
   },
   "data/reset.js": {
@@ -990,9 +990,9 @@
     "semantic_hash": "e600180cd489763b9df2339115bcc259"
   },
   "lib/views.js": {
-    "mtime": 1790571505.5734015,
-    "seen": 1790571588.5286834,
-    "ast_hash": "00316c5062f333f924fce1f5cfa106ad",
+    "mtime": 1790572201.1658318,
+    "seen": 1790572236.6384435,
+    "ast_hash": "f0de52d5f564473baa3de12f7f670cd7",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
@@ -1020,15 +1020,15 @@
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1790571505.5664005,
-    "seen": 1790571588.5294352,
-    "ast_hash": "80ed359be79936aa859d2200020eca9c",
+    "mtime": 1790572201.1619437,
+    "seen": 1790572236.6392329,
+    "ast_hash": "3fc5007b472bddb656816a22f9bbc4a1",
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1790497458.6430035,
-    "seen": 1790510891.06058,
-    "ast_hash": "2c95154a40eb9d8feaacf7cc0a8eb1d3",
+    "mtime": 1790572912.0454376,
+    "seen": 1790572976.0050445,
+    "ast_hash": "0853d280dddbba5042376a626983dd4d",
     "semantic_hash": ""
   },
   "public/delivery-map.js": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": "f515d63efb3434dab64aa93b54e5ac6e"
   },
   "scripts/design-check.mjs": {
-    "mtime": 1790571545.2534251,
-    "seen": 1790571588.5304012,
-    "ast_hash": "c020311955a69b836d004d7360e2acd5",
+    "mtime": 1790571667.9367197,
+    "seen": 1790571698.7999487,
+    "ast_hash": "8ae3cd20341cb64fa8cf6a194c538ac3",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -1134,9 +1134,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1790497458.5822563,
-    "seen": 1790510891.0632062,
-    "ast_hash": "c04cee0baa2d88f422e1a8dde3cc7da5",
+    "mtime": 1790572912.0463147,
+    "seen": 1790572976.0097594,
+    "ast_hash": "39c2c3b5e524a0129321355a12b05320",
     "semantic_hash": ""
   },
   "Yxx1UbwMGrpapxo2-grok-workspace/.grok/favicon-preview.html": {
@@ -2142,9 +2142,9 @@
     "semantic_hash": ""
   },
   "public/kiosk-3d.js": {
-    "mtime": 1790571505.568583,
-    "seen": 1790571588.5300164,
-    "ast_hash": "64ba23ba20105c6a0bf3a3d582026c7e",
+    "mtime": 1790571667.9347632,
+    "seen": 1790571698.7993782,
+    "ast_hash": "e35c854f22d1c9597eac9c26f78c0d00",
     "semantic_hash": ""
   },
   "public/qp-3d.js": {
@@ -2163,6 +2163,30 @@
     "mtime": 1790512189.8457618,
     "seen": 1790512401.4155958,
     "ast_hash": "6d7a00e08901f44a31e91cd24c8aad61",
+    "semantic_hash": ""
+  },
+  "agent/instance-lock.js": {
+    "mtime": 1790572911.89441,
+    "seen": 1790572975.9976869,
+    "ast_hash": "c6866bd3f835d7eb0d95922534f77cfb",
+    "semantic_hash": ""
+  },
+  "agent/instance-lock.test.js": {
+    "mtime": 1790572911.8964145,
+    "seen": 1790572975.9976907,
+    "ast_hash": "833137dde74cb2521328741aa8b330c7",
+    "semantic_hash": ""
+  },
+  "agent/run-background.ps1": {
+    "mtime": 1790572911.8974104,
+    "seen": 1790572975.9981103,
+    "ast_hash": "7c48cb76a488fd1610ccb94d882a3665",
+    "semantic_hash": ""
+  },
+  "scripts/install-agent.ps1": {
+    "mtime": 1790572911.8984134,
+    "seen": 1790572976.0064535,
+    "ast_hash": "d8f25cd15435f19f9c60558b1bd74a9e",
     "semantic_hash": ""
   }
 }
