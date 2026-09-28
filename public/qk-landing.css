@@ -163,3 +163,16 @@
 .intro-nav-visible .kiosk-intro-bottom,.kiosk-intro-bottom:focus-within { opacity:1; }
 @media(prefers-reduced-motion:reduce) { .public-site:has(.kiosk-intro) .site-header { opacity:1; visibility:visible; pointer-events:auto; transition:none; }.kiosk-intro-bottom { opacity:1; transition:none; } }
 @media(prefers-reduced-motion:reduce) { .kiosk-intro { height:auto; }.kiosk-sticky { position:relative; }.kiosk-title,.kiosk-caption { opacity:1!important; transform:none!important; }.kiosk-caption { display:none; }.qk-canvas { filter:none!important; } }
+
+/* Local printing guide: readable prose and predictable spacing at every width. */
+.public-site .interior-wrap:has(> .local-print-page) { padding-top:130px; padding-bottom:72px; }
+.public-site .interior-wrap .local-print-page { max-width:52rem; margin-inline:auto; padding:clamp(20px,4vw,48px); border:1px solid #e8ecf4; border-radius:22px; background:#fff; font-size:clamp(14px,1.5vw,16px); overflow-wrap:anywhere; }
+.public-site .interior-wrap .local-print-page h1.display { margin:12px 0 22px!important; font-size:clamp(32px,5vw,54px)!important; line-height:1.1; }
+.public-site .interior-wrap .local-print-page h2 { margin:36px 0 12px; font-size:clamp(22px,3vw,28px); color:#1746e0; }
+.public-site .interior-wrap .local-print-page p { margin:12px 0; line-height:1.75; }
+.public-site .interior-wrap .local-print-page .eyebrow { margin:0; font-size:11px; line-height:1.6; }
+.local-print-page ul,.local-print-page ol { padding-left:24px; margin:16px 0; }
+.local-print-page li + li { margin-top:10px; }
+.local-print-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px; margin:24px 0 36px; }
+.local-print-actions .rowlink { display:inline-flex; align-items:center; min-height:44px; }
+@media(max-width:600px) { .public-site .interior-wrap:has(> .local-print-page) { padding-top:112px; padding-bottom:48px; }.local-print-actions { align-items:stretch; flex-direction:column; gap:8px; }.local-print-actions a { justify-content:center; text-align:center; } }
