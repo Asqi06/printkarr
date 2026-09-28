@@ -1002,9 +1002,9 @@
     "semantic_hash": ""
   },
   "lib/views_customer.js": {
-    "mtime": 1790497458.6176043,
-    "seen": 1790510891.0601282,
-    "ast_hash": "fb708cfabf0807225808a865cba96592",
+    "mtime": 1790573749.2708585,
+    "seen": 1790573808.9036503,
+    "ast_hash": "084b2be63b19f826bd117d12662a36eb",
     "semantic_hash": ""
   },
   "lib/views_order.js": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1790572201.1619437,
-    "seen": 1790572236.6392329,
-    "ast_hash": "3fc5007b472bddb656816a22f9bbc4a1",
+    "mtime": 1790573749.2744865,
+    "seen": 1790573808.9040308,
+    "ast_hash": "d77cb5e9f6080bb9b49353006c24b1d5",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": "f515d63efb3434dab64aa93b54e5ac6e"
   },
   "scripts/design-check.mjs": {
-    "mtime": 1790571667.9367197,
-    "seen": 1790571698.7999487,
-    "ast_hash": "8ae3cd20341cb64fa8cf6a194c538ac3",
+    "mtime": 1790573749.279819,
+    "seen": 1790573808.9056776,
+    "ast_hash": "2dd65337634747fd1b43235234056c4d",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "server.mjs": {
-    "mtime": 1790497458.6988869,
-    "seen": 1790510891.0613575,
-    "ast_hash": "3561c220f854d0ce7f29e2f4d9244b41",
+    "mtime": 1790573770.43459,
+    "seen": 1790573808.9066424,
+    "ast_hash": "8e3b41f60ff1fe182c256db6c376fb94",
     "semantic_hash": ""
   },
   ".opencode/skills/graphify/SKILL.md": {
@@ -1134,9 +1134,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1790572912.0463147,
-    "seen": 1790572976.0097594,
-    "ast_hash": "39c2c3b5e524a0129321355a12b05320",
+    "mtime": 1790572992.4210143,
+    "seen": 1790573808.9088268,
+    "ast_hash": "3563ce90c02ac5d3482f04dd2011dc44",
     "semantic_hash": ""
   },
   "Yxx1UbwMGrpapxo2-grok-workspace/.grok/favicon-preview.html": {
@@ -2178,15 +2178,15 @@
     "semantic_hash": ""
   },
   "agent/run-background.ps1": {
-    "mtime": 1790572911.8974104,
-    "seen": 1790572975.9981103,
-    "ast_hash": "7c48cb76a488fd1610ccb94d882a3665",
+    "mtime": 1790572992.419047,
+    "seen": 1790573808.8978252,
+    "ast_hash": "29dfb6b2c334fcd331b494c78e1a79c9",
     "semantic_hash": ""
   },
   "scripts/install-agent.ps1": {
-    "mtime": 1790572911.8984134,
-    "seen": 1790572976.0064535,
-    "ast_hash": "d8f25cd15435f19f9c60558b1bd74a9e",
+    "mtime": 1790573027.2368126,
+    "seen": 1790573808.9058754,
+    "ast_hash": "323685fd81462a5c418aad74495475a5",
     "semantic_hash": ""
   }
 }

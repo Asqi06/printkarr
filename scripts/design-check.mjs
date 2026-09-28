@@ -158,6 +158,28 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
   top = -4000; handlers.pageshow(); assert.equal(visible, true, 'Restored lower pages keep navigation');
   top = 0; handlers.scroll(); assert.equal(visible, false, 'Returning to the opening hides navigation');
 }
+// Run the camera promise chain: detecting a QR must stop the stream and navigate.
+for (const playbackFails of [false, true]) {
+  let click, stopped = 0;
+  const status = { textContent:'' }, button = { disabled:false, addEventListener: (event, handler) => { click=handler; }, setAttribute() { this.disabled=true; }, removeAttribute() { this.disabled=false; } };
+  const video = { style:{}, readyState:4, HAVE_ENOUGH_DATA:4, videoWidth:1, videoHeight:1, play: () => playbackFails ? Promise.reject(new Error('play blocked')) : Promise.resolve() };
+  const win = { location:{href:''}, addEventListener() {} };
+  const token = 'a'.repeat(32);
+  const script = pages.get('/customer/orders/preview/scan').match(/<script>\s*(\(function\(\)\{[\s\S]*?)<\/script>/)[1];
+  runInNewContext(script, {
+    document: { getElementById: id => ({'scan-start':button,'scan-video':video,'scan-status':status}[id]), createElement: () => ({getContext: () => ({drawImage() {}, getImageData: () => ({data:[]})})}) },
+    navigator: { mediaDevices:{getUserMedia: () => Promise.resolve({getTracks: () => [{stop() { stopped++; }}]})} },
+    window:win, jsQR: () => ({data:'https://printkarr.in/c/' + token}), requestAnimationFrame() { assert.fail('A found QR must not keep scanning'); }
+  });
+  click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stopped, 1, 'Camera stream is released on success and playback failure');
+  assert.equal(win.location.href, playbackFails ? '' : '/c/' + token);
+  if (playbackFails) assert.equal(button.disabled, false, 'Camera can be retried after failure');
+}
+const collectedPage = publicViews.collectPage({state:'collected', message:'Order marked collected.'});
+assert.match(collectedPage, /Pickup <em>confirmed/);
+assert.doesNotMatch(collectedPage, /Link <em>expired/);
 // A broken at-rule once swallowed every layout rule after the navigation.
 for (const file of ['qk-landing.css', 'design.css', 'customer.css']) {
   const css = readFileSync(new URL('../public/' + file, import.meta.url), 'utf8');

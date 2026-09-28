@@ -1949,7 +1949,7 @@ app.get('/c/:token', (req, res) => {
   if (!found.ok) {
     const msg = { used: 'These prints were already collected. Enjoy!', expired: 'This pickup link has expired. Ask the kiosk counter for help.' }[found.error];
     saveDb(db);
-    return res.status(found.error === 'bad-link' ? 400 : 410).send(collectPage({ state: 'dead', message: msg }));
+    return res.status(found.error === 'bad-link' ? 400 : 410).send(collectPage({ state: found.error === 'used' ? 'collected' : 'dead', message: msg }));
   }
   const o = db.orders.find((x) => x.id === found.token.orderId);
   if (!o || o.status !== 'READY_FOR_PICKUP') {
@@ -1969,7 +1969,7 @@ app.post('/c/:token/collect', (req, res) => {
     const msg = { used: 'These prints were already collected. Enjoy!', expired: 'This pickup link has expired. Ask the kiosk counter for help.' }[found.error]
       || 'This pickup link is no longer valid.';
     saveDb(db);
-    return res.status(410).send(collectPage({ state: 'dead', message: msg }));
+    return res.status(410).send(collectPage({ state: found.error === 'used' ? 'collected' : 'dead', message: msg }));
   }
   const o = db.orders.find((x) => x.id === found.token.orderId);
   const done = consumeCollectToken(db, tok, o);
@@ -1985,7 +1985,7 @@ app.post('/c/:token/collect', (req, res) => {
   }
   saveDb(db);
   notifyState(o);
-  res.send(collectPage({ state: 'dead', message: `Order #${o.id} marked collected. Enjoy your prints!` }));
+  res.send(collectPage({ state: 'collected', message: `Order #${o.id} marked collected. Enjoy your prints!` }));
 });
 
 app.get('/api/agent/health', (_req, res) => {
