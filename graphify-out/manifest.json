@@ -990,9 +990,9 @@
     "semantic_hash": "e600180cd489763b9df2339115bcc259"
   },
   "lib/views.js": {
-    "mtime": 1790571015.9397893,
-    "seen": 1790571147.8101563,
-    "ast_hash": "cb598f0146e4756d206d13360d2126f3",
+    "mtime": 1790571505.5734015,
+    "seen": 1790571588.5286834,
+    "ast_hash": "00316c5062f333f924fce1f5cfa106ad",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1790570408.4648583,
-    "seen": 1790570713.6027205,
-    "ast_hash": "2e5a8498a51e17013fbab22e18f48a0b",
+    "mtime": 1790571505.5664005,
+    "seen": 1790571588.5294352,
+    "ast_hash": "80ed359be79936aa859d2200020eca9c",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": "d7a11054759fec9d687db4a82a458f79"
   },
   "public/shell.js": {
-    "mtime": 1790570408.4408758,
-    "seen": 1790570713.6035306,
-    "ast_hash": "45a35df76b95192be4b2cb9d7bde29e7",
+    "mtime": 1790571505.5714016,
+    "seen": 1790571588.530207,
+    "ast_hash": "9755d8d9489f6d3a897debaf2bdbf41f",
     "semantic_hash": ""
   },
   "scripts/delivery-check.mjs": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": "f515d63efb3434dab64aa93b54e5ac6e"
   },
   "scripts/design-check.mjs": {
-    "mtime": 1790571063.3427658,
-    "seen": 1790571147.812817,
-    "ast_hash": "7d0fe7e3df1725ed105ccbe95d275ba9",
+    "mtime": 1790571545.2534251,
+    "seen": 1790571588.5304012,
+    "ast_hash": "c020311955a69b836d004d7360e2acd5",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -2142,9 +2142,9 @@
     "semantic_hash": ""
   },
   "public/kiosk-3d.js": {
-    "mtime": 1790570997.8224843,
-    "seen": 1790571147.8121874,
-    "ast_hash": "17a133ba223177193af72e7bb5d594d8",
+    "mtime": 1790571505.568583,
+    "seen": 1790571588.5300164,
+    "ast_hash": "64ba23ba20105c6a0bf3a3d582026c7e",
     "semantic_hash": ""
   },
   "public/qp-3d.js": {

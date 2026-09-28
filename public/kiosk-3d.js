@@ -3,7 +3,7 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 export function kioskFrame(progress) {
   const ease = (a, b) => { const t = Math.max(0, Math.min(1, (progress - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return { scale: 1.15 - .5 * ease(0, .65), rotation: -.35 + 1.25 * ease(0, .8), dissolve: ease(.48, .92), title: 1 - ease(.03, .24), caption: ease(.84, 1) };
+  return { scale: 1.15 - .5 * ease(0, .65), rotation: -.35 + Math.PI * 6 * ease(0, .78), dissolve: ease(.8, .98), title: 1 - ease(.12, .4), caption: ease(.94, 1) };
 }
 
 function parseObj(text, materials) {
@@ -163,7 +163,7 @@ async function boot() {
       camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); update();
     }
     // Loading swaps only the artwork; section geometry and scroll position stay fixed.
-    resize(); renderer.render(scene, camera); intro.classList.add('is-3d'); update();
+    resize(); progress = target; render(performance.now()); intro.classList.add('is-3d'); update();
     addEventListener('scroll', update, {passive:true});
     new ResizeObserver(resize).observe(stage);
     document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(frameId); frameId=0; } else update(); });

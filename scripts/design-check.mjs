@@ -139,10 +139,25 @@ for (const reducedMotion of [false, true]) {
   assert.equal(look.classList.contains('double'), false);
 }
 console.log('Interaction checks passed: demo replay guard, reduced motion and live paper settings.');
-assert.match(pages.get('/'), /Future of<br><em>printing/);
+assert.match(pages.get('/'), /The future of<br><em>printing<\/em><br>is here/);
 assert.match(pages.get('/'), /type="module" src="\/kiosk-3d.js/);
 for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);
+// Header reveal must work even when the 3D dependency is unavailable.
+{
+  let top = 0, visible;
+  const handlers = {};
+  const intro = { offsetHeight: 3600, querySelector: () => ({ clientHeight:1000 }), getBoundingClientRect: () => ({ top }) };
+  runInNewContext(readFileSync(new URL('../public/shell.js', import.meta.url), 'utf8'), {
+    document: { querySelector: () => intro, querySelectorAll: () => [], body: { classList: { toggle: (name, value) => { visible = value; } } } },
+    window: { matchMedia: () => ({ matches:true }), addEventListener: (event, handler) => { handlers[event] = handler; } },
+    IntersectionObserver: class { observe() {} }
+  });
+  assert.equal(visible, false, 'Opening header is hidden');
+  top = -520; handlers.scroll(); assert.equal(visible, true, 'Header appears after pullback starts');
+  top = -4000; handlers.pageshow(); assert.equal(visible, true, 'Restored lower pages keep navigation');
+  top = 0; handlers.scroll(); assert.equal(visible, false, 'Returning to the opening hides navigation');
+}
 // A broken at-rule once swallowed every layout rule after the navigation.
 for (const file of ['qk-landing.css', 'design.css', 'customer.css']) {
   const css = readFileSync(new URL('../public/' + file, import.meta.url), 'utf8');
@@ -182,6 +197,8 @@ console.log('Shared styles checked: balanced rules and media queries.');
   layout.stage.clientHeight = 500; layout.resize();
   assert.equal(sizes, 2);
   const start = scope.kioskFrame(0), end = scope.kioskFrame(1);
+  assert.ok(Math.abs(scope.kioskFrame(.78).rotation - start.rotation - Math.PI * 6) < 1e-9, 'Complete three full turns before dissolving');
+  assert.equal(scope.kioskFrame(.78).dissolve, 0);
   assert.equal(start.scale, 1.15); assert.equal(start.dissolve, 0); assert.equal(start.title, 1);
   assert.ok(Math.abs(end.scale - .65) < 1e-9); assert.equal(end.dissolve, 1); assert.equal(end.caption, 1);
   let previous = start;

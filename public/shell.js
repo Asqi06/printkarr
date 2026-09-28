@@ -8,6 +8,18 @@
   document.querySelectorAll('.qk-home .qk-section, .qk-home .qk-host').forEach(function (el) { el.classList.add('rv'); });
   document.querySelectorAll('.rv').forEach(function (el) { io.observe(el); });
 
+  var intro = document.querySelector && document.querySelector('.kiosk-intro');
+  if (intro) {
+    function revealIntroNav() {
+      var distance = Math.max(1, intro.offsetHeight - intro.querySelector('.kiosk-sticky').clientHeight);
+      document.body.classList.toggle('intro-nav-visible', -intro.getBoundingClientRect().top / distance >= 0.18);
+    }
+    window.addEventListener('scroll', revealIntroNav, { passive: true });
+    window.addEventListener('resize', revealIntroNav);
+    window.addEventListener('pageshow', revealIntroNav);
+    revealIntroNav();
+  }
+
   var t;
   window.toast = function (msg) {
     var el = document.getElementById('toast');
