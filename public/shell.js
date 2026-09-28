@@ -20,54 +20,6 @@
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  var glass = document.querySelector && document.querySelector('.public-site .site-header-inner');
-  if (glass && window.ResizeObserver && window.CSS && window.CSS.supports('backdrop-filter', 'url(#liquid-glass-refraction)') && !window.matchMedia('(prefers-reduced-transparency: reduce)').matches && !window.matchMedia('(forced-colors: active)').matches) {
-    var map = document.getElementById('liquid-glass-map');
-    var canvas = document.createElement('canvas');
-    var context = canvas.getContext('2d');
-    var lastSize = '';
-    if (map && context) {
-      function refractPill() {
-        var w = Math.round(glass.clientWidth - 2), h = Math.round(glass.clientHeight - 2);
-        if (w < h || h < 2 || lastSize === w + 'x' + h) return;
-        lastSize = w + 'x' + h;
-        canvas.width = w; canvas.height = h;
-        var image = context.createImageData(w, h), data = image.data;
-        var radius = h / 2, bezel = Math.min(22, radius - 1);
-        // Keep the strongest (42px blue) channel below a unit slope, so the lens cannot fold back on itself.
-        var amplitude = Math.min(115, bezel * 0.28 * 255 / 42);
-        for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
-          var px = x + 0.5, py = y + 0.5;
-          var vx = px - Math.max(radius, Math.min(px, w - radius));
-          var vy = py - radius;
-          var distance = Math.hypot(vx, vy), depth = radius - distance;
-          var strength = depth > 0 && depth < bezel ? Math.pow(Math.sin(Math.PI * depth / bezel), 2) : 0;
-          var i = (y * w + x) * 4;
-          data[i] = 128 + (distance ? vx / distance : 0) * strength * amplitude;
-          data[i + 1] = 128 + (distance ? vy / distance : 0) * strength * amplitude;
-          data[i + 2] = 0; data[i + 3] = 255;
-        }
-        context.putImageData(image, 0, 0);
-        map.setAttribute('href', canvas.toDataURL('image/png'));
-        map.setAttribute('width', w);
-        map.setAttribute('height', h);
-        glass.closest('.site-header').classList.add('liquid-ready');
-      }
-      new window.ResizeObserver(refractPill).observe(glass);
-      refractPill();
-      if (!reduceMotion && window.matchMedia('(hover: hover)').matches) {
-        glass.addEventListener('pointermove', function (event) {
-          var bounds = glass.getBoundingClientRect();
-          glass.style.setProperty('--glass-x', ((event.clientX - bounds.left) / bounds.width * 100).toFixed(1) + '%');
-          glass.style.setProperty('--glass-y', ((event.clientY - bounds.top) / bounds.height * 100).toFixed(1) + '%');
-        });
-        glass.addEventListener('pointerleave', function () {
-          glass.style.removeProperty('--glass-x'); glass.style.removeProperty('--glass-y');
-        });
-      }
-    }
-  }
-
   // Finite, user-triggered animation: no printing requests are made by this demo.
   document.querySelectorAll('[data-print-demo]').forEach(function (demo) {
     var button = demo.querySelector('.demo-trigger');

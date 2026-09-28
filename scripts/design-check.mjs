@@ -139,30 +139,42 @@ for (const reducedMotion of [false, true]) {
   assert.equal(look.classList.contains('double'), false);
 }
 console.log('Interaction checks passed: demo replay guard, reduced motion and live paper settings.');
+assert.match(pages.get('/'), /Future of<br><em>printing/);
+assert.match(pages.get('/'), /type="module" src="\/kiosk-3d.js/);
+for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
+assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);
+// Exercise the production timeline and OBJ parser without needing a GPU.
 {
-  let image;
-  const attrs = {};
-  const headerClasses = new Set();
-  const glass = { clientWidth: 102, clientHeight: 42, closest: () => ({ classList: { add: name => headerClasses.add(name) } }) };
-  const map = { setAttribute: (name, value) => { attrs[name] = value; } };
-  const canvas = { getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData: value => { image = value; } }), toDataURL: () => 'data:image/png;base64,test' };
-  runInNewContext(readFileSync(new URL('../public/shell.js', import.meta.url), 'utf8'), {
-    document: { querySelectorAll: () => [], querySelector: () => glass, getElementById: () => map, createElement: () => canvas },
-    window: { matchMedia: () => ({ matches: false }), CSS: { supports: () => true }, ResizeObserver: class { observe() {} } },
-    IntersectionObserver: class { observe() {} }
-  });
-  assert.equal(attrs.width, 100);
-  assert.equal(attrs.height, 40);
-  assert.equal(image.data[(20 * 100 + 50) * 4 + 1], 128, 'Pill centre must stay undistorted');
-  assert.ok(image.data[(10 * 100 + 50) * 4 + 1] < 120, 'Pill bezel must refract toward its edge');
-  for (let x = 1; x < 100; x++) {
-    const red = column => image.data[(19 * 100 + column) * 4];
-    assert.equal(red(x) + red(99 - x), 256, 'Rounded ends must mirror each other');
-    assert.ok(x + 42 * (red(x) / 255 - 0.5) > x - 1 + 42 * (red(x - 1) / 255 - 0.5), 'Rounded-end refraction must not fold or reverse the background');
+  const source = readFileSync(new URL('../public/kiosk-3d.js', import.meta.url), 'utf8');
+  const scope = { THREE: {
+    Group: class { children = []; add(mesh) { this.children.push(mesh); } },
+    BufferGeometry: class { attributes = {}; setAttribute(name, value) { this.attributes[name] = value; } computeVertexNormals() {} },
+    Float32BufferAttribute: class { constructor(array, size) { this.array = array; this.itemSize = size; } },
+    Mesh: class { constructor(geometry, material) { this.geometry = geometry; this.material = material; } }
+  } };
+  runInNewContext(source.replace(/^import .*;$/m, '').replace('export function', 'function').replace(/boot\(\);\s*$/, ''), scope);
+  const start = scope.kioskFrame(0), end = scope.kioskFrame(1);
+  assert.equal(start.scale, 1.6); assert.equal(start.dissolve, 0); assert.equal(start.title, 1);
+  assert.ok(Math.abs(end.scale - .65) < 1e-9); assert.equal(end.dissolve, 1); assert.equal(end.caption, 1);
+  let previous = start;
+  for (let i = 1; i <= 100; i++) {
+    const frame = scope.kioskFrame(i / 100);
+    assert.ok(frame.scale <= previous.scale && frame.dissolve >= previous.dissolve);
+    assert.ok(Object.values(frame).every(Number.isFinite)); previous = frame;
   }
-  assert.ok(headerClasses.has('liquid-ready'));
+  assert.equal(scope.kioskFrame(-2).scale, start.scale);
+  assert.equal(scope.kioskFrame(2).dissolve, end.dissolve);
+  const materials = Object.fromEntries(['001','002','003','004'].map(n => ['Material.' + n, n]));
+  const model = scope.parseObj(readFileSync(new URL('../public/models/kiosk.obj', import.meta.url), 'utf8'), materials);
+  assert.ok(model.children.length >= 4);
+  for (const mesh of model.children) {
+    const { position, uv } = mesh.geometry.attributes;
+    assert.ok(mesh.material); assert.equal(position.array.length % 9, 0);
+    assert.equal(uv.array.length / 2, position.array.length / 3);
+    assert.ok([...position.array, ...uv.array].every(Number.isFinite));
+  }
+  console.log('Kiosk checked: textured triangles, scroll endpoints, monotonic pullback and dissolve.');
 }
-console.log('Liquid glass pill map checked: neutral centre and refracting bezel.');
 if (process.argv.includes('--serve')) {
   const app = express();
   app.use(express.static('public', { index: false }));
