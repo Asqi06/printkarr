@@ -197,10 +197,10 @@ console.log('Shared styles checked: balanced rules and media queries.');
   layout.stage.clientHeight = 500; layout.resize();
   assert.equal(sizes, 2);
   const start = scope.kioskFrame(0), end = scope.kioskFrame(1);
-  assert.ok(Math.abs(scope.kioskFrame(.78).rotation - start.rotation - Math.PI * 6) < 1e-9, 'Complete three full turns before dissolving');
+  assert.ok(Math.abs(scope.kioskFrame(.78).rotation - start.rotation - Math.PI * 2) < 1e-9, 'Complete one full turn before dissolving');
   assert.equal(scope.kioskFrame(.78).dissolve, 0);
   assert.equal(start.scale, 1.15); assert.equal(start.dissolve, 0); assert.equal(start.title, 1);
-  assert.ok(Math.abs(end.scale - .65) < 1e-9); assert.equal(end.dissolve, 1); assert.equal(end.caption, 1);
+  assert.ok(Math.abs(end.scale - .95) < 1e-9); assert.equal(end.dissolve, 1); assert.equal(end.caption, 1);
   let previous = start;
   for (let i = 1; i <= 100; i++) {
     const frame = scope.kioskFrame(i / 100);

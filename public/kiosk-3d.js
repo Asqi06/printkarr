@@ -3,7 +3,7 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 export function kioskFrame(progress) {
   const ease = (a, b) => { const t = Math.max(0, Math.min(1, (progress - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return { scale: 1.15 - .5 * ease(0, .65), rotation: -.35 + Math.PI * 6 * ease(0, .78), dissolve: ease(.8, .98), title: 1 - ease(.12, .4), caption: ease(.94, 1) };
+  return { scale: 1.15 - .2 * ease(0, .65), rotation: -.35 + Math.PI * 2 * ease(0, .78), dissolve: ease(.8, .98), title: 1 - ease(.12, .4), caption: ease(.94, 1) };
 }
 
 function parseObj(text, materials) {
@@ -159,7 +159,7 @@ async function boot() {
       lastWidth = w; lastHeight = h;
       renderer.setSize(w, h, false); camera.aspect = w / h;
       const halfFov = Math.atan(Math.tan(camera.fov * Math.PI / 360) * Math.min(1, camera.aspect));
-      camera.position.set(0, 0, radius * kioskFrame(0).scale / Math.sin(halfFov) * 1.08);
+      camera.position.set(0, 0, radius * kioskFrame(0).scale / Math.sin(halfFov) * .95);
       camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); update();
     }
     // Loading swaps only the artwork; section geometry and scroll position stay fixed.
