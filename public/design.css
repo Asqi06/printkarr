@@ -289,7 +289,6 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
 .pk-logo { background: none; padding: 0; box-shadow: none; font-weight: 700; font-size: 24px; letter-spacing: -.065em; border-radius: 0; }
 .pk-logo .w { color: var(--ink); }
 .pk-logo .b { color: var(--primary); }
-.brand-mark { width: 32px; height: 34px; display: grid; place-items: center; margin-right: 9px; border-radius: 8px; background: var(--primary); color: white; font-size: 29px; letter-spacing: -.08em; line-height: 1; padding: 0 2px 5px 0; }
 .site-header, .app-view .pk-header { position: sticky; inset: 0 0 auto; z-index: 80; background: white; border-bottom: 1px solid var(--line); padding: 0 var(--pad); }
 .site-header-inner, .pk-header-inner { position: relative; max-width: 1380px; margin: auto; min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
 .site-links { display: flex; align-items: center; gap: 28px; margin: 0 auto; }
@@ -367,7 +366,6 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
   .site-header, .app-view .pk-header { padding-inline: 20px; }
   .site-header-inner, .pk-header-inner { min-height: 72px; gap: 14px; }
   .pk-logo { font-size: 22px; }
-  .brand-mark { width: 28px; height: 30px; font-size: 26px; margin-right: 7px; }
   .header-actions { gap: 14px; }
   .header-actions .btn, .account-link, .header-wallet span { display: none; }
   .header-wallet { min-width: 44px; min-height: 44px; justify-content: center; border: 1px solid var(--line); border-radius: 9px; }
