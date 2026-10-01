@@ -1,12 +1,11 @@
 // Local OBJ + its artwork, using the existing Three.js core dependency.
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
+// A contained product view: pointer travel gives a gentle quarter turn.
 export function kioskFrame(progress) {
-  const ease = (a, b) => { const t = Math.max(0, Math.min(1, (progress - a) / (b - a))); return t * t * (3 - 2 * t); };
-  return { scale: 1.15 - .2 * ease(0, .65), rotation: -.35 + Math.PI * 2 * ease(0, .78), dissolve: ease(.8, .98), title: 1 - ease(.12, .4), caption: ease(.94, 1) };
+  return { scale:1, rotation:-.75 + Math.max(0, Math.min(1, progress)) * .5 };
 }
 
-function parseObj(text, materials) {
+function parseObj(text, materials, THREE) {
   const model = new THREE.Group(), vertices = [], uvs = [];
   let positions = [], coords = [], material = materials['Material.001'];
   function flush() {
@@ -40,115 +39,71 @@ async function boot() {
   if (!stage || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   // Never let intrinsic canvas dimensions drive the layout if the stylesheet fails.
   if (getComputedStyle(stage).position !== 'absolute') return;
+  // Load the product renderer and artwork only when their section is nearby.
+  if (window.IntersectionObserver) await new Promise(resolve => {
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) { observer.disconnect(); resolve(); }
+    }, { rootMargin:'240px' });
+    observer.observe(stage);
+  });
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const intro = stage.closest('.kiosk-intro');
   let renderer;
   try {
+    const THREE = await import('/vendor/three-0.160.0.module.js');
     const read = url => fetch(url).then(r => { if (!r.ok) throw new Error(url); return r.text(); });
     const [obj, mtl] = await Promise.all([read('/models/kiosk.obj'), read('/models/kiosk.mtl')]);
     const materials = {}, textures = [], loader = new THREE.TextureLoader();
-    const dissolve = { value: 0 };
-    let current;
-    // Both the shell and the particles use this same surface threshold.
-    const threshold = 'clamp((position.y + 2.3) / 4.7 * .75 + .25 * fract(sin(dot(floor(position * 18.0), vec3(12.9898,78.233,45.164))) * 43758.5453), .001, .999)';
+    let current, materialName;
     for (const line of mtl.split('\n')) {
       const [kind, ...values] = line.trim().split(/\s+/);
       if (kind === 'newmtl') {
-        current = materials[values[0]] = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:.62, metalness:.08 });
-        current.onBeforeCompile = shader => {
-          shader.uniforms.uDissolve = dissolve;
-          shader.vertexShader = 'varying float vThreshold;\n' + shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvThreshold = ' + threshold + ';');
-          shader.fragmentShader = 'uniform float uDissolve; varying float vThreshold;\n' + shader.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (vThreshold < uDissolve) discard;');
-        };
+        materialName = values[0];
+        current = materials[materialName] = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:.85, metalness:0 });
       }
       if (kind === 'Kd') current.color.setRGB(...values.map(Number));
       if (kind === 'map_Kd') {
-        const material = current;
+        // Printed artwork should retain its source colours, independent of studio lights.
+        const material = materials[materialName] = new THREE.MeshBasicMaterial({ toneMapped:false });
         textures.push(loader.loadAsync('/models/' + values.join(' ')).then(texture => { texture.colorSpace = THREE.SRGBColorSpace; material.map = texture; material.color.set(0xffffff); }));
       }
     }
     await Promise.all(textures);
-    const model = parseObj(obj, materials);
+    const model = parseObj(obj, materials, THREE);
     const bounds = new THREE.Box3().setFromObject(model);
     const center = bounds.getCenter(new THREE.Vector3());
     const radius = bounds.getBoundingSphere(new THREE.Sphere()).radius;
     model.position.copy(center).negate();
     const pivot = new THREE.Group(); pivot.add(model);
     const scene = new THREE.Scene(); scene.add(pivot);
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xa9b9df, 2.4));
-    const light = new THREE.DirectionalLight(0xffffff, 3); light.position.set(4, 6, 8); scene.add(light);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8392b0, .8));
+    const light = new THREE.DirectionalLight(0xffffff, 1.4); light.position.set(-3, 7, 5); light.castShadow = true; light.shadow.mapSize.set(512,512); light.shadow.radius = 4; light.shadow.normalBias = .025; scene.add(light);
+    model.children.forEach(mesh => { mesh.castShadow = true; });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(radius * 4, radius * 4), new THREE.ShadowMaterial({ opacity:.1 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -bounds.getSize(new THREE.Vector3()).y / 2; ground.receiveShadow = true; scene.add(ground);
     const camera = new THREE.PerspectiveCamera(38, 1, .1, 100);
     renderer = new THREE.WebGLRenderer({ alpha:true, antialias:true });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
     renderer.domElement.className = 'qk-canvas';
     renderer.domElement.setAttribute('aria-hidden', 'true');
     stage.prepend(renderer.domElement);
 
-    // Sample the actual triangle surfaces by area so particles trace the kiosk.
-    const triangles = []; let area = 0;
-    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
-    model.children.forEach(mesh => {
-      const p = mesh.geometry.attributes.position;
-      for (let i = 0; i < p.count; i += 3) {
-        a.fromBufferAttribute(p, i); b.fromBufferAttribute(p, i + 1); c.fromBufferAttribute(p, i + 2);
-        area += new THREE.Triangle(a, b, c).getArea();
-        triangles.push({ a:a.clone(), b:b.clone(), c:c.clone(), area });
-      }
-    });
-    const positions = [], seeds = [];
-    for (let i = 0; i < 2400; i++) {
-      const sample = Math.random() * area, triangle = triangles.find(t => t.area >= sample);
-      const u = Math.sqrt(Math.random()), v = Math.random();
-      a.copy(triangle.a).multiplyScalar(1 - u).addScaledVector(triangle.b, u * (1 - v)).addScaledVector(triangle.c, u * v);
-      positions.push(a.x, a.y, a.z); seeds.push(Math.random());
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setAttribute('seed', new THREE.Float32BufferAttribute(seeds, 1));
-    const particleMaterial = new THREE.ShaderMaterial({
-      uniforms:{ uDissolve:dissolve, uPixelRatio:{value:renderer.getPixelRatio()} }, transparent:true, depthWrite:false,
-      vertexShader:`attribute float seed; uniform float uDissolve; uniform float uPixelRatio; varying float vAlpha; varying float vSeed;
-        void main() {
-          float threshold = ${threshold};
-          float age = max(0.0, uDissolve - threshold);
-          vAlpha = step(threshold, uDissolve) * (1.0 - smoothstep(0.0, .35, age)) * (1.0 - smoothstep(.87, 1.0, uDissolve));
-          vSeed = seed;
-          vec3 drift = vec3(sin(seed*45.0)*3.0, 1.0+seed*3.0, cos(seed*30.0)*2.0);
-          vec4 mv = modelViewMatrix * vec4(position + drift * age * 5.0, 1.0);
-          gl_Position = projectionMatrix * mv;
-          gl_PointSize = clamp((2.0+seed*2.0) * uPixelRatio * 9.0 / -mv.z, 1.0, 8.0);
-        }`,
-      fragmentShader:`varying float vAlpha; varying float vSeed;
-        void main() {
-          float dotAlpha = 1.0 - smoothstep(.25,.5,length(gl_PointCoord-.5));
-          if(vAlpha < .01) discard;
-          gl_FragColor = vec4(mix(vec3(.09,.27,.88),vec3(1.0,.42,0.0),step(.83,vSeed)),dotAlpha*vAlpha);
-        }`
-    });
-    const particles = new THREE.Points(geometry, particleMaterial);
-    particles.position.copy(model.position); particles.frustumCulled = false; pivot.add(particles);
-    const title = intro.querySelector('.kiosk-title'), caption = intro.querySelector('.kiosk-caption');
-    let progress = 0, target = 0, frameId = 0, lastTime = 0, failed = false;
+    let progress = .5, target = .5, frameId = 0, lastTime = 0, failed = false;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     function render(now) {
       frameId = 0;
       const dt = Math.min(50, now - (lastTime || now)); lastTime = now;
-      const previous = progress;
-      progress += (target - progress) * (1 - Math.exp(-dt / 75));
+      progress += (target - progress) * (1 - Math.exp(-dt / 90));
       if (Math.abs(target - progress) < .0001) progress = target;
-      const f = kioskFrame(progress);
-      pivot.scale.setScalar(f.scale); pivot.rotation.set(.05 * Math.sin(progress * Math.PI), f.rotation, -.04 * Math.sin(progress * Math.PI));
-      pivot.position.set(0, 0, 0);
-      dissolve.value = f.dissolve;
-      title.style.opacity = f.title; title.style.transform = `translateY(${-progress * 120}px)`;
-      caption.style.opacity = f.caption;
-      renderer.domElement.style.filter = `blur(${Math.min(2.5, Math.abs(progress - previous) * 110).toFixed(2)}px)`;
+      const frame = kioskFrame(progress);
+      pivot.scale.setScalar(frame.scale); pivot.rotation.y = frame.rotation;
       renderer.render(scene, camera);
       if (progress !== target) frameId = requestAnimationFrame(render);
     }
     function update() {
       if (failed || document.hidden || reduced.matches) return;
-      const rect = intro.getBoundingClientRect();
-      target = Math.max(0, Math.min(1, -rect.top / Math.max(1, intro.offsetHeight - intro.querySelector('.kiosk-sticky').clientHeight)));
       if (!frameId) { lastTime = 0; frameId = requestAnimationFrame(render); }
     }
     let lastWidth = 0, lastHeight = 0;
@@ -159,19 +114,23 @@ async function boot() {
       lastWidth = w; lastHeight = h;
       renderer.setSize(w, h, false); camera.aspect = w / h;
       const halfFov = Math.atan(Math.tan(camera.fov * Math.PI / 360) * Math.min(1, camera.aspect));
-      camera.position.set(0, 0, radius * kioskFrame(0).scale / Math.sin(halfFov) * .95);
+      camera.position.set(0, radius * .15, radius * kioskFrame(0).scale / Math.sin(halfFov) * 1.03);
       camera.lookAt(0, 0, 0); camera.updateProjectionMatrix(); update();
     }
     // Loading swaps only the artwork; section geometry and scroll position stay fixed.
-    resize(); progress = target; render(performance.now()); intro.classList.add('is-3d'); update();
-    addEventListener('scroll', update, {passive:true});
+    resize(); render(performance.now()); intro.classList.add('is-3d');
     new ResizeObserver(resize).observe(stage);
+    intro.addEventListener('pointermove', event => {
+      if (event.pointerType !== 'mouse') return;
+      const rect = intro.getBoundingClientRect(); target = (event.clientX - rect.left) / rect.width; update();
+    });
+    intro.addEventListener('pointerleave', () => { target = .5; update(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(frameId); frameId=0; } else update(); });
     reduced.addEventListener('change', () => {
       intro.classList.toggle('is-3d', !reduced.matches); renderer.domElement.hidden = reduced.matches;
-      if (reduced.matches) { cancelAnimationFrame(frameId); frameId=0; title.style.opacity=1; } else resize();
+      if (reduced.matches) { cancelAnimationFrame(frameId); frameId=0; } else { resize(); update(); }
     });
-    renderer.domElement.addEventListener('webglcontextlost', event => { event.preventDefault(); failed = true; cancelAnimationFrame(frameId); intro.classList.remove('is-3d'); renderer.domElement.remove(); title.style.opacity=1; title.style.transform=''; caption.style.opacity=0; });
+    renderer.domElement.addEventListener('webglcontextlost', event => { event.preventDefault(); failed = true; cancelAnimationFrame(frameId); intro.classList.remove('is-3d'); renderer.domElement.remove(); });
   } catch (error) {
     intro.classList.remove('is-3d'); renderer?.domElement.remove(); renderer?.dispose();
     console.warn('Kiosk preview unavailable; showing its image.', error);

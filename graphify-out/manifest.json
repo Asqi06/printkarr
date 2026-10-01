@@ -990,27 +990,27 @@
     "semantic_hash": ""
   },
   "lib/views.js": {
-    "mtime": 1790826534.3047557,
-    "seen": 1790826716.1233878,
-    "ast_hash": "5fb35ff478b994ffc53bc07e815a0b3d",
+    "mtime": 1790837523.0228727,
+    "seen": 1790838512.6317344,
+    "ast_hash": "0f5798e83d6484f9936e5049b928f4e2",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
-    "mtime": 1790825116.3861198,
-    "seen": 1790825273.374277,
-    "ast_hash": "2d0f8e2196dd60ac1db16f3527781b1c",
+    "mtime": 1790835098.5113258,
+    "seen": 1790836034.5238159,
+    "ast_hash": "a95c89ea3a0d0e4dfb153d5ff1a9482e",
     "semantic_hash": ""
   },
   "lib/views_customer.js": {
-    "mtime": 1790826310.4648118,
-    "seen": 1790826516.8091867,
-    "ast_hash": "05dafb83e8c0df6d055b9b6f31f3526e",
+    "mtime": 1790835098.5074818,
+    "seen": 1790836034.5238197,
+    "ast_hash": "010880bc8123d3ea71a590a50dd9dfa1",
     "semantic_hash": ""
   },
   "lib/views_order.js": {
-    "mtime": 1790826048.462387,
-    "seen": 1790826516.80919,
-    "ast_hash": "3834f9b3ccaf40db54ed92b5b411753a",
+    "mtime": 1790835720.1666799,
+    "seen": 1790836034.523823,
+    "ast_hash": "e87a1eb0dc01186ebcc326bff78f0cd6",
     "semantic_hash": ""
   },
   "lib/views_packs.js": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1790826535.911631,
-    "seen": 1790826716.1242123,
-    "ast_hash": "148e0de479ae3711cf2632176f8179eb",
+    "mtime": 1790837394.7261937,
+    "seen": 1790838512.6324463,
+    "ast_hash": "6e1e68ced9fd57ab2b8cb3e448593ee6",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1038,9 +1038,9 @@
     "semantic_hash": "d7a11054759fec9d687db4a82a458f79"
   },
   "public/shell.js": {
-    "mtime": 1790826537.4859548,
-    "seen": 1790826716.125237,
-    "ast_hash": "45a35df76b95192be4b2cb9d7bde29e7",
+    "mtime": 1790835886.1935842,
+    "seen": 1790836034.5255952,
+    "ast_hash": "014b2c823bd99cdcf7b47eb8b4f56e44",
     "semantic_hash": ""
   },
   "scripts/delivery-check.mjs": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": "f515d63efb3434dab64aa93b54e5ac6e"
   },
   "scripts/design-check.mjs": {
-    "mtime": 1790826540.7945664,
-    "seen": 1790826716.1254396,
-    "ast_hash": "c1a7f77b3f71346e745d08c4d57954be",
+    "mtime": 1790838393.3881073,
+    "seen": 1790838512.634486,
+    "ast_hash": "2db02649c437f45b1327acfbaa43aa96",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "server.mjs": {
-    "mtime": 1790825926.5680878,
-    "seen": 1790826516.8137147,
-    "ast_hash": "d9f43cb75cff397f685620b053804c5a",
+    "mtime": 1790837285.3579905,
+    "seen": 1790838512.635591,
+    "ast_hash": "0cd3d0f43876c6d7f7f51b9221106cb5",
     "semantic_hash": ""
   },
   ".opencode/skills/graphify/SKILL.md": {
@@ -2142,9 +2142,9 @@
     "semantic_hash": ""
   },
   "public/kiosk-3d.js": {
-    "mtime": 1790571667.9347632,
-    "seen": 1790571698.7993782,
-    "ast_hash": "e35c854f22d1c9597eac9c26f78c0d00",
+    "mtime": 1790836755.5233946,
+    "seen": 1790836815.1236203,
+    "ast_hash": "7c117510d33b56870a8c77075b6647e9",
     "semantic_hash": ""
   },
   "public/qp-3d.js": {
@@ -2199,6 +2199,90 @@
     "mtime": 1790825463.850461,
     "seen": 1790825511.3155284,
     "ast_hash": "0e5fb4b916899f9b24640dd17a435ed5",
+    "semantic_hash": ""
+  },
+  "public/design-motion.js": {
+    "mtime": 1790836269.2422144,
+    "seen": 1790836815.123618,
+    "ast_hash": "4c861f683066809736b2a51bf17c8a16",
+    "semantic_hash": ""
+  },
+  "public/vendor/gsap-3.13.0.min.js": {
+    "mtime": 1790833637.4810798,
+    "seen": 1790836034.5255995,
+    "ast_hash": "5e6e6cba1d2eabb40740bdc12f736a3c",
+    "semantic_hash": ""
+  },
+  "public/vendor/motion-12.23.24.js": {
+    "mtime": 1790833637.5381393,
+    "seen": 1790836034.5256028,
+    "ast_hash": "51748e9ef9dcf572c796b29353a9156b",
+    "semantic_hash": ""
+  },
+  "public/vendor/three-0.160.0.module.js": {
+    "mtime": 1790835751.0647273,
+    "seen": 1790836034.525606,
+    "ast_hash": "a762b8588c6abf23cb87624360d014c4",
+    "semantic_hash": ""
+  },
+  "docs/design-system.md": {
+    "mtime": 1790838394.7646232,
+    "seen": 1790838512.658201,
+    "ast_hash": "2bc59e1342f8dbd948cb50b0513d8c06",
+    "semantic_hash": ""
+  },
+  "public/fonts/DM-Sans-OFL.txt": {
+    "mtime": 1790833753.26246,
+    "seen": 1790836034.566907,
+    "ast_hash": "5d80d8b71643fc638d4b8b1f3ded7c6f",
+    "semantic_hash": ""
+  },
+  "public/fonts/Instrument-Serif-OFL.txt": {
+    "mtime": 1790833753.5375504,
+    "seen": 1790836034.566912,
+    "ast_hash": "768c3f0d6166414610edb8aab3eebfb3",
+    "semantic_hash": ""
+  },
+  "public/vendor/Motion-LICENSE.md": {
+    "mtime": 1790833754.0541122,
+    "seen": 1790836034.567276,
+    "ast_hash": "f67d6e0b9cdcc7b31a7ff058e664e133",
+    "semantic_hash": ""
+  },
+  "public/vendor/Phosphor-LICENSE.txt": {
+    "mtime": 1790833753.698035,
+    "seen": 1790836034.5672805,
+    "ast_hash": "9c267cca94df6a7ac13d83b43a8bccfb",
+    "semantic_hash": ""
+  },
+  "public/vendor/Three-LICENSE.txt": {
+    "mtime": 1790835751.4296436,
+    "seen": 1790836034.567284,
+    "ast_hash": "f655d7763863cf6503d6158421a95175",
+    "semantic_hash": ""
+  },
+  "public/icons.svg": {
+    "mtime": 1790833752.9173944,
+    "seen": 1790836034.5871062,
+    "ast_hash": "81a5e48372512d28ed10b9cc8d03e17a",
+    "semantic_hash": ""
+  },
+  "public/images/print-desk-hero-v2.webp": {
+    "mtime": 1790836269.2270555,
+    "seen": 1790836815.1623087,
+    "ast_hash": "c90b1d9eca1f2088f8d2f59337c9665f",
+    "semantic_hash": ""
+  },
+  "public/fonts/Google-Sans-OFL.txt": {
+    "mtime": 1790837519.0560782,
+    "seen": 1790838512.659007,
+    "ast_hash": "e22088344baa13c7bb0340df36d49e2c",
+    "semantic_hash": ""
+  },
+  "public/icons/google.png": {
+    "mtime": 1790837518.3183455,
+    "seen": 1790838512.6741643,
+    "ast_hash": "2bbfebc5c3db0d7a97b8cf8fe25cc8c8",
     "semantic_hash": ""
   }
 }

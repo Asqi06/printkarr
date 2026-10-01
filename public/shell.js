@@ -1,13 +1,5 @@
-// Shared interactions: reveals, print illustration, kiosk demo, and feedback. No dependencies.
+// Shared print controls, demonstration and feedback. Motion lives in design-motion.js.
 (function () {
-  var io = new IntersectionObserver(function (es) {
-    es.forEach(function (en) {
-      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
-    });
-  }, { threshold: 0.08 });
-  document.querySelectorAll('.qk-home .qk-section, .qk-home .qk-host').forEach(function (el) { el.classList.add('rv'); });
-  document.querySelectorAll('.rv').forEach(function (el) { io.observe(el); });
-
   var t;
   window.toast = function (msg) {
     var el = document.getElementById('toast');

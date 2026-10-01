@@ -89,7 +89,7 @@ function googleRedirectUri(req) {
   return `${req.protocol}://${req.get('host')}/auth/google/callback`;
 }
 
-const loginView = (err) => loginPage(err, !!GOOGLE.id, demoLoginOn());
+const loginView = (err) => loginPage(err, !!GOOGLE.id);
 
 // Live-map config — Leaflet + OpenStreetMap needs no API keys.
 // Override tiles (e.g. Mapbox) or hub via env; no code change required.
@@ -265,7 +265,7 @@ const isAdminEmail = (email) => {
 app.post('/login', loginLimiter, (req, res) => {
   const user = verifyCredentials(req.body.email, req.body.password);
   if (!user || user.role !== 'customer') {
-    return res.status(401).send(loginView(demoLoginOn() ? 'No match — check your email and password, or try a demo account below.' : 'No match — check your email and password. (Admins use /admin/login)'));
+    return res.status(401).send(loginView('Please continue with Google to sign in.'));
   }
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
@@ -280,7 +280,7 @@ app.post('/login/code-request', loginLimiter, async (req, res) => {
   const db = loadDb();
   const user = email && db.users.find((u) => String(u.email || '').toLowerCase() === email);
   if (!user || user.role !== 'customer') {
-    return res.status(404).send(loginView('No customer account on that email yet — print something first, or continue with Google.'));
+    return res.status(404).send(loginView('Please continue with Google to sign in.'));
   }
   const otp = await requestEmailOtp(email);
   if (!otp.ok) return res.status(429).send(loginView(otp.error));
@@ -295,7 +295,7 @@ app.post('/login/code-verify', loginLimiter, (req, res) => {
   const db = loadDb();
   const user = db.users.find((u) => String(u.email || '').toLowerCase() === email);
   if (!user || user.role !== 'customer') {
-    return res.status(401).send(loginView('That account can\'t sign in here — shop staff use /admin/login.'));
+    return res.status(401).send(loginView('Please continue with Google to sign in.'));
   }
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
@@ -304,7 +304,7 @@ app.post('/login/code-verify', loginLimiter, (req, res) => {
 
 function staffLogin(role) {
   const home = HOME[role];
-  const mkPage = (err) => staffLoginPage(role, err, !!GOOGLE.id);
+  const mkPage = (err) => staffLoginPage(role, err);
   return {
     show: (req, res) => {
       const user = currentUser(req);
@@ -343,7 +343,7 @@ app.get('/auth/google', (req, res) => {
 });
 
 app.get('/auth/google/callback', async (req, res) => {
-  const fail = () => res.status(401).send(loginView('Google could not verify you — try again or sign in with email.'));
+  const fail = () => res.status(401).send(loginView('Google could not verify your account. Please try again.'));
   try {
     if (!GOOGLE.id || !GOOGLE.secret) return fail();
     const cookies = parseCookies(req.headers.cookie);
@@ -366,17 +366,9 @@ app.get('/auth/google/callback', async (req, res) => {
     const email = String(info.email || '').toLowerCase();
     if (!email || info.email_verified === false) return fail();
     const db = loadDb();
-    if (isAdminEmail(email)) {
-      let admin = db.users.find(u => u.role === 'admin' && u.email.toLowerCase() === email);
-      if (!admin) {
-        admin = { id: 'ADM-' + Date.now().toString(36), role: 'admin', name: String(info.name || email.split('@')[0]).slice(0,60), email, password: null, phone: '', student: false };
-        db.users.push(admin); saveDb(db);
-      }
-      const token = createSession(admin.id);
-      res.setHeader('Set-Cookie', sessionCookie(req, token));
-      return res.redirect('/admin');
-    }
     let user = db.users.find((u) => u.email.toLowerCase() === email);
+    // Customer OAuth never creates or signs in a staff account.
+    if (isAdminEmail(email) || (user && user.role !== 'customer')) return res.redirect('/admin/login');
 
     if (!user) {
       user = {
@@ -872,7 +864,7 @@ app.get('/customer', requireRole('customer'), (req, res) => {
   const current = mine.find(ACTIVE) || mine[0] || null;
   const notes = (db.notifications || []).filter((n) => n.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at));
   const lastDoc = mine.find((o) => !current || o.id !== current.id) || null;
-  res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc, packsHtml: packDashboardHtml(mySubs(db, req.user.id)) }));
+  res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc, walletBalance: walletOf(db, req.user.id).balance, packsHtml: packDashboardHtml(mySubs(db, req.user.id)) }));
 });
 
 app.get('/customer/orders', requireRole('customer'), (req, res) => {
