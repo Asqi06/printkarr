@@ -66,7 +66,7 @@ try {
   assert.equal((await withHost('unrelated.example')).status,404, 'No host-header-driven external redirect');
   assert.equal((await fetch(base + '/PRINTING-IN-VAPI/', { method:'POST', redirect:'manual' })).status,404, 'Do not redirect order/form POSTs');
   for (const path of ['/login','/admin/login','/customer','/customer/wallet','/order']) assert.match(pages.get(path), /name="robots" content="noindex,nofollow"/, path + ' private pages excluded');
-  assert.match(readFileSync(new URL('../public/kiosk-3d.js', import.meta.url),'utf8'), /connection\?\.saveData/);
+  for (const html of pages.values()) assert.doesNotMatch(html, /kiosk-3d|three-0/, 'Kiosk stays an image on all pages');
   console.log(`${urls.length} sitemap URLs and public metadata checked.`);
 } finally {
   server.close();

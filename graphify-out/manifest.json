@@ -990,9 +990,9 @@
     "semantic_hash": ""
   },
   "lib/views.js": {
-    "mtime": 1790846469.531556,
-    "seen": 1790847194.1154816,
-    "ast_hash": "01e47863de2ad0af3550226169104d0e",
+    "mtime": 1790861794.3456879,
+    "seen": 1790862195.853287,
+    "ast_hash": "188edc4e0f9a08fa895676c7c8e1b83a",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1790846963.0713675,
-    "seen": 1790847194.1174085,
-    "ast_hash": "afc2b04b1cd4dfd03a992b82bf464e27",
+    "mtime": 1790862423.7508101,
+    "seen": 1790862851.206677,
+    "ast_hash": "cd628d44eeeccd811f7ea7e12956b0ca",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": "f515d63efb3434dab64aa93b54e5ac6e"
   },
   "scripts/design-check.mjs": {
-    "mtime": 1790846223.9098048,
-    "seen": 1790847194.122436,
-    "ast_hash": "d6e260830c77f5be26162c2141482cd7",
+    "mtime": 1790862423.751741,
+    "seen": 1790862851.2124143,
+    "ast_hash": "e493d01aa1a32919931cfb4292a82cda",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -2124,9 +2124,9 @@
     "semantic_hash": ""
   },
   "scripts/seo-check.mjs": {
-    "mtime": 1790847483.120039,
-    "seen": 1790847650.8630497,
-    "ast_hash": "19ca371a75d45f804123ca084c62c6fb",
+    "mtime": 1790862423.7547374,
+    "seen": 1790862851.213753,
+    "ast_hash": "411ac1e76d112a04913626f346ab8139",
     "semantic_hash": ""
   },
   "lib/owner-test.js": {
@@ -2139,12 +2139,6 @@
     "mtime": 1790497458.606603,
     "seen": 1790510891.0591836,
     "ast_hash": "2457b945d5a2368968de6b3de9ec54c0",
-    "semantic_hash": ""
-  },
-  "public/kiosk-3d.js": {
-    "mtime": 1790846230.5946395,
-    "seen": 1790847194.1193242,
-    "ast_hash": "5cb9d427fe4fe8903071c785cd3f90bf",
     "semantic_hash": ""
   },
   "public/qp-3d.js": {
@@ -2202,9 +2196,9 @@
     "semantic_hash": ""
   },
   "public/design-motion.js": {
-    "mtime": 1790836269.2422144,
-    "seen": 1790836815.123618,
-    "ast_hash": "4c861f683066809736b2a51bf17c8a16",
+    "mtime": 1790862563.8651667,
+    "seen": 1790862851.2082665,
+    "ast_hash": "5cd132c236a4741765d2c94f6fef1e6e",
     "semantic_hash": ""
   },
   "public/vendor/gsap-3.13.0.min.js": {
@@ -2226,9 +2220,9 @@
     "semantic_hash": ""
   },
   "docs/design-system.md": {
-    "mtime": 1790838394.7646232,
-    "seen": 1790838512.658201,
-    "ast_hash": "2bc59e1342f8dbd948cb50b0513d8c06",
+    "mtime": 1790862649.1108835,
+    "seen": 1790862851.2540612,
+    "ast_hash": "a661df87f5ea4022be60c5bb3c16617d",
     "semantic_hash": ""
   },
   "public/fonts/DM-Sans-OFL.txt": {
@@ -2709,6 +2703,48 @@
     "mtime": 1790847181.7010903,
     "seen": 1790847650.9005473,
     "ast_hash": "641afc70fdf32cf88fa270ec1372eb08",
+    "semantic_hash": ""
+  },
+  "scripts/motion-browser-check.mjs": {
+    "mtime": 1790862565.7197435,
+    "seen": 1790862851.2137437,
+    "ast_hash": "153a5d0a5722f936197b6ae79afbfaa9",
+    "semantic_hash": ""
+  },
+  "docs/seo/ACTION-PLAN.md": {
+    "mtime": 1790848266.3552566,
+    "seen": 1790862195.9163642,
+    "ast_hash": "304ed0088377d482185a2f0c4fa640bc",
+    "semantic_hash": ""
+  },
+  "docs/seo/FULL-AUDIT-REPORT.md": {
+    "mtime": 1790848265.1629431,
+    "seen": 1790862195.9163754,
+    "ast_hash": "e13e98dc6f21b44db3727a31a0dc64b9",
+    "semantic_hash": ""
+  },
+  "docs/motion-preview/marquee-320.png": {
+    "mtime": 1790862660.3422396,
+    "seen": 1790862851.274209,
+    "ast_hash": "54cceb69224536783dcc640569980984",
+    "semantic_hash": ""
+  },
+  "docs/motion-preview/marquee-390.png": {
+    "mtime": 1790862673.166957,
+    "seen": 1790862851.2742133,
+    "ast_hash": "1cfe7a03b4475439366ef50914e4551b",
+    "semantic_hash": ""
+  },
+  "docs/motion-preview/kiosk-image-390.png": {
+    "mtime": 1790862782.9820242,
+    "seen": 1790862851.2741983,
+    "ast_hash": "5aee190c47bc7ac10b5254d0e6be5025",
+    "semantic_hash": ""
+  },
+  "docs/motion-preview/marquee-1440.png": {
+    "mtime": 1790862685.7702088,
+    "seen": 1790862851.2742043,
+    "ast_hash": "6dc90112c60c9ac971305c45a7826ed9",
     "semantic_hash": ""
   }
 }

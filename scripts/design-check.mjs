@@ -210,7 +210,7 @@ for (const reducedMotion of [false, true]) {
 }
 console.log('Interaction checks passed: demo replay guard, reduced motion and live paper settings.');
 assert.match(pages.get('/'), /Good prints.<br><em>Zero fuss.<\/em>/);
-assert.match(pages.get('/'), /type="module" src="\/kiosk-3d.js/);
+
 for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);
 // Run the camera promise chain: detecting a QR must stop the stream and navigate.
@@ -247,50 +247,10 @@ for (const file of ['qk-landing.css', 'design.css', 'customer.css']) {
   assert.equal(stack.length, 0, `${file}: unclosed CSS rule`);
 }
 console.log('Shared styles checked: balanced rules and media queries.');
-// Exercise the production timeline and OBJ parser without needing a GPU.
-{
-  const source = readFileSync(new URL('../public/kiosk-3d.js', import.meta.url), 'utf8');
-  const scope = { THREE: {
-    Group: class { children = []; add(mesh) { this.children.push(mesh); } },
-    BufferGeometry: class { attributes = {}; setAttribute(name, value) { this.attributes[name] = value; } computeVertexNormals() {} },
-    Float32BufferAttribute: class { constructor(array, size) { this.array = array; this.itemSize = size; } },
-    Mesh: class { constructor(geometry, material) { this.geometry = geometry; this.material = material; } }
-  } };
-  runInNewContext(source.replace(/^import .*;$/m, '').replace('export function', 'function').replace(/boot\(\);\s*$/, ''), scope);
-  // Repeated ResizeObserver notifications must not resize the canvas again.
-  let sizes = 0;
-  const layout = {
-    failed: false, stage: { clientWidth: 360, clientHeight: 320 }, radius: 2.8,
-    kioskFrame: scope.kioskFrame, update() {},
-    renderer: { setSize() { sizes++; } },
-    camera: { fov:38, position:{ set(x, y, z) { assert.ok(Number.isFinite(z) && z > 0); } }, lookAt() {}, updateProjectionMatrix() {} }
-  };
-  const resizing = source.slice(source.indexOf('    let lastWidth'), source.indexOf('    // Loading swaps'));
-  runInNewContext(resizing, layout);
-  layout.resize(); layout.resize();
-  assert.equal(sizes, 1, 'Unchanged dimensions must not feed back into layout');
-  layout.stage.clientHeight = 0; layout.resize();
-  assert.equal(sizes, 1, 'A zero-sized stage must not change the camera');
-  layout.stage.clientHeight = 500; layout.resize();
-  assert.equal(sizes, 2);
-  const start = scope.kioskFrame(0), end = scope.kioskFrame(1);
-  assert.equal(start.scale, 1); assert.equal(end.scale, 1);
-  assert.equal(start.rotation, -.75); assert.equal(end.rotation, -.25);
-  assert.equal(scope.kioskFrame(-2).rotation, start.rotation);
-  assert.equal(scope.kioskFrame(2).rotation, end.rotation);
-  for (let i = 0; i <= 100; i++) assert.ok(Object.values(scope.kioskFrame(i / 100)).every(Number.isFinite));
-  assert.doesNotMatch(source, /addEventListener\('scroll'/, 'A product preview must not take over scrolling');
-  const materials = Object.fromEntries(['001','002','003','004'].map(n => ['Material.' + n, n]));
-  const model = scope.parseObj(readFileSync(new URL('../public/models/kiosk.obj', import.meta.url), 'utf8'), materials, scope.THREE);
-  assert.ok(model.children.length >= 4);
-  for (const mesh of model.children) {
-    const { position, uv } = mesh.geometry.attributes;
-    assert.ok(mesh.material); assert.equal(position.array.length % 9, 0);
-    assert.equal(uv.array.length / 2, position.array.length / 3);
-    assert.ok([...position.array, ...uv.array].every(Number.isFinite));
-  }
-  console.log('Kiosk checked: textured triangles, bounded pointer rotation and stable canvas sizing.');
-}
+// Every kiosk view uses a real responsive image and no 3D dependencies.
+for (const html of pages.values()) assert.doesNotMatch(html, /kiosk-3d|qp-3d|three[-.]|kiosk\.obj|qk-stage|qk-canvas/);
+for (const route of ['/', '/franchise', '/xerox']) assert.match(pages.get(route), /src="\/images\/kiosk-hero\.webp"[^>]*srcset=[^>]*alt="PrintKarr planned/);
+console.log('Kiosk checked: responsive image across every public view, no 3D renderer.');
 // Wallet choice updates the existing top-up fields, selected state, and configured reward.
 {
   const html = pages.get('/customer/wallet');
@@ -311,9 +271,24 @@ console.log('Shared styles checked: balanced rules and media queries.');
   const node = { style:{removeProperty(){reset++;}} };
   // The preference object is live, as it is in the browser.
   const pref = {matches:false, addEventListener(type, fn){change=fn;}};
-  runInNewContext(source, {window:{matchMedia:() => pref, gsap:{fromTo:() => ({kill(){cancelled++;}})}}, document:{querySelector:selector => selector === '.editorial-hero' ? node : null, querySelectorAll:() => [node]}});
+  runInNewContext(source, {window:{matchMedia:() => pref, gsap:{fromTo:() => ({kill(){cancelled++;}})}}, document:{querySelector:selector => selector === '.editorial-hero' ? node : null, querySelectorAll:selector => selector.startsWith('.hero-eyebrow') ? [node] : []}});
   pref.matches=true; change(); assert.equal(cancelled,1); assert.equal(reset,2);
-  runInNewContext(source, {window:{matchMedia:() => ({matches:false,addEventListener(){}})}, document:{}});
+  runInNewContext(source, {window:{matchMedia:() => ({matches:false,addEventListener(){}})}, document:{querySelector:()=>null,querySelectorAll:()=>[]}});
+  const effects = [], observed = [], nodes = {row:{style:{}}, rate:{style:{}}, wallet:{style:{}}};
+  let reveal;
+  function Observer(callback) { reveal=callback; this.observe=node=>observed.push(node); this.unobserve=()=>{}; }
+  runInNewContext(source, {IntersectionObserver:Observer, window:{IntersectionObserver:Observer,matchMedia:()=>({matches:false,addEventListener(){}}),Motion:{animate:(node,frames)=>{effects.push({node,frames});return {};}}}, document:{querySelector:()=>null,querySelectorAll:selector=>selector === '.process-list li' ? [nodes.row] : selector.startsWith('.qk-prices') ? [nodes.rate] : selector === '.wallet-art-card' ? [nodes.wallet] : []}});
+  reveal(observed.map(target=>({target,isIntersecting:true})));
+  assert.equal(effects.find(e=>e.node===nodes.row).frames.x[0],36);
+  assert.equal(effects.find(e=>e.node===nodes.rate).frames.scale[0],.88);
+  assert.equal(effects.find(e=>e.node===nodes.wallet).frames.rotate[1],-6);
+  const classes=new Set(), button={addEventListener(type,fn){this.click=fn;},setAttribute(name,value){this[name]=value;}};
+  const marquee={querySelector:()=>button,classList:{toggle(name){classes.has(name)?classes.delete(name):classes.add(name);return classes.has(name);},add(name){classes.add(name);}}};
+  runInNewContext(source, {window:{matchMedia:()=>({matches:false,addEventListener(){}})},document:{querySelector:selector=>selector === '.print-marquee' ? marquee : null,querySelectorAll:()=>[]}});
+  button.click(); assert.equal(button['aria-pressed'],'true'); assert.equal(button.textContent,'Resume motion');
+  button.click(); assert.equal(button['aria-pressed'],'false'); assert.ok(!classes.has('is-paused'));
+  assert.equal((pages.get('/').match(/class="print-marquee"/g)||[]).length,1);
+  assert.match(readFileSync(new URL('../public/design.css',import.meta.url),'utf8'),/@view-transition\s*\{\s*navigation:auto/);
   console.log('Motion checked: reduced-motion, changing preference, and missing-library fallback.');
 }
 if (process.argv.includes('--serve')) {
