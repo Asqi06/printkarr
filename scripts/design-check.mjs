@@ -11,6 +11,7 @@ import { referralsPage } from '../lib/views_referrals.js';
 import * as admin from '../lib/views_admin.js';
 import { loginPage, loginOtpPage, staffLoginPage } from '../lib/views.js';
 import { blankDb } from '../lib/db.js';
+import { customerDestination, parseCookies } from '../lib/auth.js';
 const { pricing, settings } = blankDb();
 const user = { id: 'preview', role: 'customer', name: 'Ani', email: 'ani@example.com' };
 const staff = { ...user, role: 'admin' };
@@ -48,11 +49,56 @@ const pages = new Map([
 ]);
 assert.match(pages.get('/login'), /<details class="login-password-options">/);
 for (const route of ['/customer', '/customer/orders/new']) {
-  assert.match(pages.get(route), /<nav class="snav"[^>]*>[\s\S]*?<a href="\/customer"[^>]*>[\s\S]*?<span>Dashboard<\/span><\/a>[\s\S]*?<a href="\/customer\/orders\/new"[^>]*>[\s\S]*?<span>Print<\/span><\/a>/);
+  assert.match(pages.get(route), /<nav class="snav"[^>]*>[\s\S]*?<a href="\/customer"[^>]*>[\s\S]*?<span>Home<\/span><\/a>[\s\S]*?<a href="\/customer\/orders\/new"[^>]*>[\s\S]*?<span>Print<\/span><\/a>/);
   assert.match(pages.get(route), /<a href="\/customer\/referrals"[^>]*>[\s\S]*?<span>Refer &amp; Earn<\/span><\/a>/);
 }
-assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">[\s\S]*?<span>Dashboard<\/span><\/a>/);
+assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">[\s\S]*?<span>Home<\/span><\/a>/);
 assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">[\s\S]*?<span>Print<\/span><\/a>/);
+for (const [route, html] of pages) {
+  if (!route.startsWith('/customer')) continue;
+  const nav = html.match(/<nav class="snav"[^>]*>([\s\S]*?)<\/nav>/)[1];
+  assert.deepEqual([...nav.matchAll(/href="([^"]+)"/g)].slice(0, 5).map(m => m[1]), ['/customer', '/customer/orders/new', '/customer/orders', '/customer/wallet', '/customer/profile'], `${route}: all five basic pages fit the mobile bar`);
+}
+for (const route of ['/', '/customer']) {
+  const shortcuts = pages.get(route).match(/<nav class="home-account-actions[^>]*>([\s\S]*?)<\/nav>/)[1];
+  assert.match(shortcuts, /href="\/customer\/wallet">(?:<span>)?Wallet \/ Top-up/);
+  assert.match(shortcuts, /href="\/customer\/profile">(?:<span>)?My Account/);
+}
+assert.match(pages.get('/'), /<nav class="customer-mobile-nav"/);
+assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.site-header\s*\{[^}]*visibility:hidden/);
+// Exercise the real auth handlers with in-memory stubs; no database, mail or session writes.
+{
+  const routes = new Map(), scope = {
+    app: { get: (route, handler) => routes.set('GET ' + route, handler), post: (route, ...handlers) => routes.set('POST ' + route, handlers.at(-1)) },
+    COOKIE: 'pk_demo', HOME: { customer: '/customer', admin: '/admin' }, process: { env: {} },
+    parseCookies, customerDestination, getSessionUser: () => null, verifyCredentials: () => user,
+    createSession: () => 'fake-session', loginLimiter() {}, loginView: error => error || 'login',
+    loginOtpPage: () => 'code', demoLoginOn: () => false, normEmail: email => email,
+    loadDb: () => ({ users: [user] }), requestEmailOtp: async () => ({ ok: true, mailed: true }), verifyEmailOtp: () => ({ ok: true })
+  };
+  const source = readFileSync(new URL('../server.mjs', import.meta.url), 'utf8');
+  runInNewContext(source.slice(source.indexOf('function currentUser('), source.indexOf('function staffLogin(')), scope);
+  const response = () => ({ cookies: {}, headers: {}, status() { return this; }, cookie(name, value, options) { this.cookies[name] = { value, options }; }, setHeader(name, value) { this.headers[name] = value; }, redirect(to) { this.location = to; }, send(body) { this.body = body; } });
+  for (const destination of ['/customer/wallet', '/customer/profile', '/customer/orders']) {
+    const guard = response();
+    scope.requireRole('customer')({ method: 'GET', path: destination, protocol: 'https', headers: {} }, guard, () => assert.fail('Guest must sign in'));
+    assert.equal(guard.location, '/login');
+    assert.equal(guard.cookies.pk_next.value, destination);
+    assert.equal(guard.cookies.pk_next.options.httpOnly, true);
+    const req = { protocol: 'https', headers: { cookie: 'pk_next=' + encodeURIComponent(destination) }, body: { email: user.email, password: 'fake', code: '123456' } };
+    for (const route of ['POST /login', 'POST /login/code-verify']) {
+      const res = response(); await routes.get(route)(req, res);
+      assert.equal(res.location, destination, `${route}: restore the selected page`);
+      assert.ok(res.headers['Set-Cookie'].some(cookie => cookie.startsWith('pk_next=;') && cookie.includes('Max-Age=0')));
+    }
+    const otp = response(); await routes.get('POST /login/code-request')(req, otp);
+    assert.equal(otp.body, 'code');
+    assert.equal(otp.headers['Set-Cookie'], undefined, 'Code request retains the destination cookie');
+  }
+  for (const value of [undefined, '//evil.example', 'https://evil.example', '/customer/../admin', '/customer/wallet?next=https://evil.example', '/customer/wallet\r\n', '/customer/wallet\n', ['/customer/wallet']]) assert.equal(customerDestination(value), '/customer');
+  for (const route of ['/customer', '/customer/orders/new', '/customer/packs', '/customer/referrals']) assert.equal(customerDestination(route), route);
+  console.log('Navigation and sign-in checked: visible shortcuts, five mobile destinations and safe return to Wallet / My Account.');
+}
 assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);
 assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /A4 black &amp; white<\/span><strong>₹7<\/strong>[\s\S]*A4 colour<\/span><strong>₹11<\/strong>/);
@@ -143,21 +189,6 @@ assert.match(pages.get('/'), /The future of<br><em>printing<\/em><br>is here/);
 assert.match(pages.get('/'), /type="module" src="\/kiosk-3d.js/);
 for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);
-// Header reveal must work even when the 3D dependency is unavailable.
-{
-  let top = 0, visible;
-  const handlers = {};
-  const intro = { offsetHeight: 3600, querySelector: () => ({ clientHeight:1000 }), getBoundingClientRect: () => ({ top }) };
-  runInNewContext(readFileSync(new URL('../public/shell.js', import.meta.url), 'utf8'), {
-    document: { querySelector: () => intro, querySelectorAll: () => [], body: { classList: { toggle: (name, value) => { visible = value; } } } },
-    window: { matchMedia: () => ({ matches:true }), addEventListener: (event, handler) => { handlers[event] = handler; } },
-    IntersectionObserver: class { observe() {} }
-  });
-  assert.equal(visible, false, 'Opening header is hidden');
-  top = -520; handlers.scroll(); assert.equal(visible, true, 'Header appears after pullback starts');
-  top = -4000; handlers.pageshow(); assert.equal(visible, true, 'Restored lower pages keep navigation');
-  top = 0; handlers.scroll(); assert.equal(visible, false, 'Returning to the opening hides navigation');
-}
 // Run the camera promise chain: detecting a QR must stop the stream and navigate.
 for (const playbackFails of [false, true]) {
   let click, stopped = 0;

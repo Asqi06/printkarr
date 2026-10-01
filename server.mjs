@@ -12,15 +12,15 @@ import multer from 'multer';
 import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas } from './lib/atlas.js';
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
-import { quote, rangePages, activePrintJobs, surchargeFees, bonusFor, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
+import { quote, rangePages, activePrintJobs, surchargeFees, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
 import { notifyState } from './lib/notify.js';
 import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, normEmail } from './lib/otp.js';
 import { janitor } from './lib/janitor.js';
 import {
   COOKIE, verifyCredentials, createSession, getSessionUser,
-  destroySession, parseCookies, demoLoginOn
+  destroySession, parseCookies, demoLoginOn, customerDestination
 } from './lib/auth.js';
-import { layout, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
+import { layout, esc, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
 import { customerDashboard, ordersList, orderDetail, scanPage } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
@@ -34,6 +34,7 @@ import {
   qualifyForTopup, validUpiId
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
+import { campaignConfig, validateCampaign, hasTopup, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, deliveryPlan, batchPrice, settleWallets } from './lib/campus.js';
 import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
@@ -221,11 +222,16 @@ function currentUser(req) {
   return getSessionUser(parseCookies(req.headers.cookie)[COOKIE]);
 }
 
+const customerReturnTo = (req) => customerDestination(parseCookies(req.headers.cookie).pk_next);
+
 const LOGIN_FOR = { customer: '/login', admin: '/admin/login' };
 function requireRole(role) {
   return (req, res, next) => {
     const user = currentUser(req);
-    if (!user) return res.redirect(LOGIN_FOR[role] || '/login');
+    if (!user) {
+      if (role === 'customer' && req.method === 'GET') res.cookie('pk_next', customerDestination(req.path), { httpOnly: true, sameSite: 'lax', secure: req.protocol === 'https', maxAge: 10 * 60_000 });
+      return res.redirect(LOGIN_FOR[role] || '/login');
+    }
     if (user.role !== role) {
       return res.status(403).send(
         layout({
@@ -242,13 +248,13 @@ function requireRole(role) {
 // ---- Auth (§3) ----
 app.get('/login', (req, res) => {
   const user = currentUser(req);
-  if (user) return res.redirect(HOME[user.role] || '/');
+  if (user) return res.redirect(user.role === 'customer' ? customerReturnTo(req) : HOME[user.role] || '/');
   res.send(loginView(null));
 });
 
 function sessionCookie(req, token) {
   const secure = req.protocol === 'https' ? '; Secure' : '';
-  return `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`;
+  return [`${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`, `pk_next=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`];
 }
 
 const isAdminEmail = (email) => {
@@ -263,7 +269,7 @@ app.post('/login', loginLimiter, (req, res) => {
   }
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
-  res.redirect('/customer');
+  res.redirect(customerReturnTo(req));
 });
 
 // Passwordless customer login: email → 6-digit code → dashboard.
@@ -293,7 +299,7 @@ app.post('/login/code-verify', loginLimiter, (req, res) => {
   }
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
-  res.redirect('/customer');
+  res.redirect(customerReturnTo(req));
 });
 
 function staffLogin(role) {
@@ -385,7 +391,7 @@ app.get('/auth/google/callback', async (req, res) => {
     }
     const token = createSession(user.id);
     res.setHeader('Set-Cookie', sessionCookie(req, token));
-    res.redirect(HOME[user.role] || '/');
+    res.redirect(user.role === 'customer' ? customerReturnTo(req) : HOME[user.role] || '/');
   } catch { return fail(); }
 });
 
@@ -480,7 +486,7 @@ app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
   // Kiosk counter QR: shown while the order awaits pickup so the customer
   // can scan it with their phone to confirm collection (Pi screen later).
   let collectQr = null;
-  if (o.status === 'READY_FOR_PICKUP') {
+  if (o.status === 'READY_FOR_PICKUP' && (!o.deliveryZone || o.deliveryZone === 'pickup')) {
     try {
       collectQr = {
         url: collectUrl(req, collectTokenFor(db, o.id)),
@@ -496,7 +502,7 @@ app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
 function finishPrintAtKiosk(db, order, by) {
   transition(order, 'PRINTED', { by, note: 'printing finished' });
   const printed = { ...order };
-  transition(order, 'READY_FOR_PICKUP', { by, note: 'ready at kiosk' });
+  transition(order, 'READY_FOR_PICKUP', { by, note: order.deliveryZone && order.deliveryZone !== 'pickup' ? 'ready for delivery' : 'ready at kiosk' });
   saveDb(db);
   notifyState(printed);
   notifyState(order);
@@ -523,7 +529,8 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
     else transition(o, to, { by: req.user.id });
   }
   catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>')); }
-  if (to === 'DELIVERED') qualifyForOrder(db, o);
+  if (['CANCELLED', 'REFUNDED'].includes(to)) { refundPaidOrder(db, o); voidPendingForOrder(db, o.id); }
+  if (to === 'DELIVERED') { qualifyForOrder(db, o); settleWallets(db); }
   if (to !== 'PRINTED') {
     saveDb(db);
     notifyState(o);
@@ -571,7 +578,7 @@ app.get('/admin/customers', requireRole('admin'), (req, res) => {
   const db = loadDb();
   const rows = visibleCustomers(db).map((c) => {
     const co = db.orders.filter((o) => o.customerId === c.id);
-    const w = db.wallets.find((x) => x.customerId === c.id);
+    const w = walletOf(db, c.id);
     return {
       id: c.id, name: c.name, count: co.length,
       spent: co.filter((o) => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0),
@@ -586,7 +593,7 @@ app.get('/admin/customers/:id', requireRole('admin'), (req, res) => {
   const c = db.users.find((u) => u.id === req.params.id && u.role === 'customer');
   if (!c) return res.status(404).send(oops(req.user, '/admin/customers', 'Customer <em>unknown.</em>'));
   const orders = db.orders.filter((o) => o.customerId === c.id).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-  const wallet = db.wallets.find((x) => x.customerId === c.id) || { balance: 0 };
+  const wallet = walletOf(db, c.id);
   res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id)));
 });
 
@@ -695,8 +702,38 @@ app.get('/admin/analytics', requireRole('admin'), (req, res) => {
 
 app.get('/admin/settings', requireRole('admin'), (req, res) => {
   const db = loadDb();
+  campaignConfig(db);
   const demos = db.users.filter((u) => u.email.toLowerCase().endsWith('@demo.printkarr.in'));
   res.send(settingsPage(req.user, db.settings, demos, { live: kioskLive(db), envLive: LIVE_PAY, blockers: kioskBlockers() }));
+});
+
+app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  try {
+    const cfg = req.body.campaign ? JSON.parse(String(req.body.campaign)) : structuredClone(campaignConfig(db));
+    if (!req.body.campaign) {
+      cfg.bonusValidityDays = Number(req.body.bonusValidityDays);
+      cfg.showPages = req.body.showPages === '1';
+      cfg.firstPrint = { enabled: req.body['firstPrint-enabled'] === '1', pages: Number(req.body['firstPrint-pages']) };
+      for (const o of cfg.wallets) {
+        o.name = req.body[`wallet-${o.id}-name`];
+        for (const key of ['amount', 'bonus', 'memberDays']) o[key] = Number(req.body[`wallet-${o.id}-${key}`]);
+        for (const key of ['enabled', 'firstOnly', 'freeFirstBatch', 'freeBatch']) o[key] = req.body[`wallet-${o.id}-${key}`] === '1';
+      }
+      for (const key of ['enabled', 'freeEnabled', 'guaranteeEnabled']) cfg.delivery[key] = req.body[`delivery-${key}`] === '1';
+      for (const key of ['freeMinOrder', 'lateCredit']) cfg.delivery[key] = Number(req.body[`delivery-${key}`]);
+      cfg.delivery.cutoff = req.body['delivery-cutoff'];
+      for (const o of cfg.delivery.slots) {
+        for (const key of ['name', 'start', 'end', 'cutoff']) o[key] = req.body[`slot-${o.id}-${key}`];
+        for (const key of ['enabled', 'guaranteed']) o[key] = req.body[`slot-${o.id}-${key}`] === '1';
+      }
+      cfg.delivery.campuses = JSON.parse(String(req.body.campuses));
+    }
+    validateCampaign(cfg);
+    db.settings.campaign = cfg;
+  } catch (error) { return res.status(400).send(oops(req.user, '/admin/settings', esc(error.message))); }
+  saveDb(db);
+  res.redirect('/admin/settings');
 });
 
 app.post('/admin/settings/kiosk', requireRole('admin'), (req, res) => {
@@ -737,7 +774,9 @@ app.post('/admin/settings', requireRole('admin'), (req, res) => {
   s.hours = String(req.body.hours || s.hours).slice(0, 80);
   s.order.maxFileMb = Math.max(1, parseInt(req.body.maxFileMb, 10) || s.order.maxFileMb);
   s.order.maxPages = Math.max(1, parseInt(req.body.maxPages, 10) || s.order.maxPages);
-  s.order.minTotal = Math.max(0, Number(req.body.minTotal) || 0);
+  const minTotal = Number(req.body.minTotal);
+  if (!Number.isFinite(minTotal) || minTotal < 0 || minTotal > 100000) return res.status(400).send(oops(req.user, '/admin/settings', 'Enter a valid minimum order amount.'));
+  s.order.minTotal = Math.round(minTotal * 100) / 100;
   saveDb(db);
   res.redirect('/admin/settings');
 });
@@ -767,11 +806,6 @@ function nextOrderId(db) {
     if (m) max = Math.max(max, parseInt(m[1], 10));
   }
   return 'PK-' + (max + 1);
-}
-function walletOf(db, customerId) {
-  let w = db.wallets.find((x) => x.customerId === customerId);
-  if (!w) { w = { customerId, balance: 0 }; db.wallets.push(w); }
-  return w;
 }
 function offerDevice(req, res) {
   const token = parseCookies(req.headers.cookie).pk_offer_device;
@@ -823,6 +857,15 @@ function restorePackQuota(db, order) {
   order.packRestored = true;
 }
 
+function refundPaidOrder(db, order) {
+  if (order.paymentStatus !== 'paid') return;
+  if (order.paymentMethod === 'wallet' && !order.walletRefunded) {
+    refundWallet(db, order.customerId, order.walletDebitId, order.total, `Refund #${order.id}`);
+    order.walletRefunded = true;
+  }
+  restorePackQuota(db, order);
+}
+
 app.get('/customer', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const mine = custOrders(db, req.user.id);
@@ -854,7 +897,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
     if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
     const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
-    return res.send(optionsStep(req.user, d, addresses));
+    return res.send(optionsStep(req.user, d, addresses, campaignConfig(db)));
   }
   res.send(uploadStep(req.user));
 });
@@ -900,7 +943,17 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   const r = d.fileType === 'image' ? { pages: 1, valid: true } : rangePages(req.body.range, d.pages);
   if (!r.valid) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Page range <em>confused us.</em>'));
   let address;
-  if (req.body.addressId === '__new') {
+  let plan;
+  try { plan = deliveryPlan(db, req.body.deliverySlot, req.body.campusId); }
+  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
+  if (plan.deliveryMode === 'batch') {
+    const campus = campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId);
+    const phone = normPhone(req.body.nn_phone || req.user.phone);
+    if (!phone) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Campus delivery needs a <em>contact phone.</em>'));
+    address = db.addresses.find((a) => a.customerId === req.user.id && a.campusId === campus.id);
+    if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, campusId: campus.id, label: 'College', phone, name: req.user.name, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng }; db.addresses.push(address); }
+    Object.assign(address, { phone, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng });
+  } else if (req.body.addressId === '__new') {
     const newZone = zoneOf(req.body.nn_area);
     if (!newZone || !req.body.nn_phone || (newZone !== 'pickup' && (!req.body.nn_address || !req.body.nn_pin))) {
       return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'New address needs <em>address, phone, PIN.</em>'));
@@ -917,13 +970,13 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     if (!address) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Pick a <em>delivery address.</em>'));
   }
   let zone = zoneOf(address.area);
-  const point = zone === 'pickup' ? null : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+  const point = zone === 'pickup' ? null : plan.deliveryMode === 'batch' ? deliveryPoint(address.lat, address.lng) : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
   try { zone = deliveryFeeFor(db.pricing, zone, point).zone; }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point and area.</em>')); }
   address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone];
   address.lat = point?.lat ?? null;
   address.lng = point?.lng ?? null;
-  const slotKind = ['ASAP', 'Today', 'Tomorrow', 'Schedule'].includes(req.body.slotKind) ? req.body.slotKind : 'Today';
+  if (plan.deliveryMode !== 'batch') plan = deliveryPlan(db, zone === 'pickup' ? 'pickup' : 'express');
   d.selections = {
     effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
     copies, printType, sides,
@@ -932,7 +985,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     notes: String(req.body.notes || '').slice(0, 300),
     addressId: address.id, zone, deliveryPoint: point,
     zoneLabel: { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone],
-    slot: slotKind === 'ASAP' ? 'ASAP' : `${slotKind}, ${req.body.slotTime || '6:30 PM'}`
+    ...plan
   };
   saveDb(db);
   res.redirect(`/customer/orders/new/summary?draft=${d.id}`);
@@ -943,9 +996,23 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
   if (!d || !d.selections) return res.redirect('/customer/orders/new');
   const s = d.selections;
+  let plan;
+  try { plan = deliveryPlan(db, s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
+  Object.assign(s, plan);
+  if (plan.deliveryMode === 'batch') {
+    s.zone = plan.campusZone;
+    s.zoneLabel = plan.campus;
+    s.deliveryPoint = plan.campusPoint;
+    const address = db.addresses.find((a) => a.id === s.addressId && a.customerId === req.user.id);
+    if (!address) return res.status(400).send(oops(req.user, '/customer/orders/new', 'Choose a valid campus address.'));
+    Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
+  }
   let q;
   try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
+  const batch = batchPrice(db, req.user.id, plan, q.subtotal, q.deliveryFee);
+  q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
   const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
   const packDiscount = packCover ? q.subtotal : 0;
   const offers = firstOffers(db, req.user, parseCookies(req.headers.cookie).pk_offer_device, {
@@ -980,10 +1047,24 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   if (di < 0 || !db.drafts[di].selections) return res.redirect('/customer/orders/new');
   const d = db.drafts[di];
   const s = d.selections;
+  let plan;
+  try { plan = deliveryPlan(db, s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
+  Object.assign(s, plan);
+  if (plan.deliveryMode === 'batch') {
+    s.zone = plan.campusZone;
+    s.zoneLabel = plan.campus;
+    s.deliveryPoint = plan.campusPoint;
+    const address = db.addresses.find((a) => a.id === s.addressId && a.customerId === req.user.id);
+    if (!address) return res.status(400).send(oops(req.user, '/customer/orders/new', 'Choose a valid campus address.'));
+    Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
+  }
   let q;
   try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const id = nextOrderId(db);
+  const batch = batchPrice(db, req.user.id, plan, q.subtotal, q.deliveryFee);
+  q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
   const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
   const packDiscount = packCover ? q.subtotal : 0;
   const offers = firstOffers(db, req.user, parseCookies(req.headers.cookie).pk_offer_device, {
@@ -1005,23 +1086,25 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     referralCode = refIn;
     referralDiscount = referralDiscountFor(db, q.subtotal, packDiscount + offers.print, couponDiscount);
   }
-  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); } catch {}
   const order = {
     id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
     printType: s.printType, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
-    addressId: s.addressId, slot: s.slot,
+    addressId: s.addressId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode, couponDiscount, packSubId: packCover ? packCover.id : null, packDiscount,
     firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
     offerDevice: parseCookies(req.headers.cookie).pk_offer_device || null,
-    campus: s.zone === 'pickup' ? 'LIT Sarigam' : null,
+    campus: plan.campus || (s.zone === 'pickup' ? 'LIT Sarigam' : null),
     referralCode, referralDiscount,
     total: Math.round((q.subtotal - packDiscount - offers.print - couponDiscount - referralDiscount + q.deliveryFee - offers.delivery + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   };
+  if (order.total < db.settings.order.minTotal) return res.status(400).send(oops(req.user, '/customer/orders/new', `Minimum order is ₹${db.settings.order.minTotal}.`));
+  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); }
+  catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Upload the file again before <em>placing this order.</em>')); }
   db.orders.push(order);
   if (referralCode) {
     const referrer = findReferrer(db, referralCode);
@@ -1058,7 +1141,8 @@ app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   const waUrl = waForwardUrl(db, req, o);
   saveDb(db);
   const short = Math.round((o.total - w.balance) * 100) / 100;
-  const top = !livePayFor(db) && short > 0 ? { short, bonus: bonusFor(short, db.pricing).bonus } : null;
+  let top = null;
+  try { top = !livePayFor(db) && short > 0 && short <= 10000 ? { short: Math.max(10, short), bonus: topupTerms(db, req.user.id, Math.max(10, short)).bonus } : null; } catch {}
   const testPrintsLeft = canUseOwnerTestPrint(req.user, o) ? req.user.ownerTestPrintsLeft : 0;
   res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: gatewayOn(), waUrl, walletTopup: top, livePay: livePayFor(db), testPrintsLeft }));
 });
@@ -1077,11 +1161,8 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
     const w = walletOf(db, req.user.id);
     const short = Math.round((o.total - w.balance) * 100) / 100;
     if (short > 0) {
-      const b = bonusFor(short, db.pricing);
-      const now = new Date().toISOString();
-      w.balance = Math.round((w.balance + short + b.bonus) * 100) / 100;
-      db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: short, kind: 'credit', label: 'Top-up for order (demo)', at: now });
-      if (b.bonus) db.walletTx.push({ id: `WTX-${Date.now()}b`, customerId: req.user.id, amount: b.bonus, kind: 'credit', label: `Top-up bonus +${b.pct}%`, at: now });
+      try { applyTopup(db, req.user.id, topupTerms(db, req.user.id, Math.max(10, short)), 'Top-up for order (demo)'); }
+      catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/${o.id}/pay`, esc(error.message))); }
     }
     method = 'wallet';
   }
@@ -1092,8 +1173,7 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
       saveDb(db);
       return res.status(402).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'Wallet too <em>light.</em>'));
     }
-    w.balance = Math.round((w.balance - o.total) * 100) / 100;
-    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: -o.total, kind: 'debit', label: `Order #${o.id}`, at: new Date().toISOString() });
+    o.walletDebitId = debitWallet(db, req.user.id, o.total, `Order #${o.id}`);
     o.paymentStatus = 'paid';
   } else {
     o.paymentStatus = 'paid';
@@ -1148,7 +1228,7 @@ app.get('/customer/orders/:id/scan', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
-  if (o.status !== 'READY_FOR_PICKUP') return res.redirect(`/customer/orders/${o.id}`);
+  if (o.status !== 'READY_FOR_PICKUP' || (o.deliveryZone && o.deliveryZone !== 'pickup')) return res.redirect(`/customer/orders/${o.id}`);
   res.send(scanPage(req.user, o));
 });
 
@@ -1159,7 +1239,7 @@ app.get('/api/orders/:id/status', (req, res) => {
   const db = loadDb();
   const o = db.orders.find(x => x.id === req.params.id);
   if (!o || (o.customerId !== user.id && user.role !== 'admin')) return res.status(404).json({ error: 'Not found.' });
-  const friendly = { CREATED:'Draft', PAYMENT_PENDING:'Awaiting payment', CONFIRMED:'Confirmed', PRINT_QUEUE:'In print queue', PRINTING:'Printing', PRINTED:'Printed', READY_FOR_PICKUP:'Ready for pickup', DELIVERED:'Collected', CANCELLED:'Cancelled', PRINT_FAILED:'Print failed' }[o.status] || o.status;
+  const friendly = { CREATED:'Draft', PAYMENT_PENDING:'Awaiting payment', CONFIRMED:'Confirmed', PRINT_QUEUE:'In print queue', PRINTING:'Printing', PRINTED:'Printed', READY_FOR_PICKUP: o.deliveryZone && o.deliveryZone !== 'pickup' ? 'Ready for delivery' : 'Ready for pickup', DELIVERED: o.deliveryZone && o.deliveryZone !== 'pickup' ? 'Delivered' : 'Collected', CANCELLED:'Cancelled', PRINT_FAILED:'Print failed' }[o.status] || o.status;
   res.json({ status: o.status, friendly, updatedAt: o.updatedAt });
 });
 
@@ -1167,31 +1247,17 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   const db = loadDb();
   const src = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!src) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
-  const address = db.addresses.find((x) => x.id === src.addressId && x.customerId === req.user.id);
+  const address = db.addresses.find((a) => a.id === src.addressId && a.customerId === req.user.id);
   const zone = zoneOf(address?.area);
-  const point = zone === 'pickup' ? null : deliveryPoint(address?.lat, address?.lng);
-  let q;
-  try { q = quote({ pages: src.pages, copies: src.copies, printType: src.printType, student: !!req.user.student, zone, point }); }
-  catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Start a new order to <em>pin your delivery point.</em>')); }
-  const id = nextOrderId(db);
-  try { fs.copyFileSync(`data/uploads/${orderFile(src.id, src.fileExt)}`, `data/uploads/${orderFile(id, src.fileExt)}`); } catch {}
-  const now = new Date().toISOString();
-  const packCover = coverFor(db, req.user.id, src.printType, src.pages * src.copies);
-  const packDiscount = packCover ? q.subtotal : 0;
-  db.orders.push({
-    id, customerId: src.customerId, document: src.document, pages: src.pages, filePages: src.filePages || src.pages, fileType: src.fileType || 'pdf', fileExt: src.fileExt || 'pdf', copies: src.copies,
-    printType: src.printType, sides: src.sides, paper: src.paper || 'A4', orientation: src.orientation || 'auto',
-    binding: src.binding || 'none', notes: src.notes || '', pageRange: src.pageRange || null,
-    addressId: src.addressId, slot: src.slot,
-    subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee,
-    discount: q.studentDiscount, couponCode: null, couponDiscount: 0, packSubId: packCover ? packCover.id : null, packDiscount,
-    total: Math.round((q.subtotal - packDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
-    paymentStatus: 'pending', paymentMethod: null,
-    status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: now, by: req.user.id, note: `reorder of ${src.id}` }],
-    riderId: null, createdAt: now, updatedAt: now
+  const id = 'D-' + crypto.randomUUID();
+  const stored = `${id}.${src.fileExt || 'pdf'}`;
+  try { fs.copyFileSync(`data/uploads/${orderFile(src.id, src.fileExt)}`, `data/uploads/${stored}`); }
+  catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Upload the file again to <em>reorder.</em>')); }
+  db.drafts.push({ id, customerId: req.user.id, document: src.document, stored, pages: src.filePages || src.pages, fileType: src.fileType || 'pdf', fileExt: src.fileExt || 'pdf', createdAt: new Date().toISOString(),
+    selections: { effPages: src.pages, copies: src.copies, printType: src.printType, sides: src.sides, orientation: src.orientation || 'auto', binding: src.binding || 'none', notes: src.notes || '', range: src.pageRange || null, addressId: src.addressId, zone, zoneLabel: address?.area, deliveryPoint: deliveryPoint(address?.lat, address?.lng), deliveryMode: src.deliveryMode, slotId: src.slotId, campusId: src.campusId }
   });
   saveDb(db);
-  res.redirect(`/customer/orders/${id}/pay`);
+  res.redirect(`/customer/orders/new/summary?draft=${id}`);
 });
 
 app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
@@ -1203,13 +1269,7 @@ app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
   } catch {
     return res.redirect(`/customer/orders/${o.id}`);
   }
-  if (o.paymentStatus === 'paid' && o.paymentMethod === 'wallet') {
-    const w = walletOf(db, req.user.id);
-    w.balance = Math.round((w.balance + o.total) * 100) / 100;
-    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: o.total, kind: 'credit', label: `Refund #${o.id}`, at: new Date().toISOString() });
-  }
-  // Quota is consumed at payment — only restore when the order was paid.
-  if (o.paymentStatus === 'paid') restorePackQuota(db, o);
+  refundPaidOrder(db, o);
   voidPendingForOrder(db, o.id);
   o.paymentStatus = 'refunded';
   saveDb(db);
@@ -1229,41 +1289,25 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const cash = cashWalletOf(db, req.user.id).balance;
   const rcfg = referralConfig(db);
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, refErr: req.query.referrError || null, refMin: rcfg.friendMinOrder, refBonus: rcfg.friendOff }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch' }, 0, 0).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: campaignConfig(db).wallets.filter((o) => o.enabled && (!o.firstOnly || !hasTopup(db, req.user.id))) }));
 });
 
 app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
   const db = loadDb();
   if (livePayFor(db)) return res.status(400).send(oops(req.user, '/customer/wallet', 'Demo top-ups are <em>off</em> in live mode.'));
-  const amount = Math.max(10, Math.min(10000, Math.round(Number(req.body.amount) || 0)));
-  if (!amount) return res.redirect('/customer/wallet');
-  let referralCode = null, refBonus = 0, referrerId = null;
+  let terms;
+  try { terms = topupTerms(db, req.user.id, req.body.amount, req.body.offerId); }
+  catch (error) { return res.status(400).send(oops(req.user, '/customer/wallet', esc(error.message))); }
   const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
+  let referrer;
   if (refIn) {
-    const v = validateReferral(db, req.user, refIn, amount);
-    if (!v.ok) {
-      return res.redirect(`/customer/wallet?referrError=${encodeURIComponent(v.error)}`);
-    }
-    referralCode = refIn;
-    referrerId = v.referrer.id;
-    refBonus = referralDiscountFor(db, amount, 0, 0);
+    const v = validateReferral(db, req.user, refIn, terms.amount);
+    if (!v.ok) return res.redirect(`/customer/wallet?referrError=${encodeURIComponent(v.error)}`);
+    referrer = v.referrer;
   }
-  const w = walletOf(db, req.user.id);
-  const b = bonusFor(amount, db.pricing);
-  const now = new Date().toISOString();
-  w.balance = Math.round((w.balance + amount + b.bonus + refBonus) * 100) / 100;
-  const topTx = { id: `WTX-${Date.now()}`, customerId: req.user.id, amount, kind: 'credit', label: 'Added (demo)', at: now };
-  db.walletTx.push(topTx);
-  if (b.bonus) db.walletTx.push({ id: `WTX-${Date.now()}b`, customerId: req.user.id, amount: b.bonus, kind: 'credit', label: `Top-up bonus +${b.pct}%`, at: now });
-  if (referralCode) {
-    db.walletTx.push({ id: `WTX-${Date.now()}r`, customerId: req.user.id, amount: refBonus, kind: 'credit', label: `Referral bonus ${referralCode}`, at: now });
-    createReferral(db, {
-      referrerId, refereeId: req.user.id, orderId: null,
-      code: referralCode, friendDiscount: refBonus,
-      sourceKind: 'topup', sourceId: topTx.id
-    });
-    qualifyForTopup(db, topTx.id, req.user.id);
-  }
+  const topTx = applyTopup(db, req.user.id, terms, 'Added (demo)');
+  if (referrer) createReferral(db, { referrerId: referrer.id, refereeId: req.user.id, code: refIn, friendDiscount: 0, sourceKind: 'topup', sourceId: topTx.id });
+  qualifyForTopup(db, topTx.id, req.user.id);
   saveDb(db);
   res.redirect('/customer/wallet');
 });
@@ -1306,8 +1350,7 @@ app.post('/customer/packs/:id/subscribe', requireRole('customer'), (req, res) =>
       saveDb(db);
       return res.status(402).send(oops(req.user, '/customer/packs', 'Wallet too <em>light.</em>'));
     }
-    w.balance = Math.round((w.balance - due) * 100) / 100;
-    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: -due, kind: 'debit', label: `${pack.name} ${plan}`, at: now });
+    debitWallet(db, req.user.id, due, `${pack.name} ${plan}`);
   }
   const sub = newSub(pack, req.user.id, due);
   sub.payments[0].method = method === 'wallet' ? 'wallet' : 'upi-sim';
@@ -1352,8 +1395,7 @@ app.post('/customer/packs/:subId/pay', requireRole('customer'), (req, res) => {
       saveDb(db);
       return res.status(402).send(oops(req.user, '/customer/packs', 'Wallet too <em>light.</em>'));
     }
-    w.balance = Math.round((w.balance - amount) * 100) / 100;
-    db.walletTx.push({ id: `WTX-${Date.now()}`, customerId: req.user.id, amount: -amount, kind: 'debit', label: `${sub.packName} installment`, at: now });
+    debitWallet(db, req.user.id, amount, `${sub.packName} installment`);
   }
   sub.paidTotal = Math.round((sub.paidTotal + amount) * 100) / 100;
   sub.payments.push({ amount, method: method === 'wallet' ? 'wallet' : 'upi-sim', at: now });
@@ -1407,7 +1449,7 @@ app.get('/customer/referrals', requireRole('customer'), (req, res) => {
     cfg, code,
     stats: referralStats(db, req.user.id),
     cash, credit, payouts,
-    shareText: `Assignment ka print chahiye? PrintKarr pe PDF upload karo. My link gives you ₹${cfg.friendOff} off your first eligible print: ${req.protocol}://${req.get('host')}/order?ref=${code}`
+    shareText: `Assignment ka print chahiye? PrintKarr pe PDF upload karo. Add ₹${cfg.minTopup}+ to your wallet and complete your first paid order to get ₹${cfg.friendOff} credit: ${req.protocol}://${req.get('host')}/order?ref=${code}`
   }));
 });
 
@@ -1455,8 +1497,19 @@ app.post('/admin/referrals/config', requireRole('admin'), (req, res) => {
     const n = Number(v);
     return Number.isFinite(n) && n >= 0 && n <= (max || 100000) ? Math.round(n * 100) / 100 : fb;
   };
+  try {
+    const milestones = String(req.body.milestones ?? cfg.milestones.map((m) => `${m.n}:${m.bonus}`).join(',')).trim();
+    const parsed = milestones ? milestones.split(',').map((part) => {
+      const match = part.trim().match(/^(\d+):(\d+(?:\.\d{1,2})?)$/);
+      if (!match || Number(match[1]) < 1 || Number(match[1]) > 10000 || Number(match[2]) > 10000) throw new Error('Use count:bonus, e.g. 3:50, 5:100.');
+      return { n: Number(match[1]), bonus: Number(match[2]) };
+    }) : [];
+    if (new Set(parsed.map((m) => m.n)).size !== parsed.length) throw new Error('Milestone counts must be unique.');
+    cfg.milestones = parsed.sort((a, b) => a.n - b.n);
+  } catch (error) { return res.status(400).send(oops(req.user, '/admin/referrals', esc(error.message))); }
   cfg.enabled = req.body.enabled === '1';
   cfg.friendOff = num(req.body.friendOff, cfg.friendOff, 500);
+  cfg.minTopup = num(req.body.minTopup, cfg.minTopup, 100000);
   cfg.friendMinOrder = num(req.body.friendMinOrder, cfg.friendMinOrder, 100000);
   cfg.referrerCredit = num(req.body.referrerCredit, cfg.referrerCredit, 500);
   cfg.minWithdrawal = num(req.body.minWithdrawal, cfg.minWithdrawal, 100000);
@@ -1565,7 +1618,7 @@ app.get('/order', (req, res) => {
   const d = req.query.draft ? guestDraft(db, req) : null;
   if (req.query.draft && !d) return res.redirect('/order');
   const jobs = activePrintJobs(db);
-  res.send(orderPage({ draft: d, pricing: db.pricing, error: null, maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
+  res.send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
 });
 
 app.post('/order/upload', upload.single('doc'), (req, res) => {
@@ -1612,15 +1665,19 @@ app.post('/order/options', (req, res) => {
   const r = d.fileType === 'image' ? { pages: 1, valid: true } : rangePages(req.body.range, d.pages);
   if (!r.valid) {
     const jobs = activePrintJobs(db);
-    return res.send(orderPage({ draft: d, pricing: db.pricing, error: 'Page range confused us — try 1-12.', maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
+    return res.send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: 'Page range confused us — try 1-12.', maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
   }
-  const area = ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
-  if (!area) return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, error: 'Choose a valid delivery area or kiosk collection.', maxMb: db.settings.order.maxFileMb }));
-  const slot = req.body.slot === 'Evening' ? 'Today, 7:00 PM' : req.body.slot === 'Morning' ? 'Tomorrow, 9:00 AM' : 'ASAP';
+  let plan;
+  try { plan = deliveryPlan(db, req.body.deliverySlot, req.body.campusId); }
+  catch (error) { return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: error.message })); }
+  const campus = plan.deliveryMode === 'batch' ? campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId) : null;
+  const area = campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
+  if (!area) return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: 'Choose a valid delivery area or kiosk collection.' }));
+  if (!campus && area === 'Pickup') plan = deliveryPlan(db, 'pickup');
   d.selections = {
     effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
     copies, printType, sides, orientation: 'auto', binding: 'none', notes: '',
-    area, zone: zoneOf(area), zoneLabel: area, slot
+    area, zone: zoneOf(area), zoneLabel: area, ...plan, campusAddress: campus?.address, campusPin: campus?.pin, campusPoint: campus ? { lat: campus.lat, lng: campus.lng } : null
   };
   saveDb(db);
   res.redirect(`/order/phone?draft=${d.id}`);
@@ -1648,10 +1705,10 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
     if (!req.body.name || !email || (d.selections.zone !== 'pickup' && (!req.body.address || !req.body.pin))) {
       return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Add your name and email, plus an address and PIN for delivery.' }));
     }
-    if (phoneRaw && !phone) {
+    if ((phoneRaw && !phone) || (d.selections.deliveryMode === 'batch' && !phone)) {
       return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — 10 digits, or leave it blank.' }));
     }
-    const point = d.selections.zone === 'pickup' ? null : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+    const point = d.selections.zone === 'pickup' ? null : d.selections.deliveryMode === 'batch' ? d.selections.campusPoint : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
     try {
       d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point).zone;
       d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
@@ -1660,9 +1717,9 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
     d.contact = {
       name: String(req.body.name).slice(0, 60), email,
       phone: phone ? '+91 ' + phone : '',
-      address: d.selections.zone === 'pickup' ? 'Kiosk collection' : String(req.body.address).slice(0, 200),
+      address: d.selections.zone === 'pickup' ? 'Kiosk collection' : d.selections.deliveryMode === 'batch' ? d.selections.campusAddress : String(req.body.address).slice(0, 200),
       landmark: String(req.body.landmark || '').slice(0, 100),
-      pin: String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
+      pin: d.selections.deliveryMode === 'batch' ? d.selections.campusPin : String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
       referral: String(req.body.referral || '').trim().toUpperCase().slice(0, 12)
     };
     if (d.contact.referral) {
@@ -1713,47 +1770,18 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
     lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: true
   };
   db.addresses.push(address);
-  const q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!user.student, zone: s.zone, point: d.contact.deliveryPoint });
-  const id = nextOrderId(db);
-  let referralCode = null, referralDiscount = 0;
+  d.customerId = user.id;
+  d.selections.addressId = address.id;
+  d.selections.deliveryPoint = d.contact.deliveryPoint;
   if (d.contact.referral) {
-    const v = validateReferral(db, user, d.contact.referral, q.subtotal);
-    if (v.ok) {
-      referralCode = d.contact.referral;
-      referralDiscount = referralDiscountFor(db, q.subtotal, 0, 0);
-    }
-    // else: silently drop — request-time check already caught typos; only a
-    // race (second order placed in between) lands here.
+    const v = validateReferral(db, user, d.contact.referral, 0);
+    if (v.ok) createReferral(db, { referrerId: v.referrer.id, refereeId: user.id, code: d.contact.referral, friendDiscount: 0 });
   }
-  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); } catch {}
-  db.orders.push({
-    id, customerId: user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
-    printType: s.printType, sides: s.sides, paper: 'A4', orientation: 'auto',
-    binding: 'none', notes: '', pageRange: s.range,
-    addressId: address.id, slot: s.slot,
-    subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
-    couponCode: null, couponDiscount: 0, packSubId: null, packDiscount: 0,
-    referralCode, referralDiscount,
-    total: Math.round((q.subtotal - referralDiscount + q.deliveryFee + q.lateNightFee + q.surgeFee) * 100) / 100,
-    paymentStatus: 'pending', paymentMethod: null,
-    status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: user.id, note: 'guest otp order' }],
-    riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-  });
-  if (referralCode) {
-    const referrer = findReferrer(db, referralCode);
-    if (referrer) {
-      createReferral(db, {
-        referrerId: referrer.id, refereeId: user.id, orderId: id,
-        code: referralCode, friendDiscount: referralDiscount
-      });
-    }
-  }
-  db.drafts.splice(di, 1);
   saveDb(db);
   const token = createSession(user.id);
   const secure = req.protocol === 'https' ? '; Secure' : '';
   res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
-  res.redirect(`/customer/orders/${id}/pay`);
+  res.redirect(`/customer/orders/new/summary?draft=${d.id}`);
 });
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
@@ -1864,7 +1892,7 @@ app.post('/api/agent/:id/done', agentAuth, (req, res) => {
   }
   // Pickup QR for the printed slip: minted now that the order is READY, so
   // the agent can print it as its own page straight from this response.
-  const url = collectUrl(req, collectTokenFor(db, o.id));
+  const url = !o.deliveryZone || o.deliveryZone === 'pickup' ? collectUrl(req, collectTokenFor(db, o.id)) : null;
   saveDb(db);
   res.json({ ok: true, order: agentJob(o), collectUrl: url });
 });
@@ -1983,6 +2011,8 @@ app.post('/c/:token/collect', (req, res) => {
     saveDb(db);
     return res.status(409).send(collectPage({ state: 'dead', message: 'These prints were already collected. Enjoy!' }));
   }
+  qualifyForOrder(db, o);
+  settleWallets(db);
   saveDb(db);
   notifyState(o);
   res.send(collectPage({ state: 'collected', message: `Order #${o.id} marked collected. Enjoy your prints!` }));
@@ -2063,9 +2093,11 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
   const user = currentUser(req);
   if (!user || user.role !== 'customer') return res.status(401).json({ error: 'Not signed in.' });
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
-  const amount = Math.max(10, Math.min(10000, Math.round(Number(req.body.amount) || 0)));
-  if (!amount) return res.status(400).json({ error: 'Enter an amount between ₹10 and ₹10,000.' });
   const db0 = loadDb();
+  let terms;
+  try { terms = topupTerms(db0, user.id, req.body.amount, req.body.offerId); }
+  catch (error) { return res.status(400).json({ error: error.message }); }
+  const amount = terms.amount;
   const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
   if (refIn) {
     const v = validateReferral(db0, user, refIn, amount);
@@ -2089,7 +2121,7 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
     if (!r.ok || !d.id) return res.status(502).json({ error: 'Gateway refused the order.' });
     const db = loadDb();
     db.topups ||= [];
-    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, referral: refIn || null, used: false, at: new Date().toISOString() });
+    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, terms, referral: refIn || null, used: false, at: new Date().toISOString() });
     saveDb(db);
     res.json({ keyId: RAZORPAY.id, rzpOrderId: d.id, amount: d.amount });
   } catch {
@@ -2114,32 +2146,17 @@ app.post('/customer/wallet/topup-verify', requireRole('customer'), (req, res) =>
   if (!pending) {
     return res.status(400).send(oops(req.user, '/customer/wallet', 'Unknown or reused <em>top-up.</em>'));
   }
-  pending.used = true;
-  const b = bonusFor(pending.amount, db.pricing);
-  const w = walletOf(db, req.user.id);
-  const now = new Date().toISOString();
-  let refBonus = 0;
+  let referrer;
   if (pending.referral) {
     const v = validateReferral(db, req.user, pending.referral, pending.amount);
-    if (v.ok) refBonus = referralDiscountFor(db, pending.amount, 0, 0);
-    // else: silently drop — validated at order time; only a race lands here.
+    if (v.ok) referrer = v.referrer;
   }
-  w.balance = Math.round((w.balance + pending.amount + b.bonus + refBonus) * 100) / 100;
-  const topTx = { id: `WTX-${Date.now()}`, customerId: req.user.id, amount: pending.amount, kind: 'credit', label: `Top-up via Razorpay (${razorpay_payment_id.slice(0, 14)})`, at: now };
-  db.walletTx.push(topTx);
-  if (b.bonus) db.walletTx.push({ id: `WTX-${Date.now()}b`, customerId: req.user.id, amount: b.bonus, kind: 'credit', label: `Top-up bonus +${b.pct}%`, at: now });
-  if (refBonus) {
-    const referrer = findReferrer(db, pending.referral);
-    db.walletTx.push({ id: `WTX-${Date.now()}r`, customerId: req.user.id, amount: refBonus, kind: 'credit', label: `Referral bonus ${pending.referral}`, at: now });
-    if (referrer) {
-      createReferral(db, {
-        referrerId: referrer.id, refereeId: req.user.id, orderId: null,
-        code: pending.referral, friendDiscount: refBonus,
-        sourceKind: 'topup', sourceId: topTx.id
-      });
-      qualifyForTopup(db, topTx.id, req.user.id);
-    }
-  }
+  let topTx;
+  try { topTx = applyTopup(db, req.user.id, pending.terms || topupTerms(db, req.user.id, pending.amount), `Top-up via Razorpay (${razorpay_payment_id.slice(0, 14)})`, razorpay_payment_id); }
+  catch (error) { return res.status(400).send(oops(req.user, '/customer/wallet', esc(error.message))); }
+  pending.used = true;
+  if (referrer) createReferral(db, { referrerId: referrer.id, refereeId: req.user.id, code: pending.referral, friendDiscount: 0, sourceKind: 'topup', sourceId: topTx.id });
+  qualifyForTopup(db, topTx.id, req.user.id);
   saveDb(db);
   res.redirect('/customer/wallet');
 });
@@ -2280,6 +2297,12 @@ async function bootstrap() {
     console.warn('Fresh data marker created. Confirm this is the intended data directory and verify customer, order, coupon and pricing records before accepting traffic.');
   }
   const db = loadDb();
+  campaignConfig(db);
+  if (settleWallets(db)) saveDb(db);
+  setInterval(() => {
+    try { const current = loadDb(); if (settleWallets(current)) saveDb(current); }
+    catch (error) { console.error('Wallet settlement failed:', error.message); }
+  }, 60000).unref();
   // Backfill referral codes + config for databases created before referrals.
   let touched = false;
   for (const u of db.users) {

@@ -767,9 +767,18 @@ img { max-width: 100%; }
 
 /* Mobile print desk: one clear action, five reachable destinations. */
 .nav-icon, .app-account-menu { display: none; }
+.customer-mobile-nav { display: none; }
+.home-account-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
 .file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 760px) {
   body { font-size: 16px; }
+  body:has(.customer-mobile-nav) { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .customer-mobile-nav { position: fixed; inset: auto 0 0; z-index: 80; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 6px 5px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--paper); box-shadow: 0 -8px 28px rgb(12 28 51 / .08); }
+  .customer-mobile-nav a { display: grid; place-items: center; align-content: center; gap: 2px; min-height: 54px; padding: 3px 1px; border-radius: 12px; color: var(--ink); text-decoration: none; font-size: 11px; line-height: 1.15; text-align: center; }
+  .customer-mobile-nav a > span:first-child { font-size: 20px; line-height: 1; }
+  .customer-mobile-nav a:hover, .customer-mobile-nav a[aria-current] { background: var(--pale); color: var(--primary); }
+  body:has(.customer-mobile-nav) .sticky-cta { bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .app-customer .livetotal { bottom: calc(82px + env(safe-area-inset-bottom)); }
   input, select, textarea { font-size: 16px; }
   .btn, .pk-contact, .chip, .pick, .stepper button { min-height: 44px; }
   .card { padding: 20px; }
@@ -822,3 +831,4 @@ img { max-width: 100%; }
   .app-view.app-customer .nav-icon { font-size: 18px; }
   .app-workspace .main { padding-inline: 14px; }
 }
+@media print { .customer-mobile-nav, .home-account-actions { display: none; } }

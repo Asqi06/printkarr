@@ -323,3 +323,15 @@ the printer. Locking the screen is fine; signing out or shutting down stops
 printing. No Windows password is stored and power settings are not changed.
 Already-started jobs are not automatically reprinted after a crash; inspect
 failed/stuck orders and the output tray before retrying from the admin page.
+
+## Campus wallet and delivery offers
+
+Customer wallet offers default to ₹49→₹59 (first top-up only, first campus batch delivery free), ₹99→₹110, ₹199→₹225, ₹499→₹575, and ₹799→₹950. Custom top-ups credit the paid amount without a percentage ladder. Purchased and legacy balances do not expire; new bonus grants default to 90 days, remain non-withdrawable, and are spent first. Refunds retain each grant's original expiry instead of turning bonuses into purchased money.
+
+Configure offers, bonus validity (0 = no expiry), campus addresses, batch fees, slots, and the missed-slot guarantee at `/admin/settings`. The optional Semester Pass is disabled by default; enabling it gives ₹550 wallet balance for ₹499 and 90 days of free campus batch delivery. Existing quota-based Semester Packs remain separate.
+
+Morning delivery defaults to 09:00–11:00 IST with payment before 01:00 IST; Afternoon defaults to 13:00–15:00 with payment before 11:00. Batch delivery is free at ₹99 print subtotal or through an eligible wallet/pass benefit. Express delivery retains its paid tariff. The order stores its promised slot and reward terms. A settlement sweep runs each minute and on startup, issuing the ₹20 missed-morning-slot credit once for eligible paid orders. Customers see the selected date and payment cutoff before paying.
+
+Configure referrals at `/admin/referrals`: link the code before the first paid order, add ₹99+ in one wallet top-up, and complete the first paid order. Only then credit the friend ₹20 and the referrer ₹25, plus ₹50 at 3 successful referrals and ₹100 at 5. Milestones, qualification amounts, rewards, monthly cap, and program availability are editable. Previously earned cash stays in its original withdrawal ledger.
+
+Guest checkout, signed-in checkout, and reorders share the same review and payment flow. WhatsApp sharing is optional. Run `npm test`, `npm run test:design`, `npm run test:seo`, and `node scripts/delivery-check.mjs` for verification.
