@@ -37,6 +37,7 @@ function parseObj(text, materials, THREE) {
 async function boot() {
   const stage = document.getElementById('qk-stage');
   if (!stage || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (navigator.connection?.saveData || /^(slow-2g|2g|3g)$/.test(navigator.connection?.effectiveType || '')) return;
   // Never let intrinsic canvas dimensions drive the layout if the stylesheet fails.
   if (getComputedStyle(stage).position !== 'absolute') return;
   // Load the product renderer and artwork only when their section is nearby.

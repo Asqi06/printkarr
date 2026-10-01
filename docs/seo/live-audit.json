@@ -1,0 +1,2176 @@
+{
+  "analyzed_at": "2026-10-01T09:04:56.750Z",
+  "origin": "https://printkarr.in",
+  "limitations": [
+    "No Search Console, verified GBP, keyword-volume or CrUX credentials. HTML inventory and measured responses only."
+  ],
+  "pages": [
+    {
+      "path": "/",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/",
+      "responseMs": 204,
+      "bytes": 19783,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Online Printing in Vapi — 24/7 Print Delivery — PrintKarr",
+      "description": "Order document printing online in Vapi. Black-and-white and colour prints, 24/7 delivery in Vapi and Daman. Call or WhatsApp 9016703180.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/",
+      "h1": [
+        "Good prints. Zero fuss."
+      ],
+      "mainWords": 594,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/how-it-works",
+        "/order",
+        "/customer/wallet",
+        "/customer/packs",
+        "/customer/packs",
+        "/customer/packs",
+        "/printing-in-vapi",
+        "/customer/referrals",
+        "/contact",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/#page",
+              "url": "https://printkarr.in/",
+              "headline": "Online Printing in Vapi — 24/7 Print Delivery",
+              "name": "Online Printing in Vapi — 24/7 Print Delivery",
+              "description": "Order document printing online in Vapi. Black-and-white and colour prints, 24/7 delivery in Vapi and Daman. Call or WhatsApp 9016703180.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "/images/print-desk-hero-v2.webp",
+          "alt": "White sample documents printed in blue with the words Your next chapter",
+          "width": "1122",
+          "height": "1402",
+          "loading": ""
+        },
+        {
+          "src": "/images/host-cta-cutout.png",
+          "alt": "Student using her phone to order prints",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        },
+        {
+          "src": "/images/kiosk-hero.png",
+          "alt": "",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        }
+      ]
+    },
+    {
+      "path": "/printing-in-vapi",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/printing-in-vapi",
+      "responseMs": 354,
+      "bytes": 11609,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Printing in Vapi — Documents, PDFs & Local Delivery — PrintKarr",
+      "description": "Print PDFs, assignments, resumes and documents in Vapi. Delivery across Vapi and Daman, plus selected colleges in Sarigam and Bhilad.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/printing-in-vapi",
+      "h1": [
+        "Printing in Vapi, delivered 24/7"
+      ],
+      "mainWords": 335,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/order",
+        "https://wa.me/919016703180",
+        "tel:+919016703180",
+        "/order",
+        "/blogs/prepare-documents-for-printing-vapi",
+        "/blogs/admit-card-printing-checklist",
+        "tel:+919016703180",
+        "https://wa.me/919016703180",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/printing-in-vapi#page",
+              "url": "https://printkarr.in/printing-in-vapi",
+              "headline": "Printing in Vapi — Documents, PDFs & Local Delivery",
+              "name": "Printing in Vapi — Documents, PDFs & Local Delivery",
+              "description": "Print PDFs, assignments, resumes and documents in Vapi. Delivery across Vapi and Daman, plus selected colleges in Sarigam and Bhilad.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Printing in Vapi — Documents, PDFs & Local Delivery",
+                  "item": "https://printkarr.in/printing-in-vapi"
+                }
+              ]
+            },
+            {
+              "@type": "Service",
+              "name": "Document printing and delivery",
+              "provider": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "description": "24/7 print delivery across Vapi and Daman; selected colleges in Sarigam and Bhilad by confirmation. Kiosks are planned in Vapi.",
+              "url": "https://printkarr.in/printing-in-vapi"
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/how-it-works",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/how-it-works",
+      "responseMs": 709,
+      "bytes": 11092,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "How Online Printing Works in Vapi — PrintKarr",
+      "description": "Learn how to upload a document, select pages and print settings, review your price and order local print delivery with PrintKarr.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/how-it-works",
+      "h1": [
+        "From your screen. Into your hands."
+      ],
+      "mainWords": 187,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/order",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/how-it-works#page",
+              "url": "https://printkarr.in/how-it-works",
+              "headline": "How Online Printing Works in Vapi",
+              "name": "How Online Printing Works in Vapi",
+              "description": "Learn how to upload a document, select pages and print settings, review your price and order local print delivery with PrintKarr.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "How Online Printing Works in Vapi",
+                  "item": "https://printkarr.in/how-it-works"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "/images/step-1-qr.jpg",
+          "alt": "Start online on a phone",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        },
+        {
+          "src": "/images/step-2-upload.jpg",
+          "alt": "Upload the right PDF on a phone",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        },
+        {
+          "src": "/images/step-3-settings.jpg",
+          "alt": "Choose exactly what prints on a phone",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        },
+        {
+          "src": "/images/step-4-collect.jpg",
+          "alt": "Get your prints delivered on a phone",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        }
+      ]
+    },
+    {
+      "path": "/about",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/about",
+      "responseMs": 704,
+      "bytes": 9594,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "About PrintKarr — Online Printing from Vapi — PrintKarr",
+      "description": "Meet PrintKarr: online document printing and local delivery from Vapi, with self-service kiosks planned for Vapi.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/about",
+      "h1": [
+        "Paper shouldn’t have closing hours."
+      ],
+      "mainWords": 149,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/about#page",
+              "url": "https://printkarr.in/about",
+              "headline": "About PrintKarr — Online Printing from Vapi",
+              "name": "About PrintKarr — Online Printing from Vapi",
+              "description": "Meet PrintKarr: online document printing and local delivery from Vapi, with self-service kiosks planned for Vapi.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "About PrintKarr — Online Printing from Vapi",
+                  "item": "https://printkarr.in/about"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/contact",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/contact",
+      "responseMs": 342,
+      "bytes": 10379,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Contact PrintKarr in Vapi — Call or WhatsApp — PrintKarr",
+      "description": "Call or WhatsApp PrintKarr on +91 90167 03180 for print delivery in Vapi and Daman, college coverage or kiosk partnerships.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/contact",
+      "h1": [
+        "Let’s make something happen."
+      ],
+      "mainWords": 82,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "tel:+919016703180",
+        "https://wa.me/919016703180",
+        "mailto:team@printkarr.in",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/contact#page",
+              "url": "https://printkarr.in/contact",
+              "headline": "Contact PrintKarr in Vapi — Call or WhatsApp",
+              "name": "Contact PrintKarr in Vapi — Call or WhatsApp",
+              "description": "Call or WhatsApp PrintKarr on +91 90167 03180 for print delivery in Vapi and Daman, college coverage or kiosk partnerships.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Contact PrintKarr in Vapi — Call or WhatsApp",
+                  "item": "https://printkarr.in/contact"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/blogs",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/blogs",
+      "responseMs": 216,
+      "bytes": 9790,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Printing Guides & Kiosk Journal — PrintKarr",
+      "description": "Practical guides to preparing documents for printing, choosing print settings and understanding PrintKarr self-service kiosks.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/blogs",
+      "h1": [
+        "Notes from the print floor"
+      ],
+      "mainWords": 105,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/blogs/prepare-documents-for-printing-vapi",
+        "/blogs/admit-card-printing-checklist",
+        "/blogs/running-a-printkarr-kiosk",
+        "/blogs/replacing-xerox-queues",
+        "/blogs/colleges-24-7-print",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/blogs#page",
+              "url": "https://printkarr.in/blogs",
+              "headline": "Printing Guides & Kiosk Journal",
+              "name": "Printing Guides & Kiosk Journal",
+              "description": "Practical guides to preparing documents for printing, choosing print settings and understanding PrintKarr self-service kiosks.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Printing Guides & Kiosk Journal",
+                  "item": "https://printkarr.in/blogs"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/franchise",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/franchise",
+      "responseMs": 216,
+      "bytes": 13032,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "PrintKarr Kiosk Partnerships & Franchise — PrintKarr",
+      "description": "Explore PrintKarr kiosk partnership models for campuses, offices and local businesses. Contact our team about a proposed location.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/franchise",
+      "h1": [
+        "Bring printing closer to everyone."
+      ],
+      "mainWords": 214,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "#partner-form",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/franchise#page",
+              "url": "https://printkarr.in/franchise",
+              "headline": "PrintKarr Kiosk Partnerships & Franchise",
+              "name": "PrintKarr Kiosk Partnerships & Franchise",
+              "description": "Explore PrintKarr kiosk partnership models for campuses, offices and local businesses. Contact our team about a proposed location.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "PrintKarr Kiosk Partnerships & Franchise",
+                  "item": "https://printkarr.in/franchise"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "/images/kiosk-hero.png",
+          "alt": "",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        }
+      ]
+    },
+    {
+      "path": "/xerox",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/xerox",
+      "responseMs": 560,
+      "bytes": 9854,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Print Shop Partnerships with PrintKarr — PrintKarr",
+      "description": "Bring online document orders and customer-selected print settings to your print shop. Enquire about partnering with PrintKarr.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/xerox",
+      "h1": [
+        "Your print shop. Ready for what’s next."
+      ],
+      "mainWords": 87,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/contact",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/xerox#page",
+              "url": "https://printkarr.in/xerox",
+              "headline": "Print Shop Partnerships with PrintKarr",
+              "name": "Print Shop Partnerships with PrintKarr",
+              "description": "Bring online document orders and customer-selected print settings to your print shop. Enquire about partnering with PrintKarr.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Print Shop Partnerships with PrintKarr",
+                  "item": "https://printkarr.in/xerox"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "src": "/images/kiosk-hero.png",
+          "alt": "PrintKarr kiosk concept",
+          "width": "",
+          "height": "",
+          "loading": "lazy"
+        }
+      ]
+    },
+    {
+      "path": "/terms",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/terms",
+      "responseMs": 209,
+      "bytes": 8694,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Terms & Conditions — PrintKarr",
+      "description": "Read the terms for PrintKarr document printing, orders, payments and refunds.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/terms",
+      "h1": [
+        "Terms & Conditions"
+      ],
+      "mainWords": 76,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/terms#page",
+              "url": "https://printkarr.in/terms",
+              "headline": "Terms & Conditions",
+              "name": "Terms & Conditions",
+              "description": "Read the terms for PrintKarr document printing, orders, payments and refunds.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Terms & Conditions",
+                  "item": "https://printkarr.in/terms"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/privacy",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/privacy",
+      "responseMs": 251,
+      "bytes": 8626,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Privacy Policy — PrintKarr",
+      "description": "Read how PrintKarr handles uploaded documents and contact information, and how to contact us about privacy.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/privacy",
+      "h1": [
+        "Privacy Policy"
+      ],
+      "mainWords": 48,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "WebPage",
+              "@id": "https://printkarr.in/privacy#page",
+              "url": "https://printkarr.in/privacy",
+              "headline": "Privacy Policy",
+              "name": "Privacy Policy",
+              "description": "Read how PrintKarr handles uploaded documents and contact information, and how to contact us about privacy.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Privacy Policy",
+                  "item": "https://printkarr.in/privacy"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/blogs/prepare-documents-for-printing-vapi",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/blogs/prepare-documents-for-printing-vapi",
+      "responseMs": 281,
+      "bytes": 10131,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "How to prepare a PDF for printing in Vapi — PrintKarr",
+      "description": "A practical checklist for assignments, resumes and everyday documents before you order print delivery.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/blogs/prepare-documents-for-printing-vapi",
+      "h1": [
+        "How to prepare a PDF for printing in Vapi"
+      ],
+      "mainWords": 199,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/blogs",
+        "/printing-in-vapi",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://printkarr.in/blogs/prepare-documents-for-printing-vapi#page",
+              "url": "https://printkarr.in/blogs/prepare-documents-for-printing-vapi",
+              "headline": "How to prepare a PDF for printing in Vapi",
+              "name": "How to prepare a PDF for printing in Vapi",
+              "description": "A practical checklist for assignments, resumes and everyday documents before you order print delivery.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              },
+              "author": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "mainEntityOfPage": "https://printkarr.in/blogs/prepare-documents-for-printing-vapi"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "How to prepare a PDF for printing in Vapi",
+                  "item": "https://printkarr.in/blogs/prepare-documents-for-printing-vapi"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/blogs/admit-card-printing-checklist",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/blogs/admit-card-printing-checklist",
+      "responseMs": 287,
+      "bytes": 10108,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Admit card printing: a checklist before exam day — PrintKarr",
+      "description": "Check the exam instructions, page size and legibility before ordering an admit card print in Vapi.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/blogs/admit-card-printing-checklist",
+      "h1": [
+        "Admit card printing: a checklist before exam day"
+      ],
+      "mainWords": 196,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/blogs",
+        "/printing-in-vapi",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://printkarr.in/blogs/admit-card-printing-checklist#page",
+              "url": "https://printkarr.in/blogs/admit-card-printing-checklist",
+              "headline": "Admit card printing: a checklist before exam day",
+              "name": "Admit card printing: a checklist before exam day",
+              "description": "Check the exam instructions, page size and legibility before ordering an admit card print in Vapi.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              },
+              "author": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "mainEntityOfPage": "https://printkarr.in/blogs/admit-card-printing-checklist"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Admit card printing: a checklist before exam day",
+                  "item": "https://printkarr.in/blogs/admit-card-printing-checklist"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/blogs/running-a-printkarr-kiosk",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/blogs/running-a-printkarr-kiosk",
+      "responseMs": 290,
+      "bytes": 9229,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "What it actually costs to run a PrintKarr kiosk every month — PrintKarr",
+      "description": "Four square feet, a socket, and a predictable stack of paper.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/blogs/running-a-printkarr-kiosk",
+      "h1": [
+        "What it actually costs to run a PrintKarr kiosk every month"
+      ],
+      "mainWords": 77,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/blogs",
+        "/printing-in-vapi",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://printkarr.in/blogs/running-a-printkarr-kiosk#page",
+              "url": "https://printkarr.in/blogs/running-a-printkarr-kiosk",
+              "headline": "What it actually costs to run a PrintKarr kiosk every month",
+              "name": "What it actually costs to run a PrintKarr kiosk every month",
+              "description": "Four square feet, a socket, and a predictable stack of paper.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              },
+              "author": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "mainEntityOfPage": "https://printkarr.in/blogs/running-a-printkarr-kiosk"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "What it actually costs to run a PrintKarr kiosk every month",
+                  "item": "https://printkarr.in/blogs/running-a-printkarr-kiosk"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/blogs/replacing-xerox-queues",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/blogs/replacing-xerox-queues",
+      "responseMs": 283,
+      "bytes": 8997,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "Why self-service printing is replacing the xerox queue — PrintKarr",
+      "description": "The shop didn’t vanish. The waiting did.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/blogs/replacing-xerox-queues",
+      "h1": [
+        "Why self-service printing is replacing the xerox queue"
+      ],
+      "mainWords": 64,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/blogs",
+        "/printing-in-vapi",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://printkarr.in/blogs/replacing-xerox-queues#page",
+              "url": "https://printkarr.in/blogs/replacing-xerox-queues",
+              "headline": "Why self-service printing is replacing the xerox queue",
+              "name": "Why self-service printing is replacing the xerox queue",
+              "description": "The shop didn’t vanish. The waiting did.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              },
+              "author": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "mainEntityOfPage": "https://printkarr.in/blogs/replacing-xerox-queues"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Why self-service printing is replacing the xerox queue",
+                  "item": "https://printkarr.in/blogs/replacing-xerox-queues"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    },
+    {
+      "path": "/blogs/colleges-24-7-print",
+      "status": 200,
+      "finalUrl": "https://printkarr.in/blogs/colleges-24-7-print",
+      "responseMs": 281,
+      "bytes": 8976,
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "x-robots-tag": null,
+        "cache-control": null,
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "SAMEORIGIN",
+        "referrer-policy": "no-referrer"
+      },
+      "title": "How campuses install 24/7 print without a night shift — PrintKarr",
+      "description": "Hostels don’t close. Assignments don’t wait.",
+      "robots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/blogs/colleges-24-7-print",
+      "h1": [
+        "How campuses install 24/7 print without a night shift"
+      ],
+      "mainWords": 59,
+      "links": [
+        "/",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/customer/wallet",
+        "/customer/profile",
+        "/order",
+        "/order",
+        "/customer/wallet",
+        "/customer/profile",
+        "/customer/orders",
+        "/#how-it-works",
+        "/#pricing",
+        "/franchise",
+        "/about",
+        "/contact",
+        "/blogs",
+        "/",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "#main",
+        "/blogs",
+        "/printing-in-vapi",
+        "/contact",
+        "/",
+        "/printing-in-vapi",
+        "/how-it-works",
+        "/about",
+        "/blogs",
+        "/contact",
+        "/franchise",
+        "/xerox",
+        "/order",
+        "/customer/orders",
+        "/customer/wallet",
+        "/customer/profile",
+        "mailto:team@printkarr.in",
+        "/terms",
+        "/privacy"
+      ],
+      "json": [
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://printkarr.in/#organization",
+              "name": "PrintKarr",
+              "url": "https://printkarr.in/",
+              "telephone": "+919016703180",
+              "email": "team@printkarr.in",
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": "Vapi",
+                "addressRegion": "Gujarat",
+                "addressCountry": "IN"
+              },
+              "areaServed": [
+                "Vapi",
+                "Daman"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919016703180",
+                "contactType": "customer service"
+              }
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://printkarr.in/#website",
+              "url": "https://printkarr.in/",
+              "name": "PrintKarr",
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              }
+            },
+            {
+              "@type": "BlogPosting",
+              "@id": "https://printkarr.in/blogs/colleges-24-7-print#page",
+              "url": "https://printkarr.in/blogs/colleges-24-7-print",
+              "headline": "How campuses install 24/7 print without a night shift",
+              "name": "How campuses install 24/7 print without a night shift",
+              "description": "Hostels don’t close. Assignments don’t wait.",
+              "inLanguage": "en-IN",
+              "isPartOf": {
+                "@id": "https://printkarr.in/#website"
+              },
+              "author": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "publisher": {
+                "@id": "https://printkarr.in/#organization"
+              },
+              "mainEntityOfPage": "https://printkarr.in/blogs/colleges-24-7-print"
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://printkarr.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "How campuses install 24/7 print without a night shift",
+                  "item": "https://printkarr.in/blogs/colleges-24-7-print"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": []
+    }
+  ],
+  "discovery": {
+    "/robots.txt": {
+      "status": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "body": "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /customer\nDisallow: /order\nDisallow: /api/\nDisallow: /auth/\nDisallow: /login\nDisallow: /logout\nDisallow: /share/\nDisallow: /c/\nDisallow: /qr.png\n\nSitemap: https://printkarr.in/sitemap.xml\n"
+    },
+    "/sitemap.xml": {
+      "status": 200,
+      "contentType": "application/xml; charset=utf-8",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"><url><loc>https://printkarr.in/</loc></url><url><loc>https://printkarr.in/printing-in-vapi</loc></url><url><loc>https://printkarr.in/how-it-works</loc></url><url><loc>https://printkarr.in/about</loc></url><url><loc>https://printkarr.in/contact</loc></url><url><loc>https://printkarr.in/blogs</loc></url><url><loc>https://printkarr.in/franchise</loc></url><url><loc>https://printkarr.in/xerox</loc></url><url><loc>https://printkarr.in/terms</loc></url><url><loc>https://printkarr.in/privacy</loc></url><url><loc>https://printkarr.in/blogs/prepare-documents-for-printing-vapi</loc></url><url><loc>https://printkarr.in/blogs/admit-card-printing-checklist</loc></url><url><loc>https://printkarr.in/blogs/running-a-printkarr-kiosk</loc></url><url><loc>https://printkarr.in/blogs/replacing-xerox-queues</loc></url><url><loc>https://printkarr.in/blogs/colleges-24-7-print</loc></url></urlset>"
+    },
+    "/llms.txt": {
+      "status": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "body": "# PrintKarr\n\n> Online document printing and local print delivery based in Vapi, India.\n\n## Service facts\n\n- 24/7 delivery across Vapi and Daman. Selected colleges in Sarigam and Bhilad: confirm coverage by phone.\n- Call or WhatsApp: +91 90167 03180.\n- Upload documents, select pages, copies and colour settings, then review the current price before payment. Delivery and applicable fees are shown separately.\n- Kiosks are planned in Vapi; no public kiosk address is announced yet.\n- Delivery time and college availability should be confirmed for each order.\n\n## Public pages\n\n- [Online Printing in Vapi — 24/7 Print Delivery](https://printkarr.in/): Order document printing online in Vapi. Black-and-white and colour prints, 24/7 delivery in Vapi and Daman. Call or WhatsApp 9016703180.\n- [Printing in Vapi — Documents, PDFs & Local Delivery](https://printkarr.in/printing-in-vapi): Print PDFs, assignments, resumes and documents in Vapi. Delivery across Vapi and Daman, plus selected colleges in Sarigam and Bhilad.\n- [How Online Printing Works in Vapi](https://printkarr.in/how-it-works): Learn how to upload a document, select pages and print settings, review your price and order local print delivery with PrintKarr.\n- [About PrintKarr — Online Printing from Vapi](https://printkarr.in/about): Meet PrintKarr: online document printing and local delivery from Vapi, with self-service kiosks planned for Vapi.\n- [Contact PrintKarr in Vapi — Call or WhatsApp](https://printkarr.in/contact): Call or WhatsApp PrintKarr on +91 90167 03180 for print delivery in Vapi and Daman, college coverage or kiosk partnerships.\n- [Printing Guides & Kiosk Journal](https://printkarr.in/blogs): Practical guides to preparing documents for printing, choosing print settings and understanding PrintKarr self-service kiosks.\n- [PrintKarr Kiosk Partnerships & Franchise](https://printkarr.in/franchise): Explore PrintKarr kiosk partnership models for campuses, offices and local businesses. Contact our team about a proposed location.\n- [Print Shop Partnerships with PrintKarr](https://printkarr.in/xerox): Bring online document orders and customer-selected print settings to your print shop. Enquire about partnering with PrintKarr.\n- [Terms & Conditions](https://printkarr.in/terms): Read the terms for PrintKarr document printing, orders, payments and refunds.\n- [Privacy Policy](https://printkarr.in/privacy): Read how PrintKarr handles uploaded documents and contact information, and how to contact us about privacy.\n- [How to prepare a PDF for printing in Vapi](https://printkarr.in/blogs/prepare-documents-for-printing-vapi): A practical checklist for assignments, resumes and everyday documents before you order print delivery.\n- [Admit card printing: a checklist before exam day](https://printkarr.in/blogs/admit-card-printing-checklist): Check the exam instructions, page size and legibility before ordering an admit card print in Vapi.\n- [What it actually costs to run a PrintKarr kiosk every month](https://printkarr.in/blogs/running-a-printkarr-kiosk): Four square feet, a socket, and a predictable stack of paper.\n- [Why self-service printing is replacing the xerox queue](https://printkarr.in/blogs/replacing-xerox-queues): The shop didn’t vanish. The waiting did.\n- [How campuses install 24/7 print without a night shift](https://printkarr.in/blogs/colleges-24-7-print): Hostels don’t close. Assignments don’t wait.\n"
+    }
+  },
+  "skipped": [
+    "/customer/wallet",
+    "/customer/profile",
+    "/order",
+    "/customer/orders",
+    "/customer/packs",
+    "/customer/referrals"
+  ]
+}

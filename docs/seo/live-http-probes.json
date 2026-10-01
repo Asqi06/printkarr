@@ -1,0 +1,67 @@
+{
+  "analyzed_at": "2026-10-01T09:35:16.048Z",
+  "probes": [
+    {
+      "path": "/ABOUT",
+      "status": 200,
+      "location": null,
+      "robots": null,
+      "metaRobots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/about"
+    },
+    {
+      "path": "/about/",
+      "status": 200,
+      "location": null,
+      "robots": null,
+      "metaRobots": "index,follow,max-image-preview:large",
+      "canonical": "https://printkarr.in/about"
+    },
+    {
+      "path": "/admin/login",
+      "status": 200,
+      "location": null,
+      "robots": "noindex, nofollow, noarchive",
+      "metaRobots": "noindex,nofollow"
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "location": null,
+      "robots": "noindex, nofollow, noarchive",
+      "metaRobots": "noindex,nofollow"
+    },
+    {
+      "path": "/customer",
+      "status": 302,
+      "location": "/login",
+      "robots": "noindex, nofollow, noarchive"
+    },
+    {
+      "path": "/order",
+      "status": 200,
+      "location": null,
+      "robots": "noindex, nofollow, noarchive",
+      "metaRobots": "noindex,nofollow"
+    },
+    {
+      "path": "/blogs/not-an-article",
+      "status": 404,
+      "location": null,
+      "robots": null,
+      "metaRobots": "noindex,nofollow"
+    },
+    {
+      "path": "/products/wooden-photo-strip-fridge-magnet",
+      "status": 404,
+      "location": null,
+      "robots": "noindex"
+    },
+    {
+      "path": "/collections/trending-decor",
+      "status": 404,
+      "location": null,
+      "robots": "noindex"
+    }
+  ]
+}

@@ -1,0 +1,2124 @@
+{
+  "analyzedAt": "2026-10-01T09:04:49.027Z",
+  "environment": "Headless Edge, unthrottled lab, cold page context, device pixel ratio 1; no field CWV or Lighthouse score",
+  "observations": [
+    {
+      "url": "https://printkarr.in/",
+      "width": 390,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4c71babb5539-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:13 GMT",
+        "etag": "W/\"4d47-APlbjeu17f0BKNV9vL+0coOOEeo\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "0217183d-9ff3-4cf3",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-homepage-390.png",
+      "failures": [],
+      "errors": [],
+      "title": "Online Printing in Vapi — 24/7 Print Delivery — PrintKarr",
+      "h1": [
+        {
+          "text": "Good prints.Zero fuss.",
+          "rect": {
+            "left": 20,
+            "top": 151,
+            "width": 350,
+            "height": 127.375,
+            "bottom": 278.375
+          }
+        }
+      ],
+      "viewport": 390,
+      "scrollWidth": 390,
+      "mainCtas": [
+        {
+          "text": "Upload & print ",
+          "href": "/order",
+          "rect": {
+            "left": 20,
+            "top": 395.765625,
+            "width": 170,
+            "height": 54,
+            "bottom": 449.765625
+          }
+        },
+        {
+          "text": "Wallet / Top-up ",
+          "href": "/customer/wallet",
+          "rect": {
+            "left": 200,
+            "top": 395.765625,
+            "width": 170,
+            "height": 54,
+            "bottom": 449.765625
+          }
+        },
+        {
+          "text": "Explore wallet & top up ",
+          "href": "/customer/wallet",
+          "rect": {
+            "left": 20,
+            "top": 3850.6875,
+            "width": 225.796875,
+            "height": 49.6875,
+            "bottom": 3900.375
+          }
+        },
+        {
+          "text": "Let’s talkLet’s talk ",
+          "href": "/contact",
+          "rect": {
+            "left": 20,
+            "top": 7597.59375,
+            "width": 165,
+            "height": 49.6875,
+            "bottom": 7647.28125
+          }
+        }
+      ],
+      "images": [
+        {
+          "src": "https://printkarr.in/images/print-desk-hero-v2.webp",
+          "alt": "White sample documents printed in blue with the words Your next chapter",
+          "width": "1122",
+          "height": "1402",
+          "loading": "auto",
+          "fetchPriority": "high",
+          "loaded": true,
+          "naturalWidth": 1122,
+          "naturalHeight": 1402,
+          "rect": {
+            "left": 20,
+            "top": 563.265625,
+            "width": 350,
+            "height": 437.34375,
+            "bottom": 1000.609375
+          }
+        },
+        {
+          "src": "",
+          "alt": "Student using her phone to order prints",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": false,
+          "naturalWidth": 0,
+          "naturalHeight": 0,
+          "rect": {
+            "left": 391,
+            "top": 2201.390625,
+            "width": 0,
+            "height": 351.5,
+            "bottom": 2552.890625
+          }
+        },
+        {
+          "src": "",
+          "alt": "",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": false,
+          "naturalWidth": 0,
+          "naturalHeight": 0,
+          "rect": {
+            "left": 20,
+            "top": 5938.0625,
+            "width": 350,
+            "height": 452,
+            "bottom": 6390.0625
+          }
+        }
+      ],
+      "lab": {
+        "lcp": {
+          "time": 1508,
+          "size": 97907,
+          "url": "https://printkarr.in/images/print-desk-hero-v2.webp",
+          "tag": "IMG",
+          "text": ""
+        },
+        "cls": 0.0008826773046888272,
+        "shifts": [
+          {
+            "time": 1588,
+            "value": 0.0008826773046888272,
+            "nodes": [
+              {}
+            ]
+          }
+        ],
+        "longTasks": [
+          {
+            "time": 1709.1000000014901,
+            "duration": 93
+          }
+        ]
+      },
+      "navigation": {
+        "ttfb": 311.20000000298023,
+        "domContentLoaded": 1180.4000000022352,
+        "load": 1710.300000000745,
+        "encodedBodySize": 5101,
+        "transferSize": 5401
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 449.1000000014901,
+          "duration": 292.5,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 450.19999999925494,
+          "duration": 136.30000000074506,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 450.6000000014901,
+          "duration": 231.69999999925494,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 450.9000000022352,
+          "duration": 227.59999999776483,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/vendor/gsap-3.13.0.min.js",
+          "type": "script",
+          "start": 451.4000000022352,
+          "duration": 415.19999999925494,
+          "transferSize": 29450,
+          "encodedBodySize": 29150
+        },
+        {
+          "url": "https://printkarr.in/kiosk-3d.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 451.6000000014901,
+          "duration": 261.19999999925494,
+          "transferSize": 3232,
+          "encodedBodySize": 2932
+        },
+        {
+          "url": "https://printkarr.in/images/print-desk-hero-v2.webp",
+          "type": "img",
+          "start": 452,
+          "duration": 366.6000000014901,
+          "transferSize": 80040,
+          "encodedBodySize": 79740
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 452.19999999925494,
+          "duration": 354.5,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 452.6000000014901,
+          "duration": 290.3999999985099,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 452.80000000074506,
+          "duration": 301.8999999985099,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 486.1000000014901,
+          "duration": 302.80000000074506,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 590.1000000014901,
+          "duration": 160.19999999925494,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/fonts/instrument-serif-italic-latin.woff2",
+          "type": "css",
+          "start": 811.5,
+          "duration": 714.5,
+          "transferSize": 22428,
+          "encodedBodySize": 22128
+        },
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin-ext.woff2",
+          "type": "css",
+          "start": 1025.4000000022352,
+          "duration": 656.0999999977648,
+          "transferSize": 18528,
+          "encodedBodySize": 18228
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 1817.4000000022352,
+          "duration": 159.19999999925494,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        }
+      ],
+      "smallText": [
+        {
+          "text": "PRINT DELIVERY IN VAPI & DAMAN",
+          "fontSize": "8px"
+        },
+        {
+          "text": "PDFs & photos. Clear pricing before you pay.",
+          "fontSize": "10px"
+        },
+        {
+          "text": "HOW IT WORKS",
+          "fontSize": "9px"
+        },
+        {
+          "text": "PRINT PRICES",
+          "fontSize": "9px"
+        },
+        {
+          "text": "COMING NEXT",
+          "fontSize": "9px"
+        }
+      ]
+    },
+    {
+      "url": "https://printkarr.in/how-it-works",
+      "width": 390,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4c8fd8c6cec4-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:18 GMT",
+        "etag": "W/\"2b54-CRkkkW/9dQcor6ZhRrhKsXi46zk\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "a6d7d3e4-60cf-42d3",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-how-it-works-390.png",
+      "failures": [],
+      "errors": [],
+      "title": "How Online Printing Works in Vapi — PrintKarr",
+      "h1": [
+        {
+          "text": "From your screen.Into your hands.",
+          "rect": {
+            "left": 20,
+            "top": 168.046875,
+            "width": 350,
+            "height": 94.15625,
+            "bottom": 262.203125
+          }
+        }
+      ],
+      "viewport": 390,
+      "scrollWidth": 390,
+      "mainCtas": [
+        {
+          "text": "Try it nowTry it now",
+          "href": "/order",
+          "rect": {
+            "left": 133.125,
+            "top": 2071.390625,
+            "width": 123.734375,
+            "height": 49.6875,
+            "bottom": 2121.078125
+          }
+        }
+      ],
+      "images": [
+        {
+          "src": "https://printkarr.in/images/step-1-qr.jpg",
+          "alt": "Start online on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 20,
+            "top": 672.390625,
+            "width": 167,
+            "height": 240,
+            "bottom": 912.390625
+          }
+        },
+        {
+          "src": "https://printkarr.in/images/step-2-upload.jpg",
+          "alt": "Upload the right PDF on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 203,
+            "top": 701.828125,
+            "width": 167,
+            "height": 240,
+            "bottom": 941.828125
+          }
+        },
+        {
+          "src": "https://printkarr.in/images/step-3-settings.jpg",
+          "alt": "Choose exactly what prints on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 20,
+            "top": 1278.203125,
+            "width": 167,
+            "height": 240,
+            "bottom": 1518.203125
+          }
+        },
+        {
+          "src": "https://printkarr.in/images/step-4-collect.jpg",
+          "alt": "Get your prints delivered on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 203,
+            "top": 1278.203125,
+            "width": 167,
+            "height": 240,
+            "bottom": 1518.203125
+          }
+        }
+      ],
+      "lab": {
+        "lcp": {
+          "time": 836,
+          "size": 34860,
+          "url": "",
+          "tag": "H1",
+          "text": "From your screen.Into your hands."
+        },
+        "cls": 0,
+        "shifts": [],
+        "longTasks": []
+      },
+      "navigation": {
+        "ttfb": 183,
+        "domContentLoaded": 832.8999999985099,
+        "load": 834.1000000014901,
+        "encodedBodySize": 3160,
+        "transferSize": 3460
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 344.3999999985099,
+          "duration": 173.60000000149012,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 346,
+          "duration": 123.30000000074506,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 346.30000000074506,
+          "duration": 199.80000000074506,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 346.69999999925494,
+          "duration": 120.90000000223517,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 347.1000000014901,
+          "duration": 252.69999999925494,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 347.3999999985099,
+          "duration": 214.90000000223517,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 347.80000000074506,
+          "duration": 326,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 381.6000000014901,
+          "duration": 291.69999999925494,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 475.19999999925494,
+          "duration": 118,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/images/step-1-qr.jpg",
+          "type": "img",
+          "start": 796.6000000014901,
+          "duration": 641.5,
+          "transferSize": 889443,
+          "encodedBodySize": 889143
+        },
+        {
+          "url": "https://printkarr.in/images/step-2-upload.jpg",
+          "type": "img",
+          "start": 796.8000000007451,
+          "duration": 455.30000000074506,
+          "transferSize": 846698,
+          "encodedBodySize": 846398
+        },
+        {
+          "url": "https://printkarr.in/images/step-3-settings.jpg",
+          "type": "img",
+          "start": 797,
+          "duration": 459.1000000014901,
+          "transferSize": 875720,
+          "encodedBodySize": 875420
+        },
+        {
+          "url": "https://printkarr.in/images/step-4-collect.jpg",
+          "type": "img",
+          "start": 797.3000000007451,
+          "duration": 546,
+          "transferSize": 897105,
+          "encodedBodySize": 896805
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 851.1999999992549,
+          "duration": 134.5,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        }
+      ],
+      "smallText": [
+        {
+          "text": "Open PrintKarr on your phone to begin a delivery order. Kiosk QR order",
+          "fontSize": "11px"
+        },
+        {
+          "text": "Choose an assignment, admit card, ticket, form, or work document from ",
+          "fontSize": "11px"
+        },
+        {
+          "text": "Select pages, copies, colour, and single or double-sided. Review the p",
+          "fontSize": "11px"
+        },
+        {
+          "text": "Enter your address and review the delivery fee. Kiosk pickup will beco",
+          "fontSize": "11px"
+        }
+      ]
+    },
+    {
+      "url": "https://printkarr.in/franchise",
+      "width": 390,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4ca9ddb3d89e-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:22 GMT",
+        "etag": "W/\"32e8-oJ9uniHTpqcwkSdTchhqnkCjdAU\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "b6b4aa10-8c8c-4495",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-franchise-390.png",
+      "failures": [],
+      "errors": [],
+      "title": "PrintKarr Kiosk Partnerships & Franchise — PrintKarr",
+      "h1": [
+        {
+          "text": "Bring printing closer to everyone.",
+          "rect": {
+            "left": 20,
+            "top": 168.046875,
+            "width": 350,
+            "height": 94.15625,
+            "bottom": 262.203125
+          }
+        }
+      ],
+      "viewport": 390,
+      "scrollWidth": 390,
+      "mainCtas": [
+        {
+          "text": "Explore partnership ",
+          "href": "#partner-form",
+          "rect": {
+            "left": 20,
+            "top": 387.59375,
+            "width": 203.390625,
+            "height": 49.6875,
+            "bottom": 437.28125
+          }
+        }
+      ],
+      "images": [
+        {
+          "src": "https://printkarr.in/images/kiosk-hero.png",
+          "alt": "",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 921,
+          "naturalHeight": 1708,
+          "rect": {
+            "left": 20,
+            "top": 465.28125,
+            "width": 350,
+            "height": 392,
+            "bottom": 857.28125
+          }
+        }
+      ],
+      "lab": {
+        "lcp": {
+          "time": 1448,
+          "size": 125972,
+          "url": "https://printkarr.in/images/kiosk-hero.png",
+          "tag": "IMG",
+          "text": ""
+        },
+        "cls": 0.0003124425868748773,
+        "shifts": [
+          {
+            "time": 1289.699999999255,
+            "value": 0.0003124425868748773,
+            "nodes": [
+              {}
+            ]
+          }
+        ],
+        "longTasks": [
+          {
+            "time": 2261.800000000745,
+            "duration": 413
+          }
+        ]
+      },
+      "navigation": {
+        "ttfb": 175.80000000074506,
+        "domContentLoaded": 959.5,
+        "load": 1386.199999999255,
+        "encodedBodySize": 3642,
+        "transferSize": 3942
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 292.19999999925494,
+          "duration": 309.6000000014901,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 293.19999999925494,
+          "duration": 174.20000000298023,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 293.6000000014901,
+          "duration": 116.30000000074506,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 293.80000000074506,
+          "duration": 272,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/kiosk-3d.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 294.19999999925494,
+          "duration": 255.60000000149012,
+          "transferSize": 3232,
+          "encodedBodySize": 2932
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 294.5,
+          "duration": 351.6000000014901,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 294.69999999925494,
+          "duration": 210,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 294.80000000074506,
+          "duration": 200,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 324.80000000074506,
+          "duration": 180.5,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 469.30000000074506,
+          "duration": 181.10000000149012,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/fonts/instrument-serif-italic-latin.woff2",
+          "type": "css",
+          "start": 673,
+          "duration": 471.1000000014901,
+          "transferSize": 22428,
+          "encodedBodySize": 22128
+        },
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin-ext.woff2",
+          "type": "css",
+          "start": 861.9000000022352,
+          "duration": 236.79999999701977,
+          "transferSize": 18528,
+          "encodedBodySize": 18228
+        },
+        {
+          "url": "https://printkarr.in/images/kiosk-hero.png",
+          "type": "img",
+          "start": 939.8000000007451,
+          "duration": 439.69999999925494,
+          "transferSize": 1322632,
+          "encodedBodySize": 1322332
+        },
+        {
+          "url": "https://printkarr.in/vendor/three-0.160.0.module.js",
+          "type": "script",
+          "start": 980.3000000007451,
+          "duration": 537.6000000014901,
+          "transferSize": 259975,
+          "encodedBodySize": 259675
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 1389.4000000022352,
+          "duration": 101.09999999776483,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk.obj",
+          "type": "fetch",
+          "start": 1552.300000000745,
+          "duration": 188,
+          "transferSize": 7154,
+          "encodedBodySize": 6854
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk.mtl",
+          "type": "fetch",
+          "start": 1552.6000000014901,
+          "duration": 188.89999999850988,
+          "transferSize": 1086,
+          "encodedBodySize": 786
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk-front.png",
+          "type": "img",
+          "start": 1746.699999999255,
+          "duration": 510.4000000022352,
+          "transferSize": 1527265,
+          "encodedBodySize": 1526965
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk-side.png",
+          "type": "img",
+          "start": 1747,
+          "duration": 504.4000000022352,
+          "transferSize": 1284422,
+          "encodedBodySize": 1284122
+        }
+      ],
+      "smallText": [
+        {
+          "text": "Best for: Entrepreneurs, retailers, investors",
+          "fontSize": "11px"
+        },
+        {
+          "text": "Best for: Colleges, malls, offices, hostels, transit",
+          "fontSize": "11px"
+        },
+        {
+          "text": "Best for: Universities, enterprises, government",
+          "fontSize": "11px"
+        },
+        {
+          "text": "PrintKarr PRO",
+          "fontSize": "11px"
+        },
+        {
+          "text": "PrintKarr MINI",
+          "fontSize": "11px"
+        }
+      ]
+    },
+    {
+      "url": "https://printkarr.in/printing-in-vapi",
+      "width": 390,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4cc9c918ff64-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:27 GMT",
+        "etag": "W/\"2d59-gfgebyr3bCRhFrB9GUGAI2bogL0\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "a6d1d614-53ea-403a",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-printing-in-vapi-390.png",
+      "failures": [],
+      "errors": [],
+      "title": "Printing in Vapi — Documents, PDFs & Local Delivery — PrintKarr",
+      "h1": [
+        {
+          "text": "Printing in Vapi, delivered 24/7",
+          "rect": {
+            "left": 20,
+            "top": 155.6875,
+            "width": 350,
+            "height": 94.15625,
+            "bottom": 249.84375
+          }
+        }
+      ],
+      "viewport": 390,
+      "scrollWidth": 390,
+      "mainCtas": [
+        {
+          "text": "Upload & print →",
+          "href": "/order",
+          "rect": {
+            "left": 20,
+            "top": 368.84375,
+            "width": 155.359375,
+            "height": 49.6875,
+            "bottom": 418.53125
+          }
+        }
+      ],
+      "images": [],
+      "lab": {
+        "lcp": {
+          "time": 968,
+          "size": 55840,
+          "url": "",
+          "tag": "P",
+          "text": "Order black-and-white or colour document prints for college assignments, project"
+        },
+        "cls": 0,
+        "shifts": [],
+        "longTasks": []
+      },
+      "navigation": {
+        "ttfb": 291.9000000022352,
+        "domContentLoaded": 936.9000000022352,
+        "load": 937.4000000022352,
+        "encodedBodySize": 3466,
+        "transferSize": 3766
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 403.6000000014901,
+          "duration": 190.5,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 404.4000000022352,
+          "duration": 319.8999999985099,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 404.69999999925494,
+          "duration": 224.40000000223517,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 405,
+          "duration": 261.6000000014901,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 405.5,
+          "duration": 351.4000000022352,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 405.6000000014901,
+          "duration": 189.80000000074506,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 405.9000000022352,
+          "duration": 164.19999999925494,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 429.4000000022352,
+          "duration": 140.79999999701977,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 726.1999999992549,
+          "duration": 102,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 945.3000000007451,
+          "duration": 101.39999999850988,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        }
+      ],
+      "smallText": [
+        {
+          "text": "PRINTKARR · LOCAL DOCUMENT PRINTING",
+          "fontSize": "11px"
+        }
+      ]
+    },
+    {
+      "url": "https://printkarr.in/",
+      "width": 1440,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4ce07a933ab7-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:30 GMT",
+        "etag": "W/\"4d47-APlbjeu17f0BKNV9vL+0coOOEeo\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "db1274a9-5933-4074",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-homepage-1440.png",
+      "failures": [],
+      "errors": [],
+      "title": "Online Printing in Vapi — 24/7 Print Delivery — PrintKarr",
+      "h1": [
+        {
+          "text": "Good prints.Zero fuss.",
+          "rect": {
+            "left": 80,
+            "top": 232.84375,
+            "width": 654.6875,
+            "height": 230.9375,
+            "bottom": 463.78125
+          }
+        }
+      ],
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "mainCtas": [
+        {
+          "text": "Upload & print ",
+          "href": "/order",
+          "rect": {
+            "left": 80,
+            "top": 604.453125,
+            "width": 156.875,
+            "height": 54.140625,
+            "bottom": 658.59375
+          }
+        },
+        {
+          "text": "Wallet / Top-up ",
+          "href": "/customer/wallet",
+          "rect": {
+            "left": 248.875,
+            "top": 604.453125,
+            "width": 163.5,
+            "height": 54.140625,
+            "bottom": 658.59375
+          }
+        },
+        {
+          "text": "Explore wallet & top up ",
+          "href": "/customer/wallet",
+          "rect": {
+            "left": 80,
+            "top": 3492.96875,
+            "width": 225.796875,
+            "height": 49.6875,
+            "bottom": 3542.65625
+          }
+        },
+        {
+          "text": "Let’s talkLet’s talk ",
+          "href": "/contact",
+          "rect": {
+            "left": 1195,
+            "top": 6487.828125,
+            "width": 165,
+            "height": 49.6875,
+            "bottom": 6537.515625
+          }
+        }
+      ],
+      "images": [
+        {
+          "src": "https://printkarr.in/images/print-desk-hero-v2.webp",
+          "alt": "White sample documents printed in blue with the words Your next chapter",
+          "width": "1122",
+          "height": "1402",
+          "loading": "auto",
+          "fetchPriority": "high",
+          "loaded": true,
+          "naturalWidth": 1122,
+          "naturalHeight": 1402,
+          "rect": {
+            "left": 879.984375,
+            "top": 165,
+            "width": 480,
+            "height": 600,
+            "bottom": 765
+          }
+        },
+        {
+          "src": "https://printkarr.in/images/host-cta-cutout.png",
+          "alt": "Student using her phone to order prints",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1024,
+          "naturalHeight": 1536,
+          "rect": {
+            "left": 500.3125,
+            "top": 1979.21875,
+            "width": 278.65625,
+            "height": 418,
+            "bottom": 2397.21875
+          }
+        },
+        {
+          "src": "",
+          "alt": "",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": false,
+          "naturalWidth": 0,
+          "naturalHeight": 0,
+          "rect": {
+            "left": 718.125,
+            "top": 4874.640625,
+            "width": 641.859375,
+            "height": 552,
+            "bottom": 5426.640625
+          }
+        }
+      ],
+      "lab": {
+        "lcp": {
+          "time": 1148,
+          "size": 287990,
+          "url": "https://printkarr.in/images/print-desk-hero-v2.webp",
+          "tag": "IMG",
+          "text": ""
+        },
+        "cls": 0.000506755702642747,
+        "shifts": [
+          {
+            "time": 1298.1000000014901,
+            "value": 0.000506755702642747,
+            "nodes": [
+              {}
+            ]
+          }
+        ],
+        "longTasks": []
+      },
+      "navigation": {
+        "ttfb": 201.19999999925494,
+        "domContentLoaded": 1057,
+        "load": 1872,
+        "encodedBodySize": 5101,
+        "transferSize": 5401
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 317,
+          "duration": 198.30000000074506,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 317.6000000014901,
+          "duration": 131.30000000074506,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 317.70000000298023,
+          "duration": 143,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 317.80000000074506,
+          "duration": 132.30000000074506,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/vendor/gsap-3.13.0.min.js",
+          "type": "script",
+          "start": 318,
+          "duration": 390.1000000014901,
+          "transferSize": 29450,
+          "encodedBodySize": 29150
+        },
+        {
+          "url": "https://printkarr.in/kiosk-3d.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 318.1000000014901,
+          "duration": 141.69999999925494,
+          "transferSize": 3232,
+          "encodedBodySize": 2932
+        },
+        {
+          "url": "https://printkarr.in/images/print-desk-hero-v2.webp",
+          "type": "img",
+          "start": 318.20000000298023,
+          "duration": 240.09999999776483,
+          "transferSize": 80040,
+          "encodedBodySize": 79740
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 318.4000000022352,
+          "duration": 226.5,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 318.5,
+          "duration": 270.20000000298023,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 318.6000000014901,
+          "duration": 333.69999999925494,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 336.30000000074506,
+          "duration": 316.80000000074506,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 455,
+          "duration": 299.1000000014901,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/fonts/instrument-serif-italic-latin.woff2",
+          "type": "css",
+          "start": 763.4000000022352,
+          "duration": 494.80000000074506,
+          "transferSize": 22428,
+          "encodedBodySize": 22128
+        },
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin-ext.woff2",
+          "type": "css",
+          "start": 921.7000000029802,
+          "duration": 499,
+          "transferSize": 18528,
+          "encodedBodySize": 18228
+        },
+        {
+          "url": "https://printkarr.in/images/host-cta-cutout.png",
+          "type": "img",
+          "start": 1036.300000000745,
+          "duration": 819.3000000007451,
+          "transferSize": 2703544,
+          "encodedBodySize": 2703244
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 1876.300000000745,
+          "duration": 148.5,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        }
+      ],
+      "smallText": [
+        {
+          "text": "PRINT DELIVERY IN VAPI & DAMAN",
+          "fontSize": "11px"
+        },
+        {
+          "text": "PDFs & photos. Clear pricing before you pay.",
+          "fontSize": "11px"
+        },
+        {
+          "text": "HOW IT WORKS",
+          "fontSize": "11px"
+        },
+        {
+          "text": "PRINT PRICES",
+          "fontSize": "11px"
+        },
+        {
+          "text": "COMING NEXT",
+          "fontSize": "11px"
+        }
+      ]
+    },
+    {
+      "url": "https://printkarr.in/how-it-works",
+      "width": 1440,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4cfebc71efc3-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:35 GMT",
+        "etag": "W/\"2b54-CRkkkW/9dQcor6ZhRrhKsXi46zk\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "cc1553a5-e29a-494c",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-how-it-works-1440.png",
+      "failures": [],
+      "errors": [],
+      "title": "How Online Printing Works in Vapi — PrintKarr",
+      "h1": [
+        {
+          "text": "From your screen.Into your hands.",
+          "rect": {
+            "left": 80,
+            "top": 220.046875,
+            "width": 768,
+            "height": 166.90625,
+            "bottom": 386.953125
+          }
+        }
+      ],
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "mainCtas": [
+        {
+          "text": "Try it nowTry it now",
+          "href": "/order",
+          "rect": {
+            "left": 658.125,
+            "top": 1300.125,
+            "width": 123.734375,
+            "height": 49.6875,
+            "bottom": 1349.8125
+          }
+        }
+      ],
+      "images": [
+        {
+          "src": "https://printkarr.in/images/step-1-qr.jpg",
+          "alt": "Start online on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 80,
+            "top": 740.296875,
+            "width": 302,
+            "height": 300,
+            "bottom": 1040.296875
+          }
+        },
+        {
+          "src": "https://printkarr.in/images/step-2-upload.jpg",
+          "alt": "Upload the right PDF on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 406,
+            "top": 740.296875,
+            "width": 302,
+            "height": 300,
+            "bottom": 1040.296875
+          }
+        },
+        {
+          "src": "https://printkarr.in/images/step-3-settings.jpg",
+          "alt": "Choose exactly what prints on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 732,
+            "top": 740.296875,
+            "width": 302,
+            "height": 300,
+            "bottom": 1040.296875
+          }
+        },
+        {
+          "src": "https://printkarr.in/images/step-4-collect.jpg",
+          "alt": "Get your prints delivered on a phone",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 1086,
+          "naturalHeight": 1448,
+          "rect": {
+            "left": 1058,
+            "top": 740.296875,
+            "width": 302,
+            "height": 300,
+            "bottom": 1040.296875
+          }
+        }
+      ],
+      "lab": {
+        "lcp": {
+          "time": 756,
+          "size": 108595,
+          "url": "",
+          "tag": "H1",
+          "text": "From your screen.Into your hands."
+        },
+        "cls": 0,
+        "shifts": [],
+        "longTasks": []
+      },
+      "navigation": {
+        "ttfb": 227.20000000298023,
+        "domContentLoaded": 736.1999999992549,
+        "load": 736.8000000007451,
+        "encodedBodySize": 3160,
+        "transferSize": 3460
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 324.69999999925494,
+          "duration": 228.60000000149012,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 325.30000000074506,
+          "duration": 121.09999999776483,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 325.5,
+          "duration": 175.80000000074506,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 325.6000000014901,
+          "duration": 122.19999999925494,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 325.80000000074506,
+          "duration": 230.19999999925494,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 325.8999999985099,
+          "duration": 177.80000000074506,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 326,
+          "duration": 176.60000000149012,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 344.1000000014901,
+          "duration": 161.19999999925494,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 451.1000000014901,
+          "duration": 137.89999999850988,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/images/step-1-qr.jpg",
+          "type": "img",
+          "start": 726,
+          "duration": 716.8999999985099,
+          "transferSize": 889443,
+          "encodedBodySize": 889143
+        },
+        {
+          "url": "https://printkarr.in/images/step-2-upload.jpg",
+          "type": "img",
+          "start": 726.1999999992549,
+          "duration": 709.6999999992549,
+          "transferSize": 846698,
+          "encodedBodySize": 846398
+        },
+        {
+          "url": "https://printkarr.in/images/step-3-settings.jpg",
+          "type": "img",
+          "start": 726.3000000007451,
+          "duration": 708.8999999985099,
+          "transferSize": 875720,
+          "encodedBodySize": 875420
+        },
+        {
+          "url": "https://printkarr.in/images/step-4-collect.jpg",
+          "type": "img",
+          "start": 726.3000000007451,
+          "duration": 1950.199999999255,
+          "transferSize": 897105,
+          "encodedBodySize": 896805
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 746.6999999992549,
+          "duration": 167.40000000223517,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        }
+      ],
+      "smallText": []
+    },
+    {
+      "url": "https://printkarr.in/franchise",
+      "width": 1440,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4d228cffff66-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:41 GMT",
+        "etag": "W/\"32e8-oJ9uniHTpqcwkSdTchhqnkCjdAU\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "5e380238-9faf-49e8",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-franchise-1440.png",
+      "failures": [],
+      "errors": [],
+      "title": "PrintKarr Kiosk Partnerships & Franchise — PrintKarr",
+      "h1": [
+        {
+          "text": "Bring printing closer to everyone.",
+          "rect": {
+            "left": 80,
+            "top": 273.71875,
+            "width": 658.90625,
+            "height": 166.90625,
+            "bottom": 440.625
+          }
+        }
+      ],
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "mainCtas": [
+        {
+          "text": "Explore partnership ",
+          "href": "#partner-form",
+          "rect": {
+            "left": 80,
+            "top": 545.625,
+            "width": 203.390625,
+            "height": 49.6875,
+            "bottom": 595.3125
+          }
+        }
+      ],
+      "images": [
+        {
+          "src": "https://printkarr.in/images/kiosk-hero.png",
+          "alt": "",
+          "width": null,
+          "height": null,
+          "loading": "lazy",
+          "fetchPriority": "auto",
+          "loaded": true,
+          "naturalWidth": 921,
+          "naturalHeight": 1708,
+          "rect": {
+            "left": 810.90625,
+            "top": 169,
+            "width": 549.078125,
+            "height": 452,
+            "bottom": 621
+          }
+        }
+      ],
+      "lab": {
+        "lcp": {
+          "time": 1740,
+          "size": 185772,
+          "url": "https://printkarr.in/images/kiosk-hero.png",
+          "tag": "IMG",
+          "text": ""
+        },
+        "cls": 0.00018702811535493827,
+        "shifts": [
+          {
+            "time": 1063.1000000014901,
+            "value": 0.00018702811535493827,
+            "nodes": [
+              {}
+            ]
+          }
+        ],
+        "longTasks": [
+          {
+            "time": 2335.10000000149,
+            "duration": 364
+          }
+        ]
+      },
+      "navigation": {
+        "ttfb": 227,
+        "domContentLoaded": 1056.4000000022352,
+        "load": 1513.199999999255,
+        "encodedBodySize": 3642,
+        "transferSize": 3942
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 428.6000000014901,
+          "duration": 161.39999999850988,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 430.1000000014901,
+          "duration": 195.5,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 430.4000000022352,
+          "duration": 201.19999999925494,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 430.9000000022352,
+          "duration": 196.79999999701977,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/kiosk-3d.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 431.4000000022352,
+          "duration": 198.29999999701977,
+          "transferSize": 3232,
+          "encodedBodySize": 2932
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 431.80000000074506,
+          "duration": 309.5,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 432.1000000014901,
+          "duration": 206.39999999850988,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 432.30000000074506,
+          "duration": 207.39999999850988,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 465.5,
+          "duration": 173.5,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 644.9000000022352,
+          "duration": 148.19999999925494,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/fonts/instrument-serif-italic-latin.woff2",
+          "type": "css",
+          "start": 811,
+          "duration": 188.30000000074506,
+          "transferSize": 22428,
+          "encodedBodySize": 22128
+        },
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin-ext.woff2",
+          "type": "css",
+          "start": 980.4000000022352,
+          "duration": 232.89999999850988,
+          "transferSize": 18528,
+          "encodedBodySize": 18228
+        },
+        {
+          "url": "https://printkarr.in/images/kiosk-hero.png",
+          "type": "img",
+          "start": 1036.300000000745,
+          "duration": 472.80000000074506,
+          "transferSize": 1322632,
+          "encodedBodySize": 1322332
+        },
+        {
+          "url": "https://printkarr.in/vendor/three-0.160.0.module.js",
+          "type": "script",
+          "start": 1061.5,
+          "duration": 501.9000000022352,
+          "transferSize": 259975,
+          "encodedBodySize": 259675
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 1517.1000000014901,
+          "duration": 133.59999999776483,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk.obj",
+          "type": "fetch",
+          "start": 1593.699999999255,
+          "duration": 233.5,
+          "transferSize": 7154,
+          "encodedBodySize": 6854
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk.mtl",
+          "type": "fetch",
+          "start": 1593.9000000022352,
+          "duration": 233,
+          "transferSize": 1086,
+          "encodedBodySize": 786
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk-front.png",
+          "type": "img",
+          "start": 1832.300000000745,
+          "duration": 492.3999999985099,
+          "transferSize": 1527265,
+          "encodedBodySize": 1526965
+        },
+        {
+          "url": "https://printkarr.in/models/kiosk-side.png",
+          "type": "img",
+          "start": 1832.4000000022352,
+          "duration": 454.69999999925494,
+          "transferSize": 1284422,
+          "encodedBodySize": 1284122
+        }
+      ],
+      "smallText": [
+        {
+          "text": "Best for: Entrepreneurs, retailers, investors",
+          "fontSize": "11px"
+        },
+        {
+          "text": "Best for: Colleges, malls, offices, hostels, transit",
+          "fontSize": "11px"
+        },
+        {
+          "text": "Best for: Universities, enterprises, government",
+          "fontSize": "11px"
+        },
+        {
+          "text": "PrintKarr PRO",
+          "fontSize": "11px"
+        },
+        {
+          "text": "PrintKarr MINI",
+          "fontSize": "11px"
+        }
+      ]
+    },
+    {
+      "url": "https://printkarr.in/printing-in-vapi",
+      "width": 1440,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a43a4d430bc93b9d-BOM",
+        "content-encoding": "br",
+        "content-type": "text/html; charset=utf-8",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "date": "Thu, 01 Oct 2026 09:04:46 GMT",
+        "etag": "W/\"2d59-gfgebyr3bCRhFrB9GUGAI2bogL0\"",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "rndr-id": "2f027aac-0677-4476",
+        "server": "cloudflare",
+        "strict-transport-security": "max-age=15552000; includeSubDomains",
+        "vary": "Accept-Encoding",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-render-origin-server": "Render",
+        "x-xss-protection": "0"
+      },
+      "screenshot": "docs/seo/screenshots/live-printing-in-vapi-1440.png",
+      "failures": [],
+      "errors": [],
+      "title": "Printing in Vapi — Documents, PDFs & Local Delivery — PrintKarr",
+      "h1": [
+        {
+          "text": "Printing in Vapi, delivered 24/7",
+          "rect": {
+            "left": 80,
+            "top": 207.6875,
+            "width": 850,
+            "height": 166.90625,
+            "bottom": 374.59375
+          }
+        }
+      ],
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "mainCtas": [
+        {
+          "text": "Upload & print →",
+          "href": "/order",
+          "rect": {
+            "left": 80,
+            "top": 447.09375,
+            "width": 155.359375,
+            "height": 49.6875,
+            "bottom": 496.78125
+          }
+        }
+      ],
+      "images": [],
+      "lab": {
+        "lcp": {
+          "time": 832,
+          "size": 91080,
+          "url": "",
+          "tag": "H1",
+          "text": "Printing in Vapi, delivered 24/7"
+        },
+        "cls": 0,
+        "shifts": [],
+        "longTasks": []
+      },
+      "navigation": {
+        "ttfb": 209.79999999701977,
+        "domContentLoaded": 806.4000000022352,
+        "load": 807,
+        "encodedBodySize": 3466,
+        "transferSize": 3766
+      },
+      "resources": [
+        {
+          "url": "https://printkarr.in/fonts/dm-sans-latin.woff2",
+          "type": "link",
+          "start": 376.6000000014901,
+          "duration": 159.30000000074506,
+          "transferSize": 37232,
+          "encodedBodySize": 36932
+        },
+        {
+          "url": "https://printkarr.in/design.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 377.19999999925494,
+          "duration": 151.5,
+          "transferSize": 7987,
+          "encodedBodySize": 7687
+        },
+        {
+          "url": "https://printkarr.in/customer.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 377.4000000022352,
+          "duration": 150.39999999850988,
+          "transferSize": 3266,
+          "encodedBodySize": 2966
+        },
+        {
+          "url": "https://printkarr.in/qk-landing.css?v=20261001-editorial-blue",
+          "type": "link",
+          "start": 377.5,
+          "duration": 178.40000000223517,
+          "transferSize": 4788,
+          "encodedBodySize": 4488
+        },
+        {
+          "url": "https://printkarr.in/vendor/motion-12.23.24.js",
+          "type": "script",
+          "start": 377.69999999925494,
+          "duration": 262.5,
+          "transferSize": 29633,
+          "encodedBodySize": 29333
+        },
+        {
+          "url": "https://printkarr.in/design-motion.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 377.80000000074506,
+          "duration": 179,
+          "transferSize": 1282,
+          "encodedBodySize": 982
+        },
+        {
+          "url": "https://printkarr.in/shell.js?v=20261001-editorial-blue",
+          "type": "script",
+          "start": 377.9000000022352,
+          "duration": 179.89999999850988,
+          "transferSize": 3162,
+          "encodedBodySize": 2862
+        },
+        {
+          "url": "https://printkarr.in/icons.svg?v=20261001-editorial-blue#wallet",
+          "type": "other",
+          "start": 394.30000000074506,
+          "duration": 182.80000000074506,
+          "transferSize": 3248,
+          "encodedBodySize": 2948
+        },
+        {
+          "url": "https://printkarr.in/fonts/fonts.css",
+          "type": "css",
+          "start": 532.5,
+          "duration": 137.80000000074506,
+          "transferSize": 677,
+          "encodedBodySize": 377
+        },
+        {
+          "url": "https://printkarr.in/favicon.ico?v=20261001-editorial-blue",
+          "type": "other",
+          "start": 814.4000000022352,
+          "duration": 126.79999999701977,
+          "transferSize": 2674,
+          "encodedBodySize": 2374
+        }
+      ],
+      "smallText": [
+        {
+          "text": "PRINTKARR · LOCAL DOCUMENT PRINTING",
+          "fontSize": "11px"
+        }
+      ]
+    }
+  ]
+}

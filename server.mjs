@@ -39,7 +39,7 @@ import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
-import { POSTS, vapiPage, landing, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { POSTS, vapiPage, damanPage, printPricesPage, landing, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import { discoveryRoutes } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
@@ -2201,6 +2201,8 @@ app.get('/', (req, res) => {
 
 // Marketing pages — Grok workspace port (server-rendered, no auth).
 app.get('/printing-in-vapi', (_req, res) => res.send(vapiPage()));
+app.get('/printing-in-daman', (_req, res) => res.send(damanPage()));
+app.get('/printing-prices', (_req, res) => res.send(printPricesPage({ pricing:loadDb().pricing })));
 app.get('/how-it-works', (_req, res) => res.send(howItWorksPage()));
 app.get('/about', (_req, res) => res.send(aboutPage()));
 app.get('/franchise', (_req, res) => res.send(franchisePage()));
@@ -2221,7 +2223,9 @@ app.get('/terms', (_req, res) => res.send(termsPage()));
 app.get('/privacy', (_req, res) => res.send(privacyPage()));
 
 // ---- Static (production surface = public/ only) ----
-app.use(express.static(PUBLIC, { maxAge: '1h', extensions: ['html'] }));
+app.use(express.static(PUBLIC, { maxAge: '1h', extensions: ['html'], setHeaders(res, file) {
+  if (/[/\\]vendor[/\\](?:motion|gsap|three)-\d+\.\d+\.\d+/.test(file)) res.set('Cache-Control', 'public, max-age=31536000, immutable');
+} }));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   res.status(404).set('X-Robots-Tag', 'noindex').send('<!doctype html><html lang="en"><title>Page not found — PrintKarr</title><main><h1>Page not found</h1><a href="/">Go to PrintKarr</a></main></html>');

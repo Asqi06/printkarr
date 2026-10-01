@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="white"/>
+  <rect x="820" y="0" width="380" height="630" fill="#2448ef"/>
+  <g transform="translate(900 135) rotate(8 80 160)"><rect width="245" height="355" rx="3" fill="#ffffff"/><rect x="30" y="35" width="175" height="95" fill="#e8edff"/><path d="M30 164h175M30 187h150M30 210h166M30 233h135M30 256h155M30 279h120" stroke="#2448ef" stroke-width="7"/></g>
+  <text x="72" y="115" font-family="Arial,sans-serif" font-size="56" font-weight="700" letter-spacing="-3" fill="#14203b">Print<tspan fill="#2448ef">Karr</tspan></text>
+  <text x="72" y="255" font-family="Arial,sans-serif" font-size="66" font-weight="700" letter-spacing="-3" fill="#14203b">Online document</text>
+  <text x="72" y="335" font-family="Arial,sans-serif" font-size="66" font-weight="700" letter-spacing="-3" fill="#2448ef">printing.</text>
+  <text x="74" y="415" font-family="Arial,sans-serif" font-size="29" fill="#626d82">Local delivery in Vapi and Daman.</text>
+  <text x="74" y="470" font-family="Arial,sans-serif" font-size="24" fill="#626d82">Upload. Choose your settings. Select delivery.</text>
+  <text x="74" y="557" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#2448ef">printkarr.in</text>
+</svg>

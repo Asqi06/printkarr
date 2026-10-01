@@ -23,6 +23,8 @@ const order = { ...draft, status: 'PAYMENT_PENDING', printType: 'bw', sides: 'do
 const campaign = campaignDefaults();
 export const pages = new Map([
   ['/', publicViews.landing({ pagesWeek: 128, queueDepth: 2, pricing })],
+  ['/printing-in-daman', publicViews.damanPage()],
+  ['/printing-prices', publicViews.printPricesPage({ pricing })],
   ['/order', publicViews.orderPage({ pricing, maxMb: 20 })],
   ['/order/options', publicViews.orderPage({ pricing, draft })],
   ['/order/phone', publicViews.phonePage({ draft })],

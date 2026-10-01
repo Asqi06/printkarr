@@ -5,3 +5,4 @@ data/db.backup*.json
 data/.diskid
 data/uploads/*
 .env
+.seo-cache/

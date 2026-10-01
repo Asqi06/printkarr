@@ -1,0 +1,576 @@
+{
+  "analyzed_at": "2026-10-01T09:32:47.625Z",
+  "source": "http://127.0.0.1:3100",
+  "widths": [
+    320,
+    390,
+    760,
+    1024,
+    1440
+  ],
+  "layouts": [
+    {
+      "route": "/",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 477.3125
+    },
+    {
+      "route": "/printing-in-vapi",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 547.75
+    },
+    {
+      "route": "/printing-in-daman",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 668.90625
+    },
+    {
+      "route": "/printing-prices",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 547.75
+    },
+    {
+      "route": "/how-it-works",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 559.359375
+    },
+    {
+      "route": "/about",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1
+    },
+    {
+      "route": "/contact",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1
+    },
+    {
+      "route": "/blogs",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1
+    },
+    {
+      "route": "/franchise",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1
+    },
+    {
+      "route": "/xerox",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1
+    },
+    {
+      "route": "/terms",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1
+    },
+    {
+      "route": "/privacy",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1
+    },
+    {
+      "route": "/blogs/prepare-documents-for-printing-vapi",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 4377.5
+    },
+    {
+      "route": "/blogs/admit-card-printing-checklist",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 4276.078125
+    },
+    {
+      "route": "/blogs/running-a-printkarr-kiosk",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 4200.5
+    },
+    {
+      "route": "/blogs/replacing-xerox-queues",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 4178
+    },
+    {
+      "route": "/blogs/colleges-24-7-print",
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": 1,
+      "cta": 4277.578125
+    },
+    {
+      "route": "/",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 419.5625
+    },
+    {
+      "route": "/printing-in-vapi",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 493.75
+    },
+    {
+      "route": "/printing-in-daman",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 547.75
+    },
+    {
+      "route": "/printing-prices",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 520.75
+    },
+    {
+      "route": "/how-it-works",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 439.703125
+    },
+    {
+      "route": "/about",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1
+    },
+    {
+      "route": "/contact",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1
+    },
+    {
+      "route": "/blogs",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1
+    },
+    {
+      "route": "/franchise",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1
+    },
+    {
+      "route": "/xerox",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1
+    },
+    {
+      "route": "/terms",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1
+    },
+    {
+      "route": "/privacy",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1
+    },
+    {
+      "route": "/blogs/prepare-documents-for-printing-vapi",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 3563.921875
+    },
+    {
+      "route": "/blogs/admit-card-printing-checklist",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 3659
+    },
+    {
+      "route": "/blogs/running-a-printkarr-kiosk",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 3686
+    },
+    {
+      "route": "/blogs/replacing-xerox-queues",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 3467.921875
+    },
+    {
+      "route": "/blogs/colleges-24-7-print",
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": 1,
+      "cta": 3611.921875
+    },
+    {
+      "route": "/",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 466.390625
+    },
+    {
+      "route": "/printing-in-vapi",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 412.75
+    },
+    {
+      "route": "/printing-in-daman",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 439.75
+    },
+    {
+      "route": "/printing-prices",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 439.75
+    },
+    {
+      "route": "/how-it-works",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 363.203125
+    },
+    {
+      "route": "/about",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1
+    },
+    {
+      "route": "/contact",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1
+    },
+    {
+      "route": "/blogs",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1
+    },
+    {
+      "route": "/franchise",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1
+    },
+    {
+      "route": "/xerox",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1
+    },
+    {
+      "route": "/terms",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1
+    },
+    {
+      "route": "/privacy",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1
+    },
+    {
+      "route": "/blogs/prepare-documents-for-printing-vapi",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 2453.34375
+    },
+    {
+      "route": "/blogs/admit-card-printing-checklist",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 2303.34375
+    },
+    {
+      "route": "/blogs/running-a-printkarr-kiosk",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 2303.34375
+    },
+    {
+      "route": "/blogs/replacing-xerox-queues",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 2330.34375
+    },
+    {
+      "route": "/blogs/colleges-24-7-print",
+      "width": 760,
+      "scrollWidth": 760,
+      "h1": 1,
+      "cta": 2303.34375
+    },
+    {
+      "route": "/",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 518.453125
+    },
+    {
+      "route": "/printing-in-vapi",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 502.0625
+    },
+    {
+      "route": "/printing-in-daman",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 502.0625
+    },
+    {
+      "route": "/printing-prices",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 502.0625
+    },
+    {
+      "route": "/how-it-works",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 452.515625
+    },
+    {
+      "route": "/about",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1
+    },
+    {
+      "route": "/contact",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1
+    },
+    {
+      "route": "/blogs",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1
+    },
+    {
+      "route": "/franchise",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1
+    },
+    {
+      "route": "/xerox",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1
+    },
+    {
+      "route": "/terms",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1
+    },
+    {
+      "route": "/privacy",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1
+    },
+    {
+      "route": "/blogs/prepare-documents-for-printing-vapi",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 2464.5625
+    },
+    {
+      "route": "/blogs/admit-card-printing-checklist",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 2306.171875
+    },
+    {
+      "route": "/blogs/running-a-printkarr-kiosk",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 2306.171875
+    },
+    {
+      "route": "/blogs/replacing-xerox-queues",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 2306.171875
+    },
+    {
+      "route": "/blogs/colleges-24-7-print",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": 1,
+      "cta": 2279.171875
+    },
+    {
+      "route": "/",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 604.453125
+    },
+    {
+      "route": "/printing-in-vapi",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 537.5
+    },
+    {
+      "route": "/printing-in-daman",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 537.5
+    },
+    {
+      "route": "/printing-prices",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 537.5
+    },
+    {
+      "route": "/how-it-works",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 487.953125
+    },
+    {
+      "route": "/about",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1
+    },
+    {
+      "route": "/contact",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1
+    },
+    {
+      "route": "/blogs",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1
+    },
+    {
+      "route": "/franchise",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1
+    },
+    {
+      "route": "/xerox",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1
+    },
+    {
+      "route": "/terms",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1
+    },
+    {
+      "route": "/privacy",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1
+    },
+    {
+      "route": "/blogs/prepare-documents-for-printing-vapi",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 2516.09375
+    },
+    {
+      "route": "/blogs/admit-card-printing-checklist",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 2439.546875
+    },
+    {
+      "route": "/blogs/running-a-printkarr-kiosk",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 2356.09375
+    },
+    {
+      "route": "/blogs/replacing-xerox-queues",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 2356.09375
+    },
+    {
+      "route": "/blogs/colleges-24-7-print",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": 1,
+      "cta": 2329.09375
+    }
+  ],
+  "errors": [],
+  "kiosk": "WebGL succeeds with optimized WebP textures",
+  "saveData": "Static image visible, Three.js not downloaded"
+}

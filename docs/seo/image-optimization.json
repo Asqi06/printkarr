@@ -1,0 +1,209 @@
+[
+  {
+    "source": "public\\images\\host-cta-cutout.png",
+    "webp": "public\\images\\host-cta-cutout.webp",
+    "width": 1024,
+    "height": 1536,
+    "beforeBytes": 2703244,
+    "afterBytes": 334674,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\host-cta-cutout.png",
+    "webp": "public\\images\\host-cta-cutout-480.webp",
+    "width": 480,
+    "height": 720,
+    "beforeBytes": 2703244,
+    "afterBytes": 93314,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\host-cta-cutout.png",
+    "webp": "public\\images\\host-cta-cutout-768.webp",
+    "width": 768,
+    "height": 1152,
+    "beforeBytes": 2703244,
+    "afterBytes": 222174,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\kiosk-hero.png",
+    "webp": "public\\images\\kiosk-hero.webp",
+    "width": 921,
+    "height": 1708,
+    "beforeBytes": 1322332,
+    "afterBytes": 175264,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\kiosk-hero.png",
+    "webp": "public\\images\\kiosk-hero-480.webp",
+    "width": 480,
+    "height": 890,
+    "beforeBytes": 1322332,
+    "afterBytes": 74692,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\kiosk-hero.png",
+    "webp": "public\\images\\kiosk-hero-768.webp",
+    "width": 768,
+    "height": 1424,
+    "beforeBytes": 1322332,
+    "afterBytes": 140748,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\host-cta.jpg",
+    "webp": "public\\images\\host-cta.webp",
+    "width": 1152,
+    "height": 1728,
+    "beforeBytes": 474981,
+    "afterBytes": 194306,
+    "mode": "RGB"
+  },
+  {
+    "source": "public\\images\\host-cta.jpg",
+    "webp": "public\\images\\host-cta-480.webp",
+    "width": 480,
+    "height": 720,
+    "beforeBytes": 474981,
+    "afterBytes": 45268,
+    "mode": "RGB"
+  },
+  {
+    "source": "public\\images\\host-cta.jpg",
+    "webp": "public\\images\\host-cta-768.webp",
+    "width": 768,
+    "height": 1152,
+    "beforeBytes": 474981,
+    "afterBytes": 103174,
+    "mode": "RGB"
+  },
+  {
+    "source": "public\\images\\step-1-qr.jpg",
+    "webp": "public\\images\\step-1-qr.webp",
+    "width": 1086,
+    "height": 1448,
+    "beforeBytes": 889143,
+    "afterBytes": 108332,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-1-qr.jpg",
+    "webp": "public\\images\\step-1-qr-400.webp",
+    "width": 400,
+    "height": 533,
+    "beforeBytes": 889143,
+    "afterBytes": 30434,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-1-qr.jpg",
+    "webp": "public\\images\\step-1-qr-800.webp",
+    "width": 800,
+    "height": 1067,
+    "beforeBytes": 889143,
+    "afterBytes": 74512,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-2-upload.jpg",
+    "webp": "public\\images\\step-2-upload.webp",
+    "width": 1086,
+    "height": 1448,
+    "beforeBytes": 846398,
+    "afterBytes": 97910,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-2-upload.jpg",
+    "webp": "public\\images\\step-2-upload-400.webp",
+    "width": 400,
+    "height": 533,
+    "beforeBytes": 846398,
+    "afterBytes": 24010,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-2-upload.jpg",
+    "webp": "public\\images\\step-2-upload-800.webp",
+    "width": 800,
+    "height": 1067,
+    "beforeBytes": 846398,
+    "afterBytes": 64190,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-3-settings.jpg",
+    "webp": "public\\images\\step-3-settings.webp",
+    "width": 1086,
+    "height": 1448,
+    "beforeBytes": 875420,
+    "afterBytes": 89684,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-3-settings.jpg",
+    "webp": "public\\images\\step-3-settings-400.webp",
+    "width": 400,
+    "height": 533,
+    "beforeBytes": 875420,
+    "afterBytes": 23716,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-3-settings.jpg",
+    "webp": "public\\images\\step-3-settings-800.webp",
+    "width": 800,
+    "height": 1067,
+    "beforeBytes": 875420,
+    "afterBytes": 60616,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-4-collect.jpg",
+    "webp": "public\\images\\step-4-collect.webp",
+    "width": 1086,
+    "height": 1448,
+    "beforeBytes": 896805,
+    "afterBytes": 99704,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-4-collect.jpg",
+    "webp": "public\\images\\step-4-collect-400.webp",
+    "width": 400,
+    "height": 533,
+    "beforeBytes": 896805,
+    "afterBytes": 28156,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\images\\step-4-collect.jpg",
+    "webp": "public\\images\\step-4-collect-800.webp",
+    "width": 800,
+    "height": 1067,
+    "beforeBytes": 896805,
+    "afterBytes": 70994,
+    "mode": "RGBA"
+  },
+  {
+    "source": "public\\models\\kiosk-front.png",
+    "webp": "public\\models\\kiosk-front.webp",
+    "width": 1024,
+    "height": 1536,
+    "beforeBytes": 1526965,
+    "afterBytes": 169696,
+    "mode": "RGB"
+  },
+  {
+    "source": "public\\models\\kiosk-side.png",
+    "webp": "public\\models\\kiosk-side.webp",
+    "width": 1024,
+    "height": 1536,
+    "beforeBytes": 1284122,
+    "afterBytes": 132212,
+    "mode": "RGB"
+  }
+]
