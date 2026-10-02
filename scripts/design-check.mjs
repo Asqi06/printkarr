@@ -15,6 +15,7 @@ import { getConfig } from '../lib/referrals.js';
 import { loginPage, loginOtpPage, staffLoginPage } from '../lib/views.js';
 import { blankDb } from '../lib/db.js';
 import { customerDestination, parseCookies } from '../lib/auth.js';
+import { buildCoverPdf } from '../agent/cover.js';
 const { pricing, settings } = blankDb();
 const user = { id: 'preview', role: 'customer', name: 'Ani', email: 'ani@example.com' };
 const staff = { ...user, role: 'admin' };
@@ -22,7 +23,7 @@ const draft = { id: 'preview', document: 'Design-notes.pdf', pages: 12, area: 'P
 const order = { ...draft, status: 'PAYMENT_PENDING', printType: 'bw', sides: 'double', copies: 1, total: 24, subtotal: 24, deliveryFee: 0, history: [] };
 const campaign = campaignDefaults();
 export const pages = new Map([
-  ['/', publicViews.landing({ pagesWeek: 128, queueDepth: 2, pricing })],
+  ['/', publicViews.landing({ pagesWeek: 128, queueDepth: 2, pricing, campaign, walletOffers:campaign.wallets.filter(o=>o.enabled) })],
   ['/printing-in-daman', publicViews.damanPage()],
   ['/printing-prices', publicViews.printPricesPage({ pricing })],
   ['/order', publicViews.orderPage({ pricing, maxMb: 20 })],
@@ -40,14 +41,16 @@ export const pages = new Map([
   ['/customer/orders', customer.ordersList(user, { tab: 'active', counts: { active: 1, completed: 0, cancelled: 0 }, orders: [order] })],
   ['/customer/orders/preview', customer.orderDetail(user, order)],
   ['/customer/orders/preview/scan', customer.scanPage(user, { ...order, id: 'preview', status: 'READY_FOR_PICKUP' })],
-  ['/customer/orders/new', account.uploadStep(user)],
-  ['/customer/options', account.optionsStep(user, draft, [])],
+  ['/customer/orders/new', account.uploadStep(user, {pricing,campaign,maxMb:20})],
+  ['/customer/options', account.optionsStep(user, draft, [], campaign, pricing)],
+  ['/customer/returning', customer.customerDashboard(user, {pricing,notes:[],lastDoc:{...order,status:'DELIVERED',fileAvailable:false},walletBalance:150})],
+  ['/customer/checkout-offer', account.payStep({...user,walletBalance:0}, order, {offers:campaign.wallets.filter(o=>o.enabled),bonusValidityDays:90,razorpay:true,livePay:true})],
   ['/customer/orders/preview/pay', account.payStep(user, order)],
   ['/customer/wallet', account.walletPage(user, { balance:150 }, [], pricing, {campaign, offers:campaign.wallets.filter(o=>o.enabled), bonusBalance:20})],
   ['/customer/referrals', referralsPage(user, { cfg: { friendOff: 20, friendMinOrder: 79, referrerCredit: 20, monthlyCap: 500, minWithdrawal: 50, milestones: [{ n: 3, bonus: 10 }] }, code: 'ABC234', stats: { joined: 1, qualified: 0, earned: 0 }, credit: { balance: 0 }, cash: { balance: 0 }, payouts: [], shareText: 'PrintKarr it' })],
   ['/customer/packs', packs.packsPage(user, {subs:[],walletBalance:150,livePay:true})],
   ['/customer/review', account.summaryStep(user, draft, {effPages:12,copies:1,printType:'bw',sides:'double',orientation:'portrait',binding:'none',zone:'vapi',zoneLabel:'Vapi',slot:'Morning'}, {subtotal:24,total:24,deliveryFee:0})],
-  ['/customer/wallet-live', account.walletPage(user, {balance:150}, [], pricing, {campaign,offers:campaign.wallets.filter(o=>o.enabled),razorpay:true,livePay:true})],
+  ['/customer/wallet-live', account.walletPage(user, {balance:150}, [], pricing, {campaign,offers:campaign.wallets.filter(o=>o.enabled),razorpay:true,livePay:true,returnOrder:'preview',selectedOffer:'study'})],
   ['/customer/profile', account.profilePage(user, [], [])],
   ['/admin/orders/preview', admin.adminOrderDetail(staff, order, user, {area:'Vapi',address:'Campus'}, ['CONFIRMED','CANCELLED'], '', null)],
   ['/admin/customers/preview', admin.customerDetailAdmin(staff,user,[order],{balance:150},[])],
@@ -258,7 +261,7 @@ console.log('Kiosk checked: responsive image across every public view, no 3D ren
   const html = pages.get('/customer/wallet');
   const source = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).find(s=>s.includes('var offers ='));
   const fields = {amount:{value:49,addEventListener(type,fn){this.input=fn;},focus(){}}, topNudge:{}, offerId:{value:'first'}};
-  const buttons = campaign.wallets.filter(o=>o.enabled).map(o=>({dataset:{offer:o.id,amount:o.amount},addEventListener(type,fn){this.click=fn;},setAttribute(name,value){this[name]=value;}}));
+  const buttons = campaign.wallets.filter(o=>o.enabled).map(o=>({dataset:{offer:o.id,amount:o.amount},addEventListener(type,fn){this.click=fn;},setAttribute(name,value){this[name]=value;},closest(){return {classList:{toggle(){}}};}}));
   runInNewContext(source, {document:{getElementById:id=>fields[id],querySelectorAll:()=>buttons}});
   buttons[2].click(); assert.equal(fields.amount.value,199); assert.equal(fields.offerId.value,'study');
   assert.match(fields.topNudge.textContent,/225/); assert.equal(buttons[2]['aria-pressed'],'true'); assert.equal(buttons[0]['aria-pressed'],'false');
@@ -296,6 +299,7 @@ console.log('Kiosk checked: responsive image across every public view, no 3D ren
 if (process.argv.includes('--serve')) {
   const app = express();
   app.use(express.static('public', { index: false }));
+  app.get(['/customer/orders/preview/preview.pdf', '/customer/orders/new/preview/preview.pdf'], (_req,res)=>res.type('pdf').send(buildCoverPdf('PrintKarr preview', [['Document','Fictional print preview'],['Review','Check your pages, margins and settings']])));
   // The preview intentionally accepts no form submissions.
   app.get('*', (req, res) => pages.has(req.path) ? res.send(pages.get(req.path)) : res.status(404).send('Preview route not found'));
   app.listen(3100, '127.0.0.1', () => console.log('Read-only design preview: http://127.0.0.1:3100'));

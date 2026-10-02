@@ -34,7 +34,7 @@ import {
   qualifyForTopup, validUpiId
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
-import { campaignConfig, validateCampaign, hasTopup, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, deliveryPlan, batchPrice, settleWallets } from './lib/campus.js';
+import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, deliveryPlan, batchPrice, settleWallets } from './lib/campus.js';
 import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
@@ -488,10 +488,12 @@ app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
     } catch { collectQr = null; }
   }
   saveDb(db);
-  res.send(adminOrderDetail(req.user, o, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt, collectQr));
+  const queuePause = db.orders.find(x => ['PRINTING', 'PRINT_FAILED'].includes(x.status));
+  res.send(adminOrderDetail(req.user, { ...o, queuePause: queuePause?.id }, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt, collectQr));
 });
 
 function finishPrintAtKiosk(db, order, by) {
+  order.printAwaitingVerification = false;
   transition(order, 'PRINTED', { by, note: 'printing finished' });
   const printed = { ...order };
   transition(order, 'READY_FOR_PICKUP', { by, note: order.deliveryZone && order.deliveryZone !== 'pickup' ? 'ready for delivery' : 'ready at kiosk' });
@@ -715,6 +717,8 @@ app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
       for (const key of ['enabled', 'freeEnabled', 'guaranteeEnabled']) cfg.delivery[key] = req.body[`delivery-${key}`] === '1';
       for (const key of ['freeMinOrder', 'lateCredit']) cfg.delivery[key] = Number(req.body[`delivery-${key}`]);
       cfg.delivery.cutoff = req.body['delivery-cutoff'];
+      cfg.delivery.pickup = { enabled: req.body['pickup-enabled'] === '1', address: String(req.body['pickup-address'] || '').trim() };
+      for (const zone of ['vapi', 'daman']) cfg.delivery.local[zone] = { enabled: req.body[`local-${zone}-enabled`] === '1', fee: Number(req.body[`local-${zone}-fee`]), radiusKm: Number(req.body[`local-${zone}-radiusKm`]) };
       for (const o of cfg.delivery.slots) {
         for (const key of ['name', 'start', 'end', 'cutoff']) o[key] = req.body[`slot-${o.id}-${key}`];
         for (const key of ['enabled', 'guaranteed']) o[key] = req.body[`slot-${o.id}-${key}`] === '1';
@@ -861,10 +865,11 @@ function refundPaidOrder(db, order) {
 app.get('/customer', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const mine = custOrders(db, req.user.id);
-  const current = mine.find(ACTIVE) || mine[0] || null;
+  const current = mine.find(ACTIVE) || null;
   const notes = (db.notifications || []).filter((n) => n.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at));
-  const lastDoc = mine.find((o) => !current || o.id !== current.id) || null;
-  res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc, walletBalance: walletOf(db, req.user.id).balance, packsHtml: packDashboardHtml(mySubs(db, req.user.id)) }));
+  const lastDoc = mine.find((o) => o.status === 'DELIVERED') || null;
+  if (lastDoc) lastDoc.fileAvailable = fs.existsSync(path.join(ROOT, 'data', 'uploads', orderFile(lastDoc.id, lastDoc.fileExt)));
+  res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc, walletBalance: walletOf(db, req.user.id).balance, packsHtml: packDashboardHtml(mySubs(db, req.user.id)), campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db, req.user.id) : [] }));
 });
 
 app.get('/customer/orders', requireRole('customer'), (req, res) => {
@@ -878,7 +883,7 @@ app.get('/customer/orders', requireRole('customer'), (req, res) => {
   };
   res.send(ordersList(req.user, {
     tab, counts: { active: groups.active.length, completed: groups.completed.length, cancelled: groups.cancelled.length },
-    orders: groups[tab]
+    orders: groups[tab].map((o) => ({ ...o, fileAvailable: fs.existsSync(path.join(ROOT, 'data', 'uploads', orderFile(o.id, o.fileExt))) }))
   }));
 });
 
@@ -889,9 +894,11 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
     if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
     const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
-    return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing));
+    return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing, surchargeFees(db.pricing, activePrintJobs(db))));
   }
-  res.send(uploadStep(req.user));
+  const db = loadDb();
+  const repeat = db.orders.find((o) => o.id === req.query.repeat && o.customerId === req.user.id);
+  res.send(uploadStep(req.user, { pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
 });
 
 app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), (req, res) => {
@@ -913,12 +920,14 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   }
   const db = loadDb();
   db.drafts ||= [];
+  const repeat = db.orders.find((o) => o.id === req.body.repeat && o.customerId === req.user.id);
   const draft = {
     id: 'D' + Date.now().toString(36), customerId: req.user.id,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
     pages: file.pages, fileType: file.fileType, fileExt: file.ext,
     createdAt: new Date().toISOString()
   };
+  if (repeat) draft.selections = { printType: repeat.printType, copies: repeat.copies, sides: repeat.sides, orientation: repeat.orientation, binding: repeat.binding, notes: repeat.notes, addressId: repeat.addressId, zone: repeat.deliveryZone, deliveryMode: repeat.deliveryMode, campusId: repeat.campusId, slotId: repeat.slotId };
   db.drafts.push(draft);
   saveDb(db);
   res.redirect(`/customer/orders/new?draft=${draft.id}`);
@@ -947,7 +956,8 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     Object.assign(address, { phone, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng });
   } else if (plan.deliveryMode === 'pickup') {
     address = db.addresses.find((a) => a.customerId === req.user.id && zoneOf(a.area) === 'pickup');
-    if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, label: 'Kiosk', name: req.user.name, phone: req.user.phone || '', address: 'Kiosk collection', area: 'Kiosk pickup', pin: '' }; db.addresses.push(address); }
+    if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, label: 'Kiosk', name: req.user.name, phone: req.user.phone || '', area: 'Kiosk pickup', pin: '' }; db.addresses.push(address); }
+    address.address = plan.pickupAddress;
   } else if (req.body.addressId === '__new') {
     const newZone = zoneOf(req.body.nn_area);
     if (!newZone || !normPhone(req.body.nn_phone) || (newZone !== 'pickup' && (!String(req.body.nn_address || '').trim() || !/^\d{6}$/.test(String(req.body.nn_pin || ''))))) {
@@ -976,7 +986,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone];
   address.lat = point?.lat ?? null;
   address.lng = point?.lng ?? null;
-  if (!plan.campusId) plan = deliveryPlan(db, zone === 'pickup' ? 'pickup' : 'express');
+  if (!plan.campusId && plan.deliveryMode !== 'scheduled') plan = deliveryPlan(db, zone === 'pickup' ? 'pickup' : 'express');
   d.selections = {
     effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
     copies, printType, sides,
@@ -997,7 +1007,7 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   if (!d || !d.selections) return res.redirect('/customer/orders/new');
   const s = d.selections;
   let plan;
-  try { plan = deliveryPlan(db, s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  try { plan = deliveryPlan(db, s.deliveryMode === 'scheduled' ? s.slotId : s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   Object.assign(s, plan);
   if (plan.campusId) {
@@ -1009,7 +1019,7 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint, campusId: plan.campusId, deliveryMode: plan.deliveryMode }); }
+  try { q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
   q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
@@ -1048,7 +1058,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   const d = db.drafts[di];
   const s = d.selections;
   let plan;
-  try { plan = deliveryPlan(db, s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  try { plan = deliveryPlan(db, s.deliveryMode === 'scheduled' ? s.slotId : s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   Object.assign(s, plan);
   if (plan.campusId) {
@@ -1060,7 +1070,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint, campusId: plan.campusId, deliveryMode: plan.deliveryMode }); }
+  try { q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const id = nextOrderId(db);
   const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
@@ -1144,7 +1154,7 @@ app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   let top = null;
   try { top = !livePayFor(db) && short > 0 && short <= 10000 ? { short: Math.max(10, short), bonus: topupTerms(db, req.user.id, Math.max(10, short)).bonus } : null; } catch {}
   const testPrintsLeft = canUseOwnerTestPrint(req.user, o) ? req.user.ownerTestPrintsLeft : 0;
-  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: gatewayOn(), waUrl, walletTopup: top, livePay: livePayFor(db), testPrintsLeft }));
+  res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: gatewayOn(), waUrl, walletTopup: top, livePay: livePayFor(db), testPrintsLeft, offers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db, req.user.id) : [], bonusValidityDays: campaignConfig(db).bonusValidityDays }));
 });
 
 app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
@@ -1252,7 +1262,7 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   const id = 'D-' + crypto.randomUUID();
   const stored = `${id}.${src.fileExt || 'pdf'}`;
   try { fs.copyFileSync(`data/uploads/${orderFile(src.id, src.fileExt)}`, `data/uploads/${stored}`); }
-  catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Upload the file again to <em>reorder.</em>')); }
+  catch { return res.redirect(`/customer/orders/new?repeat=${encodeURIComponent(src.id)}`); }
   db.drafts.push({ id, customerId: req.user.id, document: src.document, stored, pages: src.filePages || src.pages, fileType: src.fileType || 'pdf', fileExt: src.fileExt || 'pdf', createdAt: new Date().toISOString(),
     selections: { effPages: src.pages, copies: src.copies, printType: src.printType, sides: src.sides, orientation: src.orientation || 'auto', binding: src.binding || 'none', notes: src.notes || '', range: src.pageRange || null, addressId: src.addressId, zone, zoneLabel: address?.area, deliveryPoint: deliveryPoint(address?.lat, address?.lng), deliveryMode: src.deliveryMode, slotId: src.slotId, campusId: src.campusId }
   });
@@ -1288,8 +1298,9 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const tx = (db.walletTx || []).filter((t) => t.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
   const cash = cashWalletOf(db, req.user.id).balance;
   const rcfg = referralConfig(db);
+  const returnOrder = db.orders.find((o) => o.id === req.query.order && o.customerId === req.user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status))?.id;
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', campusId: 'lit' }, 0, 3).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: campaignConfig(db).wallets.filter((o) => o.enabled && (!o.firstOnly || !hasTopup(db, req.user.id))) }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, returnOrder, selectedOffer: String(req.query.offer || '').slice(0, 32), refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', campusId: 'lit' }, 0, 3).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: eligibleWalletOffers(db, req.user.id) }));
 });
 
 app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
@@ -1309,7 +1320,8 @@ app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
   if (referrer) createReferral(db, { referrerId: referrer.id, refereeId: req.user.id, code: refIn, friendDiscount: 0, sourceKind: 'topup', sourceId: topTx.id });
   qualifyForTopup(db, topTx.id, req.user.id);
   saveDb(db);
-  res.redirect('/customer/wallet');
+  const order = db.orders.find((o) => o.id === req.body.orderId && o.customerId === req.user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status));
+  res.redirect(order ? `/customer/orders/${encodeURIComponent(order.id)}/pay` : '/customer/wallet');
 });
 
 // ---- Semester packs (§-packs): ₹199 secures, rest in installments ----
@@ -1641,7 +1653,6 @@ app.post('/order/upload', upload.single('doc'), (req, res) => {
   }
   const db = loadDb();
   db.drafts ||= [];
-  db.drafts = db.drafts.filter((x) => Date.now() - Date.parse(x.createdAt) < 864e5);
   const t = guestToken(req, res);
   const draft = {
     id: 'D' + Date.now().toString(36), guest: t, customerId: null,
@@ -1717,7 +1728,7 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
     d.contact = {
       name: String(req.body.name).slice(0, 60), email,
       phone: phone ? '+91 ' + phone : '',
-      address: d.selections.zone === 'pickup' ? 'Kiosk collection' : d.selections.campusId ? d.selections.campusAddress : String(req.body.address).slice(0, 200),
+      address: d.selections.zone === 'pickup' ? d.selections.pickupAddress : d.selections.campusId ? d.selections.campusAddress : String(req.body.address).slice(0, 200),
       landmark: String(req.body.landmark || '').slice(0, 100),
       pin: d.selections.campusId ? d.selections.campusPin : String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
       referral: String(req.body.referral || '').trim().toUpperCase().slice(0, 12)
@@ -1726,7 +1737,7 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
       // Preliminary check now (phone page can show the error); re-validated
       // strictly at verify time once the account is resolved.
       const existing = db.users.find((u) => String(u.email || '').toLowerCase() === email);
-      const q0 = quote({ pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, student: !!(existing && existing.student), zone: d.selections.zone, point, campusId: d.selections.campusId, deliveryMode: d.selections.deliveryMode });
+      const q0 = quote({ ...d.selections, pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, student: !!(existing && existing.student), zone: d.selections.zone, point });
       const pv = validateReferral(db, existing || { id: '__new__' }, d.contact.referral, q0.subtotal);
       if (!pv.ok) {
         return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: pv.error }));
@@ -1834,12 +1845,15 @@ function agentAuth(req, res, next) {
 const agentJob = (o) => ({
   id: o.id, document: o.document, pages: o.pages, copies: o.copies,
   printType: o.printType, sides: o.sides, paper: o.paper || 'A4',
+  filePages: o.filePages || (o.pageRange ? null : o.pages),
   pageRange: o.pageRange || null, fileType: o.fileType || 'pdf', fileExt: o.fileExt || 'pdf',
   status: o.status
 });
 
 app.get('/api/agent/next', agentAuth, (_req, res) => {
   const db = loadDb();
+  const blocked = db.orders.find(o => ['PRINTING', 'PRINT_FAILED'].includes(o.status));
+  if (blocked) return res.json({ paused: true, reason: `Inspect ${blocked.id} in admin before continuing` });
   const job = db.orders
     .filter((o) => o.status === 'PRINT_QUEUE')
     .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))[0];
@@ -1869,7 +1883,9 @@ function agentStep(to, note) {
     const o = db.orders.find((x) => x.id === safe);
     if (!o) return res.status(404).json({ error: 'Unknown order.' });
     try {
+      if (to === 'PRINTING' && db.orders.some(x => x.id !== o.id && (['PRINTING', 'PRINT_FAILED'].includes(x.status)))) throw new Error('Print queue paused');
       transition(o, to, { by: 'agent', note: note || req.body.note || null });
+      if (to === 'PRINTING') o.printAwaitingVerification = false;
     } catch {
       return res.status(409).json({ error: `Cannot move to ${to} from ${o.status}.` });
     }
@@ -1885,16 +1901,13 @@ app.post('/api/agent/:id/done', agentAuth, (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
   if (!o) return res.status(404).json({ error: 'Unknown order.' });
-  try {
-    finishPrintAtKiosk(db, o, 'agent');
-  } catch {
-    return res.status(409).json({ error: `Cannot move to PRINTED from ${o.status}.` });
-  }
-  // Pickup QR for the printed slip: minted now that the order is READY, so
-  // the agent can print it as its own page straight from this response.
-  const url = !o.deliveryZone || o.deliveryZone === 'pickup' ? collectUrl(req, collectTokenFor(db, o.id)) : null;
+  if (o.status !== 'PRINTING') return res.status(409).json({ error: `Cannot report output from ${o.status}.` });
+  if (req.body.queueDrained !== true) return res.status(400).json({ error: 'Printer queue completion report required. Update the print agent.' });
+  // Spooler completion is not proof of legible output. An operator confirms the tray.
+  o.printAwaitingVerification = true;
+  o.printReport = { queueDrainedAt: new Date().toISOString(), observedJobs: Math.max(0, Math.min(1000, Number(req.body.observedJobs) || 0)) };
   saveDb(db);
-  res.json({ ok: true, order: agentJob(o), collectUrl: url });
+  res.json({ ok: true, order: agentJob(o), verificationRequired: true });
 });
 app.post('/api/agent/:id/failed', agentAuth, (req, res) => {
   const safe = safeOrderId(req.params.id);
@@ -1933,11 +1946,10 @@ app.get('/qr.png', async (req, res) => {
   }
 });
 
-// File janitor (V0 §16): every 5 minutes, delete PDFs of terminal orders
-// older than FILE_RETENTION_MINUTES (default 15). Order records and
-// history stay — only the document files are wiped.
+// Every 5 minutes: completed-file retention plus abandoned-upload cleanup.
+// Order records and history stay; document files are removed.
 setInterval(() => {
-  janitor(ROOT);
+  try { janitor(ROOT); } catch (error) { console.error('File cleanup failed:', error.message); }
   if (atlasEnabled) flushAtlas().catch((error) => console.error('Atlas file cleanup failed:', error.message));
 }, 300e3).unref();
 
@@ -2094,6 +2106,8 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
   if (!user || user.role !== 'customer') return res.status(401).json({ error: 'Not signed in.' });
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
   const db0 = loadDb();
+  const returnOrder = req.body.orderId ? db0.orders.find((o) => o.id === req.body.orderId && o.customerId === user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status)) : null;
+  if (req.body.orderId && !returnOrder) return res.status(400).json({ error: 'That checkout is unavailable. Return to your orders.' });
   let terms;
   try { terms = topupTerms(db0, user.id, req.body.amount, req.body.offerId); }
   catch (error) { return res.status(400).json({ error: error.message }); }
@@ -2121,7 +2135,7 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
     if (!r.ok || !d.id) return res.status(502).json({ error: 'Gateway refused the order.' });
     const db = loadDb();
     db.topups ||= [];
-    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, terms, referral: refIn || null, used: false, at: new Date().toISOString() });
+    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, terms, referral: refIn || null, returnOrderId: returnOrder?.id || null, used: false, at: new Date().toISOString() });
     saveDb(db);
     res.json({ keyId: RAZORPAY.id, rzpOrderId: d.id, amount: d.amount });
   } catch {
@@ -2158,7 +2172,7 @@ app.post('/customer/wallet/topup-verify', requireRole('customer'), (req, res) =>
   if (referrer) createReferral(db, { referrerId: referrer.id, refereeId: req.user.id, code: pending.referral, friendDiscount: 0, sourceKind: 'topup', sourceId: topTx.id });
   qualifyForTopup(db, topTx.id, req.user.id);
   saveDb(db);
-  res.redirect('/customer/wallet');
+  res.redirect(pending.returnOrderId ? `/customer/orders/${encodeURIComponent(pending.returnOrderId)}/pay` : '/customer/wallet');
 });
 
 // Razorpay: verify signature, then confirm exactly like a normal payment.
@@ -2204,7 +2218,7 @@ app.get('/', (req, res) => {
     .filter((o) => Date.parse(o.createdAt) >= weekAgo && o.status !== 'CANCELLED')
     .reduce((s, o) => s + o.pages * o.copies, 0);
   const queueDepth = db.orders.filter((o) => ['PRINT_QUEUE', 'PRINTING'].includes(o.status)).length;
-  res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb }));
+  res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb, campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db) : [] }));
 });
 
 // Marketing pages — Grok workspace port (server-rendered, no auth).
@@ -2296,6 +2310,7 @@ async function bootstrap() {
     throw new Error(`Storage unavailable: ${store.error}`);
   }
   console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
+  janitor(ROOT); // Remove expired/restored working files before accepting traffic.
   const vol = atlasEnabled ? { fresh: false } : diskCheck();
   if (vol.fresh && process.env.NODE_ENV === 'production') {
     console.warn('Fresh data marker created. Confirm this is the intended data directory and verify customer, order, coupon and pricing records before accepting traffic.');

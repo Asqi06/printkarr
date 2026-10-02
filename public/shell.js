@@ -12,6 +12,76 @@
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  document.querySelectorAll('[data-delivery-guide-area]').forEach(function (select) {
+    select.addEventListener('change', function () {
+      select.closest('.delivery-guide').querySelectorAll('[data-delivery-guide-zone]').forEach(function (block) {
+        block.hidden = block.dataset.deliveryGuideZone !== select.value;
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-print-quote]').forEach(function (quote) {
+    var form = quote.closest('form'), cfg = JSON.parse(quote.dataset.pricing), pages = Number(quote.dataset.pages);
+    function value(name) { var input = form.querySelector('[name="' + name + '"]:checked'); return input && input.value; }
+    function update() {
+      var range = form.querySelector('[name="range"]'), count = pages, error = '';
+      if (range && range.value.trim()) {
+        var selected = new Set();
+        range.value.split(',').forEach(function (part) {
+          if (!part.trim() || error) return;
+          var match = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+          if (!match) { error = 'Use page numbers such as 1, 3-5.'; return; }
+          var first = Number(match[1]), last = Number(match[2] || match[1]);
+          if (first < 1 || last < 1 || first > pages || last > pages) { error = 'Choose pages between 1 and ' + pages + '.'; return; }
+          for (var i = Math.min(first, last); i <= Math.max(first, last); i++) selected.add(i);
+        });
+        count = selected.size;
+        if (!count && !error) error = 'Pick at least one page.';
+      }
+      if (range) range.setCustomValidity(error);
+      var hint = form.querySelector('#range-err'); if (hint) hint.textContent = error;
+      if (error) { quote.querySelector('span').textContent = error; quote.querySelector('b').textContent = 'Check page range'; return; }
+      var copies = Math.max(1, Math.min(200, parseInt(form.querySelector('[name="copies"]').value, 10) || 1));
+      var slot = value('deliverySlot') || 'express', scheduled = slot.indexOf('local-') === 0;
+      var address = form.querySelector('[name="addressId"]:checked'), area = form.querySelector('[name="area"],[name="nn_area"]');
+      var zone = scheduled ? slot.split('-')[1] : (address && address.value !== '__new' ? address.dataset.area : area && area.value) || 'Vapi';
+      zone = zone.toLowerCase();
+      var print = count * copies * (value('printType') === 'color' ? cfg.color : cfg.bw);
+      var delivery = slot === 'pickup' ? 0 : slot === 'college' ? 3 : slot === 'college-express' ? 25 : scheduled ? cfg.local[zone].fee : cfg.fees[zone];
+      var late = slot === 'express' ? Number(cfg.lateNightFee || 0) : 0, surge = Number(cfg.surgeFee || 0);
+      if (!Number.isFinite(print) || !Number.isFinite(delivery)) { quote.querySelector('b').textContent = 'Confirmed at review'; return; }
+      quote.querySelector('span').textContent = 'Printing ₹' + print.toLocaleString('en-IN') + ' · delivery ₹' + delivery + (slot === 'college' ? ' (first delivery free; checked at review)' : '') + (late ? ' · late-night ₹' + late : '') + (surge ? ' · high-demand ₹' + surge : '');
+      quote.querySelector('b').textContent = 'Estimate ₹' + (Math.round((print + delivery + late + surge) * 100) / 100).toLocaleString('en-IN');
+    }
+    form.addEventListener('input', update); form.addEventListener('change', update);
+    ['cMinus', 'cPlus'].forEach(function (id) {
+      var button = form.querySelector('#' + id); if (!button) return;
+      button.addEventListener('click', function () { var copies = form.querySelector('[name="copies"]'); copies.value = Math.max(1, Math.min(200, (parseInt(copies.value, 10) || 1) + (id === 'cMinus' ? -1 : 1))); update(); });
+    });
+    update();
+  });
+
+  document.querySelectorAll('[data-wallet-offer]').forEach(function (link) {
+    link.addEventListener('click', function () { try { sessionStorage.setItem('pk-wallet-offer', JSON.stringify({ id: link.dataset.walletOffer, at: Date.now() })); } catch {} });
+  });
+  var prompt = document.querySelectorAll('[data-wallet-prompt]')[0];
+  if (prompt && typeof prompt.showModal === 'function') {
+    var key = 'pk-wallet-prompt:' + prompt.dataset.promptKey, seen = 0;
+    try { seen = Number(localStorage.getItem(key) || sessionStorage.getItem(key)); } catch {}
+    function remember() { try { localStorage.setItem(key, String(Date.now())); } catch { try { sessionStorage.setItem(key, String(Date.now())); } catch {} } }
+    prompt.querySelectorAll('[data-wallet-dismiss]').forEach(function (button) { button.addEventListener('click', function () { prompt.close(); }); });
+    prompt.addEventListener('close', remember);
+    prompt.addEventListener('click', function (event) { var box = prompt.getBoundingClientRect(); if (event.target === prompt && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) prompt.close(); });
+    prompt.addEventListener('change', function () {
+      var selected = prompt.querySelector('[name="wallet-prompt-offer"]:checked');
+      prompt.querySelector('[data-prompt-amount]').textContent = '₹' + selected.dataset.amount;
+      prompt.querySelector('[data-prompt-total]').textContent = '₹' + (Number(selected.dataset.amount) + Number(selected.dataset.bonus));
+      var link = prompt.querySelector('[data-prompt-link]'); link.dataset.walletOffer = selected.value; link.href = '/customer/wallet?offer=' + encodeURIComponent(selected.value);
+    });
+    prompt.querySelector('[data-prompt-link]').addEventListener('click', remember);
+    if (!seen || Date.now() - seen >= 7 * 864e5) { prompt.showModal(); remember(); }
+  }
+
   // Finite, user-triggered animation: no printing requests are made by this demo.
   document.querySelectorAll('[data-print-demo]').forEach(function (demo) {
     var button = demo.querySelector('.demo-trigger');

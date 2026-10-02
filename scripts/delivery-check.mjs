@@ -102,6 +102,7 @@ function campaignDefaultsConfig(store) { return store.settings.campaign; }
 const response = () => ({ code: 200, status(code) { this.code = code; return this; }, send(html) { this.html = html; }, redirect(url) { this.url = url; } });
 for (const route of ['college', 'college-express', 'pickup']) {
   const store = blankDb();
+  if (route === 'pickup') store.settings.campaign.delivery.pickup = { enabled: true, address: 'Test campus counter' };
   store.drafts = [{ ...draft, selections: null, customerId: user.id }];
   const res = response();
   handler('/customer/orders/new/confirm', store)({ user, body: { draft: draft.id, deliverySlot: route, nn_phone: '9825011111' } }, res);

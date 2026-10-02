@@ -136,15 +136,15 @@ async function pipelineTest() {
   const combined = (out.stdout || '') + (out.stderr || '');
   console.log(combined.split('\n').slice(0, 20).join('\n'));
   if (out.status !== 0) fail(`Agent exited with ${out.status}. Output above.`);
-  // Verify order moved through PRINTED to READY_FOR_PICKUP
+  // Queue completion holds the order for an operator output check.
   const { loadDb: reload } = await import('../lib/db.js');
   // Need fresh read (import cache holds old db object) — read file directly
   const fresh = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/db.json'), 'utf8'));
   const order = fresh.orders.find(o => o.id === id);
   if (!order) fail('Test order vanished from DB');
-  if (order.status !== 'READY_FOR_PICKUP') fail(`Pipeline failed — order ${id} is ${order.status} (expected READY_FOR_PICKUP). Check agent log above and printer.`);
-  ok(`Pipeline OK — order ${id} is READY_FOR_PICKUP; cover + document should be in the kiosk tray.`);
-  console.log('\n  Clean up: order stays as proof; file auto-deletes in 15 min. Delete manually if needed:');
+  if (order.status !== 'PRINTING' || !order.printAwaitingVerification) fail(`Pipeline failed — order ${id} is ${order.status}; expected PRINTING awaiting output verification. Check agent log above.`);
+  ok(`Queue drained — order ${id} awaits output verification. Check cover + document, then confirm all pages in /admin/orders/${id}.`);
+  console.log('\n  File cleanup starts after DELIVERED, REFUNDED or CANCELLED, with configured retention. Until then, the file stays for verification:');
   console.log(`    data/uploads/${id}.pdf`);
 }
 
@@ -153,4 +153,4 @@ await checkPrinter();
 await checkServer();
 await directPrintTest();
 await pipelineTest();
-console.log('\n✓ All real-print checks passed. If both sheets are in the tray, the Epson path and the full queue are proven.\n');
+console.log('\n✓ Submission checks passed. Inspect the physical output and confirm it in admin; printer queue status does not prove sheet quality.\n');

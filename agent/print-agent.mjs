@@ -14,9 +14,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { buildCoverPdf, validatePdf } from './cover.js';
-import { printSettings } from './print-settings.js';
-import QRCode from 'qrcode';
+import { printSettings, checkRenderedPages } from './print-settings.js';
 import { acquireAgentLock } from './instance-lock.js';
 
 const BASE = process.env.PRINTKARR_URL || 'http://localhost:3000';
@@ -27,6 +27,8 @@ const DRY = process.env.DRY_RUN === '1';
 const POLL = Math.max(2000, Number(process.env.POLL_MS) || 2000);
 const RUN_ONCE = process.env.RUN_ONCE === '1';
 const TMP = path.join(os.tmpdir(), 'printkarr-agent');
+const MONITOR = fileURLToPath(new URL('./print-monitored.ps1', import.meta.url));
+const PRINT_TIMEOUT = Math.min(7200, Math.max(300, Number(process.env.PRINT_TIMEOUT_SECONDS) || 1800));
 
 if (!TOKEN) {
   console.error('AGENT_TOKEN is not set — refusing to start.');
@@ -43,6 +45,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function api(p, opts = {}) {
   const r = await fetch(BASE + p, {
+    signal: AbortSignal.timeout(30000),
     ...opts,
     headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json', ...(opts.headers || {}) }
   });
@@ -54,39 +57,55 @@ async function api(p, opts = {}) {
   return data;
 }
 
-function run(cmd, args, timeoutMs = 180000) {
+function run(cmd, args, timeoutMs = 180000, bench = false) {
   return new Promise((resolve, reject) => {
     const child = execFile(cmd, args, { timeout: timeoutMs, windowsHide: true }, (err, stdout, stderr) => {
-      if (err) reject(new Error(`${cmd} failed: ${(stderr || err.message).slice(0, 300)}`));
+      if (err && !(bench && err.code === 1 && !err.killed)) reject(new Error(`${cmd} failed: ${(stderr || err.message).slice(0, 300)}`));
       else resolve(stdout);
     });
     child.on('error', reject);
   });
 }
 
-async function printFile(file, order, tag) {
+async function printFile(file, order, tag, appData) {
   const settings = printSettings(order, tag === 'cover' ? '' : process.env.PRINT_SETTINGS);
   if (DRY) {
     console.log(`DRY-PRINT [${tag}] ${path.basename(file)} -> "${PRINTER}" (${settings})`);
-    return;
+    return { dryRun: true };
   }
   const started = Date.now();
-  await run(SUMATRA, ['-print-to', PRINTER, '-print-settings', settings, '-silent', file]);
-  console.log(`spooled [${tag}] ${path.basename(file)} (${settings}) in ${Date.now() - started}ms`);
+  if (process.platform !== 'win32') throw new Error('Monitored printing requires Windows');
+  const report = JSON.parse(await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', MONITOR, '-Printer', PRINTER, '-Sumatra', SUMATRA, '-File', file, '-Settings', settings, '-AppData', appData, '-TimeoutSeconds', String(PRINT_TIMEOUT)], (PRINT_TIMEOUT + 30) * 1000));
+  if (!report.queueDrained) throw new Error('Printer queue did not drain');
+  console.log(`queue drained [${tag}] ${path.basename(file)} (${settings}) in ${Date.now() - started}ms`);
+  return report;
 }
 
 async function processJob(order) {
+  if (!/^PK-[A-Z0-9-]{3,}$/.test(String(order.id))) throw new Error('Invalid order ID from server');
   const workDir = path.join(TMP, order.id);
+  const appData = path.join(workDir, 'sumatra');
   fs.mkdirSync(workDir, { recursive: true });
-  await api(`/api/agent/${order.id}/started`, { method: 'POST', body: '{}' });
-  console.log(`job ${order.id}: ${order.document} (${order.pages}p x${order.copies}, ${order.printType})`);
   try {
-    const dl = await fetch(`${BASE}/api/agent/file/${order.id}`, { headers: { Authorization: 'Bearer ' + TOKEN } });
+    await api(`/api/agent/${order.id}/started`, { method: 'POST', body: '{}' });
+    console.log(`job ${order.id}: ${order.document} (${order.pages}p x${order.copies}, ${order.printType})`);
+    const dl = await fetch(`${BASE}/api/agent/file/${order.id}`, { headers: { Authorization: 'Bearer ' + TOKEN }, signal: AbortSignal.timeout(120000) });
     if (!dl.ok) throw new Error(`download -> ${dl.status}`);
     const ext = /^(png|jpe?g)$/i.test(order.fileExt || '') ? String(order.fileExt).toLowerCase() : 'pdf';
     const srcPdf = path.join(workDir, `${order.id}.${ext}`);
-    fs.writeFileSync(srcPdf, Buffer.from(await dl.arrayBuffer()));
+    const bytes = Buffer.from(await dl.arrayBuffer());
+    if (!bytes.length || (ext === 'pdf' && !bytes.subarray(0, 1024).includes(Buffer.from('%PDF-')))) throw new Error('Downloaded file is empty or is not a PDF');
+    fs.writeFileSync(srcPdf, bytes);
+    fs.mkdirSync(appData, { recursive: true });
+    fs.writeFileSync(path.join(appData, 'SumatraPDF-settings.txt'), 'ReuseInstance = false\nRememberOpenedFiles = false\nRememberStatePerDocument = false\nRestoreSession = false\nCheckForUpdates = false\n');
     printSettings(order, process.env.PRINT_SETTINGS); // Reject a bad range before any paper moves.
+    if (order.sides === 'double' && /L3250/i.test(PRINTER)) throw new Error('L3250 requires manual duplex; print this order manually and confirm output');
+    if (!DRY) {
+      const log = await run(SUMATRA, ['-appdata', appData, '-bench', srcPdf], Math.max(180000, Number(order.filePages || order.pages) * 10000), true);
+      order.filePages = checkRenderedPages(log, order.filePages || (order.pageRange ? null : order.pages));
+      printSettings(order, process.env.PRINT_SETTINGS); // Validate against the renderer's actual page count.
+      console.log(`job ${order.id}: all source pages rendered before printing`);
+    }
     const cover = buildCoverPdf(`PRINTKARR ${order.id}`, [
       ['Document', order.document],
       ['Pages x copies', `${order.pages} x ${order.copies}${order.pageRange ? ` (${order.pageRange})` : ''}`],
@@ -101,19 +120,13 @@ async function processJob(order) {
     if (!cv.ok) throw new Error(`Invalid cover PDF: ${cv.error}`);
     // Cover stays its own single-sided job: merging it into a duplexed
     // document would share its sheet with page 1. Two jobs, correct output.
-    await printFile(coverPdf, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'cover');
-    await printFile(srcPdf, order, 'document');
-    const doneRes = await api(`/api/agent/${order.id}/done`, { method: 'POST', body: '{}' });
-    // Pickup QR as its own page, last in the tray: the customer scans it
-    // with their phone to confirm collection (Pi screen shows it later).
-    if (doneRes && doneRes.collectUrl) {
-      const qrPng = path.join(workDir, `${order.id}-qr.png`);
-      await QRCode.toFile(qrPng, doneRes.collectUrl, { width: 640, margin: 2 });
-      await printFile(qrPng, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'qr-slip');
-    }
-    console.log(`job ${order.id}: READY`);
+    await printFile(coverPdf, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'cover', appData);
+    const report = await printFile(srcPdf, order, 'document', appData);
+    const doneRes = await api(`/api/agent/${order.id}/done`, { method: 'POST', body: JSON.stringify({ queueDrained: report.queueDrained === true, observedJobs: report.observedJobs || 0 }) });
+    console.log(`job ${order.id}: ${doneRes?.verificationRequired ? 'OUTPUT CHECK REQUIRED — confirm all pages in admin before the queue continues' : 'READY'}`);
   } catch (e) {
     console.log(`job ${order.id}: FAILED — ${e.message}`);
+    stopping = true; // A printer fault must not consume the next customer's paper.
     try {
       await api(`/api/agent/${order.id}/failed`, { method: 'POST', body: JSON.stringify({ error: e.message }) });
     } catch (e2) {
@@ -125,6 +138,8 @@ async function processJob(order) {
 }
 
 let stopping = false;
+let pauseReason = '';
+
 async function main() {
   console.log(`agent up → ${BASE} as printer "${PRINTER}"${DRY ? ' (DRY RUN — no paper moves)' : ''}`);
   for (;;) {
@@ -136,6 +151,8 @@ async function main() {
     try {
       const d = await api('/api/agent/next');
       next = d && d.order;
+      if (d?.paused && d.reason !== pauseReason) console.log(`queue paused: ${d.reason}`);
+      pauseReason = d?.reason || '';
     } catch (e) {
       console.log(`queue poll failed: ${e.message}`);
     }

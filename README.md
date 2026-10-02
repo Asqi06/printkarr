@@ -298,8 +298,8 @@ npm run agent        # terminal 2: print agent (polls every 2s)
 
 ### Soak target (§23)
 50–100 test orders with zero manual Ctrl+P before even discussing
-Raspberry Pi. Print files auto-delete 15 minutes after terminal state
-(`FILE_RETENTION_MINUTES`); order records and history are kept.
+Raspberry Pi. Completed working files become eligible for cleanup after 15 minutes
+(`FILE_RETENTION_MINUTES`); cleanup runs every 5 minutes. Order records and history are kept.
 
 
 ### Automatic Windows print agent
@@ -335,3 +335,39 @@ Morning delivery defaults to 09:00–11:00 IST with payment before 01:00 IST; Af
 Configure referrals at `/admin/referrals`: link the code before the first paid order, add ₹99+ in one wallet top-up, and complete the first paid order. Only then credit the friend ₹20 and the referrer ₹25, plus ₹50 at 3 successful referrals and ₹100 at 5. Milestones, qualification amounts, rewards, monthly cap, and program availability are editable. Previously earned cash stays in its original withdrawal ledger.
 
 Guest checkout, signed-in checkout, and reorders share the same review and payment flow. WhatsApp sharing is optional. Run `npm test`, `npm run test:design`, `npm run test:seo`, and `node scripts/delivery-check.mjs` for verification.
+
+
+### Print reliability and file retention (October 2026)
+
+The Windows agent renders every source page with SumatraPDF before submitting any paper,
+validates actual page count/range, explicitly sets A4, scaling, colour, sides and copies,
+and monitors the printer queue until it drains. Cover and document run sequentially.
+Keep Windows printer defaults at the intended quality and A4; the agent cannot detect ink
+coverage on a physical sheet. L3250 automatic duplex is unavailable; those jobs are held
+for manual processing.
+
+**Output verification is required:** the order stays PRINTING after queue completion.
+In `/admin/orders/:id`, check page count, first/last pages, legibility and copies, then
+click “Confirm all pages printed”. This marks it ready and allows the next order.
+Choose the incomplete/blank action for bad output. Inspect the printer before retrying;
+a retry prints the whole order. To avoid duplicating good pages, download the original,
+manually print only missing pages, then confirm the complete output. Printing failures
+pause the queue across agent restarts; inspect the failed order and retry or refund it.
+No unattended automatic retries occur.
+
+Update server and agent together. An old agent cannot confirm completion on the new server.
+`PRINT_TIMEOUT_SECONDS` defaults to 1800 (30 minutes per file). The monitored helper cancels
+only jobs belonging to that invocation on failure; it never resets the shared spooler.
+
+Completed (DELIVERED, REFUNDED, CANCELLED) working files are deleted after the configured
+retention period (default 15 minutes) on a cleanup that runs every 5 minutes. Abandoned
+drafts and unassigned upload files expire after 24 hours. Active and failed order files
+are retained for processing/correction. Deleted working files are also removed from Atlas
+GridFS, including older duplicate versions, by storage sync. Cleanup also runs at startup.
+Cleanup failures are logged and retried; a failed storage sync requires service recovery.
+Order/payment history remains. Provider backups and already downloaded copies have their
+own retention. Agent temporary documents are removed after the monitored invocation ends.
+
+Paper-free regression checks: `node scripts/print-safety-check.mjs` and `npm test`.
+The real printer still needs an operator-observed run of the previously failing PDF;
+queue status cannot certify whether a sheet is blank.
