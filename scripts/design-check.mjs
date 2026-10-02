@@ -28,6 +28,8 @@ export const pages = new Map([
   ['/order', publicViews.orderPage({ pricing, maxMb: 20 })],
   ['/order/options', publicViews.orderPage({ pricing, draft })],
   ['/order/phone', publicViews.phonePage({ draft })],
+  ['/order/college', publicViews.phonePage({ draft: { ...draft, selections: { campusId:'lit', campus:'LIT College', slot:'Next campus batch' } } })],
+  ['/order/local', publicViews.phonePage({ draft: { ...draft, area:'Vapi', selections: { deliveryMode:'express' } } })],
   ['/order/verify', publicViews.otpPage({ draft, email: user.email })],
   ...[['printing-in-vapi', 'vapiPage'], ['about', 'aboutPage'], ['how-it-works', 'howItWorksPage'], ['franchise', 'franchisePage'], ['xerox', 'xeroxPage'], ['contact', 'contactPage'], ['blogs', 'blogsPage'], ['terms', 'termsPage'], ['privacy', 'privacyPage']].map(([route, fn]) => ['/' + route, publicViews[fn]()]),
   ...publicViews.POSTS.map(post => ['/blogs/' + post.slug, publicViews.blogArticlePage(post.slug)]),
@@ -148,7 +150,7 @@ assert.match(pages.get('/'), /Printing in Vapi/);
 assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /A4 black &amp; white<\/span><strong>₹7<\/strong>[\s\S]*A4 colour<\/span><strong>₹11<\/strong>/);
 for (const id of ['how-it-works', 'features', 'pricing', 'compare', 'kiosks', 'packs', 'referrals', 'faq']) assert.match(pages.get('/'), new RegExp(`id="${id}"`));
 assert.match(pages.get('/'), /no pickup address has been announced yet/i);
-assert.match(pages.get('/order/options'), /name="area" value="Pickup" checked/);
+assert.match(pages.get('/order/options'), /name="deliverySlot" value="college" checked/);
 assert.match(pages.get('/order/options'), /<details class="order-more">/);
 assert.match(pages.get('/customer/referrals'), /₹20 print credit/);
 assert.doesNotMatch(pages.get('/customer/referrals'), /withdraw|real cash/i);

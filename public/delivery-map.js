@@ -25,7 +25,8 @@
     }
     function sync() {
       var choice = selected(), kind = area();
-      root.hidden = kind === 'pickup';
+      var route = form.querySelector('[name="deliverySlot"]:checked');
+      root.hidden = kind === 'pickup' || route && route.value !== 'express';
       if (root.hidden) { latInput.value = lngInput.value = ''; return; }
       if (map) {
         map.invalidateSize();
@@ -41,8 +42,9 @@
     }
     form.querySelectorAll('[name="addressId"]').forEach(function (radio) { radio.addEventListener('change', sync); });
     form.querySelector('[name="nn_area"]')?.addEventListener('change', sync);
+    form.querySelectorAll('[name="deliverySlot"]').forEach(function (radio) { radio.addEventListener('change', sync); });
     form.addEventListener('submit', function (event) {
-      if (area() !== 'pickup' && (!latInput.value || !lngInput.value)) {
+      if (!latInput.disabled && !root.hidden && area() !== 'pickup' && (!latInput.value || !lngInput.value)) {
         event.preventDefault(); status.textContent = 'Select your delivery point before continuing.';
         root.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }

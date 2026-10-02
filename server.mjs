@@ -604,7 +604,7 @@ app.post('/admin/pricing', requireRole('admin'), (req, res) => {
   p.color = num(req.body.color, p.color);
   p.studentBw = num(req.body.studentBw, p.studentBw);
   p.studentColor = num(req.body.studentColor, p.studentColor);
-  for (const z of ['sarigam', 'bhilad']) {
+  for (const z of ['sarigam', 'bhilad', 'vapi', 'daman']) {
     p.delivery[z] = num(req.body['dz_' + z], p.delivery[z]);
   }
   const validTime = (v, fb) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) ? String(v) : fb;
@@ -889,7 +889,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
     if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
     const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
-    return res.send(optionsStep(req.user, d, addresses, campaignConfig(db)));
+    return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing));
   }
   res.send(uploadStep(req.user));
 });
@@ -938,16 +938,19 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   let plan;
   try { plan = deliveryPlan(db, req.body.deliverySlot, req.body.campusId); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
-  if (plan.deliveryMode === 'batch') {
+  if (plan.campusId) {
     const campus = campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId);
     const phone = normPhone(req.body.nn_phone || req.user.phone);
     if (!phone) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Campus delivery needs a <em>contact phone.</em>'));
     address = db.addresses.find((a) => a.customerId === req.user.id && a.campusId === campus.id);
     if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, campusId: campus.id, label: 'College', phone, name: req.user.name, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng }; db.addresses.push(address); }
     Object.assign(address, { phone, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng });
+  } else if (plan.deliveryMode === 'pickup') {
+    address = db.addresses.find((a) => a.customerId === req.user.id && zoneOf(a.area) === 'pickup');
+    if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, label: 'Kiosk', name: req.user.name, phone: req.user.phone || '', address: 'Kiosk collection', area: 'Kiosk pickup', pin: '' }; db.addresses.push(address); }
   } else if (req.body.addressId === '__new') {
     const newZone = zoneOf(req.body.nn_area);
-    if (!newZone || !req.body.nn_phone || (newZone !== 'pickup' && (!req.body.nn_address || !req.body.nn_pin))) {
+    if (!newZone || !normPhone(req.body.nn_phone) || (newZone !== 'pickup' && (!String(req.body.nn_address || '').trim() || !/^\d{6}$/.test(String(req.body.nn_pin || ''))))) {
       return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'New address needs <em>address, phone, PIN.</em>'));
     }
     address = {
@@ -961,14 +964,19 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     address = db.addresses.find((a) => a.id === req.body.addressId && a.customerId === req.user.id);
     if (!address) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Pick a <em>delivery address.</em>'));
   }
+  if (plan.deliveryMode !== 'pickup') {
+    const phone = normPhone(req.body.nn_phone || address.phone);
+    if (!phone) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Enter a valid <em>contact phone.</em>'));
+    address.phone = '+91 ' + phone;
+  }
   let zone = zoneOf(address.area);
-  const point = zone === 'pickup' ? null : plan.deliveryMode === 'batch' ? deliveryPoint(address.lat, address.lng) : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
-  try { zone = deliveryFeeFor(db.pricing, zone, point).zone; }
+  const point = zone === 'pickup' ? null : plan.campusId ? deliveryPoint(address.lat, address.lng) : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+  try { zone = deliveryFeeFor(db.pricing, zone, point, plan).zone; }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point and area.</em>')); }
   address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone];
   address.lat = point?.lat ?? null;
   address.lng = point?.lng ?? null;
-  if (plan.deliveryMode !== 'batch') plan = deliveryPlan(db, zone === 'pickup' ? 'pickup' : 'express');
+  if (!plan.campusId) plan = deliveryPlan(db, zone === 'pickup' ? 'pickup' : 'express');
   d.selections = {
     effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
     copies, printType, sides,
@@ -976,7 +984,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none',
     notes: String(req.body.notes || '').slice(0, 300),
     addressId: address.id, zone, deliveryPoint: point,
-    zoneLabel: { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone],
+    zoneLabel: plan.campus || { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone],
     ...plan
   };
   saveDb(db);
@@ -989,10 +997,10 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   if (!d || !d.selections) return res.redirect('/customer/orders/new');
   const s = d.selections;
   let plan;
-  try { plan = deliveryPlan(db, s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  try { plan = deliveryPlan(db, s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   Object.assign(s, plan);
-  if (plan.deliveryMode === 'batch') {
+  if (plan.campusId) {
     s.zone = plan.campusZone;
     s.zoneLabel = plan.campus;
     s.deliveryPoint = plan.campusPoint;
@@ -1001,9 +1009,9 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint, campusId: plan.campusId, deliveryMode: plan.deliveryMode }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
-  const batch = batchPrice(db, req.user.id, plan, q.subtotal, q.deliveryFee);
+  const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
   q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
   const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
   const packDiscount = packCover ? q.subtotal : 0;
@@ -1018,7 +1026,7 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
     if (!v.ok) ref = { code: refCode, error: v.error, discount: 0 };
     else ref.discount = referralDiscountFor(db, q.subtotal, packDiscount + offers.print, 0);
   }
-  const qShow = { ...q, firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
+  const qShow = { ...q, firstBatchFree: batch.firstBatchFree, firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
     total: Math.round((q.total - packDiscount - offers.print - offers.delivery - ref.discount) * 100) / 100 };
   res.send(summaryStep(req.user, d, s, qShow, packCover, ref));
 });
@@ -1040,10 +1048,10 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   const d = db.drafts[di];
   const s = d.selections;
   let plan;
-  try { plan = deliveryPlan(db, s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  try { plan = deliveryPlan(db, s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   Object.assign(s, plan);
-  if (plan.deliveryMode === 'batch') {
+  if (plan.campusId) {
     s.zone = plan.campusZone;
     s.zoneLabel = plan.campus;
     s.deliveryPoint = plan.campusPoint;
@@ -1052,10 +1060,10 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  try { q = quote({ pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint, campusId: plan.campusId, deliveryMode: plan.deliveryMode }); }
   catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
   const id = nextOrderId(db);
-  const batch = batchPrice(db, req.user.id, plan, q.subtotal, q.deliveryFee);
+  const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
   q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
   const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
   const packDiscount = packCover ? q.subtotal : 0;
@@ -1281,7 +1289,7 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const cash = cashWalletOf(db, req.user.id).balance;
   const rcfg = referralConfig(db);
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch' }, 0, 0).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: campaignConfig(db).wallets.filter((o) => o.enabled && (!o.firstOnly || !hasTopup(db, req.user.id))) }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', campusId: 'lit' }, 0, 3).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: campaignConfig(db).wallets.filter((o) => o.enabled && (!o.firstOnly || !hasTopup(db, req.user.id))) }));
 });
 
 app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
@@ -1662,8 +1670,8 @@ app.post('/order/options', (req, res) => {
   let plan;
   try { plan = deliveryPlan(db, req.body.deliverySlot, req.body.campusId); }
   catch (error) { return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: error.message })); }
-  const campus = plan.deliveryMode === 'batch' ? campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId) : null;
-  const area = campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
+  const campus = plan.campusId ? campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId) : null;
+  const area = campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : plan.deliveryMode === 'pickup' ? 'Pickup' : ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
   if (!area) return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: 'Choose a valid delivery area or kiosk collection.' }));
   if (!campus && area === 'Pickup') plan = deliveryPlan(db, 'pickup');
   d.selections = {
@@ -1694,31 +1702,31 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
     const email = normEmail(req.body.email);
     const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
     const phone = phoneRaw ? normPhone(phoneRaw) : '';
-    if (!req.body.name || !email || (d.selections.zone !== 'pickup' && (!req.body.address || !req.body.pin))) {
+    if (!req.body.name || !email || (!d.selections.campusId && d.selections.zone !== 'pickup' && (!req.body.address || !/^\d{6}$/.test(String(req.body.pin || ''))))) {
       return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Add your name and email, plus an address and PIN for delivery.' }));
     }
-    if ((phoneRaw && !phone) || (d.selections.deliveryMode === 'batch' && !phone)) {
-      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — 10 digits, or leave it blank.' }));
+    if ((phoneRaw && !phone) || (d.selections.zone !== 'pickup' && !phone)) {
+      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — enter a 10-digit contact number for delivery.' }));
     }
-    const point = d.selections.zone === 'pickup' ? null : d.selections.deliveryMode === 'batch' ? d.selections.campusPoint : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+    const point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
     try {
-      d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point).zone;
+      d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
       d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
     }
     catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point in the area you chose.' })); }
     d.contact = {
       name: String(req.body.name).slice(0, 60), email,
       phone: phone ? '+91 ' + phone : '',
-      address: d.selections.zone === 'pickup' ? 'Kiosk collection' : d.selections.deliveryMode === 'batch' ? d.selections.campusAddress : String(req.body.address).slice(0, 200),
+      address: d.selections.zone === 'pickup' ? 'Kiosk collection' : d.selections.campusId ? d.selections.campusAddress : String(req.body.address).slice(0, 200),
       landmark: String(req.body.landmark || '').slice(0, 100),
-      pin: d.selections.deliveryMode === 'batch' ? d.selections.campusPin : String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
+      pin: d.selections.campusId ? d.selections.campusPin : String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
       referral: String(req.body.referral || '').trim().toUpperCase().slice(0, 12)
     };
     if (d.contact.referral) {
       // Preliminary check now (phone page can show the error); re-validated
       // strictly at verify time once the account is resolved.
       const existing = db.users.find((u) => String(u.email || '').toLowerCase() === email);
-      const q0 = quote({ pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, student: !!(existing && existing.student), zone: d.selections.zone, point });
+      const q0 = quote({ pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, student: !!(existing && existing.student), zone: d.selections.zone, point, campusId: d.selections.campusId, deliveryMode: d.selections.deliveryMode });
       const pv = validateReferral(db, existing || { id: '__new__' }, d.contact.referral, q0.subtotal);
       if (!pv.ok) {
         return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: pv.error }));
@@ -1738,7 +1746,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.guest === parseCookies(req.headers.cookie).pk_guest);
   if (di < 0 || !db.drafts[di].selections || !db.drafts[di].contact) return res.redirect('/order');
   const d = db.drafts[di];
-  try { deliveryFeeFor(db.pricing, d.selections.zone, d.contact.deliveryPoint); }
+  try { deliveryFeeFor(db.pricing, d.selections.zone, d.contact.deliveryPoint, d.selections); }
   catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point before confirming.' })); }
   const v = verifyEmailOtp(d.contact.email, req.body.code);
   if (!v.ok) return res.send(otpPage({ draft: d, email: d.contact.email, demoCode: null, mailError: null, error: v.error }));
@@ -1756,7 +1764,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   referralCodeFor(db, user);
   const s = d.selections;
   const address = {
-    id: 'ADR' + Date.now().toString(36), customerId: user.id, label: 'Home',
+    id: 'ADR' + Date.now().toString(36), customerId: user.id, campusId: s.campusId, label: s.campusId ? 'College' : 'Home',
     name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
     area: s.area, landmark: d.contact.landmark, pin: d.contact.pin,
     lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: true
