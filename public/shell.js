@@ -12,6 +12,26 @@
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  document.querySelectorAll('[data-reviews]').forEach(function (section) {
+    var rail = section.querySelector('.review-rail'), navigation = section.querySelector('.reviews-navigation');
+    if (!rail) return;
+    var buttons = navigation.querySelectorAll('button');
+    function sync() {
+      navigation.hidden = rail.scrollWidth <= rail.clientWidth + 2;
+      buttons[0].disabled = rail.scrollLeft <= 2;
+      buttons[1].disabled = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 2;
+    }
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        var card = rail.querySelector('.review-note');
+        rail.scrollBy({left: Number(button.dataset.reviewDirection) * (card.offsetWidth + parseFloat(getComputedStyle(rail).gap)), behavior: reduceMotion ? 'instant' : 'smooth'});
+      });
+    });
+    rail.addEventListener('scroll', sync, {passive:true});
+    window.addEventListener('resize', sync);
+    sync();
+  });
+
   document.querySelectorAll('[data-delivery-guide-area]').forEach(function (select) {
     select.addEventListener('change', function () {
       select.closest('.delivery-guide').querySelectorAll('[data-delivery-guide-zone]').forEach(function (block) {

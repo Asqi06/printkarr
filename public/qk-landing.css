@@ -101,6 +101,51 @@
 .qk-faq-list p { color:var(--muted); font-size:13px; line-height:1.7; padding:0 35px 24px 0; }
 .campus-invitation { display:flex; align-items:center; justify-content:space-between; gap:30px; padding-block:80px; margin-top:var(--space-section); border-top:1px solid var(--line); }
 .campus-invitation h2 { font-size:clamp(36px,4.5vw,60px); }.campus-invitation .ihb { min-width:165px; background:white; border:1px solid var(--primary); color:var(--primary); }
+/* Customer notes: paper edges, real words, and a rail you control. */
+.reviews-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:36px; margin-bottom:36px; }
+.reviews-heading>div>p:last-child { color:var(--muted); font-size:15px; margin-top:20px; }
+.reviews-summary { padding-bottom:6px; }
+.reviews-summary>div { display:flex; align-items:baseline; gap:10px; color:var(--primary); }
+.reviews-summary strong { font-size:64px; font-weight:500; line-height:1; letter-spacing:-.06em; }
+.reviews-summary>div>span { font-size:16px; color:var(--muted); }
+.reviews-summary>p { margin:12px 0 20px; color:var(--muted); font-size:12px; }
+.review-rail { display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 48px)/3); gap:24px; overflow-x:auto; scroll-snap-type:x mandatory; padding:8px 0 20px; align-items:start; scrollbar-width:thin; scrollbar-color:var(--pale-deep) transparent; }
+.review-note { display:flex; flex-direction:column; min-width:0; min-height:320px; padding:28px; border:1px solid var(--line); border-top:3px solid var(--primary); border-radius:var(--r); background:var(--paper); scroll-snap-align:start; transition:background .2s,border-color .2s; }
+.review-note:nth-child(3n+1) { background:var(--pale); }
+.review-note:hover,.review-note:focus-within { border-color:var(--primary); }
+.review-note-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.review-stars { color:var(--primary); letter-spacing:2px; font-size:18px; white-space:nowrap; }
+.review-star-empty { color:var(--muted); }
+.review-note time { font-size:10px; color:var(--muted); }
+.review-note blockquote { margin:30px 0; font-size:19px; line-height:1.65; letter-spacing:-.02em; overflow-wrap:anywhere; flex:1; }
+.review-note blockquote p { white-space:pre-wrap; }
+.review-full { margin-top:16px; }
+.review-full summary { font-size:12px; min-height:32px; }
+.review-full[open]>summary { margin-bottom:16px; }
+.review-full[open] { margin-top:0; }
+.review-note blockquote:has(.review-full[open])>p { display:none; }
+.review-author { display:flex; gap:12px; align-items:center; padding-top:20px; border-top:1px solid var(--line); }
+.review-avatar { display:grid; place-items:center; width:40px; height:40px; border-radius:50%; background:var(--paper); color:var(--primary); border:1px solid var(--pale-deep); font-weight:600; flex:none; }
+.review-author b { font-size:13px; font-weight:600; }
+.review-author small { display:flex; align-items:center; gap:5px; color:var(--muted); font-size:10px; margin-top:5px; }
+.review-author .ui-icon { width:13px; height:13px; color:var(--primary); }
+.review-delete { margin-top:18px; border-top:1px solid var(--line); padding-top:10px; font-size:12px; }
+.review-delete summary { min-height:32px; }
+.review-delete p { color:var(--muted); margin:8px 0; }
+.review-delete button { min-height:44px; }
+.reviews-navigation { display:flex; justify-content:space-between; align-items:center; padding-top:12px; }
+.reviews-navigation>p { font-size:12px; color:var(--muted); }
+.reviews-navigation>div { display:flex; gap:10px; }
+.reviews-navigation button { display:grid; place-items:center; width:48px; height:48px; border:1px solid var(--line); border-radius:var(--button-radius); background:var(--paper); color:var(--primary); cursor:pointer; }
+.reviews-navigation button:first-child .ui-icon { transform:rotate(180deg); }
+.reviews-navigation button:hover:not(:disabled) { background:var(--pale); border-color:var(--primary); }
+.reviews-navigation button:disabled { opacity:.35; }
+.reviews-empty { padding:32px 0; border-block:1px solid var(--line); }
+.reviews-empty p { font-size:20px; margin-bottom:10px; }
+.reviews-empty span { color:var(--muted); font-size:13px; }
+@media(max-width:1100px) { .review-rail { grid-auto-columns:calc((100% - 24px)/2); } }
+@media(max-width:760px) { .reviews-heading { display:block; }.reviews-summary { margin-top:28px; }.reviews-summary strong { font-size:42px; }.review-rail { grid-auto-columns:88%; gap:16px; }.review-note { padding:24px; }.review-note blockquote { font-size:18px; }.reviews-heading>div>p:last-child { font-size:13px; } }
+@media(prefers-reduced-motion:reduce) { .review-note { transition:none; } }
 /* The same editorial rhythm on marketing, legal, and checkout routes. */
 .service-guide { max-width:860px; margin-inline:auto; }
 .service-guide p,.service-guide li { font-size:15px; line-height:1.8; color:var(--muted); }

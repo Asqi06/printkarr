@@ -22,6 +22,7 @@ import {
 } from './lib/auth.js';
 import { layout, esc, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
+import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
 import { customerDashboard, ordersList, orderDetail, scanPage } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { canUseOwnerTestPrint } from './lib/owner-test.js';
@@ -1561,7 +1562,31 @@ app.get('/customer/profile', requireRole('customer'), (req, res) => {
   const fresh = db.users.find(u => u.id === req.user.id) || req.user;
   const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
   const notes = (db.notifications || []).filter((n) => n.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
-  res.send(profilePage(fresh, addresses, notes));
+  res.send(profilePage(fresh, addresses, notes, { review: db.reviews.find(r => r.customerId === fresh.id), reviewSaved: req.query.review === 'saved' }));
+});
+
+// Reviews are public, but only their author or an admin can remove them.
+function reviewOrigin(req, res, next) {
+  if (req.get('sec-fetch-site') === 'cross-site' || (req.get('origin') && req.get('origin') !== `${req.protocol}://${req.get('host')}`)) return res.status(403).send('Please submit your review from this website.');
+  next();
+}
+app.post('/customer/review', requireRole('customer'), reviewOrigin, (req, res) => {
+  const db = loadDb();
+  try { saveReview(db, req.user, req.body); }
+  catch (error) {
+    return res.status(400).send(profilePage(req.user, db.addresses.filter(a => a.customerId === req.user.id), db.notifications.filter(n => n.customerId === req.user.id), { review: { ...req.body, id: db.reviews.find(r => r.customerId === req.user.id)?.id }, reviewError: error.message }));
+  }
+  saveDb(db);
+  res.redirect('/customer/profile?review=saved#review');
+});
+app.post('/reviews/:id/delete', reviewOrigin, (req, res) => {
+  const user = currentUser(req);
+  if (!user) return res.status(401).send('Sign in to delete a review.');
+  const db = loadDb();
+  try { if (!deleteReview(db, user, req.params.id)) return res.status(404).send('Review not found.'); }
+  catch (error) { return res.status(403).send(error.message); }
+  saveDb(db);
+  res.redirect('/#reviews');
 });
 
 app.post('/customer/profile', requireRole('customer'), (req, res) => {
@@ -2207,18 +2232,17 @@ app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), (req, 
 
 // Kiosk pickup — no rider tracking. Orders are collected at the counter.
 
-// Product root: signed in → role home; strangers get the conversion
-// landing (one CTA, live stats), never a login wall.
+// The public home stays accessible to signed-in customers and review moderators.
 app.get('/', (req, res) => {
   const user = currentUser(req);
-  if (user) return res.redirect(HOME[user.role] || '/login');
+  res.set('Cache-Control', 'private, no-store');
   const db = loadDb();
   const weekAgo = Date.now() - 7 * 864e5;
   const pagesWeek = db.orders
     .filter((o) => Date.parse(o.createdAt) >= weekAgo && o.status !== 'CANCELLED')
     .reduce((s, o) => s + o.pages * o.copies, 0);
   const queueDepth = db.orders.filter((o) => ['PRINT_QUEUE', 'PRINTING'].includes(o.status)).length;
-  res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb, campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db) : [] }));
+  res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb, campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db) : [], reviews: publicReviews(db, user) }));
 });
 
 // Marketing pages — Grok workspace port (server-rendered, no auth).
