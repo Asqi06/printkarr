@@ -1557,6 +1557,8 @@ app.post('/admin/referrals/payouts/:id/reject', requireRole('admin'), (req, res)
 });
 
 app.get('/customer/profile', requireRole('customer'), (req, res) => {
+  // Keep the source domain across review redirects without sharing account or document paths.
+  res.set('Referrer-Policy', 'strict-origin');
   const db = loadDb();
   // Re-read user from DB so profile always reflects latest edits (session may be stale)
   const fresh = db.users.find(u => u.id === req.user.id) || req.user;
@@ -2241,6 +2243,7 @@ app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), (req, 
 app.get('/', (req, res) => {
   const user = currentUser(req);
   res.set('Cache-Control', 'private, no-store');
+  res.set('Referrer-Policy', 'strict-origin');
   const db = loadDb();
   const weekAgo = Date.now() - 7 * 864e5;
   const pagesWeek = db.orders
