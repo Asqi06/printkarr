@@ -1,17 +1,17 @@
 # Graph Report - prntkr  (2026-10-03)
 
 ## Corpus Check
-- 328 files · ~2,026,564 words
+- 328 files · ~2,026,683 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 42 file(s) not represented in the graph (top: (none) 11, .css 10, .woff2 7)
 
 ## Summary
-- 9463 nodes · 23886 edges · 298 communities (241 shown, 57 thin omitted)
+- 9463 nodes · 23889 edges · 298 communities (241 shown, 57 thin omitted)
 - Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 2000 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e3ff587d`
+- Built from commit: `d46118eb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1311,7 +1311,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `gl()` connect `get` to `BatchedMesh`, `three.mjs`, `index-BmpwFe3l.js`, `constructor`, `update`, `WebGLProgram`, `WebXRManager`, `Cl`, `i`, `n`, `constructor`, `n`?**
   _High betweenness centrality (0.103) - this node is a cross-community bridge._
 - **Why does `value()` connect `shell.js` to `flush`, `copy`, `warn`, `design-check.mjs`?**
-  _High betweenness centrality (0.079) - this node is a cross-community bridge._
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Why does `requestAnimationFrame()` connect `Genre Playbook — Board & Card Games (Chess, Checkers, Tic-Tac-Toe, Card games)` to `Game Audio in the Browser (Web Audio API, mobile unlock, Howler.js, gain buses, spatial, latency)`, `design-check.mjs`?**
   _High betweenness centrality (0.057) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `constructor()` (e.g. with `.arc()` and `r()`) actually correct?**

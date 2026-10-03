@@ -41,7 +41,7 @@ import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
 import { POSTS, vapiPage, damanPage, printPricesPage, landing, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
-import { discoveryRoutes } from './lib/seo.js';
+import { discoveryRoutes, SITE } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
 
@@ -1567,7 +1567,12 @@ app.get('/customer/profile', requireRole('customer'), (req, res) => {
 
 // Reviews are public, but only their author or an admin can remove them.
 function reviewOrigin(req, res, next) {
-  if (req.get('sec-fetch-site') === 'cross-site' || (req.get('origin') && req.get('origin') !== `${req.protocol}://${req.get('host')}`)) return res.status(403).send('Please submit your review from this website.');
+  const alias = new URL(SITE);
+  alias.hostname = alias.hostname.startsWith('www.') ? alias.hostname.slice(4) : 'www.' + alias.hostname;
+  let origin = req.get('origin');
+  // A www-to-apex POST redirect makes browsers send Origin: null; verify the original page instead.
+  if (origin === 'null') { try { origin = new URL(req.get('referer')).origin; } catch {} }
+  if (req.get('sec-fetch-site') === 'cross-site' || (origin && ![SITE, alias.origin, `${req.protocol}://${req.get('host')}`].includes(origin))) return res.status(403).send('Please submit your review from this website.');
   next();
 }
 app.post('/customer/review', requireRole('customer'), reviewOrigin, (req, res) => {
