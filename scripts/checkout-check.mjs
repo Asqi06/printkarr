@@ -6,7 +6,7 @@ import path from 'node:path';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { blankDb } from '../lib/db.js';
-import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, walletOf, deliveryPlan, batchPrice, validateCampaign } from '../lib/campus.js';
+import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, walletOf, deliveryPlan, batchPrice, validateCampaign } from '../lib/campus.js';
 import { deliveryFeeFor, deliveryPoint, rangePages } from '../lib/pricing.js';
 import { analyzeUpload, orderFile } from '../lib/files.js';
 import { normPhone, normEmail } from '../lib/otp.js';
@@ -29,7 +29,7 @@ function handler(method, route, extra = {}) {
     loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, batchPrice, deliveryFeeFor, deliveryPoint, quote, rangePages,
     normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload,
     fs:{copyFileSync(){throw new Error('Expired file');},readFileSync:()=>pdf},
-    topupTerms,applyTopup,qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
+    topupTerms,applyTopup,claimWalletFiles,fulfilWalletFiles,siteOrigin(){},qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
     fetch:async()=>{gatewayCalls++;return {ok:true,json:async()=>({id:'rzp-fixture',amount:4900})};},
     oops:(_user,_path,message)=>message,...extra
   });
@@ -67,6 +67,14 @@ assert.ok(!eligibleWalletOffers(db,'A').some(o=>o.id==='first'),'Pending first o
 const proof={razorpay_order_id:'rzp-fixture',razorpay_payment_id:'pay-fixture'};proof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(proof.razorpay_order_id+'|'+proof.razorpay_payment_id).digest('hex');
 const verify=response();handler('post','/customer/wallet/topup-verify')({user,body:proof},verify);assert.equal(verify.url,'/customer/orders/PK-1024/pay');assert.equal(walletOf(db,'A').balance,59);
 const replay=response();handler('post','/customer/wallet/topup-verify')({user,body:proof},replay);assert.equal(replay.code,400);assert.equal(walletOf(db,'A').balance,59);
+const fileTopup=response();await handler('post','/api/wallet/topup-order',{fetch:async()=>({ok:true,json:async()=>({id:'rzp-files',amount:14900})})})({body:{amount:149,offerId:'files',freeFiles:999}},fileTopup);
+assert.equal(fileTopup.code,200);assert.equal(db.topups.at(-1).terms.freeFiles,3);assert.ok(!db.walletTx.some(t=>t.freeFiles));
+const fileProof={razorpay_order_id:'rzp-files',razorpay_payment_id:'pay-files'};fileProof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(fileProof.razorpay_order_id+'|'+fileProof.razorpay_payment_id).digest('hex');
+const fileVerify=response();handler('post','/customer/wallet/topup-verify')({user,body:fileProof},fileVerify);assert.equal(fileVerify.url,'/customer/wallet');assert.equal(walletOf(db,'A').balance,208);
+const fileTx=db.walletTx.find(t=>t.freeFiles);assert.equal(fileTx.freeFiles.quantity,3);
+const fileReplay=response();handler('post','/customer/wallet/topup-verify')({user,body:fileProof},fileReplay);assert.equal(fileReplay.code,400);assert.equal(db.walletTx.filter(t=>t.freeFiles).length,1);
+const claim=response();handler('post','/customer/wallet/files/:txId/claim')({user,params:{txId:fileTx.id},body:{color:'green'}},claim);assert.equal(claim.url,'/customer/wallet#free-files');assert.equal(fileTx.freeFiles.color,'green');
+const handover=response();handler('post','/admin/customers/:id/files/:txId/fulfil')({user:{id:'staff',role:'admin'},params:{id:user.id,txId:fileTx.id}},handover);assert.equal(handover.url,'/admin/customers/A');assert.ok(fileTx.freeFiles.fulfilledAt);
 assert.equal(walletPrompt(campaignConfig(db),eligibleWalletOffers(db,'A'),1000),'');
 const repeat=response();handler('post','/customer/orders/:id/reorder')({user,params:{id:own.id}},repeat);assert.equal(repeat.url,'/customer/orders/new?repeat=PK-1024');
 const uploaded=response();handler('post','/customer/orders/new/upload')({user,file:{size:pdf.length,originalname:'Updated.pdf',path:'fixture',filename:'new.pdf'},body:{repeat:own.id}},uploaded);

@@ -47,6 +47,8 @@ export const pages = new Map([
   ['/customer/checkout-offer', account.payStep({...user,walletBalance:0}, order, {offers:campaign.wallets.filter(o=>o.enabled),bonusValidityDays:90,razorpay:true,livePay:true})],
   ['/customer/orders/preview/pay', account.payStep(user, order)],
   ['/customer/wallet', account.walletPage(user, { balance:150 }, [], pricing, {campaign, offers:campaign.wallets.filter(o=>o.enabled), bonusBalance:20})],
+  ['/customer/wallet-files', account.walletPage(user, {balance:149}, [], pricing, {campaign,offers:campaign.wallets.filter(o=>o.enabled),selectedOffer:'files',fileGifts:[{id:'paid-files',amount:149,freeFiles:{quantity:3,color:null}}]})],
+  ['/admin/customer-files', admin.customerDetailAdmin(staff,user,[],{balance:149},[],[],[{id:'paid-files',amount:149,freeFiles:{quantity:3,color:'orange'}}])],
   ['/customer/referrals', referralsPage(user, { cfg: { friendOff: 20, friendMinOrder: 79, referrerCredit: 20, monthlyCap: 500, minWithdrawal: 50, milestones: [{ n: 3, bonus: 10 }] }, code: 'ABC234', stats: { joined: 1, qualified: 0, earned: 0 }, credit: { balance: 0 }, cash: { balance: 0 }, payouts: [], shareText: 'PrintKarr it' })],
   ['/customer/packs', packs.packsPage(user, {subs:[],walletBalance:150,livePay:true})],
   ['/customer/review', account.summaryStep(user, draft, {effPages:12,copies:1,printType:'bw',sides:'double',orientation:'portrait',binding:'none',zone:'vapi',zoneLabel:'Vapi',slot:'Morning'}, {subtotal:24,total:24,deliveryFee:0})],
@@ -263,8 +265,11 @@ console.log('Kiosk checked: responsive image across every public view, no 3D ren
   const fields = {amount:{value:49,addEventListener(type,fn){this.input=fn;},focus(){}}, topNudge:{}, offerId:{value:'first'}};
   const buttons = campaign.wallets.filter(o=>o.enabled).map(o=>({dataset:{offer:o.id,amount:o.amount},addEventListener(type,fn){this.click=fn;},setAttribute(name,value){this[name]=value;},closest(){return {classList:{toggle(){}}};}}));
   runInNewContext(source, {document:{getElementById:id=>fields[id],querySelectorAll:()=>buttons}});
-  buttons[2].click(); assert.equal(fields.amount.value,199); assert.equal(fields.offerId.value,'study');
-  assert.match(fields.topNudge.textContent,/225/); assert.equal(buttons[2]['aria-pressed'],'true'); assert.equal(buttons[0]['aria-pressed'],'false');
+  const study = buttons.find(b=>b.dataset.offer==='study'), files = buttons.find(b=>b.dataset.offer==='files');
+  study.click(); assert.equal(fields.amount.value,199); assert.equal(fields.offerId.value,'study');
+  assert.match(fields.topNudge.textContent,/225/); assert.equal(study['aria-pressed'],'true'); assert.equal(buttons[0]['aria-pressed'],'false');
+  files.click(); assert.equal(fields.amount.value,149); assert.equal(fields.offerId.value,'files');
+  assert.match(fields.topNudge.textContent,/3 free paper\/cardboard files/); assert.doesNotMatch(fields.topNudge.textContent,/₹0 bonus/);
   fields.amount.value=123; fields.amount.input(); assert.equal(fields.offerId.value,''); assert.match(fields.topNudge.textContent,/Custom top-up.*123/);
   console.log('Wallet choice checked: configured bonus, selection state and custom top-up.');
 }

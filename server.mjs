@@ -35,7 +35,7 @@ import {
   qualifyForTopup, validUpiId
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
-import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, deliveryPlan, batchPrice, settleWallets } from './lib/campus.js';
+import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, deliveryPlan, batchPrice, settleWallets } from './lib/campus.js';
 import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
@@ -577,19 +577,29 @@ app.get('/admin/customers', requireRole('admin'), (req, res) => {
     return {
       id: c.id, name: c.name, count: co.length,
       spent: co.filter((o) => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0),
-      wallet: w ? w.balance : 0
+      wallet: w ? w.balance : 0,
+      pendingFiles: db.walletTx.filter((t) => t.customerId === c.id && t.freeFiles?.color && !t.freeFiles.fulfilledAt).reduce((n, t) => n + t.freeFiles.quantity, 0)
     };
   });
   res.send(customersPage(req.user, rows));
 });
 
 app.get('/admin/customers/:id', requireRole('admin'), (req, res) => {
+  res.set('Referrer-Policy', 'strict-origin');
   const db = loadDb();
   const c = db.users.find((u) => u.id === req.params.id && u.role === 'customer');
   if (!c) return res.status(404).send(oops(req.user, '/admin/customers', 'Customer <em>unknown.</em>'));
   const orders = db.orders.filter((o) => o.customerId === c.id).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const wallet = walletOf(db, c.id);
-  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id)));
+  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id), db.walletTx.filter((t) => t.customerId === c.id && t.freeFiles)));
+});
+
+app.post('/admin/customers/:id/files/:txId/fulfil', requireRole('admin'), siteOrigin, (req, res) => {
+  const db = loadDb();
+  try { fulfilWalletFiles(db, req.params.id, req.params.txId, req.user.id); }
+  catch (error) { return res.status(400).send(oops(req.user, '/admin/customers', esc(error.message))); }
+  saveDb(db);
+  res.redirect(`/admin/customers/${encodeURIComponent(req.params.id)}`);
 });
 
 app.get('/admin/pricing', requireRole('admin'), (req, res) => {
@@ -712,7 +722,7 @@ app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
       cfg.firstPrint = { enabled: req.body['firstPrint-enabled'] === '1', pages: Number(req.body['firstPrint-pages']) };
       for (const o of cfg.wallets) {
         o.name = req.body[`wallet-${o.id}-name`];
-        for (const key of ['amount', 'bonus', 'memberDays']) o[key] = Number(req.body[`wallet-${o.id}-${key}`]);
+        for (const key of ['amount', 'bonus', 'memberDays', 'freeFiles']) o[key] = Number(req.body[`wallet-${o.id}-${key}`] || 0);
         for (const key of ['enabled', 'firstOnly', 'freeFirstBatch', 'freeBatch']) o[key] = req.body[`wallet-${o.id}-${key}`] === '1';
       }
       for (const key of ['enabled', 'freeEnabled', 'guaranteeEnabled']) cfg.delivery[key] = req.body[`delivery-${key}`] === '1';
@@ -1294,6 +1304,7 @@ app.get('/customer/addresses', requireRole('customer'), (_req, res) => {
 });
 
 app.get('/customer/wallet', requireRole('customer'), (req, res) => {
+  res.set('Referrer-Policy', 'strict-origin');
   const db = loadDb();
   const w = walletOf(db, req.user.id);
   const tx = (db.walletTx || []).filter((t) => t.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
@@ -1301,7 +1312,15 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const rcfg = referralConfig(db);
   const returnOrder = db.orders.find((o) => o.id === req.query.order && o.customerId === req.user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status))?.id;
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, returnOrder, selectedOffer: String(req.query.offer || '').slice(0, 32), refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', campusId: 'lit' }, 0, 3).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: eligibleWalletOffers(db, req.user.id) }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, returnOrder, selectedOffer: String(req.query.offer || '').slice(0, 32), refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', campusId: 'lit' }, 0, 3).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: eligibleWalletOffers(db, req.user.id), fileGifts: db.walletTx.filter((t) => t.customerId === req.user.id && t.freeFiles) }));
+});
+
+app.post('/customer/wallet/files/:txId/claim', requireRole('customer'), siteOrigin, (req, res) => {
+  const db = loadDb();
+  try { claimWalletFiles(db, req.user.id, req.params.txId, req.body.color); }
+  catch (error) { return res.status(400).send(oops(req.user, '/customer/wallet', esc(error.message))); }
+  saveDb(db);
+  res.redirect('/customer/wallet#free-files');
 });
 
 app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
@@ -1568,16 +1587,16 @@ app.get('/customer/profile', requireRole('customer'), (req, res) => {
 });
 
 // Reviews are public, but only their author or an admin can remove them.
-function reviewOrigin(req, res, next) {
+function siteOrigin(req, res, next) {
   const alias = new URL(SITE);
   alias.hostname = alias.hostname.startsWith('www.') ? alias.hostname.slice(4) : 'www.' + alias.hostname;
   let origin = req.get('origin');
   // A www-to-apex POST redirect makes browsers send Origin: null; verify the original page instead.
   if (origin === 'null') { try { origin = new URL(req.get('referer')).origin; } catch {} }
-  if (req.get('sec-fetch-site') === 'cross-site' || (origin && ![SITE, alias.origin, `${req.protocol}://${req.get('host')}`].includes(origin))) return res.status(403).send('Please submit your review from this website.');
+  if (req.get('sec-fetch-site') === 'cross-site' || (origin && ![SITE, alias.origin, `${req.protocol}://${req.get('host')}`].includes(origin))) return res.status(403).send('Please submit this form from this website.');
   next();
 }
-app.post('/customer/review', requireRole('customer'), reviewOrigin, (req, res) => {
+app.post('/customer/review', requireRole('customer'), siteOrigin, (req, res) => {
   const db = loadDb();
   try { saveReview(db, req.user, req.body); }
   catch (error) {
@@ -1586,7 +1605,7 @@ app.post('/customer/review', requireRole('customer'), reviewOrigin, (req, res) =
   saveDb(db);
   res.redirect('/customer/profile?review=saved#review');
 });
-app.post('/reviews/:id/delete', reviewOrigin, (req, res) => {
+app.post('/reviews/:id/delete', siteOrigin, (req, res) => {
   const user = currentUser(req);
   if (!user) return res.status(401).send('Sign in to delete a review.');
   const db = loadDb();
