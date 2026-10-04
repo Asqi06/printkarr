@@ -13,7 +13,8 @@ import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas } from './lib/atlas.j
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
 import { quote, rangePages, activePrintJobs, surchargeFees, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
-import { notifyState } from './lib/notify.js';
+import { notifyState, runNotificationJobs } from './lib/notify.js';
+import { installNotificationRoutes } from './lib/notify_routes.js';
 import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, normEmail } from './lib/otp.js';
 import { janitor } from './lib/janitor.js';
 import {
@@ -1895,6 +1896,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
 installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon, notifyState, restorePackQuota, voidPendingForOrder, qualifyForOrder, gateway: RAZORPAY });
+installNotificationRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin });
 
 app.use((err, req, res, _next) => {
   if (!err || !/multer|PDF, PNG or JPG|Only PDF|File too large/i.test(err.message)) throw err;
@@ -2422,6 +2424,9 @@ async function bootstrap() {
   setInterval(() => {
     try { const current = loadDb(); if (settleWallets(current)) saveDb(current); }
     catch (error) { console.error('Wallet settlement failed:', error.message); }
+  }, 60000).unref();
+  setInterval(() => {
+    runNotificationJobs().catch((error) => console.error('Notification delivery failed:', error.message));
   }, 60000).unref();
   // Backfill referral codes + config for databases created before referrals.
   let touched = false;

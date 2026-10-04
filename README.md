@@ -17,6 +17,12 @@ npm start      # http://localhost:3000
 
 `npm test` runs the order state-machine suite.
 
+Admin alerts are at `/admin/notifications`: customer sign-ins, confirmed print orders and successful wallet top-ups appear across open admin pages (5-second polling). Click **Enable sound** on each page to unlock browser audio; choose Chime, Bell or Soft in the inbox. Sound styles are saved on that browser, and each event has a different melody. Closed or suspended browser pages do not receive background push alerts.
+
+Customers can enable reminder/offer emails and change website reminder preferences at `/customer/notifications`. The existing OTP mailer also sends these emails; no new credentials or dependency are needed. Admins can switch reminders/offers/email off and set the delay (default: 1 hour after login). A server job checks every minute, sends at most one reminder/offer per customer per 7 days, stops no-order reminders after payment, and targets only customers who signed in within 30 days. Old accounts begin tracking on their next login. Emails include an unsubscribe confirmation link; pending messages recheck preferences, orders and offer eligibility before sending. The server must remain running for scheduled delivery. Email delivery counts are visible in the admin inbox.
+
+Run `node --test lib/notify.test.js` for notification scheduling, delivery and access checks. Tests use an isolated in-memory database and a fake mailer.
+
 ## Demo accounts (`/login`)
 
 | Role | Email | Password |

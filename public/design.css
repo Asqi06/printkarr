@@ -426,6 +426,11 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
   .home-account-actions .btn { flex: 1; font-size: 13px; padding-inline: 12px; }
 }
 @media (max-width: 560px) { .grid.c2, .grid.c3, .grid.c4 { grid-template-columns: minmax(0,1fr); }.app-admin .main > .grid.c3 { grid-template-columns: repeat(2,minmax(0,1fr)); }.app-admin .main > .grid.c3 .card { padding: 18px; }.app-admin .stat .v { font-size: 30px; }.sumrow { font-size: 13px; } }
+@media (max-width: 640px) {
+  .pk-header-cta { gap: 8px; }
+  .pk-header-cta > [data-notification-sound] { display: none; }
+  .pk-header-cta > a.pk-contact { min-height: 44px; padding: 10px; font-size: 12px; }
+}
 @media (max-width: 380px) { .site-header, .app-view .pk-header { padding-inline: 16px; }.site-header-inner { gap: 8px; }.header-actions { gap: 8px; }.pk-logo { font-size: 20px; }.customer-mobile-nav, .app-customer .app-sidebar { left: 8px; right: 8px; }.app-workspace .main { padding-inline: 16px; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; }.rv { opacity: 1; transform: none; } }
 @media (forced-colors: active) { .btn, .card, .customer-mobile-nav { border: 1px solid CanvasText; }.ui-icon { fill: currentColor; } }
