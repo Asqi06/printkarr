@@ -83,7 +83,7 @@ assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/ne
 for (const [route, html] of pages) {
   if (!route.startsWith('/customer')) continue;
   const nav = html.match(/<nav class="snav"[^>]*>([\s\S]*?)<\/nav>/)[1];
-  assert.deepEqual([...nav.matchAll(/<a href="([^"]+)"/g)].slice(0, 5).map(m => m[1]), ['/customer', '/customer/orders/new', '/customer/orders', '/customer/wallet', '/customer/profile'], `${route}: all five basic pages fit the mobile bar`);
+  assert.deepEqual([...nav.matchAll(/<a href="([^"]+)"/g)].slice(0, 6).map(m => m[1]), ['/customer', '/customer/orders/new', '/stationery', '/customer/orders', '/customer/wallet', '/customer/profile'], `${route}: stationery and all basic pages fit the mobile bar`);
 }
 for (const route of ['/', '/customer']) {
   const shortcuts = pages.get(route).match(/<nav class="home-account-actions[^>]*>([\s\S]*?)<\/nav>/)[1];
@@ -125,7 +125,7 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
   }
   for (const value of [undefined, '//evil.example', 'https://evil.example', '/customer/../admin', '/customer/wallet?next=https://evil.example', '/customer/wallet\r\n', '/customer/wallet\n', ['/customer/wallet']]) assert.equal(customerDestination(value), '/customer');
   for (const route of ['/customer', '/customer/orders/new', '/customer/packs', '/customer/referrals']) assert.equal(customerDestination(route), route);
-  console.log('Navigation and sign-in checked: visible shortcuts, five mobile destinations and safe return to Wallet / My Account.');
+  console.log('Navigation and sign-in checked: visible shortcuts, six mobile destinations including Stationery and safe return to Wallet / My Account.');
 }
 // Exercise the actual OAuth callback, including customer/staff separation, without Google or DB writes.
 {

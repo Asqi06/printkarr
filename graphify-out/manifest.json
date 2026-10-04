@@ -942,9 +942,9 @@
     "semantic_hash": "d3f4bf17e9d3e22af9eadc3e452e5615"
   },
   "lib/janitor.js": {
-    "mtime": 1790962259.7223234,
-    "seen": 1790962829.7090628,
-    "ast_hash": "14cd4cf597718e720bd75f5c6d6869b1",
+    "mtime": 1791114278.9145162,
+    "seen": 1791114628.800144,
+    "ast_hash": "f7a0295e531981d1b55e36e7bca0a70f",
     "semantic_hash": ""
   },
   "lib/machine.js": {
@@ -990,9 +990,9 @@
     "semantic_hash": ""
   },
   "lib/views.js": {
-    "mtime": 1791111552.2797608,
-    "seen": 1791111951.7799232,
-    "ast_hash": "4adac7164c031864bdf49458e1539293",
+    "mtime": 1791114209.9464583,
+    "seen": 1791114628.8062782,
+    "ast_hash": "3b9bd389f6dc19bbbdd27dce7c7ceddf",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1791106928.9845245,
-    "seen": 1791107168.5407243,
-    "ast_hash": "7b3086565aa795360414522b5151a7a0",
+    "mtime": 1791114209.96163,
+    "seen": 1791114628.806963,
+    "ast_hash": "b6c03e16b135addb47d99467086b72c6",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": ""
   },
   "scripts/design-check.mjs": {
-    "mtime": 1791107071.6740344,
-    "seen": 1791107168.5423899,
-    "ast_hash": "e94f63c12cf6e028166c8cbd268b83c3",
+    "mtime": 1791114376.7676415,
+    "seen": 1791114628.8092153,
+    "ast_hash": "9ee4f76e1f6e12bcd719083ce8afb24e",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -2868,21 +2868,21 @@
     "semantic_hash": ""
   },
   "lib/store.js": {
-    "mtime": 1791112581.479071,
-    "seen": 1791112738.5980427,
-    "ast_hash": "73a5d6738e789fe5a0ca2134c96afbe4",
+    "mtime": 1791114209.95846,
+    "seen": 1791114628.806272,
+    "ast_hash": "6fcb46b91ae331cea9ec689b80c21bc5",
     "semantic_hash": ""
   },
   "lib/store_routes.js": {
-    "mtime": 1791111758.801,
-    "seen": 1791111951.7799199,
-    "ast_hash": "f65df7c18f477a0d1dea5345b7ed4331",
+    "mtime": 1791114204.3712654,
+    "seen": 1791114628.8062754,
+    "ast_hash": "21cf7e240e58489600598ff9018721df",
     "semantic_hash": ""
   },
   "lib/views_store.js": {
-    "mtime": 1791111685.3295126,
-    "seen": 1791111951.7807143,
-    "ast_hash": "77fee368d30cd6d00919050b4f3b85db",
+    "mtime": 1791114209.9574614,
+    "seen": 1791114628.807141,
+    "ast_hash": "32c5e6e8b15410b650d7e4f3a410c0d6",
     "semantic_hash": ""
   },
   "public/store.js": {
@@ -2892,99 +2892,117 @@
     "semantic_hash": ""
   },
   "scripts/store-check.mjs": {
-    "mtime": 1791112582.708576,
-    "seen": 1791112738.6032472,
-    "ast_hash": "bc65934ec50f9d2fedb884f7fc2345f0",
+    "mtime": 1791114551.2783468,
+    "seen": 1791114628.810393,
+    "ast_hash": "e90e9a8dd460d27c9fa54e8651a7e773",
     "semantic_hash": ""
   },
   "scripts/store-preview.mjs": {
-    "mtime": 1791111423.1642635,
-    "seen": 1791111951.7838192,
-    "ast_hash": "a1cdac39d5395386f782518ee312dbfe",
+    "mtime": 1791114280.3365183,
+    "seen": 1791114628.8103988,
+    "ast_hash": "3ab90cf3451de7d787ebea690e3153e8",
     "semantic_hash": ""
   },
   "docs/stationery-marketplace.md": {
-    "mtime": 1791111934.5292296,
-    "seen": 1791111951.8090794,
-    "ast_hash": "2f9b5e69940734427af617563a265200",
+    "mtime": 1791114569.115154,
+    "seen": 1791114628.8353357,
+    "ast_hash": "19b6f2726f3eb79442dfca024fd5721d",
     "semantic_hash": ""
   },
   "docs/store-preview/admin-1440.png": {
-    "mtime": 1791112669.5365155,
-    "seen": 1791112738.6566489,
-    "ast_hash": "30e49a4583fcb3e1598f34fe9d28ebe1",
+    "mtime": 1791114598.0297306,
+    "seen": 1791114628.8576436,
+    "ast_hash": "152b5cfd45799886561e1cd6fcbccd7a",
     "semantic_hash": ""
   },
   "docs/store-preview/admin-320.png": {
-    "mtime": 1791112653.6514282,
-    "seen": 1791112738.656655,
-    "ast_hash": "517c5d10b4fe477b6b6a93b110860bf9",
+    "mtime": 1791114566.3363216,
+    "seen": 1791114628.857646,
+    "ast_hash": "ffbb1e263191a979a444b0c691760ab5",
     "semantic_hash": ""
   },
   "docs/store-preview/admin-390.png": {
-    "mtime": 1791112660.9705584,
-    "seen": 1791112738.656661,
-    "ast_hash": "59b3799e90e68ad08f76655fec6e78f1",
+    "mtime": 1791114581.2457275,
+    "seen": 1791114628.8576481,
+    "ast_hash": "c1e1030863c6a638c6b27597fcf93d2d",
     "semantic_hash": ""
   },
   "docs/store-preview/cart-1440.png": {
-    "mtime": 1791112665.5971758,
-    "seen": 1791112738.6566658,
-    "ast_hash": "d12554a73f42903007e22ee28cfb2b8b",
+    "mtime": 1791114593.5137231,
+    "seen": 1791114628.8576503,
+    "ast_hash": "a0c0514d57a9221701cd3d4b4023f59c",
     "semantic_hash": ""
   },
   "docs/store-preview/cart-320.png": {
-    "mtime": 1791112649.509104,
-    "seen": 1791112738.6566715,
-    "ast_hash": "a5d09c231f0ea0d7a17993cb40035a16",
+    "mtime": 1791114562.6213672,
+    "seen": 1791114628.857652,
+    "ast_hash": "e4cebf288722c4cb91b38a9fced3c781",
     "semantic_hash": ""
   },
   "docs/store-preview/cart-390.png": {
-    "mtime": 1791112657.0572877,
-    "seen": 1791112738.6566763,
-    "ast_hash": "274668d1014e280b38528b70064d659c",
+    "mtime": 1791114576.744737,
+    "seen": 1791114628.857654,
+    "ast_hash": "3b3fdd7f3e80afb8d92414afad7c5d6b",
     "semantic_hash": ""
   },
   "docs/store-preview/receipt-1440.png": {
-    "mtime": 1791112668.0718508,
-    "seen": 1791112738.656682,
-    "ast_hash": "59ad37a5d8c8a9fe05f03f27552dcb2a",
+    "mtime": 1791114596.714728,
+    "seen": 1791114628.8576562,
+    "ast_hash": "92fe8dbb4dbcaf03663ecd7fc3615ab6",
     "semantic_hash": ""
   },
   "docs/store-preview/receipt-320.png": {
-    "mtime": 1791112652.6303434,
-    "seen": 1791112738.6566873,
-    "ast_hash": "12520d376f54d306d84b0caba6ce4bc1",
+    "mtime": 1791114565.1380398,
+    "seen": 1791114628.8576581,
+    "ast_hash": "9c325440ab45b2cf3c62a1ea303bfbda",
     "semantic_hash": ""
   },
   "docs/store-preview/receipt-390.png": {
-    "mtime": 1791112660.1295595,
-    "seen": 1791112738.656693,
-    "ast_hash": "c26d2d48048cb2d5108fa05664a4aa6f",
+    "mtime": 1791114580.1957266,
+    "seen": 1791114628.8576598,
+    "ast_hash": "c637d8b1d0b1035ecbd26220b6d26e2b",
     "semantic_hash": ""
   },
   "docs/store-preview/shop-1440.png": {
-    "mtime": 1791112663.0845563,
-    "seen": 1791112738.6566975,
-    "ast_hash": "b1d14e7897167b15a856e5e83c0c00d5",
+    "mtime": 1791114590.3477273,
+    "seen": 1791114628.857662,
+    "ast_hash": "7a4b84cea6c65dad36dff195251d735f",
     "semantic_hash": ""
   },
   "docs/store-preview/shop-320.png": {
-    "mtime": 1791112647.708043,
-    "seen": 1791112738.6567023,
-    "ast_hash": "3a4e7dd4801ba8d9a9cb6f60878ed66e",
+    "mtime": 1791114560.4401217,
+    "seen": 1791114628.8576636,
+    "ast_hash": "6a2efefd541bbfe176b3e8ab201f8b7f",
     "semantic_hash": ""
   },
   "docs/store-preview/shop-390.png": {
-    "mtime": 1791112655.2351112,
-    "seen": 1791112738.6567073,
-    "ast_hash": "e4f23b0f18b95e28044042c455f1fe80",
+    "mtime": 1791114573.8207407,
+    "seen": 1791114628.8576655,
+    "ast_hash": "2c23a41801c20da0771740831a4271d1",
     "semantic_hash": ""
   },
   "public/images/stationery-demo-hero.png": {
     "mtime": 1791108957.451753,
     "seen": 1791111951.8365624,
     "ast_hash": "35a70c936f2b7919b2ea670073326ecb",
+    "semantic_hash": ""
+  },
+  "docs/shop-discovery-preview/home-320.png": {
+    "mtime": 1791114558.390698,
+    "seen": 1791114628.8576345,
+    "ast_hash": "2ea6251fcb720c09bc37de53f2a6fb7b",
+    "semantic_hash": ""
+  },
+  "docs/shop-discovery-preview/promo-320.png": {
+    "mtime": 1791114558.5535707,
+    "seen": 1791114628.8576374,
+    "ast_hash": "c1833fe4674549953cde8cef91faf966",
+    "semantic_hash": ""
+  },
+  "docs/shop-discovery-preview/wallet-320.png": {
+    "mtime": 1791114558.656055,
+    "seen": 1791114628.8576405,
+    "ast_hash": "c152e31864358891e2b9baeb6ebc6893",
     "semantic_hash": ""
   }
 }

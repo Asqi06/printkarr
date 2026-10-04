@@ -13,6 +13,17 @@
 .hero-actions .btn { font-size:13px; padding-inline:18px; }
 .hero-account { display:inline-flex; align-items:center; justify-content:flex-start; gap:10px; min-height:44px; color:var(--primary); font-size:13px; font-weight:600; text-decoration:none; flex-basis:100%; }
 .hero-helper { font-size:11px; color:var(--muted); margin-top:8px; }
+.hero-shop-link { display:inline-flex; align-items:center; gap:8px; min-height:44px; margin-top:8px; color:var(--primary); font-size:13px; font-weight:600; text-underline-offset:4px; }
+.home-stationery { display:grid; grid-template-columns:minmax(0,1fr) 240px; align-items:center; gap:40px; margin-top:36px; padding:36px; background:var(--pale); border:1px solid var(--pale-deep); }
+.home-stationery h2 { font-size:clamp(28px,3.2vw,44px); margin:12px 0; }
+.home-stationery p:not(.section-index) { max-width:560px; font-size:14px; color:var(--muted); line-height:1.7; }
+.home-stationery .btn { margin-top:22px; }
+.home-stationery small { display:block; margin-top:14px; font-size:11px; color:var(--muted); }
+.stationery-files { display:flex; justify-content:center; align-items:center; height:190px; }
+.stationery-files span { display:block; flex:none; width:110px; height:150px; border-radius:4px; border:1px solid #00000015; background:#db6b30; box-shadow:6px 8px 0 #14203b0d; transform:rotate(-12deg); }
+.stationery-files span+span { margin-left:-66px; background:#42714d; transform:rotate(0deg); }
+.stationery-files span:last-child { background:#efb930; transform:rotate(12deg); }
+@media(max-width:760px) { .home-stationery { grid-template-columns:1fr; padding:24px; gap:20px; }.stationery-files { height:160px; }.stationery-files span { height:130px; width:100px; } }
 .paper-scene { position:relative; min-width:0; height:600px; width:100%; max-width:480px; justify-self:end; margin:0; background:var(--pale); border-radius:2px; display:grid; place-items:center; overflow:hidden; }
 .hero-sheet { display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
 .paper-scene figcaption { position:absolute; bottom:0; left:0; right:0; padding:13px 20px; background:#ffffffd9; display:flex; justify-content:space-between; font-size:9px; color:var(--muted); }
@@ -74,6 +85,7 @@
 .wallet-chapter h2 em { color:white; }.wallet-chapter .section-index { color:#d6ddff; }
 .wallet-chapter p:not(.section-index) { max-width:420px; margin:26px 0 32px; color:#e0e6ff; font-size:14px; line-height:1.7; }
 .wallet-chapter .btn { background:white; color:var(--primary); border-color:white; }
+.wallet-chapter .wallet-topup-button { display:flex; width:fit-content; max-width:100%; margin:0; }
 .wallet-art { padding:24px; }.wallet-art-card { border:1px solid #ffffff60; border-radius:18px; padding:28px; transform:rotate(-6deg); box-shadow:20px 20px 0 #ffffff0a; display:flex; flex-direction:column; min-height:280px; }
 .wallet-art-card>span,.wallet-art-card small { font-size:10px; letter-spacing:.1em; }
 .wallet-art-card>.ui-icon { margin:24px 0 12px; width:30px; height:30px; }

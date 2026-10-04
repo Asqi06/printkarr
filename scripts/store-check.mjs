@@ -1,7 +1,11 @@
 // One runnable check for the commerce flow: node scripts/store-check.mjs [--browser].
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, utimesSync, existsSync, rmSync, mkdtempSync } from 'node:fs';
+import nodePath from 'node:path';
+import { tmpdir } from 'node:os';
+import { saveDb } from '../lib/db.js';
+import { janitor } from '../lib/janitor.js';
 import { cartFor, setQuantity, addPrint, cartQuote, createPurchase, confirmPurchase, cancelPurchase, availableStock, saveProduct, checkPackQuota } from '../lib/store.js';
 import { previewDb, createStorePreview, couponPolicy } from './store-preview.mjs';
 import { walletOf, topupTerms, applyTopup, settleWallets, deliveryPlan } from '../lib/campus.js';
@@ -125,20 +129,68 @@ try {
   assert.equal(fixture.snapshot().purchases[0].status,'DELIVERED','Whole-basket fulfilment works');
   assert.equal((await request('/admin/catalogue',{name:'Owner supplied file',category:'Files',price:'149',stock:'5',colors:'orange, green, red, yellow',active:'on',demo:'on'})).status,302);
   assert.equal(fixture.snapshot().products.at(-1).name,'Owner supplied file');assert.deepEqual(fixture.snapshot().products.at(-1).colors,['orange','green','red','yellow']);
+  const png = readFileSync('public/favicon-32x32.png');
+  async function uploadPhoto(bytes, filename, fields = {}, headers = {}) {
+    const form = new FormData();
+    for (const [key, value] of Object.entries({name:'Photo product',category:'Files',price:'25',stock:'5',active:'on',...fields})) form.set(key,value);
+    form.set('photo',new Blob([bytes]),filename);
+    return fetch(base+'/admin/catalogue',{method:'POST',body:form,headers:{Cookie:cookie,...headers},redirect:'manual'});
+  }
+  const beforePhotos=fixture.snapshot().products.length;
+  assert.equal((await uploadPhoto(png,'photo.png',{}, {Cookie:'preview_role=customer'})).status,403);
+  assert.equal((await uploadPhoto(png,'photo.png',{}, {Origin:'https://evil.example'})).status,403);
+  for (const [bytes, name] of [[Buffer.from('<svg></svg>'),'image.svg'],[Buffer.from('MZ-not-a-photo'),'image.jpg'],[png,'program.exe'],[Buffer.alloc(0),'empty.png'],[Buffer.alloc(5*1024*1024+1),'big.png']]) assert.equal((await uploadPhoto(bytes,name)).status,400,`Reject ${name}`);
+  assert.equal((await uploadPhoto(png,'photo.png',{price:'-1'})).status,400);
+  assert.equal(fixture.snapshot().products.length,beforePhotos,'Invalid uploads never create a product');
+  assert.equal((await uploadPhoto(png,'photo.PNG',{image:'https://ignored.example/fake.png'})).status,302);
+  const product=fixture.snapshot().products.at(-1),image=product.image;
+  assert.match(image,/^\/product-images\/store-[a-f0-9-]{36}\.png$/);
+  const photoResponse=await request(image);assert.equal(photoResponse.status,200);assert.match(photoResponse.headers.get('content-type'),/image\/png/);
+  assert.deepEqual(Buffer.from(await photoResponse.arrayBuffer()),png,'The uploaded photo is publicly served unchanged');
+  assert.equal((await request('/admin/catalogue',{id:product.id,name:'Edited photo product',category:'Files',price:25,stock:5,active:'on',image:'https://ignored.example/replacement.png'})).status,302);
+  assert.equal(fixture.snapshot().products.at(-1).image,image,'Editing without a file retains the current photo');
+  assert.equal((await uploadPhoto(png,'replacement.png',{id:product.id})).status,302);
+  const replacement=fixture.snapshot().products.at(-1).image;
+  assert.notEqual(replacement,image);assert.equal((await request(image)).status,404,'Replaced photos are no longer public');
+  assert.equal((await request('/product-images/PK-ACTIVE.pdf')).status,404,'Print documents cannot be served as product photos');
+  const retentionRoot=mkdtempSync(nodePath.join(tmpdir(),'printkarr-store-retention-')),uploads=nodePath.join(retentionRoot,'data','uploads'),dbFile=nodePath.join(retentionRoot,'db.json');
+  try {
+    mkdirSync(uploads,{recursive:true});
+    for(const url of [image,replacement]){const file=nodePath.join(uploads,nodePath.basename(url));writeFileSync(file,png);utimesSync(file,new Date(Date.now()-2*864e5),new Date(Date.now()-2*864e5));}
+    saveDb({...previewDb(true),products:[fixture.snapshot().products.at(-1)]},dbFile);
+    assert.equal(janitor(retentionRoot,15,dbFile),1);
+    assert.ok(existsSync(nodePath.join(uploads,nodePath.basename(replacement))),'Current product photos survive document cleanup');
+    assert.ok(!existsSync(nodePath.join(uploads,nodePath.basename(image))),'Replaced photos are cleaned after 24 hours');
+  } finally {rmSync(retentionRoot,{recursive:true,force:true});}
+  console.log('Product photo checks passed: local upload, authentication, origin, signatures, size, public delivery, edit retention and orphan cleanup.');
   console.log('HTTP checks passed: origin and role guards, native cart/quote/checkout, server totals, wallet replay, bound captured gateway payment and replay.');
-} finally { await new Promise(resolve=>server.close(resolve)); }
+} finally { await new Promise(resolve=>server.close(resolve)); rmSync(fixture.uploadsDir,{recursive:true,force:true}); }
 
 if (process.argv.includes('--browser')) {
   const {default:puppeteer}=await import('puppeteer-core');
   const preview=createStorePreview(),browserServer=await new Promise(resolve=>{const s=preview.app.listen(0,'127.0.0.1',()=>resolve(s));});
   const url=`http://127.0.0.1:${browserServer.address().port}`;
   const browser=await puppeteer.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
-  const errors=[];mkdirSync('docs/store-preview',{recursive:true});
+  const errors=[];mkdirSync('docs/store-preview',{recursive:true});mkdirSync('docs/shop-discovery-preview',{recursive:true});
   try {
     for(const width of [320,390,1440]) {
       preview.reset();
       const context=await browser.createBrowserContext(),page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
       await page.setViewport({width,height:1000});await page.emulateMediaFeatures([{name:'prefers-reduced-motion',value:'reduce'}]);
+      await page.goto(url+'/',{waitUntil:'networkidle0'});
+      if(await page.$('[data-wallet-prompt][open]')) await page.click('.wallet-prompt-close');
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Home overflow at ${width}`);
+      assert.equal(await page.$eval('.hero-shop-link',e=>e.getAttribute('href')),'/stationery');
+      assert.equal(await page.$eval('.home-stationery .btn',e=>e.getAttribute('href')),'/stationery');
+      const aligned=await page.evaluate(()=>{const button=document.querySelector('.wallet-topup-button').getBoundingClientRect(),copy=document.querySelector('.wallet-chapter h2').getBoundingClientRect();return Math.abs(button.left-copy.left)<2;});
+      assert.ok(aligned,`Wallet button aligned with copy at ${width}`);
+      await page.screenshot({path:`docs/shop-discovery-preview/home-${width}.png`});
+      await page.$('.home-stationery').then(e=>e.screenshot({path:`docs/shop-discovery-preview/promo-${width}.png`}));
+      await page.$('.wallet-chapter').then(e=>e.screenshot({path:`docs/shop-discovery-preview/wallet-${width}.png`}));
+      if(width<760) {
+        assert.ok(await page.$eval('.customer-mobile-nav a[href="/stationery"]',e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44&&getComputedStyle(e).display!=='none';}),'Stationery is visible with a usable touch target');
+        await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('.customer-mobile-nav a[href="/stationery"]')]);assert.ok(page.url().endsWith('/stationery'));
+      }
       await page.goto(url+'/stationery',{waitUntil:'networkidle0'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Shop overflow at ${width}`);
       await page.screenshot({path:`docs/store-preview/shop-${width}.png`,fullPage:true});
       await page.type('[data-product-search]','file');assert.equal(await page.$$eval('[data-product]',els=>els.filter(e=>!e.hidden).length),1);
@@ -153,8 +205,19 @@ if (process.argv.includes('--browser')) {
       await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('.receipt-actions button.loud')]);assert.match(await page.$eval('.store-status',e=>e.textContent),/PAID/);
       await page.screenshot({path:`docs/store-preview/receipt-${width}.png`,fullPage:true});
       await page.goto(url+'/preview/role/admin',{waitUntil:'networkidle0'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Admin overflow at ${width}`);
-      await page.screenshot({path:`docs/store-preview/admin-${width}.png`,fullPage:true});await context.close();
+      await page.screenshot({path:`docs/store-preview/admin-${width}.png`,fullPage:true});
+      assert.equal(await page.$('#product-image'),null,'The catalogue uses a local file picker');
+      await page.type('#product-name','Uploaded photo notebook');await page.type('#product-category','Notebooks');await page.type('#product-price','30');await page.type('#product-stock','8');
+      const input=await page.$('#product-photo');await input.uploadFile(nodePath.resolve('public/favicon-32x32.png'));
+      await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('form[action="/admin/catalogue"] button[type="submit"]')]);
+      const uploaded=preview.snapshot().products.at(-1);assert.match(uploaded.image,/^\/product-images\//);
+      await page.goto(url+'/admin/catalogue?edit='+uploaded.id,{waitUntil:'networkidle0'});
+      assert.ok(await page.$eval('.catalogue-photo',e=>e.complete&&e.naturalWidth>0),'Saved photo loads in the product editor');
+      await page.goto(url+'/preview/role/customer',{waitUntil:'networkidle0'});
+      assert.ok(await page.$eval('[data-product] img[src^="/product-images/"]',e=>e.complete&&e.naturalWidth>0),'Uploaded photo loads in the storefront');
+      if(width<760){await page.goto(url+'/customer/profile',{waitUntil:'networkidle0'});assert.ok(await page.$eval('.snav a[href="/stationery"]',e=>getComputedStyle(e).display!=='none'),'Stationery visible in account mobile navigation');}
+      await context.close();
     }
-    assert.deepEqual(errors,[]);console.log('Browser checks passed at 320, 390 and 1440px: search, red-file selection, AJAX add, demo print, shared cart, discounted progress, payment and admin layout.');
-  } finally {await browser.close();await new Promise(resolve=>browserServer.close(resolve));}
+    assert.deepEqual(errors,[]);console.log('Browser checks passed at 320, 390 and 1440px: visible stationery navigation, homepage promotion, aligned wallet button, local photo upload and display, plus shared cart checkout.');
+  } finally {await browser.close();await new Promise(resolve=>browserServer.close(resolve));rmSync(preview.uploadsDir,{recursive:true,force:true});}
 }

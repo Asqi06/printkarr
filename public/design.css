@@ -401,11 +401,11 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
   .app-workspace .main .grid { margin-top: 16px; }
   .app-sidebar > .eyebrow, .sidebar-print, .sidebar-website { display: none; }
   .customer-mobile-nav, .app-customer .app-sidebar { display: block; position: fixed; inset: auto 12px calc(10px + env(safe-area-inset-bottom)); z-index: 85; padding: 5px; border: 1px solid var(--line); border-radius: 16px; background: white; box-shadow: 0 4px 28px #14203b14; min-height: 0; }
-  .customer-mobile-nav, .app-customer .app-sidebar .snav { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 2px; margin: 0; padding: 0; }
+  .customer-mobile-nav, .app-customer .app-sidebar .snav { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 2px; margin: 0; padding: 0; }
   .customer-mobile-nav { padding: 5px; }
   .customer-mobile-nav a, .app-customer .snav a { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 56px; gap: 5px; padding: 6px 1px; border: 0; border-radius: 10px; text-align: center; font-size: 10px; line-height: 1.2; font-weight: 500; color: var(--muted); text-decoration: none; white-space: normal; }
   .customer-mobile-nav a[aria-current], .customer-mobile-nav a:hover, .app-customer .snav a.live { color: var(--primary); background: var(--pale); }
-  .app-customer .snav a:nth-child(n+6) { display: none; }
+  .app-customer .snav a:nth-child(n+7) { display: none; }
   body:has(.customer-mobile-nav) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   .app-admin .app-sidebar { position: sticky; top: 72px; z-index: 65; padding: 6px 16px; border: 0; border-bottom: 1px solid var(--line); background: white; min-height: 0; }
   .app-admin .snav { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; margin: 0; }
