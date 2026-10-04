@@ -396,16 +396,35 @@ app.post('/logout', (req, res) => {
 });
 
 // ---- Admin (§26–§37) ----
-function validateCoupon(db, code, subtotal) {
+function couponOrder(db, code, customerId) {
+  const matches = (db.orders || []).filter((o) => o.customerId === customerId && o.couponDiscount > 0 && String(o.couponCode || '').trim().toUpperCase() === String(code).trim().toUpperCase());
+  // Paid/refunded use wins; otherwise the oldest open order reserves the code.
+  // Unpaid customer cancellations also say "refunded", but have no payment method or confirmation.
+  return matches.find((o) => ['paid', 'demo'].includes(o.paymentStatus) || o.paymentStatus === 'refunded' && (o.paymentMethod || o.history?.some((h) => h.to === 'CONFIRMED')))
+    || matches.find((o) => !['CANCELLED', 'PAYMENT_FAILED', 'REFUNDED'].includes(o.status));
+}
+
+function validateCoupon(db, code, subtotal, customerId) {
   const c = (db.coupons || []).find((x) => x.code === String(code || '').trim().toUpperCase());
   if (!c) return { ok: false, error: 'Unknown code.' };
   if (!c.active) return { ok: false, error: 'Code disabled.' };
   if (c.expiry && c.expiry < new Date().toISOString().slice(0, 10)) return { ok: false, error: 'Code expired.' };
+  if (couponOrder(db, c.code, customerId)) return { ok: false, error: 'You have already used this coupon or reserved it on another order. Each coupon can be used once per customer.' };
   if (subtotal < (c.minOrder || 0)) return { ok: false, error: `Needs ₹${c.minOrder}+ order.` };
   const discount = c.type === 'percent'
     ? Math.round((subtotal * c.value) / 100 * 100) / 100
     : Math.min(c.value, subtotal);
   return { ok: true, discount, code: c.code };
+}
+
+function couponOnce(req, res, next) {
+  const user = req.user || currentUser(req), db = loadDb();
+  const order = db.orders.find((o) => o.id === (req.params.id || req.body.orderId) && o.customerId === user?.id);
+  if (['CREATED', 'PAYMENT_PENDING'].includes(order?.status) && order.couponDiscount > 0 && couponOrder(db, order.couponCode, order.customerId)?.id !== order.id) {
+    const error = 'This coupon has already been used or reserved on another order. Please place this order without it.';
+    return req.path.startsWith('/api/') ? res.status(409).json({ error }) : res.status(409).send(oops(user, `/customer/orders/${order.id}`, error));
+  }
+  next();
 }
 
 const isDemoUser = (u) => u && String(u.email||'').toLowerCase().endsWith('@demo.printkarr.in');
@@ -1094,7 +1113,8 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   });
   let couponCode = null, couponDiscount = 0;
   if (!packCover && req.body.coupon && String(req.body.coupon).trim()) {
-    const vc = validateCoupon(db, req.body.coupon, q.subtotal);
+    const vc = validateCoupon(db, req.body.coupon, q.subtotal, req.user.id);
+    if (!vc.ok) return res.status(400).send(oops(req.user, `/customer/orders/new/summary?draft=${encodeURIComponent(d.id)}`, esc(vc.error)));
     if (vc.ok) { couponCode = vc.code; couponDiscount = Math.min(vc.discount, q.subtotal - offers.print); }
   }
   let referralCode = null, referralDiscount = 0;
@@ -1168,7 +1188,7 @@ app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   res.send(payStep({ ...req.user, walletBalance: w.balance }, o, { razorpay: gatewayOn(), waUrl, walletTopup: top, livePay: livePayFor(db), testPrintsLeft, offers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db, req.user.id) : [], bonusValidityDays: campaignConfig(db).bonusValidityDays }));
 });
 
-app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
+app.post('/customer/orders/:id/pay', requireRole('customer'), couponOnce, (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
@@ -1213,7 +1233,7 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
 });
 
 // Capped owner test prints use a separate payment status so they never count as sales.
-app.post('/customer/orders/:id/demo-pay', requireRole('customer'), (req, res) => {
+app.post('/customer/orders/:id/demo-pay', requireRole('customer'), couponOnce, (req, res) => {
   const db = loadDb();
   const tester = db.users.find((u) => u.id === req.user.id);
   const o = db.orders.find(x => x.id === req.params.id && x.customerId === req.user.id);
@@ -2119,7 +2139,7 @@ app.get('/api/ready', (_req, res) => {
 });
 
 // Razorpay: create a gateway order for a payable customer order.
-app.post('/api/razorpay/order', apiLimiter, async (req, res) => {
+app.post('/api/razorpay/order', apiLimiter, couponOnce, async (req, res) => {
   const user = currentUser(req);
   if (!user) return res.status(401).json({ error: 'Not signed in.' });
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
@@ -2227,7 +2247,7 @@ app.post('/customer/wallet/topup-verify', requireRole('customer'), (req, res) =>
 });
 
 // Razorpay: verify signature, then confirm exactly like a normal payment.
-app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), (req, res) => {
+app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), couponOnce, (req, res) => {
   if (!(RAZORPAY.id && RAZORPAY.secret)) {
     return res.status(503).send(oops(req.user, '/customer/orders', 'Online payment <em>not configured.</em>'));
   }

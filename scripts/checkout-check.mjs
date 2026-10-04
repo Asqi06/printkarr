@@ -24,8 +24,8 @@ function handler(method, route, extra = {}) {
   assert.ok(start>=0,route);
   const pricing = readFileSync(new URL('../lib/pricing.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ','');
   const quote = runInNewContext(pricing+'\nquote;', {loadDb:()=>db,Intl,Date,Set,Number});
-  runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(start,end), {
-    app:{[method](...args){result=args.at(-1);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
+  runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+source.slice(start,end), {
+    app:{[method](...args){result=args.at(-1);result.middleware=args.slice(1,-1).filter(Boolean);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
     loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, batchPrice, deliveryFeeFor, deliveryPoint, quote, rangePages,
     normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload,
     fs:{copyFileSync(){throw new Error('Expired file');},readFileSync:()=>pdf},
@@ -79,7 +79,37 @@ assert.equal(walletPrompt(campaignConfig(db),eligibleWalletOffers(db,'A'),1000),
 const repeat=response();handler('post','/customer/orders/:id/reorder')({user,params:{id:own.id}},repeat);assert.equal(repeat.url,'/customer/orders/new?repeat=PK-1024');
 const uploaded=response();handler('post','/customer/orders/new/upload')({user,file:{size:pdf.length,originalname:'Updated.pdf',path:'fixture',filename:'new.pdf'},body:{repeat:own.id}},uploaded);
 const newDraft=db.drafts.at(-1);assert.equal(newDraft.selections.copies,2);assert.equal(newDraft.selections.printType,'color');assert.equal(newDraft.pages,1);assert.equal(newDraft.selections.range,undefined,'New file must not inherit stale page ranges');
-console.log('Checkout checks passed: route limits/cutoffs, preserved settings, wallet ownership, signed top-up return and replay prevention.');
+// Coupon reservations and prior use are derived from existing orders, including legacy orders.
+const couponDb=blankDb();couponDb.coupons=[{code:'SAVE',type:'fixed',value:10,minOrder:20,active:true,expiry:'2099-12-31'},{code:'NEXT',type:'percent',value:10,active:true}];
+const coupons=runInNewContext(source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n({validateCoupon});');
+assert.equal(coupons.validateCoupon(couponDb,' save ',100,'A').discount,10);
+assert.equal(coupons.validateCoupon(couponDb,'SAVE',10,'A').ok,false);
+const claimed={id:'first-order',customerId:'A',couponCode:' save ',couponDiscount:10,paymentStatus:'pending',paymentMethod:null,status:'CREATED',history:[{to:'CREATED'}]};
+couponDb.orders.push(claimed,{...claimed,id:'legacy-duplicate'});
+assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'A').ok,false);
+assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'B').ok,true);
+assert.equal(coupons.validateCoupon(couponDb,'NEXT',100,'A').ok,true);
+for(const route of ['/customer/orders/:id/pay','/customer/orders/:id/demo-pay','/customer/orders/:id/razorpay-verify','/api/razorpay/order']) {
+  const middleware=handler('post',route,{loadDb:()=>couponDb}).middleware.find(fn=>fn.name==='couponOnce');assert.ok(middleware,route);
+  const request={user,params:{id:'legacy-duplicate'},body:{orderId:'legacy-duplicate'},path:route};let allowed=false;
+  const denied=response();middleware(request,denied,()=>allowed=true);assert.equal(denied.code,409);assert.equal(allowed,false);
+  const ownRequest={...request,params:{id:claimed.id},body:{orderId:claimed.id}};middleware(ownRequest,response(),()=>allowed=true);assert.equal(allowed,true);
+}
+couponDb.orders=[claimed];claimed.status='CANCELLED';claimed.paymentStatus='refunded';
+assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'A').ok,true,'Cancelling an unpaid order releases its reservation');
+claimed.status='PAYMENT_FAILED';claimed.paymentStatus='pending';assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'A').ok,true);
+claimed.status='PRINT_QUEUE';claimed.paymentStatus='paid';claimed.paymentMethod='wallet';
+assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'A').ok,false);
+claimed.status='CANCELLED';claimed.paymentStatus='refunded';assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'A').ok,false,'Refunds do not reset a paid coupon');
+claimed.paymentMethod=null;claimed.history.push({to:'CONFIRMED'});assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'A').ok,false,'Legacy confirmed history preserves paid usage');
+couponDb.orders=JSON.parse(JSON.stringify(couponDb.orders));assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'A').ok,false);
+couponDb.coupons[0].active=false;assert.equal(coupons.validateCoupon(couponDb,'SAVE',100,'B').ok,false);couponDb.coupons[0].active=true;
+const couponDraft={id:'coupon-draft',customerId:'A',stored:'fixture.pdf',pages:12,selections:{effPages:12,copies:1,printType:'color',sides:'single',zone:'vapi',zoneLabel:'Vapi',deliveryMode:'express',deliveryPoint:point}};
+couponDb.drafts=[couponDraft];let moved=0;
+const place=handler('post','/customer/orders/new/place',{loadDb:()=>couponDb,nextOrderId:()=> 'PK-COUPON',parseCookies:()=>({}),coverFor:()=>null,firstOffers:()=>({print:0,delivery:0}),fs:{renameSync(){moved++;}}});
+const rejected=response();place({user,body:{draft:couponDraft.id,coupon:'SAVE'},headers:{}},rejected);assert.equal(rejected.code,400);assert.match(rejected.body,/already used/);assert.equal(couponDb.drafts.length,1);assert.equal(moved,0);
+couponDraft.customerId='B';const accepted=response();place({user:{...user,id:'B'},body:{draft:couponDraft.id,coupon:'SAVE'},headers:{}},accepted);assert.equal(accepted.url,'/customer/orders/PK-COUPON/pay');assert.equal(couponDb.orders.at(-1).couponDiscount,10);assert.equal(moved,1);
+console.log('Checkout checks passed: route limits/cutoffs, preserved settings, wallet ownership, signed top-up return, file gifts and one coupon use per customer across all payment routes.');
 if(process.argv.includes('--browser')) {
   const {default:puppeteer}=await import('puppeteer-core');
   const browser=await puppeteer.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true,args:['--no-sandbox']});
