@@ -110,7 +110,9 @@ const couponDraft={id:'coupon-draft',customerId:'A',stored:'fixture.pdf',pages:1
 couponDb.drafts=[couponDraft];let moved=0;
 const place=handler('post','/customer/orders/new/place',{loadDb:()=>couponDb,nextOrderId:()=> 'PK-COUPON',parseCookies:()=>({}),coverFor:()=>null,firstOffers:()=>({print:0,delivery:0}),fs:{renameSync(){moved++;}}});
 const rejected=response();place({user,body:{draft:couponDraft.id,coupon:'SAVE'},headers:{}},rejected);assert.equal(rejected.code,400);assert.match(rejected.body,/already used/);assert.equal(couponDb.drafts.length,1);assert.equal(moved,0);
-couponDraft.customerId='B';const accepted=response();place({user:{...user,id:'B'},body:{draft:couponDraft.id,coupon:'SAVE'},headers:{}},accepted);assert.equal(accepted.url,'/cart');assert.equal(couponDb.orders.at(-1).couponDiscount,10);assert.equal(moved,1);assert.ok(couponDb.carts.find(c=>c.customerId==='B').printIds.includes('PK-COUPON'));
+couponDraft.customerId='B';couponDb.coupons[0].influencer='@riya';const accepted=response();place({user:{...user,id:'B'},body:{draft:couponDraft.id,coupon:'SAVE',influencer:'spoofed'},headers:{}},accepted);assert.equal(accepted.url,'/cart');assert.equal(couponDb.orders.at(-1).couponDiscount,10);assert.equal(moved,1);assert.ok(couponDb.carts.find(c=>c.customerId==='B').printIds.includes('PK-COUPON'));
+assert.equal(couponDb.orders.at(-1).influencer,'@riya','Print attribution comes from the coupon, never customer input');
+assert.equal(couponDb.referrals.length,0,'Influencer coupon does not create a friend referral');
 console.log('Checkout checks passed: route limits/cutoffs, preserved settings, wallet ownership, signed top-up return, file gifts and one coupon use per customer across all payment routes.');
 if(process.argv.includes('--browser')) {
   const {default:puppeteer}=await import('puppeteer-core');

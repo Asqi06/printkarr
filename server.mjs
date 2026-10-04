@@ -15,6 +15,7 @@ import { transition, canTransition, nextStates, printedAt } from './lib/machine.
 import { quote, rangePages, activePrintJobs, surchargeFees, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
 import { notifyState, runNotificationJobs } from './lib/notify.js';
 import { installNotificationRoutes } from './lib/notify_routes.js';
+import { influencerStats } from './lib/influencers.js';
 import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, normEmail } from './lib/otp.js';
 import { janitor } from './lib/janitor.js';
 import {
@@ -409,9 +410,9 @@ function couponOrder(db, code, customerId) {
 
 function validateCoupon(db, code, subtotal, customerId, reservingId) {
   const used = couponOrder(db, code, customerId);
-  if (reservingId && used?.id === reservingId) return { ok: true, code: used.couponCode, discount: used.couponDiscount };
+  if (reservingId && used?.id === reservingId) return { ok: true, code: used.couponCode, discount: used.couponDiscount, influencer: used.influencer || null };
   const c = (db.coupons || []).find((x) => x.code === String(code || '').trim().toUpperCase());
-  if (!c) return { ok: false, error: 'Unknown code.' };
+  if (!c) return { ok: false, error: (db.users || []).some((u) => u.referralCode === String(code || '').trim().toUpperCase()) ? "This is a friend's referral code. Use the referral field, not the coupon field." : 'Unknown code.' };
   if (!c.active) return { ok: false, error: 'Code disabled.' };
   if (c.expiry && c.expiry < new Date().toISOString().slice(0, 10)) return { ok: false, error: 'Code expired.' };
   if (used) return { ok: false, error: 'You have already used this coupon or reserved it on another order. Each coupon can be used once per customer.' };
@@ -419,7 +420,7 @@ function validateCoupon(db, code, subtotal, customerId, reservingId) {
   const discount = c.type === 'percent'
     ? Math.round((subtotal * c.value) / 100 * 100) / 100
     : Math.min(c.value, subtotal);
-  return { ok: true, discount, code: c.code };
+  return { ok: true, discount, code: c.code, influencer: c.influencer || null };
 }
 
 function couponOnce(req, res, next) {
@@ -667,31 +668,38 @@ app.post('/admin/pricing', requireRole('admin'), (req, res) => {
 });
 
 app.get('/admin/coupons', requireRole('admin'), (req, res) => {
-  res.send(couponsPage(req.user, loadDb().coupons || []));
+  const db = loadDb();
+  res.set('Referrer-Policy', 'strict-origin');
+  res.send(couponsPage(req.user, db.coupons || [], influencerStats(db)));
 });
 
-app.post('/admin/coupons', requireRole('admin'), (req, res) => {
+app.post('/admin/coupons', requireRole('admin'), siteOrigin, (req, res) => {
   const db = loadDb();
-  const code = String(req.body.code || '').trim().toUpperCase().slice(0, 20);
+  const code = String(req.body.code || '').trim().toUpperCase();
+  const influencer = String(req.body.influencer || '').trim();
   const value = Number(req.body.value);
+  const minOrder = Number(req.body.minOrder || 0);
+  const expiry = String(req.body.expiry || '2099-12-31');
   const type = req.body.type === 'fixed' ? 'fixed' : 'percent';
-  if (!/^[A-Z0-9]{3,20}$/.test(code) || !(value > 0) || (db.coupons || []).some((c) => c.code === code)) {
+  if (!/^[A-Z0-9]{3,20}$/.test(code) || !Number.isFinite(value) || !(value > 0) || (db.coupons || []).some((c) => c.code === code)) {
     return res.status(400).send(oops(req.user, '/admin/coupons', 'Bad or duplicate <em>code.</em>'));
   }
+  if (db.users.some((u) => String(u.referralCode || '').toUpperCase() === code)) return res.status(400).send(oops(req.user, '/admin/coupons', 'That code belongs to <em>Refer &amp; Earn.</em> Choose a different coupon code.'));
+  if (influencer.length > 80 || !Number.isFinite(minOrder) || minOrder < 0 || !/^\d{4}-\d{2}-\d{2}$/.test(expiry) || !Number.isFinite(Date.parse(expiry)) || new Date(expiry).toISOString().slice(0, 10) !== expiry) return res.status(400).send(oops(req.user, '/admin/coupons', 'Check the influencer name (up to 80 characters), minimum order and <em>expiry date.</em>'));
   if (type === 'percent' && value > 100) return res.status(400).send(oops(req.user, '/admin/coupons', 'Percent must be <em>≤100.</em>'));
   if (type === 'fixed' && value > 500) return res.status(400).send(oops(req.user, '/admin/coupons', 'Fixed discount max <em>₹500.</em>'));
   db.coupons ||= [];
   db.coupons.push({
     code, type,
     value: Math.round(value * 100) / 100,
-    minOrder: Math.max(0, Number(req.body.minOrder) || 0),
-    expiry: req.body.expiry || '2099-12-31', active: true
+    minOrder, influencer: influencer || null,
+    expiry, active: true
   });
   saveDb(db);
   res.redirect('/admin/coupons');
 });
 
-app.post('/admin/coupons/toggle', requireRole('admin'), (req, res) => {
+app.post('/admin/coupons/toggle', requireRole('admin'), siteOrigin, (req, res) => {
   const db = loadDb();
   const c = (db.coupons || []).find((x) => x.code === req.body.code);
   if (c) c.active = !c.active;
@@ -1129,11 +1137,11 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     pages: s.effPages, copies: s.copies, printType: s.printType, rate: q.rate,
     zone: s.zone, deliveryFee: q.deliveryFee, subtotal: q.subtotal, packDiscount
   });
-  let couponCode = null, couponDiscount = 0;
+  let couponCode = null, couponDiscount = 0, influencer = null;
   if (!packCover && req.body.coupon && String(req.body.coupon).trim()) {
     const vc = validateCoupon(db, req.body.coupon, q.subtotal, req.user.id);
     if (!vc.ok) return res.status(400).send(oops(req.user, `/customer/orders/new/summary?draft=${encodeURIComponent(d.id)}`, esc(vc.error)));
-    if (vc.ok) { couponCode = vc.code; couponDiscount = Math.min(vc.discount, q.subtotal - offers.print); }
+    if (vc.ok) { couponCode = vc.code; couponDiscount = Math.min(vc.discount, q.subtotal - offers.print); influencer = vc.influencer || null; }
   }
   let referralCode = null, referralDiscount = 0;
   const refIn = String(req.body.referral || '').trim().toUpperCase().slice(0, 12);
@@ -1151,7 +1159,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
-    couponCode, couponDiscount, packSubId: packCover ? packCover.id : null, packDiscount,
+    couponCode, couponDiscount, influencer, packSubId: packCover ? packCover.id : null, packDiscount,
     firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
     offerDevice: parseCookies(req.headers.cookie).pk_offer_device || null,
     campus: plan.campus || (s.zone === 'pickup' ? 'LIT Sarigam' : null),

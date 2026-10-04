@@ -23,6 +23,10 @@ Customers can enable reminder/offer emails and change website reminder preferenc
 
 Run `node --test lib/notify.test.js` for notification scheduling, delivery and access checks. Tests use an isolated in-memory database and a fake mailer.
 
+Influencer coupons use the existing checkout coupon field. At `/admin/coupons`, add an optional influencer name/handle when creating a code (leave it blank for regular offers). Use the same name for multiple codes belonging to one influencer. The performance table shows unique paying customers, new customers, paid checkouts, net sales, coupon discounts and cancelled/refunded checkouts. Attribution is saved on orders and shared baskets; unpaid reservations and preview/demo payments do not count, refunds remove active conversions, and a shared basket is counted once per influencer. Print-level coupons attribute only the print's paid value; cart coupons attribute the basket. This tracks coupon redemptions, not visits or logins. New customers are identified by their first successful paid checkout.
+
+Influencer coupons do not create friend referrals or award referral wallet credit. Friend codes stay in the separate referral field, and existing Refer & Earn eligibility and rewards still apply. New coupon and referral codes cannot collide. The existing one-use-per-customer coupon rule and prohibition on adding a cart coupon over a print coupon remain in place. No influencer commission or payout system is added. Run `node --test lib/influencers.test.js` for the attribution and coexistence checks.
+
 ## Demo accounts (`/login`)
 
 | Role | Email | Password |
