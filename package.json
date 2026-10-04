@@ -16,6 +16,8 @@
     "test": "node --test agent/print-settings.test.js lib/machine.test.js lib/packs.test.js lib/referrals.test.js lib/campus.test.js lib/kiosk.test.js lib/collect.test.js lib/files.test.js lib/db.test.js lib/owner-test.test.js agent/instance-lock.test.js lib/reviews.test.js",
     "test:design": "node scripts/design-check.mjs",
     "test:checkout": "node scripts/checkout-check.mjs",
+    "test:store": "node scripts/store-check.mjs",
+    "preview:store": "node scripts/store-preview.mjs",
     "test:seo": "node scripts/seo-check.mjs",
     "agent:install": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1",
     "agent:status": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1 -Mode Status",

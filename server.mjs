@@ -23,6 +23,8 @@ import {
 import { layout, esc, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
 import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
+import { addPrint, cartFor, checkPackQuota } from './lib/store.js';
+import { installStoreRoutes } from './lib/store_routes.js';
 import { customerDashboard, ordersList, orderDetail, scanPage } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { canUseOwnerTestPrint } from './lib/owner-test.js';
@@ -397,19 +399,21 @@ app.post('/logout', (req, res) => {
 
 // ---- Admin (§26–§37) ----
 function couponOrder(db, code, customerId) {
-  const matches = (db.orders || []).filter((o) => o.customerId === customerId && o.couponDiscount > 0 && String(o.couponCode || '').trim().toUpperCase() === String(code).trim().toUpperCase());
+  const matches = [...(db.orders || []), ...(db.purchases || [])].filter((o) => o.customerId === customerId && o.couponCode && String(o.couponCode).trim().toUpperCase() === String(code).trim().toUpperCase());
   // Paid/refunded use wins; otherwise the oldest open order reserves the code.
   // Unpaid customer cancellations also say "refunded", but have no payment method or confirmation.
   return matches.find((o) => ['paid', 'demo'].includes(o.paymentStatus) || o.paymentStatus === 'refunded' && (o.paymentMethod || o.history?.some((h) => h.to === 'CONFIRMED')))
     || matches.find((o) => !['CANCELLED', 'PAYMENT_FAILED', 'REFUNDED'].includes(o.status));
 }
 
-function validateCoupon(db, code, subtotal, customerId) {
+function validateCoupon(db, code, subtotal, customerId, reservingId) {
+  const used = couponOrder(db, code, customerId);
+  if (reservingId && used?.id === reservingId) return { ok: true, code: used.couponCode, discount: used.couponDiscount };
   const c = (db.coupons || []).find((x) => x.code === String(code || '').trim().toUpperCase());
   if (!c) return { ok: false, error: 'Unknown code.' };
   if (!c.active) return { ok: false, error: 'Code disabled.' };
   if (c.expiry && c.expiry < new Date().toISOString().slice(0, 10)) return { ok: false, error: 'Code expired.' };
-  if (couponOrder(db, c.code, customerId)) return { ok: false, error: 'You have already used this coupon or reserved it on another order. Each coupon can be used once per customer.' };
+  if (used) return { ok: false, error: 'You have already used this coupon or reserved it on another order. Each coupon can be used once per customer.' };
   if (subtotal < (c.minOrder || 0)) return { ok: false, error: `Needs ₹${c.minOrder}+ order.` };
   const discount = c.type === 'percent'
     ? Math.round((subtotal * c.value) / 100 * 100) / 100
@@ -420,7 +424,15 @@ function validateCoupon(db, code, subtotal, customerId) {
 function couponOnce(req, res, next) {
   const user = req.user || currentUser(req), db = loadDb();
   const order = db.orders.find((o) => o.id === (req.params.id || req.body.orderId) && o.customerId === user?.id);
-  if (['CREATED', 'PAYMENT_PENDING'].includes(order?.status) && order.couponDiscount > 0 && couponOrder(db, order.couponCode, order.customerId)?.id !== order.id) {
+  if (order && ['CREATED', 'PAYMENT_PENDING'].includes(order.status) && ((db.carts || []).some((c) => c.printIds.includes(order.id)) || (db.purchases || []).some((p) => p.status === 'CREATED' && p.printIds.includes(order.id)))) {
+    const error = 'This print is in a shared basket. Pay for the basket from your cart.';
+    return req.path.startsWith('/api/') ? res.status(409).json({ error }) : res.status(409).send(oops(user, '/cart', error));
+  }
+  if (order && ['CREATED', 'PAYMENT_PENDING'].includes(order.status)) {
+    try { checkPackQuota(db, [order]); }
+    catch (error) { return req.path.startsWith('/api/') ? res.status(409).json({ error: error.message }) : res.status(409).send(oops(user, `/customer/orders/${order.id}`, esc(error.message))); }
+  }
+  if (['CREATED', 'PAYMENT_PENDING'].includes(order?.status) && order.couponCode && couponOrder(db, order.couponCode, order.customerId)?.id !== order.id) {
     const error = 'This coupon has already been used or reserved on another order. Please place this order without it.';
     return req.path.startsWith('/api/') ? res.status(409).json({ error }) : res.status(409).send(oops(user, `/customer/orders/${order.id}`, error));
   }
@@ -498,7 +510,7 @@ app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
   // Kiosk counter QR: shown while the order awaits pickup so the customer
   // can scan it with their phone to confirm collection (Pi screen later).
   let collectQr = null;
-  if (o.status === 'READY_FOR_PICKUP' && (!o.deliveryZone || o.deliveryZone === 'pickup')) {
+  if (!o.purchaseId && o.status === 'READY_FOR_PICKUP' && (!o.deliveryZone || o.deliveryZone === 'pickup')) {
     try {
       collectQr = {
         url: collectUrl(req, collectTokenFor(db, o.id)),
@@ -527,6 +539,9 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   const o = db.orders.find((x) => x.id === req.params.id);
   if (!o) return res.status(404).send(oops(req.user, '/admin/orders', 'Order <em>not found.</em>'));
   const to = req.body.to;
+  if (o.purchaseId && ['PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(to)) return res.status(409).send(oops(req.user, `/admin/purchases/${o.purchaseId}`, 'Pack and fulfil all items together from the shared purchase.'));
+  if (['CANCELLED', 'REFUNDED'].includes(to) && o.purchaseId) return res.status(409).send(oops(req.user, `/admin/purchases/${o.purchaseId}`, 'Cancel and refund the whole shared purchase from its receipt.'));
+  if (['CANCELLED', 'REFUNDED'].includes(to) && (db.purchases || []).some((p) => p.status === 'CREATED' && p.printIds.includes(o.id))) return res.status(409).send(oops(req.user, '/admin/purchases', 'Cancel the shared checkout before changing this print.'));
   if (!canTransition(o.status, to) || to === 'RIDER_ASSIGNED') {
     return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>'));
   }
@@ -867,6 +882,7 @@ const ACTIVE = (o) => !['DELIVERED', 'REFUNDED', 'CANCELLED'].includes(o.status)
 // ---- Semester packs: quota unlocks at ₹199, printing covered per order ----
 function consumePackQuota(db, order) {
   if (!order.packSubId) return;
+  checkPackQuota(db, [order]);
   const sub = (db.packSubs || []).find((s) => s.id === order.packSubId && s.customerId === order.customerId);
   if (!sub) return;
   deductSides(sub, order.printType, (order.pages || 0) * (order.copies || 1));
@@ -1086,6 +1102,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.customerId === req.user.id);
   if (di < 0 || !db.drafts[di].selections) return res.redirect('/customer/orders/new');
   const d = db.drafts[di];
+  if ((db.carts || []).some((c) => c.customerId === req.user.id && c.purchaseId)) return res.status(409).send(oops(req.user, '/cart', 'Finish or cancel your current checkout before adding a print.'));
   const s = d.selections;
   let plan;
   try { plan = deliveryPlan(db, s.deliveryMode === 'scheduled' ? s.slotId : s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
@@ -1143,7 +1160,6 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   };
-  if (order.total < db.settings.order.minTotal) return res.status(400).send(oops(req.user, '/customer/orders/new', `Minimum order is ₹${db.settings.order.minTotal}.`));
   try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); }
   catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Upload the file again before <em>placing this order.</em>')); }
   db.orders.push(order);
@@ -1157,8 +1173,10 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     }
   }
   db.drafts.splice(di, 1);
+  const ownerTest = canUseOwnerTestPrint(req.user, order);
+  if (!ownerTest) { cartFor(db, req.user.id, parseCookies(req.headers.cookie).pk_cart); addPrint(db, req.user.id, order.id); }
   saveDb(db);
-  res.redirect(`/customer/orders/${id}/pay`);
+  res.redirect(ownerTest ? `/customer/orders/${id}/pay` : '/cart');
 });
 
 app.get('/customer/orders/:id/preview.pdf', requireRole('customer'), (req, res) => {
@@ -1178,6 +1196,12 @@ app.get('/customer/orders/:id/pay', requireRole('customer'), (req, res) => {
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   if (!['CREATED', 'PAYMENT_PENDING'].includes(o.status)) return res.redirect(`/customer/orders/${o.id}`);
+  const basket = (db.purchases || []).find((p) => p.status === 'CREATED' && p.printIds.includes(o.id));
+  if (basket) return res.redirect(`/customer/purchases/${basket.id}`);
+  if (!canUseOwnerTestPrint(req.user, o)) {
+    try { addPrint(db, req.user.id, o.id); saveDb(db); return res.redirect('/cart'); }
+    catch (error) { return res.status(409).send(oops(req.user, '/cart', esc(error.message))); }
+  }
   const w = walletOf(db, req.user.id);
   const waUrl = waForwardUrl(db, req, o);
   saveDb(db);
@@ -1305,6 +1329,8 @@ app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
+  if (o.purchaseId) return res.status(409).send(oops(req.user, `/customer/purchases/${o.purchaseId}`, 'Cancel the whole shared purchase from its receipt.'));
+  if ((db.purchases || []).some((p) => p.status === 'CREATED' && p.printIds.includes(o.id))) return res.status(409).send(oops(req.user, '/cart', 'Cancel the shared checkout before cancelling this print.'));
   try {
     transition(o, 'CANCELLED', { by: req.user.id });
   } catch {
@@ -1313,6 +1339,7 @@ app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
   refundPaidOrder(db, o);
   voidPendingForOrder(db, o.id);
   o.paymentStatus = 'refunded';
+  for (const cart of db.carts || []) cart.printIds = cart.printIds.filter((id) => id !== o.id);
   saveDb(db);
   notifyState(o);
   res.redirect(`/customer/orders/${o.id}`);
@@ -1867,6 +1894,8 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
 });
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
+installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon, notifyState, restorePackQuota, voidPendingForOrder, qualifyForOrder, gateway: RAZORPAY });
+
 app.use((err, req, res, _next) => {
   if (!err || !/multer|PDF, PNG or JPG|Only PDF|File too large/i.test(err.message)) throw err;
   const user = currentUser(req);
@@ -2083,6 +2112,7 @@ app.post('/c/:token/collect', (req, res) => {
     return res.status(410).send(collectPage({ state: found.error === 'used' ? 'collected' : 'dead', message: msg }));
   }
   const o = db.orders.find((x) => x.id === found.token.orderId);
+  if (o?.purchaseId) return res.status(409).send(collectPage({ state: 'dead', message: 'This print belongs to a combined purchase. Ask the counter to hand over and confirm the whole basket together.' }));
   const done = consumeCollectToken(db, tok, o);
   if (!done.ok) {
     saveDb(db);

@@ -6,9 +6,11 @@ import path from 'node:path';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { blankDb } from '../lib/db.js';
+import { addPrint, cartFor, checkPackQuota } from '../lib/store.js';
 import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, walletOf, deliveryPlan, batchPrice, validateCampaign } from '../lib/campus.js';
 import { deliveryFeeFor, deliveryPoint, rangePages } from '../lib/pricing.js';
 import { analyzeUpload, orderFile } from '../lib/files.js';
+import { canUseOwnerTestPrint } from '../lib/owner-test.js';
 import { normPhone, normEmail } from '../lib/otp.js';
 import { esc } from '../lib/views.js';
 import { optionsStep, summaryStep, walletPrompt } from '../lib/views_order.js';
@@ -26,8 +28,8 @@ function handler(method, route, extra = {}) {
   const quote = runInNewContext(pricing+'\nquote;', {loadDb:()=>db,Intl,Date,Set,Number});
   runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+source.slice(start,end), {
     app:{[method](...args){result=args.at(-1);result.middleware=args.slice(1,-1).filter(Boolean);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
-    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, batchPrice, deliveryFeeFor, deliveryPoint, quote, rangePages,
-    normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload,
+    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, batchPrice, deliveryFeeFor, deliveryPoint, quote, rangePages, cartFor, addPrint, checkPackQuota,
+    normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
     fs:{copyFileSync(){throw new Error('Expired file');},readFileSync:()=>pdf},
     topupTerms,applyTopup,claimWalletFiles,fulfilWalletFiles,siteOrigin(){},qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
     fetch:async()=>{gatewayCalls++;return {ok:true,json:async()=>({id:'rzp-fixture',amount:4900})};},
@@ -108,7 +110,7 @@ const couponDraft={id:'coupon-draft',customerId:'A',stored:'fixture.pdf',pages:1
 couponDb.drafts=[couponDraft];let moved=0;
 const place=handler('post','/customer/orders/new/place',{loadDb:()=>couponDb,nextOrderId:()=> 'PK-COUPON',parseCookies:()=>({}),coverFor:()=>null,firstOffers:()=>({print:0,delivery:0}),fs:{renameSync(){moved++;}}});
 const rejected=response();place({user,body:{draft:couponDraft.id,coupon:'SAVE'},headers:{}},rejected);assert.equal(rejected.code,400);assert.match(rejected.body,/already used/);assert.equal(couponDb.drafts.length,1);assert.equal(moved,0);
-couponDraft.customerId='B';const accepted=response();place({user:{...user,id:'B'},body:{draft:couponDraft.id,coupon:'SAVE'},headers:{}},accepted);assert.equal(accepted.url,'/customer/orders/PK-COUPON/pay');assert.equal(couponDb.orders.at(-1).couponDiscount,10);assert.equal(moved,1);
+couponDraft.customerId='B';const accepted=response();place({user:{...user,id:'B'},body:{draft:couponDraft.id,coupon:'SAVE'},headers:{}},accepted);assert.equal(accepted.url,'/cart');assert.equal(couponDb.orders.at(-1).couponDiscount,10);assert.equal(moved,1);assert.ok(couponDb.carts.find(c=>c.customerId==='B').printIds.includes('PK-COUPON'));
 console.log('Checkout checks passed: route limits/cutoffs, preserved settings, wallet ownership, signed top-up return, file gifts and one coupon use per customer across all payment routes.');
 if(process.argv.includes('--browser')) {
   const {default:puppeteer}=await import('puppeteer-core');
