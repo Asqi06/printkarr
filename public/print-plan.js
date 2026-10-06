@@ -60,3 +60,10 @@ export function printDescription(order) {
   if (order.printType !== 'mixed') return order.printType === 'color' ? 'Colour' : 'B&W';
   return `Mixed · ${order.bwPages} B&W (pages ${order.bwRange || 'none'}) · ${order.colorPages} colour (pages ${order.colorRange || 'none'})`;
 }
+
+// Extra colour uses the same remaining B&W pool as B&W pages in a mixed order.
+export function packCovers(left, need) {
+  if (![need.bw, need.color].every(n=>Number.isSafeInteger(n) && n >= 0)) return false;
+  const extra = Math.max(0, need.color - left.color);
+  return left.bw >= need.bw && (extra === 0 || left.colorSwapRate > 0 && left.bw - need.bw >= extra * left.colorSwapRate);
+}

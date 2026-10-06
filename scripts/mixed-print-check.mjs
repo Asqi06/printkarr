@@ -5,7 +5,7 @@ import path from 'node:path';
 import { createOrderPreview } from './order-preview.mjs';
 import { previewDb } from './store-preview.mjs';
 import { pageRange, printPlan, printSides, printDescription } from '../public/print-plan.js';
-import { coverFor, deductSides, leftOf } from '../lib/packs.js';
+import { coverFor, deductSides, leftOf, newSub, packById } from '../lib/packs.js';
 import { firstOffers } from '../lib/offers.js';
 import { checkPackQuota } from '../lib/store.js';
 import { printSettings } from '../agent/print-settings.js';
@@ -90,3 +90,30 @@ try{
   }finally{await browser.close();}
  }
 }finally{await new Promise(resolve=>server.close(resolve));fs.rmSync(preview.uploadsDir,{recursive:true,force:true});}
+
+
+// Actual upload → 60 colour sides → reservation → payment → refund, using S quota exchange.
+{
+ const flexSeed=previewDb();flexSeed.packSubs=[newSub(packById('S'),flexSeed.users[0].id,199)];flexSeed.pricing.lateNight={enabled:false};
+ const flex=createOrderPreview(flexSeed), service=flex.app.listen(0,'127.0.0.1');await new Promise(resolve=>service.once('listening',resolve));
+ const url='http://127.0.0.1:'+service.address().port;
+ const post=(route,fields)=>fetch(url+route,{method:'POST',redirect:'manual',headers:{'Content-Type':'application/x-www-form-urlencoded',Origin:url},body:new URLSearchParams(fields)});
+ try {
+  const form=new FormData();form.set('doc',new Blob([pdf],{type:'application/pdf'}),'Colour assignment.pdf');
+  const upload=await fetch(url+'/customer/orders/new/upload',{method:'POST',body:form,redirect:'manual'});
+  const draft=new URL(upload.headers.get('location'),url).searchParams.get('draft');assert.ok(draft);
+  assert.equal((await post('/customer/orders/new/confirm',{draft,printType:'color',copies:3,sides:'double',deliverySlot:'express',addressId:'preview-address',nn_phone:'9825011111'})).status,302);
+  const review=await(await fetch(url+'/customer/orders/new/summary?draft='+draft)).text();assert.match(review,/Semester pack/);assert.match(review,/−₹300/);
+  const options=await(await fetch(url+'/customer/orders/new?draft='+draft)).text();assert.match(options,/colorSwapRate/,'Browser quote receives exchange-aware remaining quota');
+  assert.equal((await post('/customer/orders/new/place',{draft})).status,302);
+  const order=flex.snapshot().orders[0];assert.equal(order.packDiscount,300);assert.equal(order.packSubId,flexSeed.packSubs[0].id);
+  assert.equal((await post('/cart/checkout',{})).status,302);const purchase=flex.snapshot().purchases[0];assert.equal(purchase.total,15);
+  assert.equal((await post('/customer/purchases/'+purchase.id+'/wallet',{})).status,302);
+  assert.deepEqual([flex.snapshot().packSubs[0].colorUsed,leftOf(flex.snapshot().packSubs[0]).bw],[60,40]);
+  await post('/customer/purchases/'+purchase.id+'/wallet',{});assert.equal(flex.snapshot().packSubs[0].colorUsed,60,'Payment replay does not consume exchange twice');
+  assert.equal((await post('/customer/purchases/'+purchase.id+'/cancel',{})).status,302);
+  assert.deepEqual([flex.snapshot().packSubs[0].colorUsed,leftOf(flex.snapshot().packSubs[0]).bw],[0,130]);
+  await post('/customer/purchases/'+purchase.id+'/cancel',{});assert.equal(leftOf(flex.snapshot().packSubs[0]).bw,130,'Refund replay does not create more quota');
+  console.log('Colour pack checks passed: 60-side upload, exchanged quota, browser estimate, payment, refund and replay.');
+ } finally {await new Promise(resolve=>service.close(resolve));}
+}

@@ -45,3 +45,20 @@ Shop payable is the agreed printing rate per printed side plus its stationery se
 Run `npm test`, `npm run test:delivery`, `npm run test:checkout`, `npm run test:store`, `npm run test:ux`, `npm run test:design` and `npm run test:seo`.
 
 `npm run preview:orders` serves an isolated in-memory preview at `http://127.0.0.1:3133/`. It does not take real money, send email or use a printer. Real customer-facing shop availability requires onboarding and actual stock; the preview does not pretend shops are already live.
+
+
+## Improved semester pack quota
+
+| Pack | Price | B&W sides | Included colour sides | Files |
+| --- | ---: | ---: | ---: | ---: |
+| S | ₹329 | 130 | 30 | 2 |
+| M | ₹499 | 250 | 45 | 4 |
+| L | ₹725 | 400 | 60 | 5 |
+
+Included colour is consumed first. Every extra colour side exchanges three unused B&W sides automatically; this is one-way. Mixed assignments and copies share the same quota check. For example, a fresh S pack covers 60 colour sides and retains 40 B&W sides; L covers 400 B&W plus 60 colour sides together.
+
+The standard legacy S/M/L subscriptions upgrade on their next pack access or checkout validation. Used sides, file claims, payments and remaining dues are preserved; custom quota snapshots are left intact. Unpaid orders reserve both included and exchanged quota. A paid cancellation restores the actual printed sides once, which also returns exchanged B&W capacity.
+
+A pack must cover the whole document/order. If it cannot, normal printing charges appear before payment; delivery, binding and surcharges stay separate. Booking still costs ₹199, with the remaining pack price due in installments.
+
+Verification: `node --test lib/packs.test.js` and `node scripts/mixed-print-check.mjs` cover upgrades, 60 colour sides, mixed usage, reservations, payment and refund replay. The browser estimate uses the same quota helper as server validation.

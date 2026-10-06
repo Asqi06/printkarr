@@ -972,15 +972,15 @@
     "semantic_hash": "98b03d618219e298947548c8398b0170"
   },
   "lib/packs.js": {
-    "mtime": 1791195237.060947,
-    "seen": 1791197496.0546365,
-    "ast_hash": "9cfd12547f16964c7a18a1f35861cb72",
+    "mtime": 1791285891.8081598,
+    "seen": 1791286311.0922813,
+    "ast_hash": "009b91eb2c60a58e539faf94a24ac4c3",
     "semantic_hash": ""
   },
   "lib/packs.test.js": {
-    "mtime": 1790396464.8279371,
-    "seen": 1790407810.9974453,
-    "ast_hash": "92a72528c674cd4f0e43c735c209bfd3",
+    "mtime": 1791285957.960039,
+    "seen": 1791286311.0922885,
+    "ast_hash": "d1cbf7252587975e65d1ba1eb51a11a6",
     "semantic_hash": ""
   },
   "lib/pricing.js": {
@@ -990,15 +990,15 @@
     "semantic_hash": ""
   },
   "lib/views.js": {
-    "mtime": 1791284991.9782014,
-    "seen": 1791285108.2894876,
-    "ast_hash": "f5bdf1426a950a391972a3ccbb5f9040",
+    "mtime": 1791285957.628506,
+    "seen": 1791286311.0961175,
+    "ast_hash": "c7e741a61eadc93cc4392db1ea642819",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
-    "mtime": 1791282647.1091108,
-    "seen": 1791283957.5918171,
-    "ast_hash": "2cadb7ff3ad24aea5b7c56c8eb789138",
+    "mtime": 1791285957.6264882,
+    "seen": 1791286311.096123,
+    "ast_hash": "e2f2338ab34a1951677cd9743347ac36",
     "semantic_hash": ""
   },
   "lib/views_customer.js": {
@@ -1014,15 +1014,15 @@
     "semantic_hash": ""
   },
   "lib/views_packs.js": {
-    "mtime": 1791283282.8375185,
-    "seen": 1791283957.5918229,
-    "ast_hash": "a098274521a3f2922b9cee7276b8699b",
+    "mtime": 1791285957.6209614,
+    "seen": 1791286311.097241,
+    "ast_hash": "a20bf9c9aa0e6f0beab54623613c2237",
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1791282856.4143615,
-    "seen": 1791283957.591825,
-    "ast_hash": "4dbc124e38ab8d3c683dae455c360961",
+    "mtime": 1791285957.6239612,
+    "seen": 1791286311.0972478,
+    "ast_hash": "9dbb829049d79661987e09a8f44e5099",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "server.mjs": {
-    "mtime": 1791281930.388444,
-    "seen": 1791282103.415375,
-    "ast_hash": "bbccc54e6819f87aa97c7c3a3b11402d",
+    "mtime": 1791285891.8227272,
+    "seen": 1791286311.1148748,
+    "ast_hash": "b07ac829b0523aaec9390d2c977b6f91",
     "semantic_hash": ""
   },
   ".opencode/skills/graphify/SKILL.md": {
@@ -2868,9 +2868,9 @@
     "semantic_hash": ""
   },
   "lib/store.js": {
-    "mtime": 1791281090.359781,
-    "seen": 1791281687.8142025,
-    "ast_hash": "78232e59179ed3e4cb3dcb21bae749a8",
+    "mtime": 1791285891.8131196,
+    "seen": 1791286311.0956256,
+    "ast_hash": "077bc8ef4c315c341aed61ab0803c8f3",
     "semantic_hash": ""
   },
   "lib/store_routes.js": {
@@ -3102,21 +3102,21 @@
     "semantic_hash": ""
   },
   "public/print-options.js": {
-    "mtime": 1791278532.8207135,
-    "seen": 1791281687.8149502,
-    "ast_hash": "b17d03a51e273ba1f5e04c195bff6efe",
+    "mtime": 1791286115.2102935,
+    "seen": 1791286311.1010118,
+    "ast_hash": "e73c6708ecc98bc94c08796e7cd8ffe3",
     "semantic_hash": ""
   },
   "public/print-plan.js": {
-    "mtime": 1791195071.690189,
-    "seen": 1791197496.0585647,
-    "ast_hash": "897a03946da9d1be8d8be9426550a426",
+    "mtime": 1791285891.8101144,
+    "seen": 1791286311.1010196,
+    "ast_hash": "01a8ebe11e56093046035982ff232546",
     "semantic_hash": ""
   },
   "scripts/mixed-print-check.mjs": {
-    "mtime": 1791280084.218992,
-    "seen": 1791281687.816597,
-    "ast_hash": "8470e365e5aa64ccc43eb08ec7eaefc2",
+    "mtime": 1791286185.749693,
+    "seen": 1791286311.1095266,
+    "ast_hash": "a857e11886f4a77a20323da6639f7f69",
     "semantic_hash": ""
   },
   "scripts/order-preview.mjs": {
@@ -3609,6 +3609,18 @@
     "mtime": 1791284706.1243026,
     "seen": 1791285108.3869658,
     "ast_hash": "eac67d40e371f5a1b5988751a639f6a3",
+    "semantic_hash": ""
+  },
+  "docs/site-overhaul-preview/footer-fixed-desktop.jpg": {
+    "mtime": 1791285071.2279608,
+    "seen": 1791286311.2096822,
+    "ast_hash": "757ac2bc82768fcf9282260e8cfb761e",
+    "semantic_hash": ""
+  },
+  "docs/site-overhaul-preview/footer-fixed-mobile.jpg": {
+    "mtime": 1791285127.260169,
+    "seen": 1791286311.2096865,
+    "ast_hash": "703c9b836fb188cc0ef728242fe17dee",
     "semantic_hash": ""
   }
 }

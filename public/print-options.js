@@ -1,4 +1,4 @@
-import { printPlan } from './print-plan.js';
+import { printPlan, packCovers } from './print-plan.js?v=20261006-colour-packs';
 
 function initPrintOptions() {
 for (const quote of document.querySelectorAll('[data-print-quote]')) {
@@ -29,7 +29,7 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       const zone = (scheduled ? slot.split('-')[1] : address && address.value !== '__new' ? address.dataset.area : get('area') || get('nn_area') || 'Vapi').toLowerCase();
       const delivery = slot === 'pickup' ? 0 : slot.startsWith('school') ? slot === 'school-express' ? 25 : 10 : slot === 'college' ? 3 : slot === 'college-express' ? 25 : scheduled ? cfg.local[zone]?.fee : cfg.fees[zone];
       const late = slot === 'express' ? Number(cfg.lateNightFee || 0) : 0, surge = Number(cfg.surgeFee || 0);
-      const pack = (cfg.packs || []).some(p => p.bw >= plan.bwPages * plan.copies && p.color >= plan.colorPages * plan.copies);
+      const pack = (cfg.packs || []).some(p => packCovers(p, {bw:plan.bwPages * plan.copies,color:plan.colorPages * plan.copies}));
       const discount = pack ? printing : Math.min(printing, Math.min(Number(cfg.firstPrintPages || 0),plan.bwPages*plan.copies)*cfg.bw);
       const net = Math.round((printing-discount)*100)/100;
       const variable = zone === 'vapi' && !slot.startsWith('school'), free = scheduled && net + Number(cfg.otherSubtotal || 0) >= 149;

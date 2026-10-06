@@ -960,10 +960,10 @@ function printQuoteExtras(db, user, req) {
   if (!user) return { ...extra, guest: true };
   const device=parseCookies(req.headers.cookie).pk_offer_device;
   const first=firstOffers(db,user,device,{pages:1000,bwPages:1000,copies:1,printType:'bw',rate:1,zone:'sarigam',deliveryFee:3,subtotal:1000});
-  const packs=(db.packSubs || []).filter(p=>p.customerId===user.id && usableOf(p)).map(p=>{
-    const remaining=leftOf(p);
-    for(const o of db.orders.filter(o=>o.packSubId===p.id && ['CREATED','PAYMENT_PENDING'].includes(o.status))){const n=printSides(o);remaining.bw-=n.bw;remaining.color-=n.color;}
-    return {bw:remaining.bw,color:remaining.color};
+  const packs=mySubs(db,user.id).filter(usableOf).map(p=>{
+    const reserved={...p};
+    for(const o of db.orders.filter(o=>o.packSubId===p.id && ['CREATED','PAYMENT_PENDING'].includes(o.status))){const n=printSides(o);reserved.bwUsed=(reserved.bwUsed||0)+n.bw;reserved.colorUsed=(reserved.colorUsed||0)+n.color;}
+    return leftOf(reserved);
   });
   const cart=(db.carts || []).find(c=>c.customerId===user.id);
   let otherSubtotal=0;try{if(cart && !cart.purchaseId)otherSubtotal=cartItems(db,cart,user.id).subtotal;}catch{}
