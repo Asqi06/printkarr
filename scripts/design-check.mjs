@@ -43,6 +43,7 @@ export const pages = new Map([
   ['/login/code', loginOtpPage(user.email)],
   ['/admin/login', staffLoginPage('admin')],
   ['/customer', customer.customerDashboard(user, { pricing, notes: [], walletBalance:150 })],
+  ['/customer/active', customer.customerDashboard({...user,name:'Ananya Krishnamurthy Subramanian'}, {pricing,notes:[],current:{...order,status:'OUT_FOR_DELIVERY',document:'Semester-assignments-and-colour-lab-records.pdf'},walletBalance:12345.50})],
   ['/customer/orders', customer.ordersList(user, { tab: 'active', counts: { active: 1, completed: 0, cancelled: 0 }, orders: [order] })],
   ['/customer/orders/preview', customer.orderDetail(user, order)],
   ['/customer/orders/preview/scan', customer.scanPage(user, { ...order, id: 'preview', status: 'READY_FOR_PICKUP' })],
@@ -127,6 +128,12 @@ for (const route of ['/customer']) {
   assert.match(pages.get(route), /<a href="\/customer\/referrals"[^>]*>[\s\S]*?<span>Refer &amp; Earn<\/span><\/a>/);
 }
 assert.match(pages.get('/customer'), /<a href="\/customer" class="live"\s+aria-current="page">[\s\S]*?<span>Home<\/span><\/a>/);
+for (const route of ['/customer', '/customer/active', '/customer/returning']) {
+  const services = pages.get(route).match(/<div class="dashboard-grid">([\s\S]*?)<\/div>/)[1];
+  assert.deepEqual([...services.matchAll(/<a[^>]*href="([^"]+)"/g)].map(m=>m[1]), ['/shops','/stationery'], 'Dashboard keeps nearby prints and stationery directly accessible');
+}
+assert.match(pages.get('/customer/active'), /<h1>Good (morning|afternoon|evening), Ananya<\/h1>/, 'Long account names do not overwhelm the dashboard greeting');
+assert.match(pages.get('/customer/active'), /href="\/customer\/orders\/preview"[\s\S]*?Out for delivery[\s\S]*?Semester-assignments-and-colour-lab-records.pdf/);
 assert.match(pages.get('/customer/orders/new'), /class="order-focus"/);
 for (const [route, html] of pages) {
   if (!route.startsWith('/customer')) continue;

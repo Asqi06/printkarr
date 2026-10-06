@@ -990,9 +990,9 @@
     "semantic_hash": ""
   },
   "lib/views.js": {
-    "mtime": 1791285957.628506,
-    "seen": 1791286311.0961175,
-    "ast_hash": "c7e741a61eadc93cc4392db1ea642819",
+    "mtime": 1791288169.391941,
+    "seen": 1791288366.145239,
+    "ast_hash": "81894849bd89593612c501f833fdf06c",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
@@ -1002,9 +1002,9 @@
     "semantic_hash": ""
   },
   "lib/views_customer.js": {
-    "mtime": 1791282981.7715688,
-    "seen": 1791283957.5918193,
-    "ast_hash": "6690c0e94f59ec560519d854b035bce7",
+    "mtime": 1791288401.3340576,
+    "seen": 1791288709.5602996,
+    "ast_hash": "5b10898d5f6acfb55b4025b2e2440110",
     "semantic_hash": ""
   },
   "lib/views_order.js": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": ""
   },
   "scripts/design-check.mjs": {
-    "mtime": 1791284991.9802036,
-    "seen": 1791285108.2966342,
-    "ast_hash": "ea7a75ab835ca3d6dcb9b302732c29f9",
+    "mtime": 1791288401.34706,
+    "seen": 1791288709.564945,
+    "ast_hash": "4394072611b4c6ecd5e176407c1351b6",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -3534,9 +3534,9 @@
     "semantic_hash": ""
   },
   "docs/hyperlocal-delivery.md": {
-    "mtime": 1791281586.204563,
-    "seen": 1791281687.8407152,
-    "ast_hash": "c1d5f462015116ccf06c13f83409ea1b",
+    "mtime": 1791286552.6792827,
+    "seen": 1791288366.1748707,
+    "ast_hash": "0bebeb9aaa1a311a7270047575fc32e4",
     "semantic_hash": ""
   },
   "docs/ux-refinement/REVIEW.html": {
@@ -3621,6 +3621,24 @@
     "mtime": 1791285127.260169,
     "seen": 1791286311.2096865,
     "ast_hash": "703c9b836fb188cc0ef728242fe17dee",
+    "semantic_hash": ""
+  },
+  "docs/site-overhaul-preview/packs-improved-desktop.jpg": {
+    "mtime": 1791286296.7859602,
+    "seen": 1791288366.2081692,
+    "ast_hash": "6cd4960eab0f5765ec7ae94429e1cdd6",
+    "semantic_hash": ""
+  },
+  "docs/site-overhaul-preview/packs-improved-mobile.jpg": {
+    "mtime": 1791286588.5548112,
+    "seen": 1791288366.2081718,
+    "ast_hash": "cf895a759844a86eef680b1326735005",
+    "semantic_hash": ""
+  },
+  "docs/site-overhaul-preview/dashboard-desktop-polished.jpg": {
+    "mtime": 1791288642.223211,
+    "seen": 1791288709.6146815,
+    "ast_hash": "884a55b6dd891456733a4127c4ebe3aa",
     "semantic_hash": ""
   }
 }
