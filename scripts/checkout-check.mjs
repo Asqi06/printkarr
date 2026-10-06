@@ -1,3 +1,5 @@
+import { pageRange, printPlan, printSides, printDescription } from '../public/print-plan.js';
+import { activePrintJobs, surchargeFees } from '../lib/pricing.js';
 // Runnable regression check: node scripts/checkout-check.mjs [--browser]
 // Uses in-memory route handlers and read-only fixtures; no customer data or money moves.
 import assert from 'node:assert/strict';
@@ -6,8 +8,9 @@ import path from 'node:path';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { blankDb } from '../lib/db.js';
-import { addPrint, cartFor, checkPackQuota } from '../lib/store.js';
-import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, walletOf, deliveryPlan, batchPrice, validateCampaign } from '../lib/campus.js';
+import { addPrint, cartFor, cartItems, cartQuote, printNet, checkPackQuota } from '../lib/store.js';
+import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, walletOf, deliveryPlan, deliveryChoice, validateDestination, batchPrice, validateCampaign } from '../lib/campus.js';
+import { fulfillmentFor } from '../lib/partners.js';
 import { deliveryFeeFor, deliveryPoint, rangePages } from '../lib/pricing.js';
 import { analyzeUpload, orderFile } from '../lib/files.js';
 import { canUseOwnerTestPrint } from '../lib/owner-test.js';
@@ -25,11 +28,11 @@ function handler(method, route, extra = {}) {
   const start = source.indexOf(`app.${method}('${route}'`), end = source.indexOf('\napp.',start+1);
   assert.ok(start>=0,route);
   const pricing = readFileSync(new URL('../lib/pricing.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ','');
-  const quote = runInNewContext(pricing+'\nquote;', {loadDb:()=>db,Intl,Date,Set,Number});
+  const quote = runInNewContext(pricing+'\nquote;', {loadDb:()=>db,Intl,Date,Set,Number,pageRange,printSides});
   runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+source.slice(start,end), {
     app:{[method](...args){result=args.at(-1);result.middleware=args.slice(1,-1).filter(Boolean);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
-    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, batchPrice, deliveryFeeFor, deliveryPoint, quote, rangePages, cartFor, addPrint, checkPackQuota,
-    normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
+    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
+    printPlan,printSides,printDescription,optionsStep,activePrintJobs,surchargeFees,normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
     fs:{copyFileSync(){throw new Error('Expired file');},readFileSync:()=>pdf},
     topupTerms,applyTopup,claimWalletFiles,fulfilWalletFiles,siteOrigin(){},qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
     fetch:async()=>{gatewayCalls++;return {ok:true,json:async()=>({id:'rzp-fixture',amount:4900})};},
@@ -39,14 +42,15 @@ function handler(method, route, extra = {}) {
 }
 const response = () => ({code:200,status(code){this.code=code;return this;},json(body){this.body=body;},send(body){this.body=body;},redirect(url){this.url=url;}});
 const at = Date.parse('2026-10-02T10:00:00+05:30'), route='local-vapi-afternoon', point={lat:20.389722,lng:72.889945};
+campaignConfig(db).delivery.local.vapi.enabled=false;
 assert.throws(()=>deliveryPlan(db,route,null,at),/unavailable/);
-assert.throws(()=>deliveryPlan(db,'pickup'),/not available/);
+assert.throws(()=>deliveryPlan(db,'pickup'),/in development/);
 db.settings.campaign.delivery.local.vapi={enabled:true,fee:7,radiusKm:2};
 const plan = deliveryPlan(db,route,null,at);
 assert.equal(plan.promisedBy,'2026-10-02T09:30:00.000Z');
-assert.equal(deliveryFeeFor(db.pricing,'vapi',point,plan).fee,7);
+assert.equal(deliveryFeeFor(db.pricing,'vapi',point,plan).fee,10);
 assert.throws(()=>deliveryFeeFor(db.pricing,'vapi',{lat:20.43,lng:72.9},plan),/Outside/);
-assert.throws(()=>deliveryFeeFor(db.pricing,'vapi',point,{...plan,scheduledFee:-1}),/unavailable/);
+assert.equal(deliveryFeeFor(db.pricing,'vapi',point,{...plan,scheduledFee:-1}).fee,10,'Vapi distance bands ignore a submitted flat fee');
 assert.equal(deliveryPlan(db,route,null,Date.parse('2026-10-02T11:00:00+05:30')).promisedBy,'2026-10-03T09:30:00.000Z');
 assert.throws(()=>validateCampaign({...campaignConfig(db),delivery:{...campaignConfig(db).delivery,pickup:{enabled:true,address:''}}}),/collection address/);
 db.drafts=[{id:'D',customerId:'A',document:'Notes.pdf',pages:12,fileType:'pdf'}];
@@ -55,12 +59,12 @@ handler('post','/customer/orders/new/confirm')({user,body:{draft:'D',deliverySlo
 assert.match(confirm.url,/summary/); assert.equal(db.drafts[0].selections.deliveryMode,'scheduled');
 const review=response();
 handler('get','/customer/orders/new/summary',{firstOffers:()=>({print:0,delivery:0}),coverFor:()=>null,parseCookies:()=>({}),summaryStep:(u,d,s,q)=>({s,q})})({user,query:{draft:'D'},headers:{}},review);
-assert.equal(review.body.q.deliveryFee,7); assert.equal(review.body.q.total,127);
+assert.equal(review.body.q.deliveryFee,10); assert.equal(review.body.q.total,130);
 db.settings.campaign.delivery.local.vapi.enabled=false;
 const disabled=response();handler('get','/customer/orders/new/summary')({user,query:{draft:'D'},headers:{}},disabled);assert.equal(disabled.code,400);
 const saved = optionsStep(user,db.drafts[0],db.addresses,campaignConfig(db),db.pricing);
 assert.match(saved,/name="printType" value="color" checked/);assert.match(saved,/name="copies"[^>]*value="2"/);assert.match(saved,/name="deliverySlot" value="express" checked/);
-assert.match(summaryStep(user,db.drafts[0],db.drafts[0].selections,{subtotal:120,total:127,deliveryFee:7}),/class="document-preview" open/);
+assert.match(summaryStep(user,db.drafts[0],db.drafts[0].selections,{subtotal:120,total:127,deliveryFee:7}),/data-print-payment/);
 const own={id:'PK-1024',customerId:'A',status:'CREATED',document:'Notes.pdf',printType:'color',copies:2,sides:'double'};
 db.orders=[own,{id:'PK-1025',customerId:'B',status:'CREATED'}];
 const denied=response();await handler('post','/api/wallet/topup-order')({body:{orderId:'PK-1025',amount:49,offerId:'first'}},denied);assert.equal(denied.code,400);assert.equal(gatewayCalls,0);
@@ -123,16 +127,12 @@ if(process.argv.includes('--browser')) {
     for(const width of [320,390,1440]) {
       const context=await browser.createBrowserContext(), page=await context.newPage();page.on('pageerror',error=>errors.push(error.message));await page.setViewport({width,height:900});
       await page.goto('http://127.0.0.1:3100',{waitUntil:'networkidle0'});
-      await page.waitForSelector('.wallet-prompt[open]');
-      await page.click('[name="wallet-prompt-offer"][value="study"]');assert.equal(await page.$eval('[data-prompt-total]',el=>el.textContent),'₹225');
+      assert.equal(await page.$('.wallet-prompt[open]'),null,'Wallet offers must not interrupt ordering');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-      await page.screenshot({path:`docs/checkout-preview/wallet-${width}.png`});
-      await page.keyboard.press('Escape');assert.equal(await page.$eval('.wallet-prompt',el=>el.open),false);
-      await page.reload({waitUntil:'networkidle0'});assert.equal(await page.$eval('.wallet-prompt',el=>el.open),false,'Dismissed dialog must stay dismissed');
       await page.goto('http://127.0.0.1:3100/order/options',{waitUntil:'networkidle0'});
       await page.$eval('#copies',el=>{el.value='3';el.dispatchEvent(new Event('input',{bubbles:true}));});
       assert.match(await page.$eval('[data-print-quote] b',el=>el.textContent),/75/);
-      await page.$eval('#range',el=>{el.value='5-3, 4';el.dispatchEvent(new Event('input',{bubbles:true}));});
+      await page.$eval('#range',el=>{el.value='3-5, 4';el.dispatchEvent(new Event('input',{bubbles:true}));});
       assert.match(await page.$eval('[data-print-quote] b',el=>el.textContent),/21/);
       await page.$eval('#range',el=>{el.value='99';el.dispatchEvent(new Event('input',{bubbles:true}));});assert.equal(await page.$eval('#range',el=>el.checkValidity()),false);
       await page.goto('http://127.0.0.1:3100/customer/review',{waitUntil:'domcontentloaded'});

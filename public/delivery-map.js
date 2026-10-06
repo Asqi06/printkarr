@@ -11,26 +11,29 @@
       vapi: [20.389722, 72.889945], daman: [20.398424, 72.89082],
       sarigam: [20.27801, 72.84171], bhilad: [20.258333, 72.883333]
     };
-    function selected() { return form.querySelector('[name="addressId"]:checked'); }
+    function selected() { return form.querySelector('[name="addressId"]:checked') || form.querySelector('select[name="addressId"]')?.selectedOptions[0]; }
     function area() {
       var choice = selected();
-      return (choice?.value === '__new' ? form.querySelector('[name="nn_area"]')?.value : choice?.dataset.area || root.dataset.area || 'vapi').toLowerCase();
+      var field = form.querySelector('[name="nn_area"],[name="area"]');
+      return String(choice?.value === '__new' ? field?.value || root.dataset.area : choice?.dataset.area || field?.value || root.dataset.area || 'vapi').toLowerCase();
     }
     function setPoint(lat, lng) {
       latInput.value = Number(lat).toFixed(6);
       lngInput.value = Number(lng).toFixed(6);
       if (marker) marker.setLatLng([lat, lng]);
-      else marker = L.marker([lat, lng]).addTo(map);
+      else if (map) marker = L.marker([lat, lng]).addTo(map);
       status.textContent = 'Delivery point selected. The rider will come to this pin.';
+      form.dispatchEvent(new Event('change', { bubbles: true }));
     }
     function sync() {
       var choice = selected(), kind = area();
       var route = form.querySelector('[name="deliverySlot"]:checked');
-      root.hidden = kind === 'pickup' || route && route.value !== 'express';
+      root.hidden = kind === 'pickup';
       if (root.hidden) { latInput.value = lngInput.value = ''; return; }
+      var lat = Number(choice?.value !== '__new' && choice ? choice.dataset.lat : root.dataset.lat), lng = Number(choice?.value !== '__new' && choice ? choice.dataset.lng : root.dataset.lng);
+      if (lat && lng) setPoint(lat, lng);
       if (map) {
         map.invalidateSize();
-        var lat = Number(choice ? choice.dataset.lat : root.dataset.lat), lng = Number(choice ? choice.dataset.lng : root.dataset.lng);
         if (lat && lng) { setPoint(lat, lng); map.setView([lat, lng], 15); }
         else {
           latInput.value = lngInput.value = '';
@@ -41,7 +44,7 @@
       }
     }
     form.querySelectorAll('[name="addressId"]').forEach(function (radio) { radio.addEventListener('change', sync); });
-    form.querySelector('[name="nn_area"]')?.addEventListener('change', sync);
+    form.querySelector('[name="nn_area"],[name="area"]')?.addEventListener('change', sync);
     form.querySelectorAll('[name="deliverySlot"]').forEach(function (radio) { radio.addEventListener('change', sync); });
     form.addEventListener('submit', function (event) {
       if (!latInput.disabled && !root.hidden && area() !== 'pickup' && (!latInput.value || !lngInput.value)) {
@@ -49,17 +52,24 @@
         root.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, true);
+    root.querySelector('[data-use-centre]').addEventListener('click', function () {
+      if (!map) { status.textContent = 'Map is loading. Please try again shortly.'; return; }
+      var point = map.getCenter(); setPoint(point.lat, point.lng);
+    });
     root.querySelector('[data-use-location]').addEventListener('click', function () {
+      if (!map) { status.textContent = 'Map is loading. Please try again shortly.'; return; }
       if (!navigator.geolocation) { status.textContent = 'Location is unavailable. Tap the map instead.'; return; }
       navigator.geolocation.getCurrentPosition(function (position) {
         var { latitude, longitude } = position.coords;
         setPoint(latitude, longitude); map.setView([latitude, longitude], 16);
       }, function () { status.textContent = 'Location unavailable. Tap the map instead.'; }, { enableHighAccuracy: true, timeout: 10000 });
     });
+    root.closest('details')?.addEventListener('toggle',function(){if(map)map.invalidateSize();});
+    sync();
     var tries = 0;
     var ready = setInterval(function () {
       if (typeof L === 'undefined') {
-        if (++tries >= 25) { clearInterval(ready); status.textContent = 'Map unavailable. Please reload or contact us to place the order.'; }
+        if (++tries >= 25) { clearInterval(ready); status.textContent = latInput.value && lngInput.value ? 'Saved delivery point retained. You can continue.' : 'Map unavailable. Please reload or contact us to place the order.'; }
         return;
       }
       clearInterval(ready);
@@ -71,5 +81,6 @@
       sync();
     }, 200);
   }
-  document.querySelectorAll('[data-delivery-picker]').forEach(init);
+  function start(){document.querySelectorAll('[data-delivery-picker]').forEach(root=>{if(root.dataset.ready)return;root.dataset.ready='1';init(root);});}
+  start();document.addEventListener('DOMContentLoaded',start);document.addEventListener('print-screen',start);
 })();

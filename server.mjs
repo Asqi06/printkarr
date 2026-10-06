@@ -1,3 +1,4 @@
+import { printPlan, printSides, printDescription } from './public/print-plan.js';
 import 'dotenv/config';
 import crypto from 'node:crypto';
 import express from 'express';
@@ -12,7 +13,7 @@ import multer from 'multer';
 import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas } from './lib/atlas.js';
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
-import { quote, rangePages, activePrintJobs, surchargeFees, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
+import { quote, activePrintJobs, surchargeFees, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
 import { notifyState, runNotificationJobs } from './lib/notify.js';
 import { installNotificationRoutes } from './lib/notify_routes.js';
 import { influencerStats } from './lib/influencers.js';
@@ -25,8 +26,10 @@ import {
 import { layout, esc, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
 import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
-import { addPrint, cartFor, checkPackQuota } from './lib/store.js';
+import { addPrint, cartFor, cartItems, cartQuote, createPurchase, printNet, checkPackQuota } from './lib/store.js';
 import { installStoreRoutes } from './lib/store_routes.js';
+import { fulfillmentFor } from './lib/partners.js';
+import { installPartnerRoutes } from './lib/partner_routes.js';
 import { customerDashboard, ordersList, orderDetail, scanPage } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { canUseOwnerTestPrint } from './lib/owner-test.js';
@@ -38,13 +41,13 @@ import {
   cashWalletOf, monthEarned, monthKey, qualifyForOrder, qualifyForPack,
   qualifyForTopup, validUpiId
 } from './lib/referrals.js';
-import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
-import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, deliveryPlan, batchPrice, settleWallets } from './lib/campus.js';
+import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, usableOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
+import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, deliveryPlan, deliveryChoice, validateDestination, batchPrice, settleWallets } from './lib/campus.js';
 import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
-import { POSTS, vapiPage, damanPage, printPricesPage, landing, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { POSTS, vapiPage, damanPage, printPricesPage, landing, nearbyShopsPage, kioskStatusPage, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import { discoveryRoutes, SITE } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
@@ -54,7 +57,7 @@ const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
 const PORT = process.env.PORT || 3000;
-const HOME = { customer: '/customer', admin: '/admin' };
+const HOME = { customer: '/customer', admin: '/admin', partner: '/partner', rider: '/rider' };
 
 // Google sign-in (production). Set GOOGLE_CLIENT_ID/SECRET to enable;
 // the button hides itself when keys are absent (local demo unaffected).
@@ -80,7 +83,7 @@ const LIVE_PAY = process.env.NODE_ENV === 'production' && !!(RAZORPAY.id && RAZO
 const gatewayOn = () => !!(RAZORPAY.id && RAZORPAY.secret);
 // Runtime kiosk switch (admin toggle): live when the env forces it, or the
 // admin switched it on with a real gateway behind it.
-const livePayFor = (db) => effectiveLive({ envLive: LIVE_PAY, gatewayOn: gatewayOn(), kioskLive: kioskLive(db) });
+const livePayFor = () => LIVE_PAY || process.env.NODE_ENV === 'production';
 function kioskBlockers() {
   const missing = [];
   if (!gatewayOn()) missing.push('Razorpay keys (RAZORPAY_KEY_ID/SECRET)');
@@ -155,7 +158,7 @@ function waForwardUrl(db, req, order) {
   const lines = [
     `New Printkarr order ${order.id}`,
     `- ${order.document} (${order.pages} pages x${order.copies})`,
-    `- ${order.printType === 'bw' ? 'B&W' : 'Color'}, ${order.sides}, ${order.paper || 'A4'}${order.pageRange ? `, pages ${order.pageRange}` : ''}`,
+    `- ${printDescription(order)}, ${order.sides}, ${order.paper || 'A4'}${order.pageRange ? `, pages ${order.pageRange}` : ''}`,
     `- Customer: ${c.name || ''} ${c.phone || ''}`,
     `- ${zoneOf(a.area) === 'pickup' ? 'Kiosk collection' : 'Drop'}: ${[a.address, a.area, a.pin].filter(Boolean).join(', ') || order.slot || ''}`,
     `- Slot: ${order.slot || ''}`,
@@ -178,6 +181,10 @@ app.use(['/admin', '/customer', '/order', '/login', '/logout', '/auth', '/api', 
   res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   next();
 });
+app.get('/shops', (req,res) => res.send(nearbyShopsPage(loadDb().partners || [], req.query.area)));
+app.get('/kiosks', (_req,res) => res.send(kioskStatusPage()));
+app.get(['/admin/qr','/qr.png','/c/:token','/customer/orders/:id/scan'], (_req,res) => res.redirect('/kiosks'));
+app.post('/c/:token/collect', (_req,res) => res.status(409).send('Kiosks are in development. Contact support for an existing order.'));
 app.get('/index.html', (_req, res) => res.redirect(301, '/'));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'tiny'));
 
@@ -229,7 +236,7 @@ function currentUser(req) {
 
 const customerReturnTo = (req) => customerDestination(parseCookies(req.headers.cookie).pk_next);
 
-const LOGIN_FOR = { customer: '/login', admin: '/admin/login' };
+const LOGIN_FOR = { customer: '/login', admin: '/admin/login', partner: '/partner/login', rider: '/rider/login' };
 function requireRole(role) {
   return (req, res, next) => {
     const user = currentUser(req);
@@ -328,6 +335,11 @@ function staffLogin(role) {
 const adminLogin = staffLogin('admin');
 app.get('/admin/login', adminLogin.show);
 app.post('/admin/login', loginLimiter, adminLogin.run);
+for (const role of ['partner','rider']) {
+  const login = staffLogin(role);
+  app.get(`/${role}/login`, login.show);
+  app.post(`/${role}/login`, loginLimiter, login.run);
+}
 
 
 
@@ -522,7 +534,7 @@ app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
     } catch { collectQr = null; }
   }
   saveDb(db);
-  const queuePause = db.orders.find(x => ['PRINTING', 'PRINT_FAILED'].includes(x.status));
+  const queuePause = db.orders.find(x => !x.fulfillmentId && ['PRINTING', 'PRINT_FAILED'].includes(x.status));
   res.send(adminOrderDetail(req.user, { ...o, queuePause: queuePause?.id }, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt, collectQr));
 });
 
@@ -736,8 +748,8 @@ app.get('/admin/analytics', requireRole('admin'), (req, res) => {
     salesToday: paid.filter((o) => inDay(o.createdAt)).reduce((s, o) => s + o.total, 0),
     salesWeek: paid.filter((o) => Date.parse(now) - Date.parse(o.createdAt) < 7 * 864e5).reduce((s, o) => s + o.total, 0),
     pages,
-    bw: printed.filter((o) => o.printType === 'bw').reduce((s, o) => s + o.pages * o.copies, 0),
-    color: printed.filter((o) => o.printType === 'color').reduce((s, o) => s + o.pages * o.copies, 0),
+    bw: printed.reduce((s, o) => s + printSides(o).bw, 0),
+    color: printed.reduce((s, o) => s + printSides(o).color, 0),
     done: orders.filter((o) => ['DELIVERED', 'REFUNDED'].includes(o.status)).length,
     cancelled: orders.filter((o) => o.status === 'CANCELLED').length,
     live: orders.filter((o) => !['DELIVERED', 'REFUNDED', 'CANCELLED'].includes(o.status)).length,
@@ -780,6 +792,7 @@ app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
       cfg.delivery.campuses = JSON.parse(String(req.body.campuses));
     }
     validateCampaign(cfg);
+    cfg.delivery.pickup.enabled = false;
     db.settings.campaign = cfg;
   } catch (error) { return res.status(400).send(oops(req.user, '/admin/settings', esc(error.message))); }
   saveDb(db);
@@ -894,7 +907,7 @@ function consumePackQuota(db, order) {
   checkPackQuota(db, [order]);
   const sub = (db.packSubs || []).find((s) => s.id === order.packSubId && s.customerId === order.customerId);
   if (!sub) return;
-  deductSides(sub, order.printType, (order.pages || 0) * (order.copies || 1));
+  deductSides(sub, order.printType, printSides(order));
   sub.updatedAt = new Date().toISOString();
 }
 
@@ -902,9 +915,9 @@ function restorePackQuota(db, order) {
   if (!order.packSubId || order.packRestored) return;
   const sub = (db.packSubs || []).find((s) => s.id === order.packSubId && s.customerId === order.customerId);
   if (!sub) return;
-  const sides = Math.max(1, Math.ceil((order.pages || 0) * (order.copies || 1)));
-  if (order.printType === 'color') sub.colorUsed = Math.max(0, (sub.colorUsed || 0) - sides);
-  else sub.bwUsed = Math.max(0, (sub.bwUsed || 0) - sides);
+  const sides = printSides(order);
+  sub.colorUsed = Math.max(0, (sub.colorUsed || 0) - sides.color);
+  sub.bwUsed = Math.max(0, (sub.bwUsed || 0) - sides.bw);
   order.packRestored = true;
 }
 
@@ -942,18 +955,51 @@ app.get('/customer/orders', requireRole('customer'), (req, res) => {
   }));
 });
 
+function printQuoteExtras(db, user, req) {
+  const extra = surchargeFees(db.pricing, activePrintJobs(db));
+  if (!user) return { ...extra, guest: true };
+  const device=parseCookies(req.headers.cookie).pk_offer_device;
+  const first=firstOffers(db,user,device,{pages:1000,bwPages:1000,copies:1,printType:'bw',rate:1,zone:'sarigam',deliveryFee:3,subtotal:1000});
+  const packs=(db.packSubs || []).filter(p=>p.customerId===user.id && usableOf(p)).map(p=>{
+    const remaining=leftOf(p);
+    for(const o of db.orders.filter(o=>o.packSubId===p.id && ['CREATED','PAYMENT_PENDING'].includes(o.status))){const n=printSides(o);remaining.bw-=n.bw;remaining.color-=n.color;}
+    return {bw:remaining.bw,color:remaining.color};
+  });
+  const cart=(db.carts || []).find(c=>c.customerId===user.id);
+  let otherSubtotal=0;try{if(cart && !cart.purchaseId)otherSubtotal=cartItems(db,cart,user.id).subtotal;}catch{}
+  let campusFee=10,campusSlot='';try{const plan=deliveryPlan(db,'school');campusSlot=plan.slot;campusFee=batchPrice(db,user.id,plan,0,10).fee;}catch{}
+  return {...extra,firstPrintPages:first.print,packs,otherSubtotal,campusFee,campusSlot};
+}
+
+function purchaseForDraft(db, customerId, draftId) {
+  const order=db.orders.find(o=>o.draftId===draftId && o.customerId===customerId);
+  return order && (db.purchases || []).find(p=>p.customerId===customerId && p.printIds.includes(order.id) && !['CANCELLED','REFUNDED'].includes(p.status));
+}
+
 app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
   offerDevice(req, res);
+  if (!req.query.draft && !req.query.repeat && !req.query.fresh) {
+    const db = loadDb(), token = parseCookies(req.headers.cookie).pk_guest;
+    const draft = token && (db.drafts || []).filter(d => !d.customerId && d.guest === token).at(-1);
+    if (draft) {
+      if (!draft.customerId) { draft.customerId = req.user.id; delete draft.guest; saveDb(db); }
+      return res.redirect(`/customer/orders/new?draft=${encodeURIComponent(draft.id)}`);
+    }
+  }
   if (req.query.draft) {
     const db = loadDb();
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
-    if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
+    if (!d) {const p=purchaseForDraft(db,req.user.id,req.query.draft);return p ? res.redirect(`/customer/purchases/${p.id}`) : res.status(404).send(oops(req.user,'/customer/orders','That draft <em>expired.</em>'));}
     const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
-    return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing, surchargeFees(db.pricing, activePrintJobs(db))));
+    const last=db.orders.filter(o=>o.customerId===req.user.id && o.paymentStatus==='paid' && !['CANCELLED','REFUNDED'].includes(o.status)).at(-1);
+    if(last){d.previousPrint=Object.fromEntries(['printType','copies','sides','orientation','binding','mixedPageType'].filter(k=>last[k]!==undefined).map(k=>[k,last[k]]));d.defaults={addressId:last.addressId,deliverySlot:deliveryChoice(last)};}
+    return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req)));
   }
   const db = loadDb();
   const repeat = db.orders.find((o) => o.id === req.query.repeat && o.customerId === req.user.id);
-  res.send(uploadStep(req.user, { pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
+  const shop = req.query.shop && (db.partners || []).find(s=>s.id===req.query.shop && s.active);
+  if (req.query.shop && !shop) return res.status(404).send(oops(req.user,'/shops','This shop is unavailable.'));
+  res.send(uploadStep(req.user, { shop, pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
 });
 
 app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), (req, res) => {
@@ -976,13 +1022,16 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   const db = loadDb();
   db.drafts ||= [];
   const repeat = db.orders.find((o) => o.id === req.body.repeat && o.customerId === req.user.id);
+  const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
+  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/shops','This shop is unavailable.'));}
   const draft = {
+    preferredShopId: chosenShop?.id || null,
     id: 'D' + Date.now().toString(36), customerId: req.user.id,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
     pages: file.pages, fileType: file.fileType, fileExt: file.ext,
     createdAt: new Date().toISOString()
   };
-  if (repeat) draft.selections = { printType: repeat.printType, copies: repeat.copies, sides: repeat.sides, orientation: repeat.orientation, binding: repeat.binding, notes: repeat.notes, addressId: repeat.addressId, zone: repeat.deliveryZone, deliveryMode: repeat.deliveryMode, campusId: repeat.campusId, slotId: repeat.slotId };
+  if (repeat) draft.selections = { printType: repeat.printType, mixedPageType: repeat.mixedPageType, copies: repeat.copies, sides: repeat.sides, institutionDelivery: repeat.institutionDelivery, institutionName: repeat.institutionName, orientation: repeat.orientation, binding: repeat.binding, notes: repeat.notes, addressId: repeat.addressId, zone: repeat.deliveryZone, deliveryMode: repeat.deliveryMode, campusId: repeat.campusId, slotId: repeat.slotId };
   db.drafts.push(draft);
   saveDb(db);
   res.redirect(`/customer/orders/new?draft=${draft.id}`);
@@ -992,20 +1041,19 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
   const db = loadDb();
   const d = (db.drafts || []).find((x) => x.id === req.body.draft && x.customerId === req.user.id);
   if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
-  const copies = Math.max(1, Math.min(200, parseInt(req.body.copies, 10) || 1));
-  const printType = req.body.printType === 'color' ? 'color' : 'bw';
-  const sides = req.body.sides === 'double' ? 'double' : 'single';
-  // Single-page images have no range to select — the whole photo prints.
-  const r = d.fileType === 'image' ? { pages: 1, valid: true } : rangePages(req.body.range, d.pages);
-  if (!r.valid) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Page range <em>confused us.</em>'));
+  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','orientation','binding','notes','deliverySlot','institutionName','addressId','nn_phone','nn_address','nn_area','nn_pin','nn_landmark','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
+  const fail = (message) => { saveDb(db); return res.status(400).send(optionsStep(req.user, d, db.addresses.filter(a => a.customerId === req.user.id), campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req), message)); };
+  let print;
+  try { print = printPlan({ ...req.body, range: d.fileType === 'image' ? '' : req.body.range }, d.pages); }
+  catch (error) { return fail(error.message); }
   let address;
   let plan;
-  try { plan = deliveryPlan(db, req.body.deliverySlot, req.body.campusId); }
-  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
+  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
+  catch (error) { return fail(error.message); }
   if (plan.campusId) {
     const campus = campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId);
     const phone = normPhone(req.body.nn_phone || req.user.phone);
-    if (!phone) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Campus delivery needs a <em>contact phone.</em>'));
+    if (!phone) return fail('Campus delivery needs a <em>contact phone.</em>');
     address = db.addresses.find((a) => a.customerId === req.user.id && a.campusId === campus.id);
     if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, campusId: campus.id, label: 'College', phone, name: req.user.name, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng }; db.addresses.push(address); }
     Object.assign(address, { phone, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng });
@@ -1015,36 +1063,35 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     address.address = plan.pickupAddress;
   } else if (req.body.addressId === '__new') {
     const newZone = zoneOf(req.body.nn_area);
-    if (!newZone || !normPhone(req.body.nn_phone) || (newZone !== 'pickup' && (!String(req.body.nn_address || '').trim() || !/^\d{6}$/.test(String(req.body.nn_pin || ''))))) {
-      return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'New address needs <em>address, phone, PIN.</em>'));
+    if (!['vapi','daman','sarigam','bhilad'].includes(newZone) || !normPhone(req.body.nn_phone) || (typeof req.body.nn_address !== 'string' || !req.body.nn_address.trim() || !/^\d{6}$/.test(String(req.body.nn_pin || '')))) {
+      return fail('New address needs <em>address, phone, PIN.</em>');
     }
     address = {
       id: 'ADR' + Date.now().toString(36), customerId: req.user.id,
-      label: 'Home', name: req.body.nn_name || req.user.name, phone: req.body.nn_phone,
-      address: newZone === 'pickup' ? 'Kiosk collection' : req.body.nn_address, area: req.body.nn_area || 'Vapi',
-      landmark: req.body.nn_landmark || '', pin: req.body.nn_pin, isDefault: false
+      label: 'Home', name: req.user.name, phone: req.body.nn_phone,
+      address: String(req.body.nn_address).trim().slice(0, 200), area: req.body.nn_area,
+      landmark: String(req.body.nn_landmark || '').slice(0, 100), pin: req.body.nn_pin, isDefault: false
     };
-    db.addresses.push(address);
   } else {
     address = db.addresses.find((a) => a.id === req.body.addressId && a.customerId === req.user.id);
-    if (!address) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Pick a <em>delivery address.</em>'));
+    if (!address) return fail('Pick a <em>delivery address.</em>');
   }
   if (plan.deliveryMode !== 'pickup') {
     const phone = normPhone(req.body.nn_phone || address.phone);
-    if (!phone) return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Enter a valid <em>contact phone.</em>'));
+    if (!phone) return fail('Enter a valid <em>contact phone.</em>');
     address.phone = '+91 ' + phone;
   }
   let zone = zoneOf(address.area);
-  const point = zone === 'pickup' ? null : plan.campusId ? deliveryPoint(address.lat, address.lng) : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
-  try { zone = deliveryFeeFor(db.pricing, zone, point, plan).zone; }
-  catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point and area.</em>')); }
+  const point = zone === 'pickup' ? null : plan.campusId ? deliveryPoint(address.lat, address.lng) : deliveryPoint(req.body.deliveryLat || address.lat, req.body.deliveryLng || address.lng);
+  try { if (point) Object.assign(plan, fulfillmentFor(db, point, { ...plan, zone }, [print])); zone = deliveryFeeFor(db.pricing, zone, point, plan).zone; }
+  catch (error) { return fail(esc(error.message)); }
   address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone];
   address.lat = point?.lat ?? null;
   address.lng = point?.lng ?? null;
-  if (!plan.campusId && plan.deliveryMode !== 'scheduled') plan = deliveryPlan(db, zone === 'pickup' ? 'pickup' : 'express');
+  if (plan.institutionDelivery) { address = { ...address, institutionName: plan.institutionName, label: 'School / College' }; }
+  if (!db.addresses.some(a => a.id === address.id)) db.addresses.push(address);
   d.selections = {
-    effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
-    copies, printType, sides,
+    ...print,
     orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto',
     binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none',
     notes: String(req.body.notes || '').slice(0, 300),
@@ -1052,6 +1099,8 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
     zoneLabel: plan.campus || { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone],
     ...plan
   };
+  if (plan.deliveryMode !== 'pickup') db.users.find(u => u.id === req.user.id).phone = address.phone;
+  delete d.form;
   saveDb(db);
   res.redirect(`/customer/orders/new/summary?draft=${d.id}`);
 });
@@ -1059,10 +1108,12 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
 app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
-  if (!d || !d.selections) return res.redirect('/customer/orders/new');
+  if (!d || !d.selections) {const p=purchaseForDraft(db,req.user.id,req.query.draft);return res.redirect(p ? `/customer/purchases/${p.id}` : '/customer/orders/new');}
   const s = d.selections;
+  try { Object.assign(s, printPlan(s, d.pages)); }
+  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   let plan;
-  try { plan = deliveryPlan(db, s.deliveryMode === 'scheduled' ? s.slotId : s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  try { plan = deliveryPlan(db, s); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   Object.assign(s, plan);
   if (plan.campusId) {
@@ -1074,14 +1125,14 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
-  catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
+  try { if (s.deliveryPoint) Object.assign(plan, fulfillmentFor(db, s.deliveryPoint, { ...plan, zone: s.zone }, [s])); q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
   q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
-  const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
+  const packCover = coverFor(db, req.user.id, s.printType, printSides(s));
   const packDiscount = packCover ? q.subtotal : 0;
   const offers = firstOffers(db, req.user, parseCookies(req.headers.cookie).pk_offer_device, {
-    pages: s.effPages, copies: s.copies, printType: s.printType, rate: q.rate,
+    pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, rate: q.rate,
     zone: s.zone, deliveryFee: q.deliveryFee, subtotal: q.subtotal, packDiscount
   });
   const refCode = String(req.query.referral || '').trim().toUpperCase().slice(0, 12);
@@ -1091,9 +1142,22 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
     if (!v.ok) ref = { code: refCode, error: v.error, discount: 0 };
     else ref.discount = referralDiscountFor(db, q.subtotal, packDiscount + offers.print, 0);
   }
-  const qShow = { ...q, firstBatchFree: batch.firstBatchFree, firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
-    total: Math.round((q.total - packDiscount - offers.print - offers.delivery - ref.discount) * 100) / 100 };
-  res.send(summaryStep(req.user, d, s, qShow, packCover, ref));
+  let couponCode=null,couponDiscount=0,influencer=null;
+  if(!packCover && String(req.query.coupon || '').trim()){
+    const v=validateCoupon(db,req.query.coupon,q.subtotal,req.user.id);
+    if(!v.ok)ref.error=v.error;else{couponCode=v.code;couponDiscount=Math.min(v.discount,q.subtotal-offers.print);influencer=v.influencer || null;}
+  }
+  if(ref.code && !ref.error)ref.discount=referralDiscountFor(db,q.subtotal,packDiscount+offers.print,couponDiscount);
+  const cart=cartFor(db,req.user.id,parseCookies(req.headers.cookie).pk_cart);
+  if(cart.purchaseId)return res.redirect(`/customer/purchases/${cart.purchaseId}`);
+  const previous=cartItems(db,cart,req.user.id);
+  const temporary={id:'DRAFT-'+d.id,customerId:req.user.id,status:'CREATED',paymentStatus:'pending',...s,pages:s.effPages,deliveryZone:s.zone,subtotal:q.subtotal,packSubId:packCover?.id || null,packDiscount,firstPrintDiscount:offers.print,firstDeliveryDiscount:offers.delivery,firstBatchFree:batch.firstBatchFree,couponCode,couponDiscount,influencer,referralDiscount:ref.discount};
+  db.orders.push(temporary);
+  let final;
+  try{final=cartQuote(db,{...cart,printIds:[...cart.printIds,temporary.id]},req.user.id,{addressId:s.addressId,deliverySlot:deliveryChoice(s)},validateCoupon);}
+  catch(error){return res.status(400).send(oops(req.user,`/customer/orders/new?draft=${d.id}`,esc(error.message)));}
+  const qShow={...q,subtotal:q.subtotal+previous.subtotal,firstPrintDiscount:offers.print,packDiscount,couponDiscount,deliveryFee:final.deliveryFee,lateNightFee:final.lateNightFee,surgeFee:final.surgeFee,total:final.total};
+  res.send(summaryStep(req.user,d,s,qShow,packCover,ref,{coupon:String(req.query.coupon || '').trim().slice(0,40),balance:walletOf(db,req.user.id).balance,gateway:gatewayOn(),prints:previous.prints.map(o=>({...o,net:printNet(o)})),items:previous.items,address:final.address,fulfillmentName:final.fulfillmentName}));
 });
 
 app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (req, res) => {
@@ -1109,12 +1173,18 @@ app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (r
 app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.customerId === req.user.id);
-  if (di < 0 || !db.drafts[di].selections) return res.redirect('/customer/orders/new');
+  if (di < 0 || !db.drafts[di].selections) {
+    const purchase=purchaseForDraft(db,req.user.id,req.body.draft);
+    if(purchase && req.get('accept')?.includes('application/json'))return res.json({id:purchase.id,total:purchase.total,paid:purchase.paymentStatus==='paid'});
+    return res.redirect(purchase ? `/customer/purchases/${purchase.id}` : '/customer/orders/new');
+  }
   const d = db.drafts[di];
   if ((db.carts || []).some((c) => c.customerId === req.user.id && c.purchaseId)) return res.status(409).send(oops(req.user, '/cart', 'Finish or cancel your current checkout before adding a print.'));
   const s = d.selections;
+  try { Object.assign(s, printPlan(s, d.pages)); }
+  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   let plan;
-  try { plan = deliveryPlan(db, s.deliveryMode === 'scheduled' ? s.slotId : s.campusId === 'lit' ? (s.deliveryMode === 'batch' ? 'college' : 'college-express') : s.deliveryMode === 'batch' ? s.slotId : s.zone === 'pickup' ? 'pickup' : 'express', s.campusId); }
+  try { plan = deliveryPlan(db, s); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   Object.assign(s, plan);
   if (plan.campusId) {
@@ -1126,15 +1196,15 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
-  catch { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, 'Select a valid <em>delivery point.</em>')); }
+  try { if (s.deliveryPoint) Object.assign(plan, fulfillmentFor(db, s.deliveryPoint, { ...plan, zone: s.zone }, [s])); q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   const id = nextOrderId(db);
   const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
   q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
-  const packCover = coverFor(db, req.user.id, s.printType, s.effPages * s.copies);
+  const packCover = coverFor(db, req.user.id, s.printType, printSides(s));
   const packDiscount = packCover ? q.subtotal : 0;
   const offers = firstOffers(db, req.user, parseCookies(req.headers.cookie).pk_offer_device, {
-    pages: s.effPages, copies: s.copies, printType: s.printType, rate: q.rate,
+    pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, rate: q.rate,
     zone: s.zone, deliveryFee: q.deliveryFee, subtotal: q.subtotal, packDiscount
   });
   let couponCode = null, couponDiscount = 0, influencer = null;
@@ -1154,10 +1224,10 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     referralDiscount = referralDiscountFor(db, q.subtotal, packDiscount + offers.print, couponDiscount);
   }
   const order = {
-    id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
-    printType: s.printType, sides: s.sides, paper: 'A4', orientation: s.orientation,
+    id, draftId: d.id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
+    printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, bwRange: s.bwRange, colorRange: s.colorRange, mixedPageType: s.mixedPageType, mixedRange: s.mixedRange, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
-    addressId: s.addressId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
+    addressId: s.addressId, preferredShopId: d.preferredShopId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode, couponDiscount, influencer, packSubId: packCover ? packCover.id : null, packDiscount,
     firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
@@ -1169,8 +1239,6 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
   };
-  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); }
-  catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Upload the file again before <em>placing this order.</em>')); }
   db.orders.push(order);
   if (referralCode) {
     const referrer = findReferrer(db, referralCode);
@@ -1181,11 +1249,21 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
       });
     }
   }
-  db.drafts.splice(di, 1);
   const ownerTest = canUseOwnerTestPrint(req.user, order);
-  if (!ownerTest) { cartFor(db, req.user.id, parseCookies(req.headers.cookie).pk_cart); addPrint(db, req.user.id, order.id); }
+  let purchase;
+  if (!ownerTest) {
+    cartFor(db,req.user.id,parseCookies(req.headers.cookie).pk_cart);const cart=addPrint(db,req.user.id,order.id);
+    if(req.body.checkout==='1' && req.body.next!=='add'){
+      try{purchase=createPurchase(db,cart,req.user.id,{addressId:s.addressId,deliverySlot:deliveryChoice(s)},validateCoupon);purchase.focused=true;}
+      catch(error){return req.get('accept')?.includes('application/json') ? res.status(400).json({error:error.message}) : res.status(400).send(oops(req.user,`/customer/orders/new/summary?draft=${d.id}`,esc(error.message)));}
+    }
+  }
+  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); }
+  catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Upload the file again before <em>placing this order.</em>')); }
+  db.drafts.splice(di,1);
   saveDb(db);
-  res.redirect(ownerTest ? `/customer/orders/${id}/pay` : '/cart');
+  if(purchase && req.get('accept')?.includes('application/json'))return res.json({id:purchase.id,total:purchase.total,paid:false});
+  res.redirect(ownerTest ? `/customer/orders/${id}/pay` : req.body.next==='add' ? '/customer/orders/new?fresh=1' : purchase ? `/customer/purchases/${purchase.id}` : '/cart');
 });
 
 app.get('/customer/orders/:id/preview.pdf', requireRole('customer'), (req, res) => {
@@ -1328,7 +1406,7 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   try { fs.copyFileSync(`data/uploads/${orderFile(src.id, src.fileExt)}`, `data/uploads/${stored}`); }
   catch { return res.redirect(`/customer/orders/new?repeat=${encodeURIComponent(src.id)}`); }
   db.drafts.push({ id, customerId: req.user.id, document: src.document, stored, pages: src.filePages || src.pages, fileType: src.fileType || 'pdf', fileExt: src.fileExt || 'pdf', createdAt: new Date().toISOString(),
-    selections: { effPages: src.pages, copies: src.copies, printType: src.printType, sides: src.sides, orientation: src.orientation || 'auto', binding: src.binding || 'none', notes: src.notes || '', range: src.pageRange || null, addressId: src.addressId, zone, zoneLabel: address?.area, deliveryPoint: deliveryPoint(address?.lat, address?.lng), deliveryMode: src.deliveryMode, slotId: src.slotId, campusId: src.campusId }
+    selections: { effPages: src.pages, copies: src.copies, printType: src.printType, bwPages: src.bwPages, colorPages: src.colorPages, bwRange: src.bwRange, colorRange: src.colorRange, mixedPageType: src.mixedPageType, mixedRange: src.mixedRange, sides: src.sides, orientation: src.orientation || 'auto', binding: src.binding || 'none', notes: src.notes || '', range: src.pageRange || null, addressId: src.addressId, zone, zoneLabel: address?.area, deliveryPoint: deliveryPoint(address?.lat, address?.lng), deliveryMode: src.deliveryMode, slotId: src.slotId, campusId: src.campusId }
   });
   saveDb(db);
   res.redirect(`/customer/orders/new/summary?draft=${id}`);
@@ -1368,7 +1446,7 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const rcfg = referralConfig(db);
   const returnOrder = db.orders.find((o) => o.id === req.query.order && o.customerId === req.user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status))?.id;
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, returnOrder, selectedOffer: String(req.query.offer || '').slice(0, 32), refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', campusId: 'lit' }, 0, 3).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: eligibleWalletOffers(db, req.user.id), fileGifts: db.walletTx.filter((t) => t.customerId === req.user.id && t.freeFiles) }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, returnOrder, selectedOffer: String(req.query.offer || '').slice(0, 32), refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', institutionDelivery: true }, 0, 10).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: eligibleWalletOffers(db, req.user.id), fileGifts: db.walletTx.filter((t) => t.customerId === req.user.id && t.freeFiles) }));
 });
 
 app.post('/customer/wallet/files/:txId/claim', requireRole('customer'), siteOrigin, (req, res) => {
@@ -1502,7 +1580,7 @@ app.post('/customer/packs/:subId/files/claim', requireRole('customer'), (req, re
   sub.filesUsed = (sub.filesUsed || 0) + 1;
   sub.updatedAt = new Date().toISOString();
   db.notifications ||= [];
-  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `Free file claimed (${sub.filesUsed}/${sub.filesTotal}) — collect at the kiosk.`, at: new Date().toISOString(), read: false });
+  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `Free file claimed (${sub.filesUsed}/${sub.filesTotal}) — ready for handover with your next delivery. Contact support to arrange it.`, at: new Date().toISOString(), read: false });
   saveDb(db);
   res.redirect('/customer/packs');
 });
@@ -1687,10 +1765,11 @@ app.post('/customer/profile', requireRole('customer'), (req, res) => {
 
 app.post('/customer/addresses/add', requireRole('customer'), (req, res) => {
   const db = loadDb();
-  if (!req.body.address || !req.body.phone || !req.body.pin) return res.redirect('/customer/profile#addresses');
+  const point = deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+  if (!point || !String(req.body.address || '').trim() || String(req.body.address).length > 200 || !normPhone(req.body.phone) || !/^[1-9]\d{5}$/.test(String(req.body.pin || '')) || !['Vapi','Daman','Sarigam','Bhilad'].includes(req.body.area)) return res.status(400).send(oops(req.user,'/customer/profile#addresses','Add a valid address, phone, PIN and delivery location.'));
   db.addresses.push({
     id: 'ADR' + Date.now().toString(36), customerId: req.user.id,
-    label: req.body.label || 'Home', name: req.user.name, phone: String(req.body.phone).slice(0, 20),
+    ...point, label: String(req.body.label || 'Home').slice(0,40), name: req.user.name, phone: String(req.body.phone).slice(0, 20),
     address: String(req.body.address).slice(0, 200), area: req.body.area || 'Sarigam',
     landmark: String(req.body.landmark || '').slice(0, 100), pin: String(req.body.pin).slice(0, 10),
     isDefault: !db.addresses.some((a) => a.customerId === req.user.id)
@@ -1722,11 +1801,17 @@ function guestToken(req, res) {
 function guestDraft(db, req) {
   const t = parseCookies(req.headers.cookie).pk_guest;
   if (!t) return null;
-  return (db.drafts || []).find((x) => x.id === req.query.draft && x.guest === t) || null;
+  return (db.drafts || []).find((x) => x.id === (req.body?.draft || req.query?.draft) && !x.customerId && x.guest === t) || null;
 }
 
 app.get('/order', (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  const user = currentUser(req);
+  if (user) {
+    const db = loadDb(), token = parseCookies(req.headers.cookie).pk_guest;
+    const draft = token && (db.drafts || []).filter(d => d.guest === token && !d.customerId && (!req.query.draft || d.id === req.query.draft)).at(-1);
+    if (draft && user.role === 'customer') { draft.customerId = user.id; delete draft.guest; saveDb(db); return res.redirect(`/customer/orders/new?draft=${encodeURIComponent(draft.id)}`); }
+    return res.redirect('/customer/orders/new' + (req.query.shop ? '?shop=' + encodeURIComponent(req.query.shop) : ''));
+  }
   offerDevice(req, res);
   const db = loadDb();
   const ref = String(req.query.ref || '').trim().toUpperCase();
@@ -1737,7 +1822,9 @@ app.get('/order', (req, res) => {
   const d = req.query.draft ? guestDraft(db, req) : null;
   if (req.query.draft && !d) return res.redirect('/order');
   const jobs = activePrintJobs(db);
-  res.send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
+  const shop=req.query.shop && (db.partners || []).find(s=>s.id===req.query.shop && s.active);
+  if(req.query.shop && !shop)return res.status(404).send(oops(null,'/shops','This shop is unavailable.'));
+  res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
 app.post('/order/upload', upload.single('doc'), (req, res) => {
@@ -1761,7 +1848,10 @@ app.post('/order/upload', upload.single('doc'), (req, res) => {
   const db = loadDb();
   db.drafts ||= [];
   const t = guestToken(req, res);
+  const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
+  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/shops','This shop is unavailable.'));}
   const draft = {
+    preferredShopId: chosenShop?.id || null,
     id: 'D' + Date.now().toString(36), guest: t, customerId: null,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
     pages: file.pages, fileType: file.fileType, fileExt: file.ext,
@@ -1772,31 +1862,34 @@ app.post('/order/upload', upload.single('doc'), (req, res) => {
   res.redirect(`/order?draft=${draft.id}`);
 });
 
+app.get('/order/:draft/preview', (req,res)=>{
+  const d=guestDraft(loadDb(),{headers:req.headers,query:{draft:req.params.draft}});
+  if(!d || !d.stored || path.basename(d.stored)!==d.stored)return res.sendStatus(404);
+  res.set('Cache-Control','private, no-store');res.type(mimeFor(d.fileExt)).sendFile(path.join(ROOT,'data','uploads',d.stored));
+});
+
 app.post('/order/options', (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
   const db = loadDb();
-  const d = (db.drafts || []).find((x) => x.id === req.body.draft && x.guest === parseCookies(req.headers.cookie).pk_guest);
+  const d = guestDraft(db, req);
   if (!d) return res.redirect('/order');
-  const copies = Math.max(1, Math.min(200, parseInt(req.body.copies, 10) || 1));
-  const printType = req.body.printType === 'color' ? 'color' : 'bw';
-  const sides = req.body.sides === 'double' ? 'double' : 'single';
-  const r = d.fileType === 'image' ? { pages: 1, valid: true } : rangePages(req.body.range, d.pages);
-  if (!r.valid) {
-    const jobs = activePrintJobs(db);
-    return res.send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: 'Page range confused us — try 1-12.', maxMb: db.settings.order.maxFileMb, surcharges: surchargeFees(db.pricing, jobs) }));
-  }
+  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','orientation','binding','notes','area','deliverySlot','institutionName'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
+  const fail = (message) => { saveDb(db); return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: message, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) })); };
+  let print;
+  try { print = printPlan({ ...req.body, range: d.fileType === 'image' ? '' : req.body.range }, d.pages); }
+  catch (error) { return fail(error.message); }
   let plan;
-  try { plan = deliveryPlan(db, req.body.deliverySlot, req.body.campusId); }
-  catch (error) { return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: error.message })); }
+  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
+  catch (error) { return fail(error.message); }
   const campus = plan.campusId ? campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId) : null;
   const area = campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : plan.deliveryMode === 'pickup' ? 'Pickup' : ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
-  if (!area) return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: 'Choose a valid delivery area or kiosk collection.' }));
+  if (!area || area === 'Pickup') return fail('Choose a supported delivery area. Kiosks are in development.');
   if (!campus && area === 'Pickup') plan = deliveryPlan(db, 'pickup');
   d.selections = {
-    effPages: r.pages, range: d.fileType === 'image' ? null : (req.body.range || '').slice(0, 60) || null,
-    copies, printType, sides, orientation: 'auto', binding: 'none', notes: '',
+    ...print, orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto', binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none', notes: String(req.body.notes || '').slice(0, 300),
     area, zone: zoneOf(area), zoneLabel: area, ...plan, campusAddress: campus?.address, campusPin: campus?.pin, campusPoint: campus ? { lat: campus.lat, lng: campus.lng } : null
   };
+  delete d.form;
   saveDb(db);
   res.redirect(`/order/phone?draft=${d.id}`);
 });
@@ -1813,10 +1906,11 @@ app.get('/order/phone', (req, res) => {
 app.post('/order/otp-request', otpLimiter, async (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
   const db = loadDb();
-  const list = db.drafts || [];
-  const d = list.find((x) => x.id === (req.body.draft || req.query.draft) && x.guest === parseCookies(req.headers.cookie).pk_guest);
+  const d = guestDraft(db, req);
   if (!d || !d.selections) return res.redirect('/order');
   if (!req.body.resend) {
+    d.contactForm = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['name','email','phone','address','pin','landmark','referral','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key,value]) => [key,value.slice(0,200)]));
+    saveDb(db);
     const email = normEmail(req.body.email);
     const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
     const phone = phoneRaw ? normPhone(phoneRaw) : '';
@@ -1828,6 +1922,7 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
     }
     const point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
     try {
+      if (point) Object.assign(d.selections, fulfillmentFor(db, point, { ...d.selections, zone: d.selections.zone }, [d.selections]));
       d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
       d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
     }
@@ -1844,7 +1939,7 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
       // Preliminary check now (phone page can show the error); re-validated
       // strictly at verify time once the account is resolved.
       const existing = db.users.find((u) => String(u.email || '').toLowerCase() === email);
-      const q0 = quote({ ...d.selections, pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, student: !!(existing && existing.student), zone: d.selections.zone, point });
+      const q0 = quote({ ...d.selections, pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, bwPages: d.selections.bwPages, colorPages: d.selections.colorPages, student: !!(existing && existing.student), zone: d.selections.zone, point });
       const pv = validateReferral(db, existing || { id: '__new__' }, d.contact.referral, q0.subtotal);
       if (!pv.ok) {
         return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: pv.error }));
@@ -1861,15 +1956,15 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
 app.post('/order/otp-verify', otpLimiter, (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
   const db = loadDb();
-  const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.guest === parseCookies(req.headers.cookie).pk_guest);
-  if (di < 0 || !db.drafts[di].selections || !db.drafts[di].contact) return res.redirect('/order');
-  const d = db.drafts[di];
+  const d = guestDraft(db, req);
+  if (!d || !d.selections || !d.contact) return res.redirect('/order');
   try { deliveryFeeFor(db.pricing, d.selections.zone, d.contact.deliveryPoint, d.selections); }
   catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point before confirming.' })); }
   const v = verifyEmailOtp(d.contact.email, req.body.code);
   if (!v.ok) return res.send(otpPage({ draft: d, email: d.contact.email, demoCode: null, mailError: null, error: v.error }));
   // Action becomes identity: find by email or create the account.
   let user = db.users.find((u) => String(u.email || '').toLowerCase() === d.contact.email.toLowerCase());
+  if (user && user.role !== 'customer') return res.status(403).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Use a customer account for this order.' }));
   if (!user) {
     user = {
       id: 'CUS-' + Date.now().toString(36), role: 'customer', name: d.contact.name,
@@ -1882,13 +1977,16 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   referralCodeFor(db, user);
   const s = d.selections;
   const address = {
-    id: 'ADR' + Date.now().toString(36), customerId: user.id, campusId: s.campusId, label: s.campusId ? 'College' : 'Home',
+    id: 'ADR' + Date.now().toString(36), customerId: user.id, campusId: s.campusId, institutionName: s.institutionName, label: s.institutionDelivery || s.campusId ? 'School / College' : 'Home',
     name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
     area: s.area, landmark: d.contact.landmark, pin: d.contact.pin,
     lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: true
   };
   db.addresses.push(address);
+  if (d.contact.phone) user.phone = d.contact.phone;
   d.customerId = user.id;
+  delete d.guest;
+  delete d.contactForm;
   d.selections.addressId = address.id;
   d.selections.deliveryPoint = d.contact.deliveryPoint;
   if (d.contact.referral) {
@@ -1904,6 +2002,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
 installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon, notifyState, restorePackQuota, voidPendingForOrder, qualifyForOrder, gateway: RAZORPAY });
+installPartnerRoutes(app, { loadDb, saveDb, requireRole, siteOrigin, uploadsDir: path.join(ROOT,'data','uploads'), notifyState, qualifyForOrder });
 installNotificationRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin });
 
 app.use((err, req, res, _next) => {
@@ -1954,7 +2053,7 @@ function agentAuth(req, res, next) {
 }
 const agentJob = (o) => ({
   id: o.id, document: o.document, pages: o.pages, copies: o.copies,
-  printType: o.printType, sides: o.sides, paper: o.paper || 'A4',
+  printType: o.printType, bwPages: o.bwPages, colorPages: o.colorPages, bwRange: o.bwRange, colorRange: o.colorRange, orientation: o.orientation, binding: o.binding, notes: o.notes, sides: o.sides, paper: o.paper || 'A4',
   filePages: o.filePages || (o.pageRange ? null : o.pages),
   pageRange: o.pageRange || null, fileType: o.fileType || 'pdf', fileExt: o.fileExt || 'pdf',
   status: o.status
@@ -1962,10 +2061,10 @@ const agentJob = (o) => ({
 
 app.get('/api/agent/next', agentAuth, (_req, res) => {
   const db = loadDb();
-  const blocked = db.orders.find(o => ['PRINTING', 'PRINT_FAILED'].includes(o.status));
+  const blocked = db.orders.find(o => !o.fulfillmentId && ['PRINTING', 'PRINT_FAILED'].includes(o.status));
   if (blocked) return res.json({ paused: true, reason: `Inspect ${blocked.id} in admin before continuing` });
   const job = db.orders
-    .filter((o) => o.status === 'PRINT_QUEUE')
+    .filter((o) => !o.fulfillmentId && o.status === 'PRINT_QUEUE' && o.printType !== 'mixed')
     .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))[0];
   if (!job) return res.status(204).end();
   res.json({ order: agentJob(job) });
@@ -1976,7 +2075,7 @@ app.get('/api/agent/file/:id', agentAuth, (req, res) => {
   if (!safe) return res.status(400).json({ error: 'Bad ID.' });
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
-  if (!o || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
+  if (!o || o.fulfillmentId || o.printType === 'mixed' || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
     return res.status(404).json({ error: 'Not printable right now.' });
   }
   const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o.fileExt));
@@ -1992,8 +2091,9 @@ function agentStep(to, note) {
     const db = loadDb();
     const o = db.orders.find((x) => x.id === safe);
     if (!o) return res.status(404).json({ error: 'Unknown order.' });
+    if (o.fulfillmentId || o.printType === 'mixed') return res.status(409).json({ error: 'Mixed printing requires manual operator fulfilment.' });
     try {
-      if (to === 'PRINTING' && db.orders.some(x => x.id !== o.id && (['PRINTING', 'PRINT_FAILED'].includes(x.status)))) throw new Error('Print queue paused');
+      if (to === 'PRINTING' && db.orders.some(x => !x.fulfillmentId && x.id !== o.id && (['PRINTING', 'PRINT_FAILED'].includes(x.status)))) throw new Error('Print queue paused');
       transition(o, to, { by: 'agent', note: note || req.body.note || null });
       if (to === 'PRINTING') o.printAwaitingVerification = false;
     } catch {
@@ -2011,6 +2111,7 @@ app.post('/api/agent/:id/done', agentAuth, (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
   if (!o) return res.status(404).json({ error: 'Unknown order.' });
+  if (o.fulfillmentId || o.printType === 'mixed') return res.status(409).json({ error: 'Mixed printing requires manual operator fulfilment.' });
   if (o.status !== 'PRINTING') return res.status(409).json({ error: `Cannot report output from ${o.status}.` });
   if (req.body.queueDrained !== true) return res.status(400).json({ error: 'Printer queue completion report required. Update the print agent.' });
   // Spooler completion is not proof of legible output. An operator confirms the tray.

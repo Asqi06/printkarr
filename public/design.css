@@ -12,7 +12,7 @@
   /* Keep existing templates on the same palette while they use legacy colour names. */
   --tang: var(--primary); --tang-soft: var(--pale); --on-tang: var(--primary-fg); --tang-ink: var(--primary); --tang-deep: var(--blue-bright);
   --paper-2: var(--pale-2); --ink-2: var(--ink); --line-soft: var(--line); --sun: var(--pale); --pool: var(--pale); --blue: var(--primary);
-  --font-d: 'DM Sans', 'Segoe UI', system-ui, sans-serif; --font-s: var(--font-d); --font-m: var(--font-d); --font-editorial: 'Instrument Serif', Georgia, serif;
+  --font-d: 'DM Sans', 'Segoe UI', system-ui, sans-serif; --font-s: var(--font-d); --font-m: var(--font-d); --font-editorial: var(--font-d);
   --space-1: 8px; --space-2: 16px; --space-3: 24px; --space-4: 32px; --space-section: clamp(64px,8vw,128px);
   --r: 16px; --button-radius: 12px; --card-padding: clamp(20px,3vw,32px); --pad: clamp(20px,4vw,64px);
   --ez: cubic-bezier(.22,1,.36,1); --ez-out: var(--ez); --shadow-card: 0 14px 40px -24px #17327726;
@@ -401,11 +401,11 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
   .app-workspace .main .grid { margin-top: 16px; }
   .app-sidebar > .eyebrow, .sidebar-print, .sidebar-website { display: none; }
   .customer-mobile-nav, .app-customer .app-sidebar { display: block; position: fixed; inset: auto 12px calc(10px + env(safe-area-inset-bottom)); z-index: 85; padding: 5px; border: 1px solid var(--line); border-radius: 16px; background: white; box-shadow: 0 4px 28px #14203b14; min-height: 0; }
-  .customer-mobile-nav, .app-customer .app-sidebar .snav { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 2px; margin: 0; padding: 0; }
+  .customer-mobile-nav, .app-customer .app-sidebar .snav { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 2px; margin: 0; padding: 0; }
   .customer-mobile-nav { padding: 5px; }
   .customer-mobile-nav a, .app-customer .snav a { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 56px; gap: 5px; padding: 6px 1px; border: 0; border-radius: 10px; text-align: center; font-size: 10px; line-height: 1.2; font-weight: 500; color: var(--muted); text-decoration: none; white-space: normal; }
   .customer-mobile-nav a[aria-current], .customer-mobile-nav a:hover, .app-customer .snav a.live { color: var(--primary); background: var(--pale); }
-  .app-customer .snav a:nth-child(n+7) { display: none; }
+  .app-customer .snav a:not([data-mobile-primary]) { display: none; }
   body:has(.customer-mobile-nav) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   .app-admin .app-sidebar { position: sticky; top: 72px; z-index: 65; padding: 6px 16px; border: 0; border-bottom: 1px solid var(--line); background: white; min-height: 0; }
   .app-admin .snav { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; margin: 0; }
@@ -435,3 +435,26 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; }.rv { opacity: 1; transform: none; } }
 @media (forced-colors: active) { .btn, .card, .customer-mobile-nav { border: 1px solid CanvasText; }.ui-icon { fill: currentColor; } }
 @media print { .site-header, .pk-header, .app-sidebar, .customer-mobile-nav, .pk-footer, .toast { display: none; }.app-workspace { display: block; }.app-workspace .main { padding: 0; } }
+
+/* Shared storefront refresh: one type family, calm surfaces and clear touch targets. */
+:root{--bg:#fafbfc;--font-body:var(--font-s);--button-radius:100px}
+.btn{border-radius:100px;min-height:44px;font-weight:600;letter-spacing:-.015em}
+.btn.big{font-size:14px}
+.field input,.field select,.field textarea{border-radius:10px;background:white;min-height:46px;font-size:14px}
+.field label{font-size:12px;font-weight:600;color:var(--ink)}
+.field-hint{line-height:1.75}
+.card{box-shadow:none;border-radius:16px}
+.pick{border-radius:12px;min-height:48px}
+.app-view{background:#f7f9fc}
+.app-view .main h1{letter-spacing:-.045em}
+.app-view .main h2{letter-spacing:-.025em}
+.app-view .app-sidebar{background:#fff}
+.app-view .workspace-label{font-size:11px}
+.app-customer .dashboard-cards{gap:20px;margin-top:24px}
+.app-customer .dashboard-action{min-height:180px;background:white}
+.app-customer .dashboard-action .eyebrow{font-size:10px}
+.app-customer .dashboard-action h2{font-size:27px}
+.app-customer .dashboard-action.nearby-action{background:#edf2ff;border-color:#d1ddff}
+.app-customer .dashboard-pricing{border-radius:12px;background:white}
+.app-partner .main,.app-rider .main{max-width:1200px}
+@media(max-width:760px){.btn.big{font-size:13px}.field input,.field select,.field textarea{font-size:16px}.app-customer .dashboard-action{min-height:140px}}

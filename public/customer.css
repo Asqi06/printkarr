@@ -179,5 +179,6 @@ details summary { cursor: pointer; color: var(--primary); font-weight: 600; }
 .dashboard-action h2 { font-size:clamp(28px,3.5vw,40px); line-height:1.12; font-weight:500; letter-spacing:-.04em; max-width:420px; }
 .dashboard-action .card-link { display:flex; align-items:center; gap:12px; margin-top:28px; font-size:13px; font-weight:600; }
 .dashboard-pricing { border-block:1px solid var(--line); display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; padding:20px 0; font-size:13px; color:var(--muted); }
+.dashboard-cards .dashboard-action:has(.stat) { min-height:0; padding:24px; }
 .dashboard-pricing strong { color:var(--primary); font-weight:500; }
 @media(max-width:760px) { .livetotal { bottom:calc(85px + env(safe-area-inset-bottom)); }.quick-order .livetotal { position:static; }.dashboard-action { min-height:210px; }.wallet-overview { padding:24px; }.receipt-paper { padding:24px; } }

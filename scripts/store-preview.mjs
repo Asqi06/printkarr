@@ -1,3 +1,4 @@
+import { printSides } from '../public/print-plan.js';
 // Local, in-memory shopping preview. No production data, emails, payments or printers.
 import express from 'express';
 import helmet from 'helmet';
@@ -26,20 +27,21 @@ export function previewDb(real = false) {
   return db;
 }
 
-export function createStorePreview(seed = previewDb(), { preview = true, gateway = {}, fetchGateway, uploadsDir = mkdtempSync(path.join(tmpdir(), 'printkarr-store-preview-')) } = {}) {
+export function createStorePreview(seed = previewDb(), { preview = true, gateway = {}, fetchGateway, installPrintRoutes, resolveUser, uploadsDir = mkdtempSync(path.join(tmpdir(), 'printkarr-store-preview-')) } = {}) {
   let db = structuredClone(seed);
   const app = express(); app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
   app.use((_req, res, next) => { res.set('Referrer-Policy', 'strict-origin'); next(); });
   app.use(express.json()); app.use(express.urlencoded({ extended: false }));
   const loadDb = () => structuredClone(db), saveDb = (next) => { db = structuredClone(next); };
-  const currentUser = (req) => { const role = parseCookies(req.headers.cookie).preview_role || 'customer'; return role === 'guest' ? null : db.users.find((u) => u.role === role); };
+  const currentUser = (req) => { if (resolveUser) return resolveUser(db, req); const role = parseCookies(req.headers.cookie).preview_role || 'customer'; return role === 'guest' ? null : db.users.find((u) => u.role === role); };
   const requireRole = (role) => (req, res, next) => { req.user = currentUser(req); if (!req.user) return res.redirect('/login'); if (req.user.role !== role) return res.sendStatus(403); next(); };
   const siteOrigin = runInNewContext(source.match(/function siteOrigin\(req, res, next\) \{[\s\S]*?\n\}/)[0] + '\nsiteOrigin;', { SITE: 'https://printkarr.in', URL });
-  const restorePackQuota = (db, o) => { const sub = db.packSubs.find((s) => s.id === o.packSubId); if (sub && !o.packRestored) { sub[o.printType === 'color' ? 'colorUsed' : 'bwUsed'] -= o.pages * o.copies; o.packRestored = true; } };
+  const restorePackQuota = (db, o) => { const sub = db.packSubs.find((s) => s.id === o.packSubId); if (sub && !o.packRestored) { const sides = printSides(o); sub.bwUsed = Math.max(0,(sub.bwUsed||0)-sides.bw); sub.colorUsed = Math.max(0,(sub.colorUsed||0)-sides.color); o.packRestored = true; } };
   installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon: couponPolicy.validateCoupon, notifyState() {}, restorePackQuota, voidPendingForOrder() {}, qualifyForOrder() {}, gateway, preview, fetchGateway, uploadsDir });
   app.get('/', (_req, res) => res.send(landing({ pricing: db.pricing, campaign: db.settings.campaign, walletOffers: db.settings.campaign.wallets.filter((o) => o.enabled) })));
   app.get('/preview/role/:role', (req, res) => { if (!['customer', 'admin', 'guest'].includes(req.params.role)) return res.sendStatus(404); res.cookie('preview_role', req.params.role, { httpOnly: true, sameSite: 'lax' }); res.redirect(req.params.role === 'admin' ? '/admin/catalogue' : '/stationery'); });
   app.get('/login', (_req, res) => { res.cookie('preview_role', 'customer', { httpOnly: true, sameSite: 'lax' }); res.redirect('/cart'); });
+  if (installPrintRoutes) installPrintRoutes({ app, loadDb, saveDb, currentUser, requireRole, uploadsDir });
   app.get('/customer/orders/new', requireRole('customer'), (req, res) => res.send(layout({ user: req.user, title: 'Demo print', active: '/customer/orders/new', body: '<p class="eyebrow">LOCAL PREVIEW · NO PRINTER CONNECTED</p><h1 class="display">Add a sample <em>print.</em></h1><p>On the website, your normal PDF upload and print settings add a real document to the same cart. Here, use a fictional assignment to test the combined checkout.</p><form class="card" style="margin-top:24px" method="POST" action="/preview/print"><div class="field"><label for="pages">Sample pages at ₹2 each</label><input id="pages" name="pages" type="number" min="1" max="100" value="25" required></div><button class="btn loud" type="submit">Add demo assignment to cart →</button></form>' })));
   app.post('/preview/print', siteOrigin, requireRole('customer'), (req, res) => {
     const next = loadDb(), pages = Number(req.body.pages);

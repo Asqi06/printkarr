@@ -1,0 +1,866 @@
+[
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/shops",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/kiosks",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/printing-in-daman",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/printing-prices",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/order",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/order/options",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/order/phone",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/order/college",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/order/local",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/order/verify",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/printing-in-vapi",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/about",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/how-it-works",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/franchise",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/xerox",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/contact",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/blogs",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/terms",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/privacy",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/blogs/prepare-documents-for-printing-vapi",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/blogs/admit-card-printing-checklist",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/blogs/running-a-printkarr-kiosk",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/blogs/replacing-xerox-queues",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/blogs/colleges-24-7-print",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/login",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/login/code",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/login",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/orders",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/orders/preview",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/customer/orders/preview/scan",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/customer/orders/new",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/options",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/returning",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/checkout-offer",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/orders/preview/pay",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/wallet",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/wallet-files",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/customer-files",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/referrals",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/packs",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/review",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/wallet-live",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/profile",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/orders/preview",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/customers/preview",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/admin/packs",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/referrals",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/admin/classroom-qr",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/orders",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/print-queue",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/admin/customers",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/pricing",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/coupons",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/settings",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/analytics",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/customer/notifications",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/notifications",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/partners",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/admin/delivery",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/partner",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/rider",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/partner/catalogue",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/admin/catalogue",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/admin/purchases",
+    "width": 320
+  },
+  {
+    "contentWidth": 320,
+    "h1": 1,
+    "path": "/customer/purchases",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/stationery",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/cart",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/notifications/unsubscribe/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "width": 320
+  },
+  {
+    "contentWidth": 305,
+    "h1": 1,
+    "path": "/notifications/unsubscribed",
+    "width": 320
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/shops",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/kiosks",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/printing-in-daman",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/printing-prices",
+    "width": 768
+  },
+  {
+    "contentWidth": 768,
+    "h1": 1,
+    "path": "/order",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/order/options",
+    "width": 768
+  },
+  {
+    "contentWidth": 768,
+    "h1": 1,
+    "path": "/order/phone",
+    "width": 768
+  },
+  {
+    "contentWidth": 768,
+    "h1": 1,
+    "path": "/order/college",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/order/local",
+    "width": 768
+  },
+  {
+    "contentWidth": 768,
+    "h1": 1,
+    "path": "/order/verify",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/printing-in-vapi",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/about",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/how-it-works",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/franchise",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/xerox",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/contact",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/blogs",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/terms",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/privacy",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/blogs/prepare-documents-for-printing-vapi",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/blogs/admit-card-printing-checklist",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/blogs/running-a-printkarr-kiosk",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/blogs/replacing-xerox-queues",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/blogs/colleges-24-7-print",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/login",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/login/code",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/login",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/orders",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/orders/preview",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/orders/preview/scan",
+    "width": 768
+  },
+  {
+    "contentWidth": 768,
+    "h1": 1,
+    "path": "/customer/orders/new",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/options",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/returning",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/checkout-offer",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/orders/preview/pay",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/wallet",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/wallet-files",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/customer-files",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/referrals",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/packs",
+    "width": 768
+  },
+  {
+    "contentWidth": 768,
+    "h1": 1,
+    "path": "/customer/review",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/wallet-live",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/profile",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/orders/preview",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/customers/preview",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/packs",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/referrals",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/classroom-qr",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/orders",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/print-queue",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/customers",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/pricing",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/coupons",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/settings",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/analytics",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/notifications",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/notifications",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/partners",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/delivery",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/partner",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/rider",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/partner/catalogue",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/catalogue",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/admin/purchases",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/customer/purchases",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/stationery",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/cart",
+    "width": 768
+  },
+  {
+    "contentWidth": 753,
+    "h1": 1,
+    "path": "/notifications/unsubscribe/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "width": 768
+  },
+  {
+    "contentWidth": 768,
+    "h1": 1,
+    "path": "/notifications/unsubscribed",
+    "width": 768
+  }
+]

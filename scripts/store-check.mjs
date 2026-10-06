@@ -18,7 +18,8 @@ for (const type of ['stationery', 'prints', 'mixed']) for (const amount of [148.
   if (type !== 'prints') setQuantity(db, cart, 'demo-file', 'green', 1);
   if (type !== 'stationery') { print(db, 'PK-1', type === 'mixed' ? 50 : amount); addPrint(db, customer, 'PK-1'); }
   const q = cartQuote(db, cart, customer, selection, validate);
-  assert.equal(q.net, amount); assert.equal(q.deliveryFee, amount < 149 ? 15 : 0, `${type} ${amount}`); assert.equal(q.total, amount + q.deliveryFee);
+  assert.equal(q.net, amount); assert.equal(q.deliveryFee, 15, `${type} express ${amount}`);
+  const scheduled=cartQuote(db,cart,customer,{...selection,deliverySlot:'local-vapi-afternoon'},validate);assert.equal(scheduled.deliveryFee,amount<149?10:0,`${type} scheduled ${amount}`); assert.equal(q.total, amount + q.deliveryFee);
 }
 {
   const db = previewDb(true), cart = cartFor(db, customer);
@@ -26,7 +27,7 @@ for (const type of ['stationery', 'prints', 'mixed']) for (const amount of [148.
   assert.equal(cartQuote(db, cart, customer, { ...selection, coupon: 'DESK10' }, validate).deliveryFee, 15, 'Discounts reduce qualifying item value');
   db.addresses[0].lat = 20.54; db.addresses[0].lng = 73.09;
   assert.throws(() => cartQuote(db, cart, customer, selection, validate), /outside/);
-  assert.throws(() => cartQuote(db, cart, customer, { ...selection, deliverySlot: 'pickup' }, validate), /not available/);
+  assert.throws(() => cartQuote(db, cart, customer, { ...selection, deliverySlot: 'pickup' }, validate), /development/);
   assert.throws(() => cartQuote(db, cart, customer, { ...selection, addressId: 'someone-else' }, validate), /address/);
   assert.throws(() => setQuantity(db, cart, 'demo-file', 'purple', 1), /colour/);
   assert.throws(() => setQuantity(db, cart, 'demo-file', 'red', 1.5), /quantity/);
@@ -171,7 +172,7 @@ if (process.argv.includes('--browser')) {
   const preview=createStorePreview(),browserServer=await new Promise(resolve=>{const s=preview.app.listen(0,'127.0.0.1',()=>resolve(s));});
   const url=`http://127.0.0.1:${browserServer.address().port}`;
   const browser=await puppeteer.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
-  const errors=[];mkdirSync('docs/store-preview',{recursive:true});mkdirSync('docs/shop-discovery-preview',{recursive:true});
+  const errors=[];mkdirSync('docs/store-preview-focused',{recursive:true});mkdirSync('docs/shop-discovery-preview',{recursive:true});
   try {
     for(const width of [320,390,1440]) {
       preview.reset();
@@ -192,20 +193,20 @@ if (process.argv.includes('--browser')) {
         await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('.customer-mobile-nav a[href="/stationery"]')]);assert.ok(page.url().endsWith('/stationery'));
       }
       await page.goto(url+'/stationery',{waitUntil:'networkidle0'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Shop overflow at ${width}`);
-      await page.screenshot({path:`docs/store-preview/shop-${width}.png`,fullPage:true});
+      await page.screenshot({path:`docs/store-preview-focused/shop-${width}.png`,fullPage:true});
       await page.type('[data-product-search]','file');assert.equal(await page.$$eval('[data-product]',els=>els.filter(e=>!e.hidden).length),1);
       await page.click('[name="color"][value="red"]');await page.click('[data-add-product] button');await page.waitForFunction(()=>document.querySelector('[data-cart-count]').textContent==='1');
       await page.goto(url+'/customer/orders/new',{waitUntil:'networkidle0'});await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('form[action="/preview/print"] button')]);
       assert.ok(await page.$('.delivery-progress'), `Print submission at ${page.url()}: ${await page.$eval('body',e=>e.textContent.slice(0,1000))}`);
       assert.match(await page.$eval('.delivery-progress',e=>e.textContent),/₹74/);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Cart overflow at ${width}`);
-      await page.screenshot({path:`docs/store-preview/cart-${width}.png`,fullPage:true});
+      await page.screenshot({path:`docs/store-preview-focused/cart-${width}.png`,fullPage:true});
       await page.$eval('#cart-coupon',e=>{e.value='DESK10';});await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('[formaction="/cart/quote"]')]);
       assert.match(await page.$eval('.delivery-progress',e=>e.textContent),/₹84/);
       await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('button[type="submit"].loud')]);
       await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('.receipt-actions button.loud')]);assert.match(await page.$eval('.store-status',e=>e.textContent),/PAID/);
-      await page.screenshot({path:`docs/store-preview/receipt-${width}.png`,fullPage:true});
+      await page.screenshot({path:`docs/store-preview-focused/receipt-${width}.png`,fullPage:true});
       await page.goto(url+'/preview/role/admin',{waitUntil:'networkidle0'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Admin overflow at ${width}`);
-      await page.screenshot({path:`docs/store-preview/admin-${width}.png`,fullPage:true});
+      await page.screenshot({path:`docs/store-preview-focused/admin-${width}.png`,fullPage:true});
       assert.equal(await page.$('#product-image'),null,'The catalogue uses a local file picker');
       await page.type('#product-name','Uploaded photo notebook');await page.type('#product-category','Notebooks');await page.type('#product-price','30');await page.type('#product-stock','8');
       const input=await page.$('#product-photo');await input.uploadFile(nodePath.resolve('public/favicon-32x32.png'));

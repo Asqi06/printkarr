@@ -25,7 +25,7 @@ try {
   assert.match(await get('/robots.txt'), new RegExp(`Sitemap: ${SITE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/sitemap\\.xml`));
   assert.match(await get('/robots.txt'), /Allow: \/admin\/login\n/);
   assert.doesNotMatch(await get('/robots.txt'), /Disallow: \/login/);
-  assert.match(await get('/llms.txt'), /Kiosks are planned in Vapi/);
+  assert.match(await get('/llms.txt'), /Kiosks are in development/);
   for (const path of [...Object.keys(PAGES), ...POSTS.map(p => '/blogs/' + p.slug)]) {
     const html = pages.get(path);
     assert.ok(html, path + ' public page is rendered');

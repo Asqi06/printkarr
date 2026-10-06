@@ -1,17 +1,17 @@
-# Graph Report - prntkr  (2026-10-04)
+# Graph Report - prntkr  (2026-10-06)
 
 ## Corpus Check
-- 340 files · ~2,257,263 words
+- 358 files · ~2,459,906 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 43 file(s) not represented in the graph (top: (none) 11, .css 11, .woff2 7)
+- Unclassified: 47 file(s) not represented in the graph (top: .css 14, (none) 11, .woff2 7)
 
 ## Summary
-- 9582 nodes · 24391 edges · 300 communities (242 shown, 58 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 2025 edges (avg confidence: 0.86)
+- 9691 nodes · 24717 edges · 331 communities (255 shown, 76 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 2022 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `791f3933`
+- Built from commit: `9c6ea5d3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,27 +19,27 @@
 - three.mjs
 - site-BTbJergO.js
 - index-BmpwFe3l.js
-- multiplyScalar
+- applyMatrix4
 - react-router+[...].mjs
 - copy
 - get
-- writeChunk
+- ka
 - constructor
 - get
 - zod.mjs
 - constructor
-- i
-- n
+- copy
+- a
 - H
 - design-check.mjs
-- reviews.test.js
-- get
+- WebGLState
+- Td
 - createSerovalNode
 - public/vendor/three-0.160.0.module.js
 - site.tsx
 - constructor
-- getRefParam
-- i
+- push
+- lc
 - Yxx1UbwMGrpapxo2-grok-workspace/package.json
 - routeTree.gen.ts
 - server.mjs
@@ -50,28 +50,28 @@
 - ssr.mjs
 - dependencies
 - site-Cp8Pww_l.mjs
-- r
+- constructor
 - pushStartInstance
 - useRouter
 - .push
 - index.mjs
-- .copy
-- config
+- reviews.test.js
+- copyArray
 - h3+rou3+srvx.mjs
-- zl
+- return
 - normalizeParams
 - gates.tsx
 - video2dsprite.py
-- Sl
-- a
+- Path
+- i
 - browser-smoke.mjs
 - update
 - router-core+[...].mjs
-- applyMatrix4
+- .render
 - P2PRoom
-- .dispose
+- get
 - use-connector-readiness.ts
-- notify.js
+- package.json
 - grok-pwa-shared.mjs
 - generate2dsprite.py
 - grok-pwa-plugin.mjs
@@ -79,32 +79,32 @@
 - h3-v2+rou3.mjs
 - Vector3
 - router-HJC2v6Sy.mjs
-- .multiplyScalar
-- PerspectiveCamera
+- .dot
+- Object3D
 - preview-host-bridge.ts
 - createLoaderTask$1
-- .fromArray
-- .clone
+- attachRouterServerSsrUtils
+- .copy
 - server.ts
 - Matrix4
 - Animations
 - get
 - gsap-3.13.0.min.js
-- Imagine
+- .render
 - Map Pipeline Selection
 - executeServerLane
 - clone
-- sign-out-plan.test.mjs
-- pumpRawStream
+- client.ts
+- ref_agent_cover_js
 - devDependencies
-- Object3D
+- .parseObject
 - extract_prop_pack.py
 - Vector2
 - prd.md
-- constructor
+- influencers.test.js
 - db.ts
 - compilerOptions
-- flush
+- br
 - Phaser 3 / 4 — Deep Engine Guide (scenes, physics, scale, tilemaps, pooling, architecture)
 - PageShell
 - HomePage
@@ -112,40 +112,40 @@
 - compose_layered_preview.py
 - constructor
 - createReactiveSystem
-- lib/store.js
+- partner_routes.js
 - Refined UI (product chrome and overlays)
 - sonner.mjs
-- WebGLState
+- AnimationClip
 - What You Must Do When Invoked
 - brand-check.test.mjs
 - scripts
 - PMREMGenerator
 - Surfaces
-- ci
-- rn
+- views_store.js
+- e_prntkr_docs_ux_refinement_baseline_views_js
 - motion-12.23.24.js
 - make_layout_guide.py
 - WebXRManager
-- verify.server.ts
+- .get
 - tanstack__history.mjs
-- copyArray
+- fe
 - Transition Only What Changes
-- en
+- addToRenderList
 - shell.js
 - ruixen-gradient-footer.tsx
 - ssr-renderer.mjs
 - ContactPage
 - init
 - fetch
-- addToRenderList
+- PositionalAudio
 - Stationery marketplace preview
 - blogs._slug-SkOvilWI.mjs
 - _overwrite
 - graphify.js
 - grok-pwa-shared.d.mts
 - datetime
-- copy
-- db.js
+- add
+- ref_node_fs
 - Layered Raster Map Contract
 - nullable
 - virtual-grok-og-identity.d.ts
@@ -161,43 +161,45 @@
 - .normalize
 - Babylon.js — Deep Engine Guide (Havok physics, cameras, SceneOptimizer, WebGPU, assets, GUI, freezing)
 - Part B — Tetris
-- add
+- en
 - Collision & Physics for Browser Games (2D AABB/SAT/broadphase, swept collision, 3D Rapier/cannon, fixed timestep)
 - Game Feel & Juice (screenshake, hitstop, tweening/easing, particles, squash & stretch, camera, SFX layering)
-- package.json
+- scripts
 - Save & Persistence for Browser Games (localStorage vs IndexedDB, versioned saves, serialization, autosave)
 - Loader
-- grokPwaPlugin
-- .parseObject
+- vu
+- WebGLBindingStates
 - Prompt Rules
 - 46. Recommended Tech Stack
 - Printkarr — Build Progress Tracker
-- LazyPGliteDriver
-- Genre Playbook — Arcade Racing / Kart
+- config
+- Layers
 - Text Wrapping
 - PrintKarr: SEO, local search and AI search audit
-- WebGLBindingStates
+- build_proposal.py
 - Genre Playbook — Top-Down / Twin-Stick Shooter
-- get
+- WebGLTextures
 - graphify reference: extra exports and benchmark
-- WebGLExtensions
-- 5. Engine / stack choice
+- InterleavedBuffer
+- callMiddleware
 - Genre Playbook — Endless Runner
 - Genre Playbook — Tower Defense
 - Design & UI
-- packs.js
+- mixed-print-check.mjs
 - Video2dsprite pipeline
 - Generate2dmap
-- fe
+- vn
+- warn
 - 1. Product Overview
 - Phase 1: Demo
 - Customer Dashboard
 - Character Consistency
+- get
 - Game Audio in the Browser (Web Audio API, mobile unlock, Howler.js, gain buses, spatial, latency)
 - Share cards, favicon, and app icons
 - n
-- .render
-- ve
+- push
+- Genre Playbook — Arcade Racing / Kart
 - xAI API (Grok)
 - 36. Analytics
 - 37. Admin Settings
@@ -212,7 +214,7 @@
 - Hibernate, revive, and follow-up turns
 - Asset Core
 - Running the brand-asset pass (the pass's own contract)
-- Procedural Generation (seeded RNG, noise, dungeons/mazes/terrain, wave function collapse)
+- Mesh
 - graphify reference: add a URL and watch a folder
 - graphify reference: commit hook and native CLAUDE.md integration
 - graphify reference: incremental update and cluster-only
@@ -247,35 +249,43 @@
 - placeholder-card.md
 - x-banner.md
 - video2dsprite/SOURCE.md
+- AudioListener
 - checkout-check.mjs
-- .constructor
+- Clock
 - wr
 - ref
 - switchContext
+- Genre Playbook — Board & Card Games (Chess, Checkers, Tic-Tac-Toe, Card games)
 - PrintKarr content, local SEO and search intent audit
 - gs
-- PositionalAudio
+- Building Games
+- PrintKarr local delivery and shop operations
 - register3d
 - KeyframeTrack
-- referrals.js
+- AudioAnalyser
 - Vector4
 - Unified Input for Browser Games (keyboard + mouse + touch + Gamepad, action mapping, deadzones, buffering)
 - Generate2dsprite
 - r
 - Color
+- app-data.test.ts
 - client.server.ts
 - Box3
-- .equals
+- earcutLinked
 - AnimationAction
 - Texture
 - WebGLBindingStates
+- _gte
+- _lte
 - WebGLProgram
+- nearby-shops.js
 - AnimationMixer
-- kn
+- Browser Game Best Practices — Three.js / Babylon.js / Phaser (controls, camera, orientation, loop, assets, perf)
 - WebGLPrograms
 - PropertyBinding
 - Audio
-- W
+- own
+- Imagine
 - WebGLRenderer
 - Action Rules
 - WebGLUniformsGroups
@@ -283,30 +293,50 @@
 - App Builder Workspace
 - NodeResponse
 - PolyhedronGeometry
-- Clock
+- LazyPGliteDriver
+- verify.server.ts
 - parseUniform
-- QuadraticBezierCurve
+- Data & auth — implementation
+- PrintKarr website overhaul — 6 October 2026
+- QuadraticBezierCurve3
 - Video2dsprite (Grok Build only)
+- Genre Playbook — 2D Platformer
 - Sheet-Specific Rules
 - PrintKarr GEO, AI search and authority review
 - MultiDrawRenderList
-- PropertyMixer
-- parseWithError
-- BatchedMesh
-- CubicBezierCurve
-- own
+- PrintKarr local review — 6 October 2026
+- startStreamParse
+- browser-guard.mjs
+- CubicBezier
+- grokPwaPlugin
 - PrintKarr: editorial print desk
+- ECS & Game State Architecture for JS Games (bitECS, miniplex, ECS vs OOP, state structure)
+- .update
 - design-motion.js
 - Uniform
 - Workflow
 - Video2dsprite prompt rules
 - Workflow
-- Genre Playbook — 2D Platformer
 - notifications.js
-- setProgram
-- Path
-- ShaderMaterial
+- ref_campus_js
+- ref_print_plan_js
+- ref_lib_auth_js
+- ref_lib_campus_js
 - ref_https
+- ref_lib_db_js
+- ref_lib_referrals_js
+- ref_lib_views_admin_js
+- ref_lib_views_customer_js
+- ref_lib_views_js
+- ref_lib_views_order_js
+- ref_lib_views_packs_js
+- ref_lib_views_public_js
+- ref_lib_views_referrals_js
+- ref_packs_js
+- ref_public_print_plan_js
+- ref_seo_js
+- ref_views_js
+- ref_views_order_js
 
 ## God Nodes (most connected - your core abstractions)
 1. `constructor()` - 160 edges
@@ -323,99 +353,99 @@
 ## Surprising Connections (you probably didn't know these)
 - `When to Animate Icons` --references--> `transition()`  [INFERRED]
   Yxx1UbwMGrpapxo2-grok-workspace/.grok/skills/design-ui/references/animations.md → lib/machine.js
+- `2. When ECS vs OOP (don't cargo-cult ECS)` --references--> `Object3D`  [INFERRED]
+  Yxx1UbwMGrpapxo2-grok-workspace/.grok/skills/building-games/references/ecs-architecture.md → public/vendor/three-0.160.0.module.js
 - `2. Controls & camera` --references--> `Object3D`  [INFERRED]
   Yxx1UbwMGrpapxo2-grok-workspace/.grok/skills/building-games/references/genres/fps.md → public/vendor/three-0.160.0.module.js
 - `2. Chunking (the foundational structure)` --references--> `BufferGeometry`  [INFERRED]
   Yxx1UbwMGrpapxo2-grok-workspace/.grok/skills/building-games/references/genres/voxel-minecraft.md → public/vendor/three-0.160.0.module.js
 - `Reach for shadcn first` --references--> `Skeleton`  [INFERRED]
   Yxx1UbwMGrpapxo2-grok-workspace/.grok/skills/design-ui/references/refined-ui.md → public/vendor/three-0.160.0.module.js
-- `3. Face culling & greedy meshing (the performance core)` --references--> `InstancedMesh`  [INFERRED]
-  Yxx1UbwMGrpapxo2-grok-workspace/.grok/skills/building-games/references/genres/voxel-minecraft.md → public/vendor/three-0.160.0.module.js
 
 ## Import Cycles
 - 3-file cycle: `lib/campus.js -> lib/notify.js -> lib/db.js -> lib/campus.js`
 
-## Communities (300 total, 58 thin omitted)
+## Communities (331 total, 76 thin omitted)
 
 ### Community 0 - "three.mjs"
 Cohesion: 0.01
-Nodes (133): json(), addUniform(), _allocateTargets(), applyAxisAngle(), applyEuler(), _applyGGXFilter(), _applyPMREM(), applyQuaternion() (+125 more)
+Nodes (138): _allocateTargets(), applyAxisAngle(), applyEuler(), _applyGGXFilter(), _applyPMREM(), applyQuaternion(), arrayNeedsUint32(), _blur() (+130 more)
 
 ### Community 1 - "site-BTbJergO.js"
 Cohesion: 0.01
-Nodes (111): Mn(), applyAxisAngle(), applyEuler(), applyQuaternion(), _c(), cc(), clampScalar(), clearViewOffset() (+103 more)
+Nodes (132): Mn(), _allocateTargets(), applyAxisAngle(), applyEuler(), _applyGGXFilter(), _applyPMREM(), applyQuaternion(), bind() (+124 more)
 
 ### Community 2 - "index-BmpwFe3l.js"
 Cohesion: 0.02
-Nodes (142): am(), and(), Ar(), base64(), base64url(), bm(), br(), catchall() (+134 more)
+Nodes (139): am(), and(), base64(), base64url(), bm(), catchall(), Ch(), check() (+131 more)
 
-### Community 3 - "multiplyScalar"
+### Community 3 - "applyMatrix4"
 Cohesion: 0.04
-Nodes (93): Gr(), ri(), Xr(), aa(), addScaledVector(), angleTo(), applyMatrix3(), applyNormalMatrix() (+85 more)
+Nodes (107): ea(), B(), Gr(), ii(), ri(), Xr(), addScaledVector(), addVectors() (+99 more)
 
 ### Community 4 - "react-router+[...].mjs"
 Cohesion: 0.03
 Nodes (78): yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_history_r, appendUniqueUserTags(), buildBranch(), buildRouteBranch(), buildTagsFromMatches(), checkDCE(), cloneAndReplaceKey(), cloneElement() (+70 more)
 
 ### Community 5 - "copy"
-Cohesion: 0.03
-Nodes (138): addScaledVector(), addVectors(), angleTo(), applyMatrix3(), applyNormalMatrix(), at(), center(), checkGeometryIntersection() (+130 more)
+Cohesion: 0.04
+Nodes (136): addScaledVector(), addVectors(), angleTo(), applyMatrix3(), applyMatrix4(), applyNormalMatrix(), at(), center() (+128 more)
 
 ### Community 6 - "get"
 Cohesion: 0.05
-Nodes (92): addEventListener(), bl(), B(), be(), Ce(), _e(), Ee(), he() (+84 more)
+Nodes (86): addEventListener(), bl(), B(), be(), Ce(), de(), _e(), Ee() (+78 more)
 
-### Community 7 - "writeChunk"
-Cohesion: 0.15
-Nodes (29): completeWriting(), escapeJSObjectForInstructionScripts(), escapeJSStringsForInstructionScripts(), flushBuffered(), flushCompletedBoundary(), flushCompletedQueues(), flushPartiallyCompletedSegment(), flushResource() (+21 more)
+### Community 7 - "ka"
+Cohesion: 0.10
+Nodes (39): Al(), Ba(), ca(), Ci(), da(), Ea(), Ei(), fa() (+31 more)
 
 ### Community 8 - "constructor"
 Cohesion: 0.03
-Nodes (57): add(), anisotropy(), clear(), connect(), constructor(), checkMaterialsReady(), onAnimationFrame(), onContextCreationError() (+49 more)
+Nodes (41): anisotropy(), connect(), constructor(), checkMaterialsReady(), deallocateMaterial(), onAnimationFrame(), onContextCreationError(), onContextLost() (+33 more)
 
 ### Community 9 - "get"
-Cohesion: 0.06
-Nodes (98): addEventListener(), bind(), clearLayerUpdates(), getReadableState(), enhanceLogMessage(), equals(), error(), hasAttribute() (+90 more)
+Cohesion: 0.05
+Nodes (122): addEventListener(), clearLayerUpdates(), getReadableState(), initGLContext(), dispose(), equals(), error(), fromCubemap() (+114 more)
 
 ### Community 10 - "zod.mjs"
 Cohesion: 0.03
-Nodes (39): RFC-9562, and(), catch(), claim(), constantCatch(), date(), duration(), _enum() (+31 more)
+Nodes (37): RFC-9562, and(), catch(), claim(), constantCatch(), date(), duration(), _enum() (+29 more)
 
 ### Community 11 - "constructor"
 Cohesion: 0.04
-Nodes (57): applySearchMiddleware(), cleanPath(), compileDecodeCharMap(), composeRewrites(), constructor(), createDynamicNode(), createSieveCache(), createStaticNode() (+49 more)
+Nodes (46): href(), applySearchMiddleware(), composeRewrites(), constructor(), decodePath(), decodeSegment(), deepEqual(), encodePathLikeUrl() (+38 more)
 
-### Community 12 - "i"
+### Community 12 - "copy"
 Cohesion: 0.04
-Nodes (95): Ud(), Al(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_static_assets_site_btbjergo_a, s(), bf(), cl(), c(), l() (+87 more)
+Nodes (99): Hd(), ja(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_static_assets_site_btbjergo_a, aa(), Al(), l(), s(), u() (+91 more)
 
-### Community 13 - "n"
-Cohesion: 0.04
-Nodes (70): Al(), l(), u(), an(), a(), de(), F(), se() (+62 more)
+### Community 13 - "a"
+Cohesion: 0.06
+Nodes (47): a(), bs(), c(), l(), u(), center(), containsPoint(), el() (+39 more)
 
 ### Community 14 - "H"
-Cohesion: 0.07
-Nodes (34): bind(), conjugate(), a(), o(), tt(), findNode(), getValue(), _getValue_unbound() (+26 more)
+Cohesion: 0.08
+Nodes (32): a(), o(), tt(), H(), hc(), C(), nn(), _onChangeCallback() (+24 more)
 
 ### Community 15 - "design-check.mjs"
-Cohesion: 0.05
-Nodes (24): discoveryRoutes(), escape(), PAGES, seoHead(), SITE, POSTS, adminReferralsPage(), referralsPage() (+16 more)
+Cohesion: 0.03
+Nodes (41): campaignDefaults(), blankDb(), dbForTest(), fixture(), now, discoveryRoutes(), escape(), PAGES (+33 more)
 
-### Community 16 - "reviews.test.js"
-Cohesion: 0.15
-Nodes (3): deleteReview(), publicReviews(), saveReview()
+### Community 16 - "WebGLState"
+Cohesion: 0.31
+Nodes (14): WebGLState(), DepthBuffer(), disable(), enable(), reset(), scissor(), setBlending(), setCullFace() (+6 more)
 
-### Community 17 - "get"
+### Community 17 - "Td"
 Cohesion: 0.10
-Nodes (48): af(), at(), bn(), cn(), ct(), df(), dn(), Dr() (+40 more)
+Nodes (41): Ar(), at(), bd(), bn(), br(), cn(), dn(), Dr() (+33 more)
 
 ### Community 18 - "createSerovalNode"
 Cohesion: 0.05
-Nodes (91): createAggregateErrorNode(), createArrayBufferNode(), createArrayNode(), createAsyncIteratorFactoryInstanceNode(), createBigIntNode(), createBigIntTypedArrayNode(), createBoxedNode(), createConstantNode() (+83 more)
+Nodes (94): createAggregateErrorNode(), createArrayBufferNode(), createArrayNode(), createAsyncIteratorFactoryInstanceNode(), createBigIntNode(), createBigIntTypedArrayNode(), createBoxedNode(), createConstantNode() (+86 more)
 
 ### Community 19 - "public/vendor/three-0.160.0.module.js"
 Cohesion: 0.01
-Nodes (250): _addedEvent, _alignedPosition, AnimationUtils, arrayCacheF32, arrayCacheI32, arrayNeedsUint32(), _axis, _axisDirections (+242 more)
+Nodes (252): _addedEvent, _alignedPosition, AnimationUtils, ArcCurve, arrayCacheF32, arrayCacheI32, _axis, _axisDirections (+244 more)
 
 ### Community 20 - "site.tsx"
 Cohesion: 0.05
@@ -423,19 +453,19 @@ Nodes (45): class-variance-authority, clsx, lucide-react, react, sonner, tailwin
 
 ### Community 21 - "constructor"
 Cohesion: 0.05
-Nodes (66): G(), jr(), ac(), add(), addGroup(), addVectors(), Ae(), Fe() (+58 more)
+Nodes (58): G(), jr(), ac(), addGroup(), Ae(), F(), Fe(), ke() (+50 more)
 
-### Community 22 - "getRefParam"
-Cohesion: 0.07
-Nodes (62): assignIndexedValue(), createAddAssignment(), createArrayAssign(), createAssignment(), createDeleteAssignment(), createEffectfulFunction(), createFunction(), createObjectAssign() (+54 more)
+### Community 22 - "push"
+Cohesion: 0.08
+Nodes (63): assignIndexedValue(), createAddAssignment(), createArrayAssign(), createAssignment(), createDeleteAssignment(), createEffectfulFunction(), createFunction(), createObjectAssign() (+55 more)
 
-### Community 23 - "i"
-Cohesion: 0.05
-Nodes (109): ga(), aa(), ai(), ao(), Ba(), bc(), be(), bi() (+101 more)
+### Community 23 - "lc"
+Cohesion: 0.06
+Nodes (78): ga(), Gi(), Li(), aa(), af(), ao(), bc(), bi() (+70 more)
 
 ### Community 24 - "Yxx1UbwMGrpapxo2-grok-workspace/package.json"
-Cohesion: 0.04
-Nodes (59): cmdk, date-fns, eslint, eslint-config-prettier, @eslint/js, eslint-plugin-prettier, eslint-plugin-react-hooks, eslint-plugin-react-refresh (+51 more)
+Cohesion: 0.03
+Nodes (66): cmdk, date-fns, eslint, eslint-config-prettier, @eslint/js, eslint-plugin-prettier, eslint-plugin-react-hooks, eslint-plugin-react-refresh (+58 more)
 
 ### Community 25 - "routeTree.gen.ts"
 Cohesion: 0.05
@@ -443,27 +473,27 @@ Nodes (47): @tanstack/react-router, AppErrorComponent(), errorMessage(), getRout
 
 ### Community 26 - "server.mjs"
 Cohesion: 0.03
-Nodes (88): atlasEnabled, flushAtlas(), initAtlas(), queueAtlas(), queued, refreshAtlas(), remoteFiles, restoreFiles() (+80 more)
+Nodes (105): atlasEnabled, flushAtlas(), initAtlas(), queueAtlas(), queued, refreshAtlas(), remoteFiles, restoreFiles() (+97 more)
 
 ### Community 27 - "renderElement"
-Cohesion: 0.09
-Nodes (54): abortRemainingReplayNodes(), abortTask(), abortTaskSoft(), addToReplayParent(), byteLengthOfChunk(), completeAll(), completeShell(), createHoistableState() (+46 more)
+Cohesion: 0.08
+Nodes (62): abortRemainingReplayNodes(), abortTask(), abortTaskSoft(), addToReplayParent(), byteLengthOfChunk(), completeAll(), completeShell(), createFormatContext() (+54 more)
 
 ### Community 28 - ".toJSON"
 Cohesion: 0.04
-Nodes (12): Curve, CurvePath, InstancedBufferGeometry, LineCurve, LineCurve3, extractFromCache(), extractFromCache(), serialize() (+4 more)
+Nodes (12): CubicBezierCurve, Curve, CurvePath, EllipseCurve, InstancedBufferGeometry, LineCurve3, extractFromCache(), extractFromCache() (+4 more)
 
 ### Community 29 - "gate-identity.server.ts"
-Cohesion: 0.09
-Nodes (30): jose, GATE_IDENTITY_HEADER, GATE_JWKS_PATH, GateEndpoints, GateIdentity, gateIdentityFromHeaders(), gateIdentityUserInfo(), GateJwks (+22 more)
+Cohesion: 0.08
+Nodes (34): better-auth, jose, @tanstack/react-start, GATE_IDENTITY_HEADER, GATE_JWKS_PATH, GateEndpoints, GateIdentity, gateIdentityFromHeaders() (+26 more)
 
 ### Community 30 - "makeMainStream"
-Cohesion: 0.13
-Nodes (26): createAbortNotifier(), createReaderState(), decode(), findHtmlBoundary(), listenToAbort(), makeFastPathStream(), makeMainStream(), cleanup() (+18 more)
+Cohesion: 0.08
+Nodes (51): completeWriting(), createAbortNotifier(), createReaderState(), decode(), escapeJSStringsForInstructionScripts(), findHtmlBoundary(), flushBuffered(), flushCompletedBoundary() (+43 more)
 
 ### Community 31 - "ssr.mjs"
 Cohesion: 0.03
-Nodes (123): ref_node_async_hooks, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_v2_rou3_n, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_v2_rou3_t, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_history_n, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_a, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_c, defineHandlerCallback(), disposeSsrResponse() (+115 more)
+Nodes (127): ref_node_async_hooks, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_v2_rou3_n, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_v2_rou3_t, toResponse(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_history_n, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_a, bindSsrResponseToRequest(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_c (+119 more)
 
 ### Community 32 - "dependencies"
 Cohesion: 0.04
@@ -473,101 +503,101 @@ Nodes (53): dependencies, better-auth, class-variance-authority, clsx, cmdk, dat
 Cohesion: 0.05
 Nodes (52): yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_clsx_t, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_a, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_b, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_c, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_d, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_f, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_g, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_h (+44 more)
 
-### Community 34 - "r"
+### Community 34 - "constructor"
 Cohesion: 0.07
-Nodes (63): a(), ad(), ap(), Au(), bs(), cd(), cp(), Cu() (+55 more)
+Nodes (52): ad(), Ae(), ap(), be(), cd(), constructor(), cp(), Cu() (+44 more)
 
 ### Community 35 - "pushStartInstance"
-Cohesion: 0.11
-Nodes (43): adoptPreloadCredentials(), endChunkForTag(), enqueueFlush(), escapeHrefForLinkHeaderURLContextReplacer(), escapeStringForLinkHeaderQuotedParamValueContextReplacer(), escapeTextForBrowser(), flattenOptionChildren(), getCrossOriginStringAs() (+35 more)
+Cohesion: 0.10
+Nodes (47): adoptPreloadCredentials(), endChunkForTag(), enqueueFlush(), escapeHrefForLinkHeaderURLContextReplacer(), escapeJSObjectForInstructionScripts(), escapeStringForLinkHeaderQuotedParamValueContextReplacer(), escapeTextForBrowser(), flattenOptionChildren() (+39 more)
 
 ### Community 36 - "useRouter"
 Cohesion: 0.05
-Nodes (49): HARD RULE — connector / AppData API (backend only), arraysEqual(), Asset(), CatchNotFound(), checkIfSnapshotChanged(), ClientOnly(), Component(), createElement() (+41 more)
+Nodes (47): HARD RULE — connector / AppData API (backend only), arraysEqual(), Asset(), checkIfSnapshotChanged(), ClientOnly(), Component(), createElement(), createHook() (+39 more)
 
 ### Community 37 - ".push"
 Cohesion: 0.03
-Nodes (55): P(), ArrowHelper, AxesHelper, Box3Helper, BoxGeometry, buildPlane(), BoxHelper, BufferGeometry (+47 more)
+Nodes (66): P(), absNumericalSort(), ArrowHelper, AxesHelper, Box3Helper, buildPlane(), BoxHelper, BufferGeometry (+58 more)
 
 ### Community 38 - "index.mjs"
 Cohesion: 0.10
-Nodes (44): acceptsHtml(), applyCustomCardFromFs(), appNameFromHost(), createHeadInjector(), defaultHandler(), detectCustomOgCard(), error_handler_default(), escapeHtml() (+36 more)
+Nodes (42): acceptsHtml(), applyCustomCardFromFs(), appNameFromHost(), createHeadInjector(), detectCustomOgCard(), escapeHtml(), grokExtensionsHeadTags(), grokOgHeadTags() (+34 more)
 
-### Community 39 - ".copy"
-Cohesion: 0.05
-Nodes (32): checkGeometryIntersection(), checkIntersection(), Frustum, LOD, shadowCastingAndTexturingLightsFirst(), SkinnedMesh, Sprite, StereoCamera (+24 more)
+### Community 39 - "reviews.test.js"
+Cohesion: 0.11
+Nodes (10): COLLECT_TTL_MS, collectTokenFor(), collectTokens(), consumeCollectToken(), findCollectToken(), db(), deleteReview(), publicReviews() (+2 more)
 
-### Community 40 - "config"
+### Community 40 - "copyArray"
 Cohesion: 0.18
-Nodes (12): aborted(), config(), en_default(), _ensureDefaultLocale(), _ensureDefaultMemoizer(), finalizeIssue(), handleCatchResult(), handleIntersectionResults() (+4 more)
+Nodes (21): allocTexUnits(), arraysEqual(), copyArray(), setValueM2(), setValueM3(), setValueM4(), setValueT1Array(), setValueT2DArrayArray() (+13 more)
 
 ### Community 41 - "h3+rou3+srvx.mjs"
-Cohesion: 0.07
-Nodes (28): callMiddleware(), constructor(), decodePathname(), defineHandler(), defineLazyEventHandler(), errorResponse(), fetch(), #getPos() (+20 more)
+Cohesion: 0.08
+Nodes (18): constructor(), decodePathname(), errorResponse(), #getPos(), isJSONSerializable(), mergeHeaders$1(), nullBody(), pathname() (+10 more)
 
-### Community 42 - "zl"
-Cohesion: 0.12
-Nodes (23): ja(), _allocateTargets(), _applyGGXFilter(), _applyPMREM(), _blur(), _blurPass(), compileCubemapShader(), compileEquirectangularShader() (+15 more)
+### Community 42 - "return"
+Cohesion: 0.10
+Nodes (30): addCleanup(), async(), cleanup(), clearPendingMicrotask(), createPluginNode(), drainStream(), finalize(), flush() (+22 more)
 
 ### Community 43 - "normalizeParams"
-Cohesion: 0.06
-Nodes (36): _array(), _base64(), _base64url(), _cidrv4(), _cidrv6(), _cuid(), _cuid2(), _e164() (+28 more)
+Cohesion: 0.05
+Nodes (37): _array(), _base64(), _base64url(), _cidrv4(), _cidrv6(), _cuid(), _cuid2(), _e164() (+29 more)
 
 ### Community 44 - "gates.tsx"
-Cohesion: 0.08
-Nodes (44): Auth wiring (only once §0.5 says accounts), Env vars — do **not** create a `.env` file, How each mode gets its credentials, `src/lib/auth/`, What's pre-wired, and the env vars, Preventing auth flicker, Reading the user / protecting routes, Reading the user, protecting routes, and preventing flicker (+36 more)
+Cohesion: 0.11
+Nodes (31): Auth wiring (only once §0.5 says accounts), Env vars — do **not** create a `.env` file, How each mode gets its credentials, `src/lib/auth/`, What's pre-wired, and the env vars, Preventing auth flicker, Reading the user / protecting routes, Reading the user, protecting routes, and preventing flicker (+23 more)
 
 ### Community 45 - "video2dsprite.py"
 Cohesion: 0.12
-Nodes (30): ndarray, numpy, shutil, subprocess, sys, typing, build_exports(), build_parser() (+22 more)
+Nodes (30): math, ndarray, numpy, shutil, subprocess, sys, build_exports(), build_parser() (+22 more)
 
-### Community 46 - "Sl"
-Cohesion: 0.29
-Nodes (14): bl(), Cl(), el(), hl(), Ll(), pf(), qc(), Qd() (+6 more)
+### Community 46 - "Path"
+Cohesion: 0.10
+Nodes (5): CapsuleGeometry, Path, Shape, ShapePath, toShapesNoHoles()
 
-### Community 47 - "a"
-Cohesion: 0.13
-Nodes (55): an(), t(), b(), bd(), bu(), C(), ce(), clear() (+47 more)
+### Community 47 - "i"
+Cohesion: 0.09
+Nodes (86): b(), bl(), bs(), bu(), C(), ce(), Cl(), clear() (+78 more)
 
 ### Community 48 - "browser-smoke.mjs"
-Cohesion: 0.07
-Nodes (46): ref_node_util, playwright, checkedOutputPath(), checkedUrl(), fail(), LOOPBACK_HOSTNAMES, args, baselineRequested (+38 more)
+Cohesion: 0.16
+Nodes (21): args, baselineRequested, compareAgainstBaseline(), derived, mobilePng, outJson, outPng, timeoutMs (+13 more)
 
 ### Community 49 - "update"
-Cohesion: 0.03
-Nodes (122): clearUpdateRanges(), clone(), cloneUniforms(), cloneUniformsGroups(), deallocateMaterial(), getProgram(), getTargetPixelRatio(), getUniformList() (+114 more)
+Cohesion: 0.05
+Nodes (57): bind(), clearUpdateRanges(), clone(), cloneUniformsGroups(), getTargetPixelRatio(), getUniformList(), markUniformsLightsNeedsUpdate(), onMaterialDispose() (+49 more)
 
 ### Community 50 - "router-core+[...].mjs"
 Cohesion: 0.05
-Nodes (91): createInlineCssPlaceholderAsset(), createInlineCssStyleAsset(), dehydrateSsrMatchId(), invariant(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_w, applyObjectFlag(), assignIndexedValue$1(), assignIndexedValueCross() (+83 more)
+Nodes (81): createInlineCssStyleAsset(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_w, applyObjectFlag(), assignIndexedValue$1(), assignIndexedValueCross(), assignIndexedValueVanilla(), assignNodeType(), assignProperty() (+73 more)
 
-### Community 51 - "applyMatrix4"
+### Community 51 - ".render"
 Cohesion: 0.06
-Nodes (63): applyMatrix4(), attach(), conjugate(), onQuaternionChange(), onRotationChange(), setProjectionFromUnion(), updateUserCamera(), decompose() (+55 more)
+Nodes (49): add(), attach(), clear(), conjugate(), renderObject(), renderObjects(), renderScene(), renderTransmissionPass() (+41 more)
 
 ### Community 52 - "P2PRoom"
 Cohesion: 0.08
 Nodes (23): Browser QA (agent-driven only; the user is not your QA), Built output, Fallback, How deep to go, Interactive QA — `agent-browser`, Mount the API route, Schema — nothing to do by default, Signaling relay and API route (create once) (+15 more)
 
-### Community 53 - ".dispose"
+### Community 53 - "get"
 Cohesion: 0.05
-Nodes (34): absNumericalSort(), EventDispatcher, numericalSort(), RenderTarget, WebGLCubeMaps(), get(), mapTextureMapping(), onTextureDispose() (+26 more)
+Nodes (46): arrayNeedsUint32(), WebGLAttributes(), createBuffer(), get(), remove(), update(), updateBuffer(), WebGLCapabilities() (+38 more)
 
 ### Community 54 - "use-connector-readiness.ts"
 Cohesion: 0.24
 Nodes (12): isFramed(), ConnectorReadiness, getConnectorReadiness, READINESS_PROBE_DELAYS_MS, READINESS_PROBE_MAX_TOTAL_MS, readinessProbeDelayMs(), readinessProbeExhausted(), ConnectorWaitStatus (+4 more)
 
-### Community 55 - "notify.js"
-Cohesion: 0.16
-Nodes (22): eligibleWalletOffers(), b64url(), codeMail(), emailConfigured(), gmailAccessToken(), mimeMessage(), resolveFrom(), sendEmail() (+14 more)
+### Community 55 - "package.json"
+Cohesion: 0.11
+Nodes (17): description, engines, node, main, name, type, version, compression (+9 more)
 
 ### Community 56 - "grok-pwa-shared.mjs"
-Cohesion: 0.13
-Nodes (30): applyCustomCardFromFs(), customOgAssetPath(), DEFAULT_APP_NAME, detectCustomOgCard(), escapeHtml(), GROK_EXTENSIONS_SCRIPT_SRC, grokExtensionsHeadTags(), grokOgHeadTags() (+22 more)
+Cohesion: 0.12
+Nodes (31): applyCustomCardFromFs(), customOgAssetPath(), DEFAULT_APP_NAME, detectCustomOgCard(), escapeHtml(), GROK_EXTENSIONS_SCRIPT_SRC, grokExtensionsHeadTags(), grokOgHeadTags() (+23 more)
 
 ### Community 57 - "generate2dsprite.py"
-Cohesion: 0.14
-Nodes (25): hashlib, Random, bbox_touches_edge(), build_evolution_descs(), build_parser(), build_prompt(), center_single_sprite(), clean_edges() (+17 more)
+Cohesion: 0.13
+Nodes (27): collections, hashlib, Random, re, bbox_touches_edge(), build_evolution_descs(), build_parser(), build_prompt() (+19 more)
 
 ### Community 58 - "grok-pwa-plugin.mjs"
 Cohesion: 0.19
@@ -579,47 +609,47 @@ Nodes (25): cmdlineOf(), isAlive(), killPid(), LOG_FILE, looksLikePreviewProcess
 
 ### Community 60 - "h3-v2+rou3.mjs"
 Cohesion: 0.10
-Nodes (17): yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_rou3_srvx_o, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_rou3_srvx_s, constructor(), decodePathname(), errorResponse(), isJSONSerializable(), mergeHeaders$1(), nullBody() (+9 more)
+Nodes (16): yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_rou3_srvx_o, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_h3_rou3_srvx_s, constructor(), decodePathname(), errorResponse(), isJSONSerializable(), mergeHeaders$1(), nullBody() (+8 more)
 
 ### Community 61 - "Vector3"
 Cohesion: 0.04
-Nodes (12): applyRadius(), azimuth(), correctSeam(), correctUV(), correctUVs(), generateUVs(), getVertexByIndex(), inclination() (+4 more)
+Nodes (13): onRotationChange(), applyRadius(), azimuth(), correctSeam(), correctUV(), correctUVs(), generateUVs(), getVertexByIndex() (+5 more)
 
 ### Community 62 - "router-HJC2v6Sy.mjs"
 Cohesion: 0.10
 Nodes (26): yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_lucide_react_i, createRootRoute(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_d, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_g, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_h, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_m, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_u, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_v (+18 more)
 
-### Community 63 - ".multiplyScalar"
+### Community 63 - ".dot"
 Cohesion: 0.03
-Nodes (20): handleTriangle(), addShape(), addUV(), addVertex(), buildLidFaces(), buildSideFaces(), f3(), f4() (+12 more)
+Nodes (12): a(), handleVertex(), Line3, Plane, Ray, satForAxes(), SphericalHarmonics3, Sprite (+4 more)
 
-### Community 64 - "PerspectiveCamera"
-Cohesion: 0.05
-Nodes (9): ArrayCamera, Camera, CubeCamera, LightShadow, OrthographicCamera, PerspectiveCamera, PointLight, PointLightShadow (+1 more)
+### Community 64 - "Object3D"
+Cohesion: 0.04
+Nodes (17): ArrayCamera, CubeCamera, DirectionalLightHelper, DirectionalLightShadow, HemisphereLightHelper, Object3D, OrthographicCamera, PerspectiveCamera (+9 more)
 
 ### Community 65 - "preview-host-bridge.ts"
 Cohesion: 0.12
 Nodes (21): ref_styles_css_url, zod, PreviewHostBridge(), CONNECTOR_TOKEN_READY_EVENT, AuthProvider(), isGrokEmbedderOrigin(), isRemintPreviewPair(), isSandboxPreviewGuestHost() (+13 more)
 
 ### Community 66 - "createLoaderTask$1"
+Cohesion: 0.14
+Nodes (27): acquireMatchResources(), cacheLoaderMatch(), CatchNotFound(), contextualize$1(), createLoaderTask$1(), discardBackground(), executeClientLane(), getNotFoundBoundary$1() (+19 more)
+
+### Community 67 - "attachRouterServerSsrUtils"
 Cohesion: 0.11
-Nodes (31): href(), acquireMatchResources(), cacheLoaderMatch(), contextualize$1(), createLoaderTask$1(), discardBackground(), executeClientLane(), getLoaderContext$1() (+23 more)
+Nodes (24): createInlineCssPlaceholderAsset(), dehydrateSsrMatchId(), invariant(), attachRouterServerSsrUtils(), dehydrateMatch(), enqueue(), getMatchedRoutesCacheKey(), hasRequestAssets() (+16 more)
 
-### Community 67 - ".fromArray"
-Cohesion: 0.04
-Nodes (27): Bone, handleVertex(), CatmullRomCurve3, CubicPoly(), init(), InstancedBufferAttribute, InstancedMesh, Skeleton (+19 more)
-
-### Community 68 - ".clone"
+### Community 68 - ".copy"
 Cohesion: 0.03
-Nodes (13): AnimationClip, convertBufferAttribute(), Cylindrical, flattenJSON(), generateUUID(), InstancedInterleavedBuffer, InterleavedBuffer, NumberKeyframeTrack (+5 more)
+Nodes (26): convertBufferAttribute(), Camera, Cylindrical, EventDispatcher, Frustum, RenderTarget, Scene, Spherical (+18 more)
 
 ### Community 69 - "server.ts"
 Cohesion: 0.11
-Nodes (20): better-auth, emailAndPasswordEnabled, GATE_PROVIDER_ID, completionHtml(), completionResponse(), handleAuthPopupRequest(), PopupMessage, readCookie() (+12 more)
+Nodes (19): emailAndPasswordEnabled, completionHtml(), completionResponse(), handleAuthPopupRequest(), PopupMessage, readCookie(), GROK_ISSUER_DEFAULT, PREVIEW_ALLOWED_HOSTS (+11 more)
 
 ### Community 70 - "Matrix4"
-Cohesion: 0.03
-Nodes (10): Matrix3, Matrix4, ShadowUniformsCache(), UniformsCache(), WebGLClipping(), projectPlanes(), resetGlobalState(), WebGLLights() (+2 more)
+Cohesion: 0.02
+Nodes (32): BatchedMesh, Bone, CatmullRomCurve3, init(), InstancedBufferAttribute, InstancedMesh, Matrix3, Matrix4 (+24 more)
 
 ### Community 71 - "Animations"
 Cohesion: 0.08
@@ -631,11 +661,11 @@ Nodes (23): serialize(), add(), assignProp(), assignProps(), attach(), bucketFor
 
 ### Community 73 - "gsap-3.13.0.min.js"
 Cohesion: 0.04
-Nodes (81): Aa(), ab(), Ad(), ae(), Animation(), _assertThisInitialized(), Ba(), Bb() (+73 more)
+Nodes (89): Aa(), ab(), Ad(), ae(), Animation(), _assertThisInitialized(), Ba(), Bb() (+81 more)
 
-### Community 74 - "Imagine"
-Cohesion: 0.11
-Nodes (16): Build accurate visuals with code, not the image tools, Choosing the tool, Core Principles, Failure modes to avoid, Handle flow (mandatory mental model), Imagine, `imagine_image_to_image`, `imagine_image_to_video` (+8 more)
+### Community 74 - ".render"
+Cohesion: 0.07
+Nodes (50): or(), union(), xr(), compose(), conjugate(), bt(), ie(), N() (+42 more)
 
 ### Community 75 - "Map Pipeline Selection"
 Cohesion: 0.06
@@ -649,25 +679,21 @@ Nodes (21): abortMatches(), applyFailure(), contextualize(), createLoaderTask(),
 Cohesion: 0.13
 Nodes (22): catchall(), _check(), clone(), exactPartial(), extend(), handleRefineResult(), isObject(), isPlainObject() (+14 more)
 
-### Community 78 - "sign-out-plan.test.mjs"
-Cohesion: 0.11
-Nodes (22): Data & auth — implementation, Env, Migrations, Server functions, Turning sign-in on (at scaffold or later), Connector / app-data apps: gate sign-in only, Env (deployer-injected), Files (pre-wired — do not edit) (+14 more)
-
-### Community 79 - "pumpRawStream"
-Cohesion: 0.31
-Nodes (10): enqueue(), createMultiplexedStream(), pumpJSON(), pumpLateStreams(), pumpRawStream(), encodeChunkFrame(), encodeEndFrame(), encodeErrorFrame() (+2 more)
+### Community 78 - "client.ts"
+Cohesion: 0.15
+Nodes (20): Wiring the routes (do this once), DEPLOYED_SIGN_OUT_TIMEOUT_MS, PREVIEW_SIGN_OUT_TIMEOUT_MS, runPreSignInSignOut(), runSignOut(), settleWithin(), signOutTimeoutMs(), deployed() (+12 more)
 
 ### Community 80 - "devDependencies"
 Cohesion: 0.10
 Nodes (21): devDependencies, eslint, eslint-config-prettier, @eslint/js, eslint-plugin-prettier, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals (+13 more)
 
-### Community 81 - "Object3D"
-Cohesion: 0.03
-Nodes (20): AudioListener, DirectionalLight, DirectionalLightHelper, DirectionalLightShadow, HemisphereLight, HemisphereLightHelper, Light, Object3D (+12 more)
+### Community 81 - ".parseObject"
+Cohesion: 0.05
+Nodes (14): AmbientLight, DataTexture, DirectionalLight, Fog, FogExp2, HemisphereLight, Light, LightProbe (+6 more)
 
 ### Community 82 - "extract_prop_pack.py"
-Cohesion: 0.18
-Nodes (22): collections, math, re, alpha_bbox(), bbox_touches_edge(), build_parser(), clean_edges(), color_distance() (+14 more)
+Cohesion: 0.22
+Nodes (19): alpha_bbox(), bbox_touches_edge(), build_parser(), clean_edges(), color_distance(), connected_components(), extract_cell(), iter_cells() (+11 more)
 
 ### Community 83 - "Vector2"
 Cohesion: 0.02
@@ -677,9 +703,9 @@ Nodes (15): LineDashedMaterial, Material, MeshDepthMaterial, MeshDistanceMateria
 Cohesion: 0.06
 Nodes (32): 11. Delivery Time, 12. Order Summary, 13. Payment, 14. Order Tracking, 15. Customer Orders, 16. Reorder, 17. Customer Wallet, 18. Customer Profile (+24 more)
 
-### Community 85 - "constructor"
-Cohesion: 0.08
-Nodes (49): Ae(), apply(), Bt(), constructor(), en(), endsWith(), Et(), fd() (+41 more)
+### Community 85 - "influencers.test.js"
+Cohesion: 0.11
+Nodes (24): influencerStats(), policy, print(), selection, source, awardReferralCredit(), cashWalletOf(), codeFor() (+16 more)
 
 ### Community 86 - "db.ts"
 Cohesion: 0.08
@@ -689,9 +715,9 @@ Nodes (27): For /graphify explain, For /graphify path, graphify reference: query
 Cohesion: 0.11
 Nodes (17): compilerOptions, allowImportingTsExtensions, allowJs, baseUrl, checkJs, isolatedModules, jsx, lib (+9 more)
 
-### Community 88 - "flush"
-Cohesion: 0.10
-Nodes (29): addCleanup(), async(), cleanup(), clearPendingMicrotask(), createPluginNode(), drainStream(), finalize(), flush() (+21 more)
+### Community 88 - "br"
+Cohesion: 0.08
+Nodes (10): Ar(), br, Dr, er(), Fr(), kr(), Mr(), Vr() (+2 more)
 
 ### Community 89 - "Phaser 3 / 4 — Deep Engine Guide (scenes, physics, scale, tilemaps, pooling, architecture)"
 Cohesion: 0.10
@@ -710,16 +736,16 @@ Cohesion: 0.14
 Nodes (16): $constructor(), init(), Internals(), defineBound(), guard(), handleArrayResult(), handleCatchall(), handlePropertyResult() (+8 more)
 
 ### Community 93 - "compose_layered_preview.py"
-Cohesion: 0.27
-Nodes (12): Any, build_parser(), load_props(), main(), paste_prop(), placement_xy(), ArgumentParser, Image (+4 more)
+Cohesion: 0.24
+Nodes (13): Any, typing, build_parser(), load_props(), main(), paste_prop(), placement_xy(), ArgumentParser (+5 more)
 
 ### Community 95 - "createReactiveSystem"
 Cohesion: 0.19
 Nodes (13): createPostbackActionStateKey(), createReactiveSystem(), checkDirty(), isValidLink(), propagate(), shallowPropagate(), unlink(), murmurhash3_32_gc() (+5 more)
 
-### Community 96 - "lib/store.js"
-Cohesion: 0.08
-Nodes (49): parseCookies(), influencerStats(), dbForTest(), policy, print(), selection, source, canTransition() (+41 more)
+### Community 96 - "partner_routes.js"
+Cohesion: 0.09
+Nodes (25): counts, db, now, PATH_TO, plan, hashPassword(), analyzeUpload(), mimeFor() (+17 more)
 
 ### Community 97 - "Refined UI (product chrome and overlays)"
 Cohesion: 0.07
@@ -729,9 +755,9 @@ Nodes (27): Anti-patterns, Border radius (concentric, mandatory), Buttons (token
 Cohesion: 0.16
 Nodes (7): ref_node_module, assignOffset(), cn(), getLoadingIcon(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_b, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_l, yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_runtime_i
 
-### Community 99 - "WebGLState"
+### Community 99 - "AnimationClip"
 Cohesion: 0.14
-Nodes (22): getUnlitUniformColorSpace(), WebGLBackground(), setClear(), WebGLCubeRenderTarget, refreshFogUniforms(), WebGLState(), activeTexture(), ColorBuffer() (+14 more)
+Nodes (7): AnimationClip, flattenJSON(), getKeyframeOrder(), getTrackTypeForValueTypeName(), NumberKeyframeTrack, parseKeyframeTrack(), sortedArray()
 
 ### Community 100 - "What You Must Do When Invoked"
 Cohesion: 0.08
@@ -739,31 +765,27 @@ Nodes (23): For /graphify add and --watch, For /graphify query, For the commit h
 
 ### Community 101 - "brand-check.test.mjs"
 Cohesion: 0.13
-Nodes (20): brandWarningsOnDisk(), computeBrandWarnings(), MAX_CARD_BYTES, OG_PENDING_MAX_AGE_MS, OG_PENDING_REL_PATH, ogPendingActive(), parseBrandCheckArgs(), siteDeclaresOgTypeGame() (+12 more)
+Nodes (19): brandWarningsOnDisk(), computeBrandWarnings(), MAX_CARD_BYTES, OG_PENDING_MAX_AGE_MS, OG_PENDING_REL_PATH, ogPendingActive(), parseBrandCheckArgs(), siteDeclaresOgTypeGame() (+11 more)
 
 ### Community 102 - "scripts"
 Cohesion: 0.15
 Nodes (13): scripts, build, build:dev, check:auth, db:migrate, dev, format, lint (+5 more)
 
 ### Community 103 - "PMREMGenerator"
-Cohesion: 0.18
-Nodes (5): _createRenderTarget(), PMREMGenerator, _setViewport(), get(), isCubeTextureComplete()
+Cohesion: 0.27
+Nodes (3): _createRenderTarget(), PMREMGenerator, get()
 
 ### Community 104 - "Surfaces"
 Cohesion: 0.09
 Nodes (21): Asymmetric Icons (Stars, Arrows, Carets), Buttons with Text + Icon, Collision Rule, Concentric Border Radius, CSS Example, Dark Mode, Example, Image Outlines (+13 more)
 
-### Community 105 - "ci"
-Cohesion: 0.15
-Nodes (11): ci(), 1. Pathfinding: A* on a grid (the default), 2. Steering behaviors (smooth local movement), 3. Finite State Machines (FSM) — decision-making for simple agents, 4. Behavior Trees (BT) — scalable decision-making, 5. Navmesh basics (3D / open spaces), 6. Performance & correctness rules, 7. Bug-prevention checklist (+3 more)
-
-### Community 106 - "rn"
-Cohesion: 0.13
-Nodes (6): es, In(), Ln(), nn(), rn, Un()
+### Community 105 - "views_store.js"
+Cohesion: 0.23
+Nodes (28): availableStock(), cancelPurchase(), cartItems(), catalogue(), checkPurchase(), confirmPurchase(), FREE_DELIVERY, money() (+20 more)
 
 ### Community 107 - "motion-12.23.24.js"
 Cohesion: 0.05
-Nodes (47): as(), At(), be(), bi(), cs(), Ct(), Di(), e() (+39 more)
+Nodes (49): as(), At(), be(), bi(), Ct(), e(), Ei(), es (+41 more)
 
 ### Community 108 - "make_layout_guide.py"
 Cohesion: 0.19
@@ -771,27 +793,31 @@ Nodes (11): argparse, Preserve originals and encode same-size WebP assets; no vi
 
 ### Community 109 - "WebXRManager"
 Cohesion: 0.09
-Nodes (6): Group, WebXRController, WebXRManager, onInputSourcesChange(), onSessionEnd(), onSessionEvent()
+Nodes (3): Group, WebXRController, WebXRManager
 
-### Community 110 - "verify.server.ts"
-Cohesion: 0.16
-Nodes (13): @tanstack/react-start, Per-user data (server-side — mandatory), Auth, Turning sign-in on, gateIdentityEnabled(), authMiddleware, authConfigured, databaseConfigured (+5 more)
+### Community 110 - ".get"
+Cohesion: 0.09
+Nodes (15): ci(), cs(), ro(), so(), us, 1. Pathfinding: A* on a grid (the default), 2. Steering behaviors (smooth local movement), 3. Finite State Machines (FSM) — decision-making for simple agents (+7 more)
 
 ### Community 111 - "tanstack__history.mjs"
 Cohesion: 0.53
 Nodes (8): assignKeyAndIndex(), createBrowserHistory(), createHistory(), createMemoryHistory(), createRandomKey(), parseHref(), IMPORTANT: This API implements history throttling via a microtask to prevent, sanitizePath()
 
-### Community 112 - "copyArray"
-Cohesion: 0.18
-Nodes (21): allocTexUnits(), arraysEqual(), copyArray(), setValueM2(), setValueM3(), setValueM4(), setValueT1Array(), setValueT2DArrayArray() (+13 more)
+### Community 112 - "fe"
+Cohesion: 0.17
+Nodes (3): fe(), Pe(), Oe()
 
 ### Community 113 - "Transition Only What Changes"
 Cohesion: 0.18
 Nodes (10): CSS Example, Performance, Rules, Tailwind, Tailwind `transition-transform` Note, Transition Only What Changes, Use `will-change` Sparingly, Useful Properties (+2 more)
 
+### Community 114 - "addToRenderList"
+Cohesion: 0.13
+Nodes (19): cloneUniforms(), deleteAttribute(), enableAll(), fromEquirectangularTexture(), getNormalMatrix(), getRGB(), getUnlitUniformColorSpace(), isThreeObject() (+11 more)
+
 ### Community 115 - "shell.js"
-Cohesion: 0.12
-Nodes (16): burst(), tick(), burstAt(), fmt(), step(), update(), value(), _gte() (+8 more)
+Cohesion: 0.28
+Nodes (5): burst(), tick(), burstAt(), fmt(), step()
 
 ### Community 116 - "ruixen-gradient-footer.tsx"
 Cohesion: 0.38
@@ -806,16 +832,12 @@ Cohesion: 0.29
 Nodes (5): yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_ssr_site_cp8pww_l_a, ContactPage(), FranchisePage(), yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_ssr_site_cp8pww_l_i, LeadForm()
 
 ### Community 120 - "init"
-Cohesion: 0.60
-Nodes (5): init(), area(), selected(), setPoint(), sync()
+Cohesion: 0.52
+Nodes (6): init(), area(), selected(), setPoint(), sync(), start()
 
 ### Community 121 - "fetch"
 Cohesion: 0.40
 Nodes (6): createH3App(), createNitroApp(), fetch(), getRouteRules(), isrRouteRewrite(), useNitroApp()
-
-### Community 122 - "addToRenderList"
-Cohesion: 0.17
-Nodes (15): deleteAttribute(), enableAll(), getNormalMatrix(), getRGB(), getUnlitUniformColorSpace(), makeRotationFromEuler(), setFromMatrix4(), transpose() (+7 more)
 
 ### Community 123 - "Stationery marketplace preview"
 Cohesion: 0.29
@@ -837,13 +859,13 @@ Nodes (3): IMPORTANT: keep the reminder string free of backticks and $(...) cons
 Cohesion: 0.40
 Nodes (5): datetime(), _isoDateTime(), _isoTime(), time(), timeSource()
 
-### Community 129 - "copy"
-Cohesion: 0.06
-Nodes (66): xr(), applyMatrix4(), attach(), compose(), _computeIntersections(), ft(), ie(), N() (+58 more)
+### Community 129 - "add"
+Cohesion: 0.09
+Nodes (37): add(), connect(), ee(), j(), M(), cs(), c(), disconnect() (+29 more)
 
-### Community 130 - "db.js"
-Cohesion: 0.03
-Nodes (80): buildCoverPdf(), escText(), validatePdf(), acquireAgentLock(), api(), main(), MONITOR, POLL (+72 more)
+### Community 130 - "ref_node_fs"
+Cohesion: 0.04
+Nodes (81): buildCoverPdf(), escText(), validatePdf(), acquireAgentLock(), api(), main(), MONITOR, POLL (+73 more)
 
 ### Community 132 - "Layered Raster Map Contract"
 Cohesion: 0.09
@@ -862,12 +884,12 @@ Cohesion: 0.11
 Nodes (17): 0. Hard rules (fail the build if broken), 1. Shared 3D basis (use this everywhere), 2. Genre maps, 2a. FPS / on-foot (strafe, not steer), 2b. Ground / water vehicle (kart, bike, jetski, boat, tank, rover, snowmobile), 2c. Fixed-wing flight (airplane, glider, RC plane), 2d. Heli / drone / 6DOF, 2e. 2D side-scroller / platformer (+9 more)
 
 ### Community 144 - "abort"
-Cohesion: 0.11
-Nodes (40): abort(), bindSsrResponseToRequest(), createCancelHandler(), createDrainHandler(), createFakeWritableFromReadable(), createFakeWritableFromReadableStreamController(), createFakeWritableFromReadableStreamController$1(), createFormatContext() (+32 more)
+Cohesion: 0.17
+Nodes (29): abort(), createCancelHandler(), createDrainHandler(), createFakeWritableFromReadable(), createFakeWritableFromReadableStreamController(), createFakeWritableFromReadableStreamController$1(), createPrerenderRequest(), createRenderState() (+21 more)
 
 ### Community 145 - ".normalize"
 Cohesion: 0.05
-Nodes (7): BufferAttribute, copyAttributeData(), denormalize(), Float16BufferAttribute, fromHalfFloat(), InterleavedBufferAttribute, toHalfFloat()
+Nodes (8): BufferAttribute, copyAttributeData(), denormalize(), Float16BufferAttribute, fromHalfFloat(), Int32BufferAttribute, InterleavedBufferAttribute, toHalfFloat()
 
 ### Community 146 - "Babylon.js — Deep Engine Guide (Havok physics, cameras, SceneOptimizer, WebGPU, assets, GUI, freezing)"
 Cohesion: 0.13
@@ -877,9 +899,9 @@ Nodes (14): 10. Inspector & profiling, 11. Common Babylon pitfalls (checklist), 
 Cohesion: 0.13
 Nodes (14): 0. The golden rule: separate model from view, A1. Core mechanics & minimal scope, A2. Match detection, A3. Gravity, refill & cascades, B1. Core mechanics & minimal scope, B2. Data model & collision, B3. Randomizer, gravity, lock delay, B4. SRS rotation & wall kicks (verbatim tables) (+6 more)
 
-### Community 149 - "add"
-Cohesion: 0.18
-Nodes (12): add(), attach(), componentDidCatch(), cr(), jp(), oc(), rc(), register() (+4 more)
+### Community 149 - "en"
+Cohesion: 0.09
+Nodes (4): en(), Pn(), Re(), rn
 
 ### Community 150 - "Collision & Physics for Browser Games (2D AABB/SAT/broadphase, swept collision, 3D Rapier/cannon, fixed timestep)"
 Cohesion: 0.17
@@ -889,9 +911,9 @@ Nodes (11): 1. Do you even need a physics engine?, 2. 2D collision detection pri
 Cohesion: 0.17
 Nodes (11): 1. The core principle, 2. Screenshake (the highest impact-per-effort effect), 3. Hitstop / hitstun / "sleep" (freeze frames on impact), 4. Tweening & easing (motion that isn't linear), 5. Particles & squash-and-stretch, 6. Camera feel (lerp, lookahead, deadzone, punch), 7. SFX layering & audio feel, 8. Don't over-juice (readability & perf guardrails) (+3 more)
 
-### Community 152 - "package.json"
-Cohesion: 0.05
-Nodes (42): dependencies, compression, dotenv, express, express-rate-limit, helmet, mongodb, morgan (+34 more)
+### Community 152 - "scripts"
+Cohesion: 0.06
+Nodes (32): dependencies, compression, dotenv, express, express-rate-limit, helmet, mongodb, morgan (+24 more)
 
 ### Community 153 - "Save & Persistence for Browser Games (localStorage vs IndexedDB, versioned saves, serialization, autosave)"
 Cohesion: 0.20
@@ -899,15 +921,15 @@ Nodes (9): 1. Pick the right storage, 2. ALWAYS version your saves (the #1 lost-
 
 ### Community 154 - "Loader"
 Cohesion: 0.06
-Nodes (22): AnimationLoader, AudioLoader, handleError(), BufferGeometryLoader, CompressedTextureLoader, loadTexture(), CubeTextureLoader, loadTexture() (+14 more)
+Nodes (26): Ready image assets, AnimationLoader, AudioLoader, handleError(), BufferGeometryLoader, CompressedTextureLoader, loadTexture(), CubeTextureLoader (+18 more)
 
-### Community 155 - "grokPwaPlugin"
-Cohesion: 0.22
-Nodes (9): 1. Your environment / workspace (for you, never surfaced to the user), First scaffold — required entry files, What is already here, Where you are, `/workspace/startup.sh` (required — you maintain this), A passing `npm run build` does not mean the deployed app renders, Build & deploy target, What `vite.config.ts` already does (+1 more)
+### Community 155 - "vu"
+Cohesion: 0.07
+Nodes (46): a(), ai(), Au(), di(), Du(), fi(), ft(), Fu() (+38 more)
 
-### Community 156 - ".parseObject"
-Cohesion: 0.06
-Nodes (18): AmbientLight, getArrayBuffer(), getInterleavedBuffer(), DataTexture, Fog, FogExp2, getTrackTypeForValueTypeName(), getTypedArray() (+10 more)
+### Community 156 - "WebGLBindingStates"
+Cohesion: 0.12
+Nodes (25): reset(), WebGLBindingStates(), bindVertexArrayObject(), createBindingState(), createVertexArrayObject(), deleteVertexArrayObject(), disableUnusedAttributes(), dispose() (+17 more)
 
 ### Community 157 - "Prompt Rules"
 Cohesion: 0.17
@@ -921,13 +943,13 @@ Nodes (11): 46. Recommended Tech Stack, Authentication, Backend, Components, Dat
 Cohesion: 0.18
 Nodes (10): Conversion layer (blueprint, post-Phase-5), Live cutover (production, no mockups), Phase 0 — Foundation (scaffold, machine, seed, design tokens), Phase 1 — Auth + shell, Phase 2 — Customer, Phase 3 — Rider, Phase 4 — Admin, Phase 5 — Golden loop + hardening (+2 more)
 
-### Community 160 - "LazyPGliteDriver"
-Cohesion: 0.14
-Nodes (6): @electric-sql/pglite, kysely, Client, LazyPGliteDriver, PGliteConnection, pgliteDialect()
+### Community 160 - "config"
+Cohesion: 0.18
+Nodes (12): aborted(), config(), en_default(), _ensureDefaultLocale(), _ensureDefaultMemoizer(), finalizeIssue(), handleCatchResult(), handleIntersectionResults() (+4 more)
 
-### Community 161 - "Genre Playbook — Arcade Racing / Kart"
-Cohesion: 0.06
-Nodes (28): ascSort(), intersectObject(), Raycaster, 1. Core mechanics (minimal-but-good scope for a demo), 2. Controls & camera, 4. Genre-specific "feel" (the juice), 5. Common bugs to avoid (checklist), Defaults to apply (+20 more)
+### Community 161 - "Layers"
+Cohesion: 0.08
+Nodes (16): ascSort(), intersectObject(), Layers, Raycaster, setPoint(), Sources, Sources, 1. Core mechanics (minimal-but-good scope for a demo) (+8 more)
 
 ### Community 162 - "Text Wrapping"
 Cohesion: 0.18
@@ -937,21 +959,29 @@ Nodes (10): Caveat, Font Smoothing (macOS), Good vs. Bad, Tabular Numbers, text-
 Cohesion: 0.08
 Nodes (21): Critical, High: connect search and local business evidence, High: release and verify the work, Low: only when evidence supports it, Medium: earn local trust and keep information accurate, Medium: measure before expanding, PrintKarr SEO action plan, Evidence and reproducibility (+13 more)
 
-### Community 164 - "WebGLBindingStates"
-Cohesion: 0.15
-Nodes (22): reset(), WebGLBindingStates(), bindVertexArrayObject(), createBindingState(), createVertexArrayObject(), deleteVertexArrayObject(), disableUnusedAttributes(), dispose() (+14 more)
+### Community 164 - "build_proposal.py"
+Cohesion: 0.17
+Nodes (8): field(), p(), docx, docx_enum_table, docx_enum_text, docx_oxml, docx_oxml_ns, docx_shared
 
 ### Community 165 - "Genre Playbook — Top-Down / Twin-Stick Shooter"
 Cohesion: 0.20
 Nodes (9): 1. Core mechanics (minimal-but-good scope for a demo), 2. Controls & aiming (the twin-stick core), 3. Camera, 4. Bullets, enemies & performance, 5. Genre-specific "feel" (the juice), 6. Common bugs to avoid (checklist), Defaults to apply, Genre Playbook — Top-Down / Twin-Stick Shooter (+1 more)
 
-### Community 166 - "get"
+### Community 166 - "WebGLTextures"
 Cohesion: 0.10
-Nodes (59): isPowerOfTwo(), setValueT1(), setValueT2DArray1(), setValueT3D1(), setValueT6(), get(), bindFramebuffer(), bindTexture() (+51 more)
+Nodes (58): isPowerOfTwo(), setValueT1(), setValueT2DArray1(), setValueT3D1(), setValueT6(), activeTexture(), bindFramebuffer(), bindTexture() (+50 more)
 
 ### Community 167 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
 Nodes (8): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7a - FalkorDB export (only if --falkordb or --falkordb-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
+
+### Community 168 - "InterleavedBuffer"
+Cohesion: 0.06
+Nodes (12): getArrayBuffer(), getInterleavedBuffer(), createCanvasElement(), createElementNS(), generateUUID(), ImageUtils, InstancedInterleavedBuffer, InterleavedBuffer (+4 more)
+
+### Community 169 - "callMiddleware"
+Cohesion: 0.23
+Nodes (12): defaultHandler(), error_handler_default(), callMiddleware(), defineHandler(), defineLazyEventHandler(), fetch(), handler(), handlerWithFetch() (+4 more)
 
 ### Community 170 - "Genre Playbook — Endless Runner"
 Cohesion: 0.22
@@ -965,9 +995,9 @@ Nodes (8): 1. Core mechanics (minimal-but-good scope for a demo), 2. Map, path &
 Cohesion: 0.22
 Nodes (8): 1. Design-system-first (do this before styling anything), 2. The quantified rubric (cheap rules that prevent "ugly"), 3. Anti-AI-slop (the tells that make output look generic — avoid), 4. Layout & hierarchy, 5. Motion (subtle, purposeful), 6. Game overlays (when this pairs with `building-games`), Design & UI, Finish checklist (before you call UI done)
 
-### Community 173 - "packs.js"
-Cohesion: 0.28
-Nodes (16): BOOKING_FEE, coverFor(), dueOf(), ensurePackSubs(), exhaustedOf(), leftOf(), mySubs(), newSub() (+8 more)
+### Community 173 - "mixed-print-check.mjs"
+Cohesion: 0.11
+Nodes (27): BOOKING_FEE, coverFor(), deductSides(), dueOf(), ensurePackSubs(), exhaustedOf(), leftOf(), mySubs() (+19 more)
 
 ### Community 174 - "Video2dsprite pipeline"
 Cohesion: 0.22
@@ -977,9 +1007,13 @@ Nodes (9): Chroma key, End-to-end, ffmpeg extract, GIF duration defaults, Normal
 Cohesion: 0.25
 Nodes (7): App-builder / Grok environment, Art comes from image generation, and you write the prompts, Decide the pipeline first, Depth for the pipeline you picked — open these before producing assets, Generate2dmap, Keep runtime objects out of the base layer, Reference mockups are checkpoints, not deliverables
 
-### Community 176 - "fe"
+### Community 176 - "vn"
 Cohesion: 0.06
-Nodes (13): Cb(), Context(), db(), Iw(), a(), bn(), Ce, fe() (+5 more)
+Nodes (7): bn(), Ce, ke(), kn, On, Tn, vn
+
+### Community 177 - "warn"
+Cohesion: 0.06
+Nodes (49): json(), onQuaternionChange(), onRotationChange(), decompose(), determinantAffine(), enhanceLogMessage(), extractBasis(), extractRotation() (+41 more)
 
 ### Community 178 - "1. Product Overview"
 Cohesion: 0.29
@@ -997,9 +1031,13 @@ Nodes (7): 5. CUSTOMER APP, Current order, Customer Dashboard, Header, Main CTA,
 Cohesion: 0.29
 Nodes (6): 1. Asymmetry bookkeeping (turnarounds), 2. Hands and props, 3. Edit-chain protocol, 4. Variants (damage / palette / equipment), 5. Verify, Character Consistency
 
+### Community 182 - "get"
+Cohesion: 0.08
+Nodes (47): add(), an(), attach(), cr(), df(), ef(), Et(), get() (+39 more)
+
 ### Community 183 - "Game Audio in the Browser (Web Audio API, mobile unlock, Howler.js, gain buses, spatial, latency)"
-Cohesion: 0.09
-Nodes (21): AudioContext, 1. The autoplay unlock — the single most important rule, 2. Web Audio API vs `<audio>` vs Howler, 3. Gain buses (music / SFX / master) — do this from the start, 4. Latency (keep audio tight), 5. Variation & layering (feel), 6. Spatial / positional audio (for 3D or top-down games), 7. Formats & assets (+13 more)
+Cohesion: 0.14
+Nodes (13): AudioContext, 1. The autoplay unlock — the single most important rule, 2. Web Audio API vs `<audio>` vs Howler, 3. Gain buses (music / SFX / master) — do this from the start, 4. Latency (keep audio tight), 5. Variation & layering (feel), 6. Spatial / positional audio (for 3D or top-down games), 7. Formats & assets (+5 more)
 
 ### Community 184 - "Share cards, favicon, and app icons"
 Cohesion: 0.29
@@ -1007,15 +1045,15 @@ Nodes (6): Brand-asset pass: always a subagent, never waited for, Build the asse
 
 ### Community 185 - "n"
 Cohesion: 0.06
-Nodes (74): i(), ac(), as(), async(), Bo(), cs(), de(), deserialize() (+66 more)
+Nodes (71): i(), ac(), t(), apply(), as(), async(), Bt(), cs() (+63 more)
 
-### Community 186 - ".render"
+### Community 186 - "push"
 Cohesion: 0.05
-Nodes (45): addGroup(), buildPlane(), generateCap(), generateTorso(), prepareMaterial(), projectObject(), renderObject(), convertArray() (+37 more)
+Nodes (57): addGroup(), addUniform(), buildPlane(), generateCap(), generateTorso(), getProgram(), materialNeedsLights(), prepareMaterial() (+49 more)
 
-### Community 187 - "ve"
-Cohesion: 0.06
-Nodes (18): ee(), me(), Ar(), Dr, er(), Fr(), Gi(), kr() (+10 more)
+### Community 187 - "Genre Playbook — Arcade Racing / Kart"
+Cohesion: 0.22
+Nodes (8): 1. Core mechanics (minimal-but-good scope for a demo), 2. Arcade handling (pseudo-physics, not a sim), 3. Drift (the payoff mechanic), 4. Checkpoints & laps (get this right or laps break), 5. Camera, 6. Common bugs to avoid (checklist), Defaults to apply, Genre Playbook — Arcade Racing / Kart
 
 ### Community 188 - "xAI API (Grok)"
 Cohesion: 0.29
@@ -1035,7 +1073,7 @@ Nodes (6): 3. Demo Login System, Demo Admin/Printer, Demo Customer, Demo Rider, 
 
 ### Community 192 - "Quaternion"
 Cohesion: 0.05
-Nodes (5): Euler, makeClipAdditive(), onQuaternionChange(), onRotationChange(), Quaternion
+Nodes (4): Euler, makeClipAdditive(), onQuaternionChange(), Quaternion
 
 ### Community 193 - "Animation Frames — video-first"
 Cohesion: 0.33
@@ -1073,9 +1111,9 @@ Nodes (4): App-builder note, Asset Core, Unprompted engine-ready defaults, Worki
 Cohesion: 0.40
 Nodes (4): 1. Claim the marker, keep it fresh, always release it, 2. Hand every file over atomically, 3. Verify your own work, because nobody waits for it, Running the brand-asset pass (the pass's own contract)
 
-### Community 202 - "Procedural Generation (seeded RNG, noise, dungeons/mazes/terrain, wave function collapse)"
-Cohesion: 0.20
-Nodes (9): 1. Seeded RNG is the foundation — never use bare `Math.random()`, 2. Noise: value / Perlin / simplex (for terrain, textures, organic fields), 3. Dungeon / room generation, 4. Maze generation, 6. Wave Function Collapse (WFC) basics, 7. Bug-prevention checklist, Defaults to apply, Procedural Generation (seeded RNG, noise, dungeons/mazes/terrain, wave function collapse) (+1 more)
+### Community 202 - "Mesh"
+Cohesion: 0.04
+Nodes (41): BoxGeometry, cloneUniforms(), cloneUniformsGroups(), _getBlurShader(), _getCommonVertexShader(), _getCubemapMaterial(), _getEquirectMaterial(), getUnlitUniformColorSpace() (+33 more)
 
 ### Community 203 - "graphify reference: add a URL and watch a folder"
 Cohesion: 0.50
@@ -1107,7 +1145,7 @@ Nodes (4): 9. Additional Options, Binding, Notes, Orientation
 
 ### Community 210 - "esc"
 Cohesion: 0.07
-Nodes (99): Ready image assets, progressOf(), FREE_DELIVERY, A(), adminDashboard(), adminOrderDetail(), analyticsPage(), badge() (+91 more)
+Nodes (88): installNotificationRoutes(), progressOf(), A(), adminDashboard(), adminOrderDetail(), analyticsPage(), badge(), campaignSettings() (+80 more)
 
 ### Community 211 - "Favicon and PWA icons"
 Cohesion: 0.50
@@ -1122,20 +1160,24 @@ Cohesion: 0.67
 Nodes (3): 4. Global Application Structure, Desktop, Mobile
 
 ### Community 238 - "checkout-check.mjs"
-Cohesion: 0.03
-Nodes (96): applyTopup(), batchPrice(), campaignConfig(), claimWalletFiles(), creditWallet(), debitWallet(), deliveryPlan(), FILE_COLORS (+88 more)
+Cohesion: 0.04
+Nodes (103): COOKIE, applyTopup(), batchPrice(), campaignConfig(), claimWalletFiles(), creditWallet(), debitWallet(), deliveryChoice() (+95 more)
 
-### Community 239 - ".constructor"
-Cohesion: 0.06
-Nodes (37): createCanvasElement(), createElementNS(), floorPowerOfTwo(), ImageUtils, WebGLAnimation(), onAnimationFrame(), WebGLIndexedBufferRenderer(), render() (+29 more)
+### Community 239 - "Clock"
+Cohesion: 0.21
+Nodes (7): Clock, now(), requestAnimationFrame(), 4. AI: minimax & alpha-beta pruning, 1. Game loop & timing (the #1 correctness issue), 8. Common browser-game bugs to prevent (checklist), 1. Game loop & timing (the #1 correctness issue)
 
 ### Community 240 - "wr"
 Cohesion: 0.05
-Nodes (28): yd(), ai(), an(), B(), br, cn(), f, $i() (+20 more)
+Nodes (24): yd(), ai(), an(), cn(), Di(), f, $i(), Ir() (+16 more)
 
 ### Community 242 - "switchContext"
 Cohesion: 0.47
 Nodes (6): popAllPrevious(), popNextToCommonLevel(), popPreviousToCommonLevel(), popToNearestCommonAncestor(), pushAllNext(), switchContext()
+
+### Community 243 - "Genre Playbook — Board & Card Games (Chess, Checkers, Tic-Tac-Toe, Card games)"
+Cohesion: 0.25
+Nodes (7): 1. Core mechanics (minimal-but-good scope for a demo), 2. Turn state machine, 3. Legal-move validation (get this exactly right), 5. Common bugs to avoid (checklist), Defaults to apply, Genre Playbook — Board & Card Games (Chess, Checkers, Tic-Tac-Toe, Card games), Sources
 
 ### Community 244 - "PrintKarr content, local SEO and search intent audit"
 Cohesion: 0.18
@@ -1145,13 +1187,17 @@ Nodes (10): Baseline content measurements, Daman service-page outline, Evidence 
 Cohesion: 0.16
 Nodes (3): gs, hi(), ui()
 
+### Community 246 - "Building Games"
+Cohesion: 0.25
+Nodes (7): 2. Controls (delegate to the `controls` skill), 4. Camera must agree with movement, 6. Assets (avoid the generated-photo trap), 8. Mobile, Building Games, Finish criteria (before "done"), Stack / engine choice
+
+### Community 247 - "PrintKarr local delivery and shop operations"
+Cohesion: 0.33
+Nodes (5): Delivery rules, Onboard a shop, Prepare and deliver, PrintKarr local delivery and shop operations, Verification and local preview
+
 ### Community 249 - "KeyframeTrack"
 Cohesion: 0.06
 Nodes (14): BooleanKeyframeTrack, ColorKeyframeTrack, convertArray(), CubicInterpolant, DiscreteInterpolant, Interpolant, isTypedArray(), KeyframeTrack (+6 more)
-
-### Community 250 - "referrals.js"
-Cohesion: 0.22
-Nodes (19): awardReferralCredit(), cashWalletOf(), codeFor(), createReferral(), creditPrint(), findReferrer(), genCode(), getConfig() (+11 more)
 
 ### Community 252 - "Unified Input for Browser Games (keyboard + mouse + touch + Gamepad, action mapping, deadzones, buffering)"
 Cohesion: 0.09
@@ -1169,53 +1215,77 @@ Nodes (8): clsx(), r(), useRouterState(), BrandWord(), cn(), DockNav(), Logo(), 
 Cohesion: 0.07
 Nodes (7): Color, damp(), euclideanModulo(), hue2rgb(), LinearToSRGB(), pingpong(), SRGBToLinear()
 
+### Community 258 - "app-data.test.ts"
+Cohesion: 0.17
+Nodes (19): WindowStub, failureMemoSize(), CallToolErrorKind, CallToolErrorState, classifyCallToolError(), matchMessageRule(), MESSAGE_RULES, MessageRule (+11 more)
+
 ### Community 259 - "client.server.ts"
-Cohesion: 0.08
-Nodes (47): WindowStub, callTool(), CONNECTORS_HOST_PROD, CONNECTORS_HOST_STAGING, connectorsBaseFor(), crossSiteBlockedResult(), failureMemo, failureMemoSize() (+39 more)
+Cohesion: 0.11
+Nodes (28): callTool(), CONNECTORS_HOST_PROD, CONNECTORS_HOST_STAGING, connectorsBaseFor(), crossSiteBlockedResult(), failureMemo, GateJson, gatePost() (+20 more)
 
 ### Community 260 - "Box3"
-Cohesion: 0.05
-Nodes (3): Box2, Box3, Sphere
+Cohesion: 0.03
+Nodes (9): Box2, Box3, checkGeometryIntersection(), checkIntersection(), LOD, SkinnedMesh, Sphere, testPoint() (+1 more)
 
-### Community 261 - ".equals"
-Cohesion: 0.08
+### Community 261 - "earcutLinked"
+Cohesion: 0.09
 Nodes (32): addContour(), compareX(), cureLocalIntersections(), earcutLinked(), eliminateHole(), eliminateHoles(), filterPoints(), findHoleBridge() (+24 more)
 
 ### Community 263 - "Texture"
-Cohesion: 0.05
-Nodes (15): CanvasTexture, CompressedArrayTexture, CompressedCubeTexture, CompressedTexture, CubeTexture, Data3DTexture, DataArrayTexture, DepthTexture (+7 more)
+Cohesion: 0.06
+Nodes (13): CanvasTexture, CompressedArrayTexture, CompressedCubeTexture, CompressedTexture, CubeTexture, Data3DTexture, DataArrayTexture, DepthTexture (+5 more)
 
 ### Community 264 - "WebGLBindingStates"
-Cohesion: 0.11
-Nodes (22): GLBufferAttribute, WebGLBindingStates(), bindVertexArrayObject(), createBindingState(), createVertexArrayObject(), deleteVertexArrayObject(), disableUnusedAttributes(), dispose() (+14 more)
+Cohesion: 0.12
+Nodes (21): GLBufferAttribute, WebGLBindingStates(), bindVertexArrayObject(), createBindingState(), createVertexArrayObject(), deleteVertexArrayObject(), disableUnusedAttributes(), dispose() (+13 more)
+
+### Community 265 - "_gte"
+Cohesion: 0.40
+Nodes (5): _gte(), min(), _minLength(), nonempty(), nonnegative()
+
+### Community 266 - "_lte"
+Cohesion: 0.50
+Nodes (4): _lte(), max(), _maxLength(), nonpositive()
 
 ### Community 267 - "WebGLProgram"
 Cohesion: 0.09
 Nodes (25): fetchAttributeLocations(), filterEmptyLine(), generateCubeUVSize(), generateDefines(), generateEnvMapBlendingDefine(), generateEnvMapModeDefine(), generateEnvMapTypeDefine(), generateExtensions() (+17 more)
 
+### Community 268 - "nearby-shops.js"
+Cohesion: 0.33
+Nodes (4): cards, grid, search, status
+
+### Community 270 - "Browser Game Best Practices — Three.js / Babylon.js / Phaser (controls, camera, orientation, loop, assets, perf)"
+Cohesion: 0.29
+Nodes (6): 2. First-person / WASD + mouse-look controls (Three.js), 5. Engine / stack choice, 6. Assets: generate vs. code vs. link, 7. Mobile / responsive / touch, Browser Game Best Practices — Three.js / Babylon.js / Phaser (controls, camera, orientation, loop, assets, perf), registry()
+
 ### Community 271 - "WebGLPrograms"
-Cohesion: 0.08
-Nodes (14): Layers, WebGLCapabilities(), getMaxAnisotropy(), getMaxPrecision(), WebGLPrograms(), acquireProgram(), dispose(), getChannel() (+6 more)
+Cohesion: 0.12
+Nodes (12): getMaxPrecision(), WebGLPrograms(), acquireProgram(), dispose(), getChannel(), getParameters(), getProgramCacheKey(), getProgramCacheKeyBooleans() (+4 more)
 
 ### Community 272 - "PropertyBinding"
-Cohesion: 0.06
+Cohesion: 0.07
 Nodes (3): AnimationObjectGroup, Composite, PropertyBinding
 
-### Community 274 - "W"
+### Community 274 - "own"
+Cohesion: 0.50
+Nodes (5): hide(), own(), spa(), "~standard"(), standardProps()
+
+### Community 275 - "Imagine"
 Cohesion: 0.11
-Nodes (23): Fu(), H(), Iu(), K(), Kh(), ku(), l(), Lu() (+15 more)
+Nodes (16): Build accurate visuals with code, not the image tools, Choosing the tool, Core Principles, Failure modes to avoid, Handle flow (mandatory mental model), Imagine, `imagine_image_to_image`, `imagine_image_to_video` (+8 more)
 
 ### Community 276 - "WebGLRenderer"
-Cohesion: 0.07
-Nodes (9): WebGL1Renderer, WebGLRenderer, checkMaterialsReady(), Finish check, Full reference, Quick defaults for this product, Stack adaptation (this app builder), Three.js (official LLM reference) (+1 more)
+Cohesion: 0.03
+Nodes (50): LightShadow, WebGL1Renderer, WebGLAnimation(), onAnimationFrame(), WebGLCubeRenderTarget, WebGLIndexedBufferRenderer(), render(), renderInstances() (+42 more)
 
 ### Community 277 - "Action Rules"
 Cohesion: 0.22
 Nodes (9): Action Rules, `attack`, `cast`, `combat`, `hurt`, `idle`, `impact` / `explode`, `projectile` (+1 more)
 
 ### Community 278 - "WebGLUniformsGroups"
-Cohesion: 0.15
-Nodes (18): WebGLAttributes(), createBuffer(), get(), remove(), update(), updateBuffer(), uniformBlockBinding(), updateUBOMapping() (+10 more)
+Cohesion: 0.26
+Nodes (12): uniformBlockBinding(), updateUBOMapping(), WebGLUniformsGroups(), allocateBindingPointIndex(), bind(), createBuffer(), getUniformSize(), hasUniformChanged() (+4 more)
 
 ### Community 279 - "arraysEqual"
 Cohesion: 0.21
@@ -1229,21 +1299,37 @@ Nodes (13): 0.5 First, decide whether to build (triage before scaffolding anythi
 Cohesion: 0.13
 Nodes (5): DodecahedronGeometry, IcosahedronGeometry, OctahedronGeometry, PolyhedronGeometry, TetrahedronGeometry
 
-### Community 285 - "Clock"
-Cohesion: 0.11
-Nodes (15): Clock, now(), onXRSessionEnd(), requestAnimationFrame(), 1. Core mechanics (minimal-but-good scope for a demo), 2. Turn state machine, 3. Legal-move validation (get this exactly right), 4. AI: minimax & alpha-beta pruning (+7 more)
+### Community 284 - "LazyPGliteDriver"
+Cohesion: 0.14
+Nodes (6): @electric-sql/pglite, kysely, Client, LazyPGliteDriver, PGliteConnection, pgliteDialect()
+
+### Community 285 - "verify.server.ts"
+Cohesion: 0.15
+Nodes (13): Per-user data (server-side — mandatory), Auth, Turning sign-in on, gateIdentityEnabled(), authMiddleware, auth, authConfigured, databaseConfigured (+5 more)
 
 ### Community 286 - "parseUniform"
 Cohesion: 0.17
 Nodes (7): addUniform(), getPureArraySetter(), getSingularSetter(), parseUniform(), PureArrayUniform, SingleUniform, StructuredUniform
 
-### Community 289 - "QuadraticBezierCurve"
-Cohesion: 0.12
-Nodes (6): QuadraticBezier(), QuadraticBezierCurve, QuadraticBezierCurve3, QuadraticBezierP0(), QuadraticBezierP1(), QuadraticBezierP2()
+### Community 287 - "Data & auth — implementation"
+Cohesion: 0.15
+Nodes (12): Data & auth — implementation, Env, Migrations, Server functions, Turning sign-in on (at scaffold or later), Connector / app-data apps: gate sign-in only, Env (deployer-injected), Files (pre-wired — do not edit) (+4 more)
+
+### Community 288 - "PrintKarr website overhaul — 6 October 2026"
+Cohesion: 0.50
+Nodes (3): PrintKarr website overhaul — 6 October 2026, Screenshots, Verification
+
+### Community 289 - "QuadraticBezierCurve3"
+Cohesion: 0.18
+Nodes (5): QuadraticBezier(), QuadraticBezierCurve3, QuadraticBezierP0(), QuadraticBezierP1(), QuadraticBezierP2()
 
 ### Community 290 - "Video2dsprite (Grok Build only)"
 Cohesion: 0.25
 Nodes (8): Agent rules, App-builder / Grok environment, Defaults, Platform gate (read first), Relationship to other skills, Resources, Tradeoffs (tell the user once), Video2dsprite (Grok Build only)
+
+### Community 291 - "Genre Playbook — 2D Platformer"
+Cohesion: 0.22
+Nodes (8): 1. Core mechanics (minimal-but-good scope for a demo), 2. Jump feel — the forgiveness features (do ALL of these), 3. Collision — tilemap / AABB (the #1 bug source), 4. One-way (drop-through) platforms, 5. Camera, Defaults to apply, Genre Playbook — 2D Platformer, Sources
 
 ### Community 292 - "Sheet-Specific Rules"
 Cohesion: 0.29
@@ -1253,25 +1339,37 @@ Nodes (7): `1x4` projectile, `3x3` large idle, `4x4` non-directional action sequ
 Cohesion: 0.25
 Nodes (7): AI crawler policy, AI files and ranking claims, Highest-priority content gaps, Practical measurement and limits, PrintKarr GEO, AI search and authority review, Public entity and link evidence, Verified starting position
 
-### Community 297 - "parseWithError"
-Cohesion: 0.11
-Nodes (25): createAsyncParserContext(), createBaseDeserializerContext(), createBaseParserContext(), createStreamParserContext(), createStreamParserState(), createVanillaDeserializerContext(), crossSerializeStream(), dedupePlugins() (+17 more)
+### Community 295 - "PrintKarr local review — 6 October 2026"
+Cohesion: 0.25
+Nodes (7): Before → after, Business facts checked against code, Preview and screenshots, PrintKarr local review — 6 October 2026, Research and interpretation, SEO/GEO and the former domain owner, Validation and limits
 
-### Community 298 - "BatchedMesh"
-Cohesion: 0.14
-Nodes (3): BatchedMesh, CameraHelper, setPoint()
+### Community 297 - "startStreamParse"
+Cohesion: 0.16
+Nodes (16): createAsyncParserContext(), createBaseParserContext(), createStreamParserContext(), createStreamParserState(), crossSerializeStream(), dedupePlugins(), destroyStreamParse(), flushStreamParse() (+8 more)
 
-### Community 299 - "CubicBezierCurve"
-Cohesion: 0.11
-Nodes (7): CubicBezier(), CubicBezierCurve, CubicBezierCurve3, CubicBezierP0(), CubicBezierP1(), CubicBezierP2(), CubicBezierP3()
+### Community 298 - "browser-guard.mjs"
+Cohesion: 0.29
+Nodes (8): playwright, checkedOutputPath(), checkedUrl(), fail(), LOOPBACK_HOSTNAMES, outPng, timeoutMs, url
 
-### Community 300 - "own"
-Cohesion: 0.50
-Nodes (5): hide(), own(), spa(), "~standard"(), standardProps()
+### Community 299 - "CubicBezier"
+Cohesion: 0.17
+Nodes (6): CubicBezier(), CubicBezierCurve3, CubicBezierP0(), CubicBezierP1(), CubicBezierP2(), CubicBezierP3()
+
+### Community 300 - "grokPwaPlugin"
+Cohesion: 0.22
+Nodes (9): 1. Your environment / workspace (for you, never surfaced to the user), First scaffold — required entry files, What is already here, Where you are, `/workspace/startup.sh` (required — you maintain this), A passing `npm run build` does not mean the deployed app renders, Build & deploy target, What `vite.config.ts` already does (+1 more)
 
 ### Community 301 - "PrintKarr: editorial print desk"
 Cohesion: 0.33
 Nodes (5): Checks and read-only preview, Foundations, Original hero asset, PrintKarr: editorial print desk, References and implementation
+
+### Community 302 - "ECS & Game State Architecture for JS Games (bitECS, miniplex, ECS vs OOP, state structure)"
+Cohesion: 0.22
+Nodes (8): 1. What ECS is (and why it exists), 2. When ECS vs OOP (don't cargo-cult ECS), 3. Library choice: bitECS vs miniplex, 4. Structuring game state (even without a formal ECS), 5. Bug-prevention checklist, Defaults to apply, ECS & Game State Architecture for JS Games (bitECS, miniplex, ECS vs OOP, state structure), Sources
+
+### Community 303 - ".update"
+Cohesion: 0.16
+Nodes (17): cleanPath(), compileDecodeCharMap(), createDynamicNode(), createSieveCache(), createStaticNode(), findSingleMatch(), joinPaths(), parseSegment() (+9 more)
 
 ### Community 307 - "Workflow"
 Cohesion: 0.29
@@ -1285,40 +1383,24 @@ Nodes (4): Base still (`imagine_text_to_image`), Sampling guidance (post-video),
 Cohesion: 0.29
 Nodes (7): 1. Plan, 2. Build the base still, 3. Animate with `imagine_image_to_video`, 4. Extract + chroma + sample (local script), 5. QC, 6. Deliver, Workflow
 
-### Community 310 - "Genre Playbook — 2D Platformer"
-Cohesion: 0.20
-Nodes (9): 1. Core mechanics (minimal-but-good scope for a demo), 2. Jump feel — the forgiveness features (do ALL of these), 3. Collision — tilemap / AABB (the #1 bug source), 4. One-way (drop-through) platforms, 5. Camera, 6. Common bugs to avoid (checklist), Defaults to apply, Genre Playbook — 2D Platformer (+1 more)
-
 ### Community 311 - "notifications.js"
 Cohesion: 0.44
 Nodes (8): chime(), enableSound(), markRead(), poll(), read(), render(), soundState(), write()
 
-### Community 314 - "setProgram"
-Cohesion: 0.26
-Nodes (6): getUniforms(), getUniformList(), markUniformsLightsNeedsUpdate(), setProgram(), resetTextureUnits(), WebGLUniforms
-
-### Community 315 - "Path"
-Cohesion: 0.08
-Nodes (7): ArcCurve, CapsuleGeometry, EllipseCurve, Path, Shape, ShapePath, toShapesNoHoles()
-
-### Community 316 - "ShaderMaterial"
-Cohesion: 0.22
-Nodes (9): cloneUniforms(), cloneUniformsGroups(), _getBlurShader(), _getCommonVertexShader(), _getCubemapMaterial(), _getEquirectMaterial(), mergeUniforms(), RawShaderMaterial (+1 more)
-
 ## Knowledge Gaps
-- **1367 isolated node(s):** `RFC-9562`, `name`, `private`, `sideEffects`, `type` (+1362 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2941 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **58 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1397 isolated node(s):** `RFC-9562`, `name`, `private`, `sideEffects`, `type` (+1392 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 3014 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **76 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `gl()` connect `get` to `three.mjs`, `index-BmpwFe3l.js`, `constructor`, `WebGLProgram`, `WebXRManager`, `Sl`, `n`, `update`, `.dispose`, `constructor`, `i`, `n`?**
-  _High betweenness centrality (0.101) - this node is a cross-community bridge._
-- **Why does `value()` connect `shell.js` to `flush`, `three.mjs`, `copy`, `design-check.mjs`?**
-  _High betweenness centrality (0.085) - this node is a cross-community bridge._
 - **Why does `requestAnimationFrame()` connect `Clock` to `design-check.mjs`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+  _High betweenness centrality (0.098) - this node is a cross-community bridge._
+- **Why does `gl()` connect `WebGLTextures` to `three.mjs`, `index-BmpwFe3l.js`, `.push`, `constructor`, `get`, `WebGLProgram`, `copy`, `i`, `WebGLRenderer`, `constructor`, `get`, `n`?**
+  _High betweenness centrality (0.095) - this node is a cross-community bridge._
+- **Why does `1. Game loop & timing (the #1 correctness issue)` connect `Clock` to `Building Games`?**
+  _High betweenness centrality (0.092) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `constructor()` (e.g. with `.arc()` and `r()`) actually correct?**
   _`constructor()` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 28 inferred relationships involving `constructor()` (e.g. with `xo()` and `Yt()`) actually correct?**

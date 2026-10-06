@@ -40,47 +40,6 @@
     });
   });
 
-  document.querySelectorAll('[data-print-quote]').forEach(function (quote) {
-    var form = quote.closest('form'), cfg = JSON.parse(quote.dataset.pricing), pages = Number(quote.dataset.pages);
-    function value(name) { var input = form.querySelector('[name="' + name + '"]:checked'); return input && input.value; }
-    function update() {
-      var range = form.querySelector('[name="range"]'), count = pages, error = '';
-      if (range && range.value.trim()) {
-        var selected = new Set();
-        range.value.split(',').forEach(function (part) {
-          if (!part.trim() || error) return;
-          var match = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-          if (!match) { error = 'Use page numbers such as 1, 3-5.'; return; }
-          var first = Number(match[1]), last = Number(match[2] || match[1]);
-          if (first < 1 || last < 1 || first > pages || last > pages) { error = 'Choose pages between 1 and ' + pages + '.'; return; }
-          for (var i = Math.min(first, last); i <= Math.max(first, last); i++) selected.add(i);
-        });
-        count = selected.size;
-        if (!count && !error) error = 'Pick at least one page.';
-      }
-      if (range) range.setCustomValidity(error);
-      var hint = form.querySelector('#range-err'); if (hint) hint.textContent = error;
-      if (error) { quote.querySelector('span').textContent = error; quote.querySelector('b').textContent = 'Check page range'; return; }
-      var copies = Math.max(1, Math.min(200, parseInt(form.querySelector('[name="copies"]').value, 10) || 1));
-      var slot = value('deliverySlot') || 'express', scheduled = slot.indexOf('local-') === 0;
-      var address = form.querySelector('[name="addressId"]:checked'), area = form.querySelector('[name="area"],[name="nn_area"]');
-      var zone = scheduled ? slot.split('-')[1] : (address && address.value !== '__new' ? address.dataset.area : area && area.value) || 'Vapi';
-      zone = zone.toLowerCase();
-      var print = count * copies * (value('printType') === 'color' ? cfg.color : cfg.bw);
-      var delivery = slot === 'pickup' ? 0 : slot === 'college' ? 3 : slot === 'college-express' ? 25 : scheduled ? cfg.local[zone].fee : cfg.fees[zone];
-      var late = slot === 'express' ? Number(cfg.lateNightFee || 0) : 0, surge = Number(cfg.surgeFee || 0);
-      if (!Number.isFinite(print) || !Number.isFinite(delivery)) { quote.querySelector('b').textContent = 'Confirmed at review'; return; }
-      quote.querySelector('span').textContent = 'Printing ₹' + print.toLocaleString('en-IN') + ' · delivery ₹' + delivery + (slot === 'college' ? ' (first delivery free; checked at review)' : '') + (late ? ' · late-night ₹' + late : '') + (surge ? ' · high-demand ₹' + surge : '');
-      quote.querySelector('b').textContent = 'Estimate ₹' + (Math.round((print + delivery + late + surge) * 100) / 100).toLocaleString('en-IN');
-    }
-    form.addEventListener('input', update); form.addEventListener('change', update);
-    ['cMinus', 'cPlus'].forEach(function (id) {
-      var button = form.querySelector('#' + id); if (!button) return;
-      button.addEventListener('click', function () { var copies = form.querySelector('[name="copies"]'); copies.value = Math.max(1, Math.min(200, (parseInt(copies.value, 10) || 1) + (id === 'cMinus' ? -1 : 1))); update(); });
-    });
-    update();
-  });
-
   document.querySelectorAll('[data-wallet-offer]').forEach(function (link) {
     link.addEventListener('click', function () { try { sessionStorage.setItem('pk-wallet-offer', JSON.stringify({ id: link.dataset.walletOffer, at: Date.now() })); } catch {} });
   });

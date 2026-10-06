@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-06T04:31:26.127Z",
+  "results": [
+    {
+      "path": "/",
+      "error": "fetch failed"
+    },
+    {
+      "path": "/robots.txt",
+      "error": "fetch failed"
+    },
+    {
+      "path": "/sitemap.xml",
+      "error": "fetch failed"
+    },
+    {
+      "path": "/llms.txt",
+      "error": "fetch failed"
+    },
+    {
+      "path": "/printing-in-vapi",
+      "error": "fetch failed"
+    }
+  ]
+}

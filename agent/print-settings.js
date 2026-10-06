@@ -1,5 +1,6 @@
 // SumatraPDF accepts page ranges and copy counts in -print-settings.
 export function printSettings(order, override = '') {
+  if (order.printType === 'mixed') throw new Error('Mixed printing requires an operator: preserve page order and colour assignments; do not submit as one colour mode.');
   const settings = override || `${order.sides === 'double' ? 'duplexlong' : 'simplex'},${order.printType === 'color' ? 'color' : 'monochrome'},paper=A4,shrink`;
   let range = order.pageRange ? String(order.pageRange).replace(/\s+/g, '') : '';
   if (range && !/^\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$/.test(range)) throw new Error('Invalid page range');

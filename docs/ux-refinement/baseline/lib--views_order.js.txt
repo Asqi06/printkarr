@@ -1,0 +1,420 @@
+import { printDescription } from '../public/print-plan.js';
+// Customer order wizard (§6–13), wallet (§17), profile (§18–19).
+import { campaignDefaults, deliveryPlan, FILE_COLORS } from './campus.js';
+import { layout, esc, icon, uploadScript, ASSET_V, DELIVERY_MAP_HEAD, deliveryPicker } from './views.js';
+
+const rs = (n) => '₹' + (Math.round(n * 100) / 100);
+
+export function walletPrompt(campaign, offers = [], balance = 0) {
+  const choices = offers.filter((o) => o.bonus > 0 && !o.memberDays).sort((a, b) => a.amount - b.amount).slice(0, 3);
+  if (!choices.length || balance >= choices[0].amount) return '';
+  const first = choices[0];
+  return `<dialog class="wallet-prompt" data-wallet-prompt data-prompt-key="${esc(choices.map((o) => `${o.id}:${o.amount}:${o.bonus}`).join('|'))}" aria-labelledby="wallet-prompt-title" aria-describedby="wallet-prompt-description">
+    <button type="button" class="wallet-prompt-close" data-wallet-dismiss aria-label="Close wallet offer">×</button>
+    <div class="wallet-prompt-art">${icon('wallet')}<p>Your next print, already covered.</p><div class="wallet-prompt-credit"><span>Add <b data-prompt-amount>${rs(first.amount)}</b></span><span>Get <strong data-prompt-total>${rs(first.amount + first.bonus)}</strong> to print</span></div></div>
+    <div class="wallet-prompt-copy"><p class="eyebrow">PRINTKARR WALLET</p><h2 id="wallet-prompt-title">Keep a little.<br><em>Print a little more.</em></h2>
+    <p id="wallet-prompt-description">Extra print credit with eligible top-ups. Pay from your balance next time, with fewer payment steps.</p>
+    <fieldset class="wallet-prompt-options"><legend>Choose your top-up</legend>${choices.map((o, i) => `<label><input type="radio" name="wallet-prompt-offer" value="${esc(o.id)}" data-amount="${o.amount}" data-bonus="${o.bonus}" ${i ? '' : 'checked'}><span>${rs(o.amount)}<small>+${rs(o.bonus)} bonus</small></span></label>`).join('')}</fieldset>
+    <p class="wallet-prompt-terms">Added money stays in your wallet without expiry. Bonus credit is non-withdrawable and ${campaign?.bonusValidityDays ? `valid for ${esc(campaign.bonusValidityDays)} days` : 'has no expiry'}. Delivery is priced separately.</p>
+    <a class="btn loud big" data-wallet-offer="${esc(first.id)}" data-prompt-link href="/customer/wallet?offer=${encodeURIComponent(first.id)}">Explore this wallet offer ${icon('arrow-up-right')}</a>
+    <button type="button" class="wallet-prompt-later" data-wallet-dismiss>Continue to printing</button></div>
+  </dialog>`;
+}
+
+export function deliveryGuide(campaign = campaignDefaults(), pricing) {
+  const d = campaign.delivery;
+  return `<details class="delivery-guide" open><summary>Know your delivery cost before uploading</summary><div class="delivery-guide-body">
+    <label for="delivery-guide-area">Where do you need your prints?</label><select id="delivery-guide-area" data-delivery-guide-area><option value="vapi">Vapi</option><option value="daman">Daman</option>${d.enabled && d.campuses.some((c) => c.id === 'lit' && c.enabled) && d.slots.some((s) => s.enabled) ? '<option value="lit">LIT Sarigam campus</option>' : ''}</select>
+    ${['vapi', 'daman'].map((zone, i) => `<div data-delivery-guide-zone="${zone}" ${i ? 'hidden' : ''}><p><strong>Address delivery ${rs(pricing.delivery[zone])}</strong> · printing charged separately.</p>${d.local?.[zone]?.enabled && d.slots.some((s) => s.enabled) ? `<p>Scheduled route ${rs(d.local[zone].fee)} · within ${d.local[zone].radiusKm} km of the delivery hub. Choose a time window after uploading.</p>` : ''}<p class="field-hint">Your map location confirms coverage and the applicable fee at checkout.</p></div>`).join('')}
+    <div data-delivery-guide-zone="lit" hidden><p><strong>First standard campus delivery free. Then ₹3.</strong></p><p class="field-hint">Delivery to LIT Sarigam only. Emergency express ₹25.</p></div>
+    ${d.pickup?.enabled ? `<p class="field-hint">Free collection: ${esc(d.pickup.address)}.</p>` : '<p class="field-hint">Public pickup is not available yet.</p>'}
+  </div></details>`;
+}
+
+export function printQuote(pricing, draft, campaign = campaignDefaults(), student = false, surcharges = {}) {
+  const config = JSON.stringify({ bw: student ? pricing.studentBw : pricing.bw, color: student ? pricing.studentColor : pricing.color, fees: pricing.delivery, local: campaign.delivery.local, ...surcharges });
+  return `<div class="order-price-lines" data-print-breakdown><div><span>Printing</span><b data-print-cost>—</b></div><div><span>Delivery</span><b data-delivery-cost>—</b></div></div><div class="livetotal order-continue" data-print-quote data-pages="${esc(draft.pages)}" data-pricing="${esc(config)}" role="status" aria-live="polite"><div><b>₹–</b><span>Total</span></div><button class="btn loud big" type="submit">Continue →</button></div>`;
+}
+
+export function mixedFields(saved = {}) {
+  return `<div data-mixed-fields ${saved.printType === 'mixed' ? '' : 'hidden'}>
+    <div class="grid c2"><div class="field"><label for="mixed-type">Print these pages in</label><select id="mixed-type" name="mixedPageType"><option value="color" ${saved.mixedPageType !== 'bw' ? 'selected' : ''}>Colour</option><option value="bw" ${saved.mixedPageType === 'bw' ? 'selected' : ''}>B&W</option></select></div><div class="field"><label for="mixed-range">Page numbers</label><input id="mixed-range" name="mixedRange" value="${esc(saved.mixedRange || '')}" placeholder="e.g. 11-12" aria-describedby="mixed-rule range-err"></div></div>
+    <p class="field-hint" id="mixed-rule">All other selected pages print in B&W.</p><p class="field-hint" data-print-assignment role="status" aria-live="polite"></p>
+  </div><p class="login-err" id="range-err" role="alert" hidden></p>`;
+}
+
+export function documentPreview(url, pages, range, fileType, open = false) {
+  const isImage = fileType === 'image';
+  const selected = range ? range.split(',').map((part) => {
+    const match = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if (!match) return esc(part);
+    const first = Number(match[1]), last = Number(match[2] || match[1]);
+    return first === last ? String(first) : `${Math.min(first, last)}–${Math.max(first, last)}`;
+  }).join(', ') : (isImage ? 'this photo' : `all ${esc(pages)} pages`);
+  const selection = range ? `pages ${selected}${pages ? ` of ${esc(pages)}` : ''}` : selected;
+  const frame = isImage
+    ? `<img title="Photo preview" src="${esc(url)}" alt="Photo to print" loading="lazy" style="display:block;width:100%;height:auto;max-height:560px;object-fit:contain;background:#fff;border:1px solid #d6dfec;border-radius:8px">`
+    : `<iframe title="PDF page preview" src="${esc(url)}#toolbar=1&amp;navpanes=0" loading="lazy"></iframe>`;
+  return `<details class="document-preview" ${open ? 'open' : ''}>
+    <summary><span>Review your ${isImage ? 'photo' : 'PDF'} before printing</span><small>${isImage ? 'One photo, one page' : 'Check the actual pages before printing'}</small></summary>
+    <div class="document-preview-body">
+      <p class="document-preview-pages">Printing <b>${selection}</b></p>
+      <p class="preview-reminder">Take one last look: correct file, readable text, margins and all required pages. Check colour, sides and copies in your order summary.</p>
+      <a href="${esc(url)}" target="_blank" rel="noopener">Open ${isImage ? 'photo' : 'PDF'} in a new tab ↗</a>
+      <p class="field-hint">${isImage ? 'Original photo preview; the printed layout follows your settings.' : 'Original PDF preview; page ranges and print settings are applied when printing. If the viewer is blank on your phone, open the PDF in a new tab.'}</p>
+      ${frame}
+    </div>
+  </details>`;
+}
+
+export function uploadStep(user, { maxMb = 20, repeat, error } = {}) {
+  return layout({ title: 'Print something', user, focused: true, extraHead: DELIVERY_MAP_HEAD, body: `
+    <h1>Print something.</h1><p class="order-intro">Choose a PDF or photo. We’ll count the pages.</p>
+    ${error ? `<p class="login-err" role="alert">${esc(error)}</p>` : ''}
+    <form class="order-upload" method="POST" action="${user ? '/customer/orders/new/upload' : '/order/upload'}" enctype="multipart/form-data" data-max-mb="${esc(maxMb)}" data-order-upload>
+      ${repeat ? `<input type="hidden" name="repeat" value="${esc(repeat.id)}"><p class="field-hint">Using your previous print settings. Page selections reset for the new file.</p>` : ''}
+      <label class="drop" for="doc"><span class="drop-arrow">↑</span><b>Choose a PDF or photo</b><span class="muted">Up to ${esc(maxMb)} MB</span></label>
+      <input id="doc" name="doc" type="file" accept="application/pdf,.pdf,.png,.jpg,.jpeg" required class="file-input">
+      <p id="fname" role="status" aria-live="polite"></p><button class="btn loud big" type="submit"><span>Upload file →</span></button>
+    </form>` });
+}
+
+export function deliverySlotsFields(cfg = campaignDefaults(), pricing = { delivery: {} }, selected = '', includeArea = true, noun = 'prints') {
+  const d = cfg.delivery;
+  const college = d.enabled && d.campuses.some((c) => c.id === 'lit' && c.enabled);
+  const standard = college && d.slots.some((s) => s.enabled);
+  const available = ['express', ...(standard ? ['college'] : []), ...(college ? ['college-express'] : []), ...(d.pickup?.enabled ? ['pickup'] : []), ...Object.entries(d.local || {}).filter(([, o]) => o.enabled).flatMap(([zone]) => d.slots.filter((s) => s.enabled).map((s) => `local-${zone}-${s.id}`))];
+  const chosen = available.includes(selected) ? selected : selected ? 'express' : standard ? 'college' : 'express';
+  return `<fieldset style="border:0;padding:0;margin:0"><legend class="eyebrow">Where should we bring your ${esc(noun)}?</legend>
+    <div class="route-picks" style="margin-top:10px">
+      ${standard ? `<label class="pick"><input type="radio" name="deliverySlot" value="college" ${chosen === 'college' ? 'checked' : ''}><span><b>LIT Sarigam</b><small>${esc(deliveryPlan({settings:{campaign:cfg}}, 'college').slot)} · first delivery free if eligible</small></span></label>` : ''}
+      <label class="pick"><input type="radio" name="deliverySlot" value="express" ${chosen === 'express' ? 'checked' : ''}><span><b>Vapi / Daman delivery</b><small>To your address · confirm your location</small></span></label>
+      ${Object.entries(d.local || {}).filter(([, o]) => o.enabled).map(([zone, o]) => d.slots.filter((s) => s.enabled).map((s) => {
+        const plan = deliveryPlan({ settings: { campaign: cfg } }, `local-${zone}-${s.id}`);
+        return `<label class="pick"><input type="radio" name="deliverySlot" value="${esc(plan.slotId)}" ${chosen === plan.slotId ? 'checked' : ''}><span><b>${zone === 'vapi' ? 'Vapi' : 'Daman'} scheduled · ${rs(o.fee)}</b><small>${esc(new Date(plan.deliveryStartAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }))} · ${esc(s.start)}–${esc(s.end)} · within ${o.radiusKm} km of hub</small></span></label>`;
+      }).join('')).join('')}
+    </div>
+    ${college ? `<label class="pick" style="margin-top:8px"><input type="radio" name="deliverySlot" value="college-express" ${chosen === 'college-express' ? 'checked' : ''}><span><b>LIT emergency express · ₹25</b><br><small>Need it urgently? Choose a separate express trip.</small></span></label>` : ''}
+    ${d.pickup?.enabled ? `<details class="order-more"><summary>Prefer to collect yourself?</summary><label class="pick"><input type="radio" name="deliverySlot" value="pickup" ${chosen === 'pickup' ? 'checked' : ''}><span><b>₹0 pickup</b><small>${esc(d.pickup.address)}</small></span></label></details>` : ''}
+    ${includeArea ? `<div class="field" data-local-fields><label for="delivery-area">Delivery area</label><select id="delivery-area" name="area"><option value="Vapi">Vapi · ₹${esc(pricing.delivery.vapi ?? 15)} delivery</option><option value="Daman">Daman · ₹${esc(pricing.delivery.daman ?? 20)} delivery</option></select></div>` : ''}
+    </fieldset>
+    <script>(function(){function init(){var choice=document.querySelector('[name="deliverySlot"]');if(!choice)return;var form=choice.form;function sync(){var route=form.querySelector('[name="deliverySlot"]:checked').value,local=route==='express'||route.indexOf('local-')===0;form.querySelectorAll('[data-address-fields],[data-local-fields]').forEach(function(block){block.hidden=!local;block.querySelectorAll('input,select,textarea').forEach(function(i){i.disabled=!local;});});if(route.indexOf('local-')===0){var area=form.querySelector('[name="area"],[name="nn_area"]');if(area)area.value=route.split('-')[1]==='vapi'?'Vapi':'Daman';}var contact=form.querySelector('#batchPhone');if(contact){contact.hidden=route==='pickup';contact.querySelector('input').disabled=contact.hidden;}}form.querySelectorAll('[name="deliverySlot"]').forEach(function(i){i.addEventListener('change',sync);});sync();}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();</script>`;
+}
+
+export function optionsStep(user, draft, addresses = [], campaign = campaignDefaults(), pricing, surcharges = {}, error = null) {
+  const saved = draft.form || draft.selections || draft.defaults || {}, guest = !user;
+  const slot = saved.deliverySlot || (saved.deliveryMode === 'scheduled' ? saved.slotId : saved.campusId === 'lit' ? (saved.deliveryMode === 'batch' ? 'college' : 'college-express') : draft.selections ? (saved.zone === 'pickup' ? 'pickup' : 'express') : '');
+  const mixed = saved.printType === 'mixed';
+  const preview = guest ? `/order/${encodeURIComponent(draft.id)}/preview` : `/customer/orders/new/${encodeURIComponent(draft.id)}/preview.pdf`;
+  const addrRadios = addresses.filter(a => !a.campusId && a.area !== 'Kiosk pickup').map((a,i) => `<label class="pick"><input type="radio" name="addressId" value="${esc(a.id)}" data-area="${esc(a.area)}" data-lat="${esc(a.lat || '')}" data-lng="${esc(a.lng || '')}" ${saved.addressId === '__new' ? '' : saved.addressId ? saved.addressId === a.id ? 'checked' : '' : i === 0 ? 'checked' : ''}><span>${esc(a.label || a.name || 'Saved address')}<small>${esc(a.address)}, ${esc(a.area)} ${esc(a.pin)}</small></span></label>`).join('');
+  return layout({ title: 'Your print', user, focused: true, extraHead: DELIVERY_MAP_HEAD, body: `
+    <div class="order-file"><div><h1>${esc(draft.document)}</h1><p>${draft.pages} ${draft.pages === 1 ? 'page' : 'pages'} · A4</p></div><button class="order-text" type="button" data-open-preview>Preview</button></div>
+    <dialog class="order-preview" aria-label="Document preview"><div><strong>${esc(draft.document)}</strong><button type="button" data-close-preview aria-label="Close preview">×</button></div>${draft.fileType === 'image' ? `<img data-preview-src="${esc(preview)}" alt="Your photo">` : `<iframe title="Your PDF" data-preview-src="${esc(preview)}"></iframe>`}<a href="${esc(preview)}" target="_blank" rel="noopener">Open original file ↗</a></dialog>
+    ${error ? `<p class="login-err" role="alert">${esc(String(error).replace(/<[^>]*>/g,''))}</p>` : ''}
+    <form class="quick-order" method="POST" action="${guest ? '/order/options' : '/customer/orders/new/confirm'}">
+      <input type="hidden" name="draft" value="${esc(draft.id)}">
+      <section class="order-section"><h2>Print settings</h2>
+        <fieldset class="order-choice"><legend>Colour</legend><div class="chips">${[['bw','B&W'],['color','Colour']].map(([v,t])=>`<label class="chip-pick"><input type="radio" name="printType" value="${v}" ${saved.printType === v || v === 'bw' && !['color','mixed'].includes(saved.printType) ? 'checked' : ''}>${t}</label>`).join('')}</div></fieldset>
+        <fieldset class="order-choice"><legend>Sides</legend><div class="chips">${[['single','Single'],['double','Double']].map(([v,t])=>`<label class="chip-pick"><input type="radio" name="sides" value="${v}" ${saved.sides === v || v === 'single' && saved.sides !== 'double' ? 'checked' : ''}>${t}</label>`).join('')}</div></fieldset>
+        <div class="order-copy-row"><label for="copies">Copies</label><div class="order-stepper"><button id="cMinus" type="button" aria-label="Remove one copy">−</button><input id="copies" aria-label="Number of copies" name="copies" type="number" value="${esc(saved.copies || 1)}" min="1" max="200" required><button id="cPlus" type="button" aria-label="Add one copy">+</button></div></div>
+        ${draft.previousPrint ? `<button type="button" class="order-text" data-last-print="${esc(JSON.stringify(draft.previousPrint))}">Use last print settings</button>` : ''}
+        <details class="order-more" ${mixed || saved.range ? 'open' : ''}><summary>More print options</summary><div class="order-more-body">
+          ${draft.fileType === 'image' ? '' : `<div class="field"><label for="range">Pages</label><input id="range" name="range" autocomplete="off" value="${esc(saved.range || '')}" placeholder="All pages — or 1, 3-5"><small>Leave empty for all ${draft.pages} pages.</small></div>`}
+          <label class="pick"><input type="radio" name="printType" value="mixed" ${mixed ? 'checked' : ''}>Mixed B&W and colour pages</label>${mixedFields(saved)}
+          <div class="grid c2"><div class="field"><label for="orientation">Orientation</label><select id="orientation" name="orientation">${['auto','portrait','landscape'].map(v=>`<option value="${v}" ${saved.orientation === v ? 'selected' : ''}>${v === 'auto' ? 'Automatic' : v[0].toUpperCase()+v.slice(1)}</option>`).join('')}</select></div><div class="field"><label for="binding">Binding</label><select id="binding" name="binding">${[['none','None'],['staple','Staple'],['spiral','Spiral binding']].map(([v,t])=>`<option value="${v}" ${saved.binding === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div></div>
+          <div class="field"><label for="notes">Special instructions</label><textarea id="notes" name="notes" rows="2" maxlength="300">${esc(saved.notes || '')}</textarea></div>
+        </div></details>
+      </section>
+      <section class="order-section"><h2 id="delivery">Delivery</h2><div class="order-delivery-summary" data-delivery-summary></div><details class="order-more" data-delivery-options><summary>Change delivery</summary><div class="order-more-body">${deliverySlotsFields(campaign,pricing,slot,guest)}</div></details>
+      ${guest ? '' : `${user.phone ? `<input id="campus-phone" name="nn_phone" type="hidden" value="${esc(saved.nn_phone || user.phone)}">` : `<div id="batchPhone" class="field"><label for="campus-phone">Contact phone</label><input id="campus-phone" name="nn_phone" type="tel" autocomplete="tel" value="${esc(saved.nn_phone || '')}" required maxlength="20"></div>`}
+      <div data-address-fields><details class="order-more" ${!addrRadios || saved.addressId === '__new' ? 'open' : ''}><summary>Delivery address</summary>${addrRadios}<details ${!addrRadios || saved.addressId === '__new' ? 'open' : ''}><summary>New address</summary>
+        <div class="field"><label for="local-address">Street address</label><input id="local-address" name="nn_address" autocomplete="street-address" value="${esc(saved.nn_address || '')}" maxlength="200"></div>
+        <div class="grid c2"><div class="field"><label for="local-area">Area</label><select id="local-area" name="nn_area"><option ${saved.nn_area !== 'Daman' ? 'selected' : ''}>Vapi</option><option ${saved.nn_area === 'Daman' ? 'selected' : ''}>Daman</option></select></div><div class="field"><label for="local-pin">PIN code</label><input id="local-pin" name="nn_pin" value="${esc(saved.nn_pin || '')}" inputmode="numeric" autocomplete="postal-code" maxlength="6"></div></div>
+        <div class="field"><label for="local-landmark">Landmark (optional)</label><input id="local-landmark" name="nn_landmark" value="${esc(saved.nn_landmark || '')}" maxlength="100"></div>
+        <label class="pick"><input type="radio" name="addressId" value="__new" ${!addrRadios || saved.addressId === '__new' ? 'checked' : ''}>Use this address</label>
+      </details>${deliveryPicker(saved.nn_area || '', saved.deliveryLat && saved.deliveryLng ? {lat:saved.deliveryLat,lng:saved.deliveryLng} : null)}</details></div>`}
+      </section>
+      ${printQuote(pricing,draft,campaign,!!user?.student,surcharges)}
+    </form>` });
+}
+
+export function summaryStep(user, draft, s, q, packCover = null, ref = { code: '', error: null }, checkout = {}) {
+  const edit = `/customer/orders/new?draft=${encodeURIComponent(draft.id)}`;
+  return layout({ title: 'Confirm & pay', user, focused: true, back: edit, extraHead: `<script src="/store.js?v=${ASSET_V}" defer></script>${checkout.gateway ? '<script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>' : ''}`, body: `
+    <h1>Confirm &amp; pay.</h1>
+    <section class="order-section"><div class="order-file"><div><h2>${esc(draft.document)}</h2><p>${s.effPages} pages · ${esc(printDescription(s))} · ${s.sides === 'double' ? 'Double' : 'Single'}-sided · ${s.copies} ${s.copies === 1 ? 'copy' : 'copies'}</p></div><a class="order-text" href="${edit}">Edit</a></div>
+    ${(checkout.prints || []).map(o=>`<p class="order-added-file">${esc(o.document)} · ${rs(o.net)}</p>`).join('')}${(checkout.items || []).map(i=>`<p class="order-added-file">${esc(i.name)} · ${i.quantity} × ${rs(i.price)}</p>`).join('')}
+    <div class="order-line"><div><h2>Delivery</h2><p>${esc(s.campusId ? s.slot : (checkout.address?.address || s.zoneLabel)+' · '+s.slot)}</p></div><a class="order-text" href="${edit}#delivery">Change</a></div>
+    ${user.phone ? `<p class="order-contact">${esc(user.name)} · ${esc(user.phone)}</p>` : ''}
+    </section>
+    <form method="GET" action="/customer/orders/new/summary" data-inline-order><input type="hidden" name="draft" value="${esc(draft.id)}"><details class="order-more" ${ref.error || ref.code || checkout.coupon ? 'open' : ''}><summary>Coupon / referral</summary>${packCover ? '' : `<div class="field"><label for="coupon">Coupon</label><input id="coupon" name="coupon" value="${esc(checkout.coupon || '')}" maxlength="40"></div>`}<div class="field"><label for="referral">Referral code</label><input id="referral" name="referral" value="${esc(ref.code || '')}" maxlength="12"></div>${ref.error ? `<p class="login-err" role="alert">${esc(ref.error)}</p>` : ''}<button class="btn ghost" type="submit">Apply code</button></details></form>
+    <section class="order-section order-totals"><div class="sumrow"><span>Printing${checkout.items?.length ? ' & stationery' : ''}</span><span>${rs(q.subtotal + (q.studentDiscount || 0))}</span></div>${q.studentDiscount ? `<div class="sumrow"><span>Student discount</span><span>−${rs(q.studentDiscount)}</span></div>` : ''}${q.packDiscount ? `<div class="sumrow"><span>Semester pack</span><span>−${rs(q.packDiscount)}</span></div>` : ''}${q.firstPrintDiscount ? `<div class="sumrow"><span>First print offer</span><span>−${rs(q.firstPrintDiscount)}</span></div>` : ''}${q.couponDiscount ? `<div class="sumrow"><span>Coupon</span><span>−${rs(q.couponDiscount)}</span></div>` : ''}${ref.discount ? `<div class="sumrow"><span>Referral</span><span>−${rs(ref.discount)}</span></div>` : ''}<div class="sumrow"><span>Delivery</span><span>${q.deliveryFee ? rs(q.deliveryFee) : 'FREE'}</span></div>${q.lateNightFee ? `<div class="sumrow"><span>Late-night delivery</span><span>${rs(q.lateNightFee)}</span></div>` : ''}${q.surgeFee ? `<div class="sumrow"><span>Demand fee</span><span>${rs(q.surgeFee)}</span></div>` : ''}<div class="sumrow total"><span>Total</span><span>${rs(q.total)}</span></div></section>
+    <form method="POST" action="/customer/orders/new/place" data-print-payment><input type="hidden" name="draft" value="${esc(draft.id)}"><input type="hidden" name="checkout" value="1"><input type="hidden" name="expectedTotal" value="${esc(q.total)}"><input type="hidden" name="coupon" value="${esc(checkout.coupon || '')}"><input type="hidden" name="referral" value="${esc(ref.code || '')}">
+      ${checkout.gateway && q.total > 0 ? `<fieldset class="order-choice"><legend>Pay with</legend><label class="pick"><input type="radio" name="paymentMethod" value="online" checked>UPI / cards</label>${checkout.balance >= q.total ? `<label class="pick"><input type="radio" name="paymentMethod" value="wallet">Wallet · ${rs(checkout.balance)} available</label>` : ''}</fieldset>` : '<input type="hidden" name="paymentMethod" value="wallet">'}
+      <p role="alert" data-payment-error hidden></p><div class="order-continue"><span>${rs(q.total)}<small>Total</small></span><button class="btn loud big" type="submit" ${ref.error || !checkout.gateway && checkout.balance < q.total ? 'disabled' : ''}>Pay ${rs(q.total)} →</button></div>
+      ${!checkout.gateway && checkout.balance < q.total ? `<p class="field-hint">Online payment is currently unavailable. <a href="/customer/wallet">Top up your wallet</a> to pay.</p>` : ''}
+      <button class="order-text order-add" type="submit" name="next" value="add" formnovalidate>+ Add another document</button>
+    </form>` });
+}
+
+export function payStep(user, order, opts = {}) {
+  const testPrintsLeft = Number(opts.testPrintsLeft) || 0;
+  const walletReady = Number(user.walletBalance || 0) >= order.total;
+  const suggested = (opts.offers || []).filter((o) => !o.memberDays && Number(user.walletBalance || 0) + o.amount + o.bonus >= order.total).sort((a, b) => a.amount - b.amount)[0];
+  const printSubtotal = Math.max(0, Number(order.subtotal ?? (Number(order.total || 0) - Number(order.deliveryFee || 0) - Number(order.lateNightFee || 0) - Number(order.surgeFee || 0) + Number(order.couponDiscount || 0) + Number(order.referralDiscount || 0) + Number(order.packDiscount || 0))) + Number(order.discount || 0));
+  const rzp = opts.razorpay
+    ? `<label class="pick"><input type="radio" name="method" value="razorpay" ${walletReady ? '' : 'checked'}> UPI / Card</label>`
+    : '';
+  const wa = opts.waUrl
+    ? `<a class="btn ghost rv" style="width:100%;margin-top:10px" href="${opts.waUrl}" target="_blank" rel="noopener"><span>✆ Send this order on WhatsApp →</span></a>`
+    : '';
+  return layout({
+    title: 'Payment', user, extraCss: '/customer.css', active: '/customer/orders/new',
+    body: `
+    <p class="eyebrow rv">Payment · order #${esc(order.id)}</p>
+    <h1 class="display rv" style="font-size:clamp(2rem,6vw,3.6rem)">Settle <em>${rs(order.total)}.</em></h1>
+    <section class="checkout-layout" aria-label="Order receipt and payment">
+    <div class="receipt-printer" aria-label="Printed order summary">
+      <div class="printer-slot"><span></span></div>
+      <div class="receipt-output">
+      <article class="receipt-paper">
+        <p class="receipt-brand">PRINTKARR <span>·</span> ORDER RECEIPT</p>
+        <h2>Ready to print</h2>
+        <p class="receipt-id">ORDER #${esc(order.id)}</p>
+        <div class="receipt-rule"></div>
+        <p class="field-hint">${esc(order.slot || '')}</p>
+        <p class="receipt-document">▤ &nbsp;${esc(order.document || 'Print order')}</p>
+        ${documentPreview(`/customer/orders/${encodeURIComponent(order.id)}/preview.pdf`, order.filePages, order.pageRange, order.fileType)}
+        <p class="preview-reminder">Before you pay, open the preview above and check every required page. ${order.sides === 'double' ? 'Double-sided' : 'Single-sided'} · ${order.copies || 1} ${order.copies > 1 ? 'copies' : 'copy'}.</p>
+        ${order.pages ? `<div class="sumrow"><span>${esc(order.pages)} pages${order.copies > 1 ? ` × ${esc(order.copies)} copies` : ''}</span><span>${esc(printDescription(order))}</span></div>` : ''}
+        <div class="sumrow"><span>Print subtotal</span><span>${rs(printSubtotal)}</span></div>
+        ${order.firstPrintDiscount ? `<div class="sumrow disc"><span>First print offer</span><span>−${rs(order.firstPrintDiscount)}</span></div>` : ''}
+        ${order.firstDeliveryDiscount ? `<div class="sumrow disc"><span>First delivery offer</span><span>−${rs(order.firstDeliveryDiscount)}</span></div>` : ''}
+        ${order.discount ? `<div class="sumrow disc"><span>Student discount</span><span>−${rs(order.discount)}</span></div>` : ''}
+        ${order.packDiscount ? `<div class="sumrow disc"><span>Semester pack ${esc(order.packSubId || '')}</span><span>−${rs(order.packDiscount)}</span></div>` : ''}
+        ${order.referralDiscount ? `<div class="sumrow disc"><span>Friend referral ${esc(order.referralCode || '')}</span><span>−${rs(order.referralDiscount)}</span></div>` : ''}
+        ${order.couponDiscount ? `<div class="sumrow disc"><span>Coupon · ${esc(order.couponCode || '')}</span><span>−${rs(order.couponDiscount)}</span></div>` : ''}
+        ${order.deliveryFee ? `<div class="sumrow"><span>Delivery${order.deliveryZone ? ` · ${esc(order.deliveryZone)} · approx. ${esc(order.deliveryKm)} km` : ''}</span><span>${rs(order.deliveryFee)}</span></div>` : ''}
+        ${order.lateNightFee ? `<div class="sumrow"><span>Late-night delivery</span><span>${rs(order.lateNightFee)}</span></div>` : ''}
+        ${order.surgeFee ? `<div class="sumrow"><span>High-demand fee</span><span>${rs(order.surgeFee)}</span></div>` : ''}
+        <div class="sumrow total"><span>Due now</span><span>${rs(order.total)}</span></div>
+        <div class="receipt-perf" aria-hidden="true"></div>
+        <p class="receipt-thanks">Thanks for printing with us ✦</p>
+      </article>
+      </div>
+    </div>
+    <form class="card checkout-payment" method="POST" action="/customer/orders/${order.id}/pay" id="payForm">
+      <p class="eyebrow">Payment method</p>
+      ${walletReady ? `<p class="wallet-checkout-note">Your wallet covers this order. ${rs(Number(user.walletBalance || 0) - order.total)} will remain after payment.</p>` : suggested ? `<div class="wallet-checkout-note"><b>Add ${rs(suggested.amount)}, ${suggested.freeFiles ? `get ${suggested.freeFiles} free paper/cardboard files` : `get ${rs(suggested.bonus)} extra print credit`}.</b><p>After paying ${rs(order.total)} for this order, ${rs(Number(user.walletBalance || 0) + suggested.amount + suggested.bonus - order.total)} stays for next time.</p><a class="rowlink" data-wallet-offer="${esc(suggested.id)}" href="/customer/wallet?order=${encodeURIComponent(order.id)}&amp;offer=${encodeURIComponent(suggested.id)}">Top up &amp; return to this order →</a><small>Optional. ${opts.bonusValidityDays ? `Bonus valid ${esc(opts.bonusValidityDays)} days; ` : ''}bonus is non-withdrawable. Order payment follows separately.</small></div>` : ''}
+      ${order.lateCredit ? `<p class="field-hint">Pay before ${esc(new Date(order.deliveryCutoffAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }))} IST to activate the ₹${order.lateCredit} missed-slot credit.</p>` : ''}
+      <div style="display:flex;flex-direction:column;gap:8px;margin:10px 0 18px">
+        ${rzp}
+        ${opts.livePay ? '' : `<label class="pick"><input type="radio" name="method" value="upi"${opts.razorpay || walletReady ? '' : ' checked'}> UPI — simulated</label>`}
+        <label class="pick"><input type="radio" name="method" value="wallet"${walletReady ? ' checked' : ''}${!walletReady ? ' disabled' : ''}> Wallet ${user.walletBalance != null ? `(₹${user.walletBalance} available)` : ''}${walletReady ? '' : ' · top-up needed'}</label>
+        ${opts.walletTopup ? `<label class="pick hot"><input type="radio" name="method" value="wallet_topup"> Add ${rs(opts.walletTopup.short)} &amp; pay ${rs(order.total)} — one tap${opts.walletTopup.bonus ? ` (incl. ${rs(opts.walletTopup.bonus)} bonus)` : ''}</label>` : ''}
+      </div>
+      <button class="btn loud big" type="submit" style="width:100%" ${opts.livePay && !opts.razorpay && !walletReady ? 'disabled' : ''}><span>Pay ${rs(order.total)}</span></button>
+      ${opts.livePay && !opts.razorpay && !walletReady ? '<p class="field-hint">Online payments are temporarily unavailable and your wallet needs a top-up. Please contact support before paying.</p>' : ''}
+      <p class="muted mono" style="font-size:10px;margin-top:10px">${opts.livePay ? 'Live mode: real payments only.' : (opts.razorpay ? 'Razorpay is live. Other methods are simulated.' : 'Demo: no money moves. Success is simulated.')}</p>
+    </form>
+    </section>
+    ${testPrintsLeft ? `<form method="POST" action="/customer/orders/${order.id}/demo-pay" style="margin-top:10px"><button class="btn ghost" type="submit" style="width:100%;border-style:dashed"><span>◆ Use test print credit — no charge</span></button></form><p class="muted mono" style="font-size:11px;margin-top:6px">${testPrintsLeft} test print${testPrintsLeft === 1 ? '' : 's'} left. Kiosk pickup, up to five sheets. Test prints are excluded from sales.</p>` : ''}
+    ${wa}
+    ${opts.razorpay ? `
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+    document.getElementById('payForm').addEventListener('submit', function (e) {
+      var m = document.querySelector('input[name="method"]:checked');
+      if (!m || m.value !== 'razorpay') return; // simulated methods post normally
+      e.preventDefault();
+      var btn = e.target.querySelector('button[type="submit"]');
+      function fail(msg) {
+        toast(msg);
+        if (btn) btn.removeAttribute('disabled');
+      }
+      if (typeof Razorpay === 'undefined') {
+        fail('Payment window blocked — disable your ad-blocker for checkout.razorpay.com, or pick another method.');
+        return;
+      }
+      if (btn) btn.setAttribute('disabled', 'true');
+      fetch('/api/razorpay/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: '${esc(order.id)}' }) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (x) {
+          if (!x.ok) { fail(x.d.error || 'Gateway hiccup — pick another method.'); return; }
+          try {
+            var rz = new Razorpay({
+              key: x.d.keyId, amount: x.d.amount, currency: 'INR',
+              order_id: x.d.rzpOrderId, name: 'Printkarr', description: 'Order ${esc(order.id)}',
+              modal: { ondismiss: function () { if (btn) btn.removeAttribute('disabled'); } },
+              handler: function (resp) {
+                var f = document.createElement('form');
+                f.method = 'POST'; f.action = '/customer/orders/${esc(order.id)}/razorpay-verify';
+                [['razorpay_order_id', resp.razorpay_order_id], ['razorpay_payment_id', resp.razorpay_payment_id], ['razorpay_signature', resp.razorpay_signature]]
+                  .forEach(function (kv) { var i = document.createElement('input'); i.type = 'hidden'; i.name = kv[0]; i.value = kv[1]; f.appendChild(i); });
+                document.body.appendChild(f); f.submit();
+              }
+            });
+            rz.on('payment.failed', function () { fail('Payment failed — try again.'); });
+            rz.open();
+          } catch (err) { fail('Could not open the payment window — check connection and try again.'); }
+        })
+        .catch(function () { fail('Gateway unreachable — pick another method.'); });
+    });
+    </script>` : ''}`
+  });
+}
+
+export function walletPage(user, wallet, tx, pricing, opts = {}) {
+  const livePay = !!opts.livePay, rzpOn = !!opts.razorpay;
+  const offers = opts.offers || [];
+  const bonusBalance = opts.bonusBalance || 0;
+  const ladder = `${offers.length ? '<h2 class="h-sec">Choose a wallet offer</h2>' : ''}<div class="grid c2 wallet-offers" style="margin:16px 0">${offers.map((o) => `<article class="card"><p class="eyebrow">${esc(o.name)}</p><p><b>Pay ${rs(o.amount)} → ${rs(o.amount + o.bonus)} wallet balance</b></p>${o.freeFiles ? `<p><strong>+ ${o.freeFiles} free paper/cardboard files</strong></p><p class="field-hint">Orange, green, red or yellow. Choose your colour after a successful top-up. All ${rs(o.amount)} stays in your wallet.</p>` : ''}${o.freeFirstBatch ? '<p class="field-hint">First campus batch delivery free.</p>' : ''}${o.memberDays ? `<p class="field-hint">${o.memberDays}-day membership${o.freeBatch ? ' · free campus batch delivery' : ''}.</p>` : ''}<button class="btn sun" type="button" data-offer="${esc(o.id)}" data-amount="${o.amount}" ${!rzpOn && livePay ? 'disabled' : ''}><span>Choose ${esc(o.name)}</span></button></article>`).join('')}</div><p class="nudge" id="topNudge" role="status"></p>`;
+  const fileGifts = (opts.fileGifts || []).map((t) => {
+    const gift = t.freeFiles;
+    return `<article class="card"><p class="eyebrow">From your ${rs(t.amount)} top-up</p><h3>${gift.quantity} free paper/cardboard files</h3>${gift.fulfilledAt ? `<p>${esc(gift.color)} · handed over ${esc(new Date(gift.fulfilledAt).toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata'}))}</p>` : `<form method="POST" action="/customer/wallet/files/${encodeURIComponent(t.id)}/claim"><div class="field"><label for="file-${esc(t.id)}">Colour for your ${gift.quantity} files</label><select id="file-${esc(t.id)}" name="color" required><option value="">Choose a colour</option>${FILE_COLORS.map((color) => `<option value="${color}" ${gift.color === color ? 'selected' : ''}>${color[0].toUpperCase() + color.slice(1)}</option>`).join('')}</select></div><button class="btn sun" type="submit">${gift.color ? 'Update colour' : 'Request my free files'}</button></form><p class="field-hint">${gift.color ? 'Colour saved. Your files are awaiting handover.' : 'Choose your colour so our team can prepare your files.'}</p>`}</article>`;
+  }).join('');
+  const rows = tx.map((t) => `
+    <div class="sumrow"><span>${t.amount > 0 ? '+' : ''}${rs(t.amount)} · ${esc(t.label)}${t.expiresAt ? ` · expires ${esc(new Date(t.expiresAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }))}` : ''}</span><span class="at">${esc(new Date(t.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }))}</span></div>`
+  ).join('') || '<p class="muted">No transactions yet.</p>';
+  return layout({
+    title: 'Wallet', user, extraCss: '/customer.css', active: '/customer/wallet',
+    body: `
+    <section class="wallet-overview"><p class="eyebrow rv">Wallet balance</p>
+    <h1 class="display rv" style="font-size:clamp(2.6rem,8vw,5rem)">${rs(wallet.balance)}</h1>
+    <p class="muted">${rs(wallet.balance - bonusBalance)} added money · ${rs(bonusBalance)} bonus credit. Bonus credit is non-withdrawable and usable only on PrintKarr orders. ${opts.campaign?.bonusValidityDays ? `New bonuses expire after ${opts.campaign.bonusValidityDays} days.` : 'New bonuses do not expire.'}</p>
+    ${opts.campaign?.showPages ? `<p class="field-hint">Approximately ${((user.student ? pricing.studentBw : pricing.bw) > 0 ? Math.floor(wallet.balance / (user.student ? pricing.studentBw : pricing.bw)) : 0)} B&amp;W page-sides at your current rate, before delivery and other fees.</p>` : ''}
+    </section>
+    ${Date.parse(wallet.memberUntil) > Date.now() ? `<p class="pick">Semester Pass active until ${esc(new Date(wallet.memberUntil).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }))}${wallet.memberFreeBatch ? ' · free campus batch delivery' : ''}.</p>` : ''}
+    ${opts.returnOrder ? `<div class="wallet-checkout-note"><b>Your print order is saved.</b><p>Top up here, then return to review and pay for order #${esc(opts.returnOrder)}.</p><a class="rowlink" href="/customer/orders/${encodeURIComponent(opts.returnOrder)}/pay">Return to checkout →</a></div>` : ''}
+    ${opts.firstBatchAvailable ? '<p class="pick">Your first LIT College standard delivery is free. Later deliveries cost ₹3; emergency express costs ₹25.</p>' : ''}
+    ${opts.cash > 0 ? `<a class="card promo rv" href="/customer/referrals" style="text-decoration:none;display:block;margin-top:12px"><p class="eyebrow">Previous cash earnings</p><div class="stat"><div class="v">${rs(opts.cash)}<em> cash</em></div><div class="k">View withdrawal options →</div></div></a>` : ''}
+    ${ladder}
+    ${fileGifts ? `<section id="free-files"><h2 class="h-sec">Your free files</h2><div class="grid c2">${fileGifts}</div></section>` : ''}
+    ${rzpOn ? `<div class="card rv" style="margin:16px 0">
+      <h2 class="h-sec" style="margin-top:0">Top up your wallet</h2>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:end">
+        <div class="field" style="margin:0"><label for="amount">Amount (₹10 – ₹10,000)</label>
+          <input id="amount" name="amount" type="number" step="0.01" value="${offers[0]?.amount ?? 10}" min="10" max="10000" style="max-width:160px"></div>
+        <div class="field" style="margin:0"><label for="rzp-ref">Referral (add ${rs(opts.refMin ?? 99)}+ and complete first paid order → ${rs(opts.refBonus ?? 20)} credit)</label>
+          <input id="rzp-ref" type="text" placeholder="K7Q2M4" maxlength="12" style="text-transform:uppercase;max-width:130px"></div>
+        <button class="btn sun" type="button" id="topupBtn"><span>+ Top up wallet</span></button>
+      </div>
+      <p class="muted mono" style="font-size:10px;margin-top:8px">The selected wallet offer applies. Referral credit arrives after your first paid order is completed.</p>
+    </div>
+    ${!livePay ? `<p class="muted mono" style="font-size:10px">Demo build: card is test mode.</p>` : ''}` : ''}
+    ${opts.refErr ? `<p class="login-err" role="alert">${esc(opts.refErr)}</p>` : ''}
+    ${!rzpOn && !livePay ? `<form id="demoTopup" class="rv" method="POST" action="/customer/wallet/add" style="margin:16px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+      <div class="field" style="margin:0"><label for="amount">Add money (demo)</label>
+        <div style="display:flex;gap:8px"><input id="amount" name="amount" type="number" step="0.01" value="${offers[0]?.amount ?? 10}" min="10" max="10000" style="max-width:140px">
+        <button class="btn sun" type="submit"><span>+ Add</span></button></div></div>
+      <div class="field" style="margin:0"><label for="wref">Referral (add ${rs(opts.refMin ?? 99)}+ and complete first paid order → ${rs(opts.refBonus ?? 20)} credit)</label>
+        <input id="wref" name="referral" placeholder="K7Q2M4" maxlength="12" style="text-transform:uppercase;max-width:130px"></div>
+    </form>
+    ` : ''}
+    ${!rzpOn && livePay ? '<p class="muted mono rv" style="font-size:11px;margin:16px 0">Top-ups unavailable — gateway not configured. Pay per order instead.</p>' : ''}
+    <input type="hidden" id="offerId" name="offerId" form="demoTopup" value="${esc(offers[0]?.id || '')}">
+    ${opts.returnOrder ? `<input type="hidden" name="orderId" form="demoTopup" value="${esc(opts.returnOrder)}">` : ''}
+    <script>
+    (function(){
+      var offers = ${JSON.stringify(offers).replace(/</g, '\\u003c')}, inp = document.getElementById('amount'), n = document.getElementById('topNudge'), chosen = document.getElementById('offerId');
+      if (!inp || !n) return;
+      var selected = ${JSON.stringify(opts.selectedOffer || '').replace(/</g, '\\u003c')};
+      try { var remembered = JSON.parse(sessionStorage.getItem('pk-wallet-offer')); if (!selected && remembered && Date.now()-remembered.at < 30*60e3) selected=remembered.id; sessionStorage.removeItem('pk-wallet-offer'); } catch {}
+      var initial=offers.find(function(o){return o.id===selected;}); if(initial){inp.value=initial.amount;chosen.value=initial.id;}
+      function upd(){document.querySelectorAll('[data-offer]').forEach(function(b){var on=b.dataset.offer===chosen.value;b.setAttribute('aria-pressed',String(on));b.closest('article').classList.toggle('wallet-offer-selected',on);});var v=Number(inp.value),o=offers.find(function(x){return x.id===chosen.value;})||offers.find(function(x){return !x.memberDays&&x.amount===v;});n.textContent=o?'Add ₹'+v+(o.bonus?' + ₹'+o.bonus+' bonus':'')+' = ₹'+(v+o.bonus)+' credit added.'+(o.freeFiles?' Plus '+o.freeFiles+' free paper/cardboard files; choose your colour after payment.':'')+' New wallet balance: ₹'+Math.round((${wallet.balance}+v+o.bonus)*100)/100:'Custom top-up: ₹'+v+' added to your wallet';}
+      document.querySelectorAll('[data-offer]').forEach(function(b){b.addEventListener('click',function(){inp.value=b.dataset.amount;chosen.value=b.dataset.offer;upd();inp.focus();});});
+      inp.addEventListener('input', function(){chosen.value='';upd();}); upd();
+    })();
+    </script>
+    ${rzpOn ? `
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+    document.getElementById('topupBtn').addEventListener('click', function () {
+      var btn = this;
+      var amount = Number(document.getElementById('amount').value);
+      var offerId = document.getElementById('offerId').value;
+      var refEl = document.getElementById('rzp-ref');
+      var referral = refEl ? refEl.value.trim().toUpperCase().slice(0, 12) : '';
+      if (typeof Razorpay === 'undefined') { toast('Payment window blocked — disable your ad-blocker for checkout.razorpay.com.'); return; }
+      btn.setAttribute('disabled', 'true');
+      fetch('/api/wallet/topup-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: amount, offerId: offerId, referral: referral, orderId: ${JSON.stringify(opts.returnOrder || null).replace(/</g, '\\u003c')} }) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (x) {
+          if (!x.ok) { toast(x.d.error || 'Gateway hiccup — try again.'); btn.removeAttribute('disabled'); return; }
+          try {
+            var rz = new Razorpay({
+              key: x.d.keyId, amount: x.d.amount, currency: 'INR',
+              order_id: x.d.rzpOrderId, name: 'Printkarr', description: 'Wallet top-up',
+              modal: { ondismiss: function () { btn.removeAttribute('disabled'); } },
+              handler: function (resp) {
+                var f = document.createElement('form');
+                f.method = 'POST'; f.action = '/customer/wallet/topup-verify';
+                [['razorpay_order_id', resp.razorpay_order_id], ['razorpay_payment_id', resp.razorpay_payment_id], ['razorpay_signature', resp.razorpay_signature]]
+                  .forEach(function (kv) { var i = document.createElement('input'); i.type = 'hidden'; i.name = kv[0]; i.value = kv[1]; f.appendChild(i); });
+                document.body.appendChild(f); f.submit();
+              }
+            });
+            rz.on('payment.failed', function () { toast('Payment failed — try again.'); btn.removeAttribute('disabled'); });
+            rz.open();
+          } catch (err) { toast('Could not open the payment window.'); btn.removeAttribute('disabled'); }
+        })
+        .catch(function () { toast('Gateway unreachable — try again.'); btn.removeAttribute('disabled'); });
+    });
+    </script>` : ''}
+    <div class="card rv"><p class="eyebrow">Recent transactions</p><div style="margin-top:8px">${rows}</div></div>`
+  });
+}
+
+export function profilePage(user, addresses, notes, { review, reviewError, reviewSaved } = {}) {
+  const addr = addresses.map((a) => `
+    <div class="sumrow"><span><b>${esc(a.label)}</b> — ${esc(a.address)}, ${esc(a.area)} ${esc(a.pin)} ${a.isDefault ? '· <b>default</b>' : ''}</span>
+    ${a.isDefault ? '' : `<form method="POST" action="/customer/addresses/default" style="display:inline"><input type="hidden" name="id" value="${a.id}"><button class="rowlink" type="submit" style="border:none;background:none;cursor:pointer">make default</button></form>`}</div>`
+  ).join('');
+  const feed = notes.map((n) => `<div class="note"><b>${esc(n.orderId)}</b> — ${esc(n.text)}<span class="at">${esc(new Date(n.at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }))}</span></div>`).join('') || '<p class="muted">No notifications yet.</p>';
+  return layout({
+    title: 'My Account', user, extraCss: '/customer.css', active: '/customer/profile',
+    body: `
+    <p class="eyebrow rv">Profile &amp; saved addresses</p>
+    <h1 class="display rv" style="font-size:clamp(2rem,6vw,3.6rem)">My <em>Account.</em></h1>
+    <div class="grid c2" style="margin-top:18px">
+      <div class="card rv"><p class="eyebrow">Details — editable</p>
+        <form method="POST" action="/customer/profile">
+          <div class="field"><label for="pname">Name</label><input id="pname" name="name" value="${esc(user.name)}" required></div>
+          <div class="field"><label for="pphone">Phone</label><input id="pphone" name="phone" value="${esc(user.phone || '')}" placeholder="+91 9XXXXXXXXX"></div>
+          <div class="field"><label>Email</label><input value="${esc(user.email)}" disabled><small class="muted mono" style="font-size:10px">Email is your login — contact support to change it.</small></div>
+          <div class="sumrow"><span>Student rate</span><span>${user.student ? 'ON · ₹2 B&W' : 'Off'}</span></div>
+          <button class="btn solid" type="submit" style="margin-top:10px"><span>Save profile →</span></button>
+        </form>
+      </div>
+      <div class="card rv" id="addresses"><p class="eyebrow">Saved addresses</p><div style="margin-top:8px">${addr}</div>
+        <details style="margin-top:10px"><summary class="rowlink">+ Add address</summary>
+          <form method="POST" action="/customer/addresses/add" style="margin-top:10px">
+            <div class="grid c2"><div class="field"><label for="field-label">Label</label><select id="field-label" name="label"><option>Home</option><option>Hostel</option><option>College</option><option>PG</option><option>Office</option></select></div>
+            <div class="field"><label for="field-phone">Phone</label><input id="field-phone" name="phone" required></div></div>
+            <div class="field"><label for="field-address">Address</label><input id="field-address" name="address" required></div>
+            <div class="grid c3"><div class="field"><label for="field-area">Area</label><select id="field-area" name="area"><option>Vapi</option><option>Sarigam</option><option>Bhilad</option><option>Daman</option><option>Kiosk pickup</option></select></div>
+            <div class="field"><label for="field-landmark">Landmark</label><input id="field-landmark" name="landmark"></div>
+            <div class="field"><label for="field-pin">PIN</label><input id="field-pin" name="pin" required></div></div>
+            <button class="btn solid" type="submit"><span>Save address</span></button>
+          </form></details>
+      </div>
+    </div>
+    <section class="card rv profile-review" id="review" aria-labelledby="review-title">
+      <p class="eyebrow">YOUR EXPERIENCE</p><h2 id="review-title">How was your print?</h2>
+      <p class="muted">A small note helps the next person. Your review and first name will appear on our home page.</p>
+      ${reviewError ? `<p class="login-err" role="alert">${esc(reviewError)}</p>` : ''}
+      ${reviewSaved ? '<p class="review-saved" role="status">Your review is saved. Thank you for sharing it.</p>' : ''}
+      <form method="POST" action="/customer/review">
+        <fieldset class="review-rating"><legend>Your rating</legend><div class="review-rating-options">${[1,2,3,4,5].map(n => `<label><input type="radio" name="rating" value="${n}" ${Number(review?.rating) === n ? 'checked' : ''} required><span aria-hidden="true">★</span><span class="rating-number">${n}</span><span class="sr-only">${n === 1 ? 'star' : 'stars'}</span></label>`).join('')}</div></fieldset>
+        <div class="field"><label for="review-text">Your review</label><textarea id="review-text" name="text" rows="4" minlength="10" maxlength="1000" required placeholder="What did you print? What went well, or could be better?">${esc(review?.text)}</textarea><small class="muted">10 to 1,000 characters. Please leave out phone numbers and order details.</small></div>
+        <div class="review-form-actions"><button class="btn loud" type="submit">${review?.id ? 'Update review' : 'Share review'}</button><a class="rowlink" href="/#reviews">Read customer reviews ${icon('arrow-up-right')}</a></div>
+      </form>
+    </section>
+    <h2 class="h-sec rv">Notifications</h2>
+    <a class="rowlink" href="/customer/notifications">Open inbox &amp; email preferences →</a>
+    <div class="card rv notes">${feed}</div>
+    <h2 class="h-sec rv" id="help">Help</h2>
+    <div class="card rv"><p><b>Where is my print?</b><br><span class="muted">Track it live on the order page — every stage pings you here too.</span></p>
+    <p style="margin-top:10px"><b>Something wrong?</b><br><span class="muted">Call or WhatsApp +91 90167 03180 (Mon–Fri, 24 hours).</span></p></div>`
+  });
+}

@@ -11,11 +11,7 @@
     const empty = document.querySelector('[data-no-results]'); if (empty) empty.hidden = !!shown;
   }
   search?.addEventListener('input', filter);
-  document.querySelectorAll('[data-category]').forEach((button) => button.addEventListener('click', () => {
-    if (button.tagName !== 'BUTTON') return;
-    category = button.dataset.category;
-    document.querySelectorAll('.store-filters button').forEach((b) => b.setAttribute('aria-pressed', String(b === button))); filter();
-  }));
+  document.querySelector('[data-product-category]')?.addEventListener('change', (event) => { category = event.target.value; filter(); });
   document.querySelector('[data-product-sort]')?.addEventListener('change', (event) => {
     const mode = event.target.value, grid = document.getElementById('product-grid');
     [...cards].sort((a, b) => mode === 'featured' ? a.dataset.index - b.dataset.index : mode === 'low' ? a.dataset.price - b.dataset.price : b.dataset.price - a.dataset.price).forEach((card) => grid.append(card));
@@ -35,18 +31,37 @@
       finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     });
   });
-  document.querySelector('[data-store-gateway]')?.addEventListener('click', async (event) => {
-    const button = event.currentTarget, id = button.dataset.storeGateway, message = document.querySelector('[data-payment-error]');
-    button.disabled = true; message.hidden = true;
+  async function pay(event) {
+    const form=event.target.closest('form[data-print-payment]');
+    const button=form ? form.querySelector('.order-continue [type=submit]') : event.target.closest('[data-store-gateway]');
+    if(!button || form && event.type!=='submit')return;
+    if(form && event.submitter?.value==='add')return;
+    event.preventDefault();let id=button.dataset.storeGateway;const message=document.querySelector('[data-payment-error]');
+    if(button.disabled)return;button.disabled=true;message.hidden=true;
     try {
-      const response = await fetch(`/customer/purchases/${encodeURIComponent(id)}/gateway`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not open payment.');
-      if (!window.Razorpay) throw new Error('Payment provider is still loading. Please retry.');
-      new window.Razorpay({ key: result.keyId, order_id: result.id, amount: result.amount, currency: 'INR', name: 'PrintKarr', description: 'Prints & stationery', modal: { ondismiss: () => { button.disabled = false; } }, handler(proof) {
-        const form = document.createElement('form'); form.method = 'POST'; form.action = `/customer/purchases/${encodeURIComponent(id)}/verify`;
-        Object.entries(proof).forEach(([name, value]) => { const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input); });
-        document.body.append(form); form.submit();
-      } }).open();
-    } catch (error) { message.textContent = error.message; message.hidden = false; button.disabled = false; }
-  });
+      if(form){
+        const response=await fetch(form.action,{method:'POST',headers:{Accept:'application/json'},body:new URLSearchParams(new FormData(form))});
+        const json=response.headers.get('content-type')?.includes('application/json');
+        const result=json?await response.json():{error:new DOMParser().parseFromString(await response.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Could not prepare your order. Please retry.'};
+        if(!response.ok || !result.id)throw new Error(result.error || 'Could not prepare your order.');
+        id=result.id;
+        if(result.paid || Number(form.elements.expectedTotal.value)!==result.total){location.assign(`/customer/purchases/${encodeURIComponent(id)}`);return;}
+        if(form.elements.paymentMethod.value==='wallet'){
+          const paid=await fetch(`/customer/purchases/${encodeURIComponent(id)}/wallet`,{method:'POST'});
+          if(!paid.ok)throw new Error(new DOMParser().parseFromString(await paid.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Payment could not be completed. Please retry.');
+          location.assign(paid.url);return;
+        }
+      }
+      const response=await fetch(`/customer/purchases/${encodeURIComponent(id)}/gateway`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+      const result=await response.json();if(!response.ok)throw new Error(result.error || 'Could not open payment.');
+      if(!window.Razorpay)throw new Error('Payment provider is still loading. Please retry.');
+      new window.Razorpay({key:result.keyId,order_id:result.id,amount:result.amount,currency:'INR',name:'PrintKarr',description:'Prints & stationery',modal:{ondismiss:()=>{button.disabled=false;}},handler(proof){
+        const proofForm=document.createElement('form');proofForm.method='POST';proofForm.action=`/customer/purchases/${encodeURIComponent(id)}/verify`;
+        Object.entries(proof).forEach(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;proofForm.append(input);});
+        document.body.append(proofForm);proofForm.submit();
+      }}).open();
+    }catch(error){message.textContent=error.message;message.hidden=false;button.disabled=false;}
+  }
+  document.addEventListener('click',event=>{if(event.target.closest('[data-store-gateway]'))pay(event);});
+  document.addEventListener('submit',event=>{if(event.target.matches('[data-print-payment]'))pay(event);});
 })();

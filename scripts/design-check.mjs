@@ -16,21 +16,26 @@ import { loginPage, loginOtpPage, staffLoginPage } from '../lib/views.js';
 import { blankDb } from '../lib/db.js';
 import { customerDestination, parseCookies } from '../lib/auth.js';
 import { buildCoverPdf } from '../agent/cover.js';
+import { createOrderPreview } from './order-preview.mjs';
+import { previewDb } from './store-preview.mjs';
 const { pricing, settings } = blankDb();
-const user = { id: 'preview', role: 'customer', name: 'Ani', email: 'ani@example.com' };
+const user = { id: 'preview', role: 'customer', name: 'Ani', email: 'ani@example.com', phone:'9825011111' };
 const staff = { ...user, role: 'admin' };
-const draft = { id: 'preview', document: 'Design-notes.pdf', pages: 12, area: 'Pickup' };
+const draft = { form:{deliverySlot:'school',institutionName:'Example College'}, id: 'preview', document: 'Design-notes.pdf', pages: 12, area: 'Pickup' };
+const selection={effPages:12,copies:1,printType:'bw',sides:'single',area:'Pickup',zone:'pickup'};
 const order = { ...draft, status: 'PAYMENT_PENDING', printType: 'bw', sides: 'double', copies: 1, total: 24, subtotal: 24, deliveryFee: 0, history: [] };
 const campaign = campaignDefaults();
 export const pages = new Map([
   ['/', publicViews.landing({ pagesWeek: 128, queueDepth: 2, pricing, campaign, walletOffers:campaign.wallets.filter(o=>o.enabled) })],
+  ['/shops', publicViews.nearbyShopsPage([])],
+  ['/kiosks', publicViews.kioskStatusPage()],
   ['/printing-in-daman', publicViews.damanPage()],
   ['/printing-prices', publicViews.printPricesPage({ pricing })],
   ['/order', publicViews.orderPage({ pricing, maxMb: 20 })],
   ['/order/options', publicViews.orderPage({ pricing, draft })],
-  ['/order/phone', publicViews.phonePage({ draft })],
-  ['/order/college', publicViews.phonePage({ draft: { ...draft, selections: { campusId:'lit', campus:'LIT College', slot:'Next campus batch' } } })],
-  ['/order/local', publicViews.phonePage({ draft: { ...draft, area:'Vapi', selections: { deliveryMode:'express' } } })],
+  ['/order/phone', publicViews.phonePage({ draft:{...draft,selections:selection} })],
+  ['/order/college', publicViews.phonePage({ draft: { ...draft, selections: { ...selection, zone:'sarigam', campusId:'lit', campus:'LIT College', slot:'Next campus batch' } } })],
+  ['/order/local', publicViews.phonePage({ draft: { ...draft, area:'Vapi', selections: { ...selection, area:'Vapi',zone:'vapi',deliveryMode:'express' } } })],
   ['/order/verify', publicViews.otpPage({ draft, email: user.email })],
   ...[['printing-in-vapi', 'vapiPage'], ['about', 'aboutPage'], ['how-it-works', 'howItWorksPage'], ['franchise', 'franchisePage'], ['xerox', 'xeroxPage'], ['contact', 'contactPage'], ['blogs', 'blogsPage'], ['terms', 'termsPage'], ['privacy', 'privacyPage']].map(([route, fn]) => ['/' + route, publicViews[fn]()]),
   ...publicViews.POSTS.map(post => ['/blogs/' + post.slug, publicViews.blogArticlePage(post.slug)]),
@@ -68,29 +73,79 @@ export const pages = new Map([
   ['/admin/settings', admin.settingsPage(staff, settings, [])],
   ['/admin/analytics', admin.analyticsPage(staff, { salesToday: 24, salesWeek: 120, pages: 60, bw: 60, color: 0, done: 5, cancelled: 0, live: 1, total: 6, repeat: 1, customers: 5, avgHrs: 1 })],
 ]);
+// Render operational and shopping screens through their real handlers in isolated data.
+{
+  const seed = previewDb();
+  seed.users.push({id:'preview-partner',role:'partner',name:'Sample partner',email:'partner@example.test'}, {id:'preview-rider',role:'rider',name:'Sample rider',email:'rider@example.test'});
+  seed.partners=[{id:'preview-shop',staffId:'preview-partner',name:'Sample local shop',address:'Sample pickup address',zone:'vapi',lat:20.389722,lng:72.889945,radiusKm:5,batchCapacity:30,active:true,color:true,binding:true,stationery:true,batch:true}];
+  seed.users[0].notificationUnsubscribe='a'.repeat(48);
+  const preview=createOrderPreview(seed), server=preview.app.listen(0,'127.0.0.1');
+  await new Promise(resolve=>server.once('listening',resolve));
+  try {
+    for(const [route,role] of [['/customer/notifications','customer'],['/admin/notifications','admin'],['/admin/partners','admin'],['/admin/delivery','admin'],['/partner','partner'],['/rider','rider'],['/partner/catalogue','partner'],['/admin/catalogue','admin'],['/admin/purchases','admin'],['/customer/purchases','customer'],['/stationery','customer'],['/cart','customer'],['/notifications/unsubscribe/'+seed.users[0].notificationUnsubscribe,'guest']]) {
+      const response=await fetch('http://127.0.0.1:'+server.address().port+route,{headers:{cookie:'preview_role='+role},redirect:'manual'});
+      assert.equal(response.status,200,route); pages.set(route,await response.text());
+    }
+    const accountPost=async(route,fields)=>fetch('http://127.0.0.1:'+server.address().port+route,{method:'POST',headers:{cookie:'preview_role=customer','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields),redirect:'manual'});
+    assert.equal((await accountPost('/customer/wallet/add',{amount:'199',offerId:'study'})).status,302);
+    assert.equal(preview.snapshot().wallets[0].balance,1225,'Chosen wallet offer credits its configured value');
+    assert.equal((await accountPost('/customer/packs/S/subscribe',{plan:'booking',method:'wallet'})).status,302);
+    const booked=preview.snapshot().packSubs[0];
+    assert.equal(booked.paidTotal,199); assert.equal(preview.snapshot().wallets[0].balance,1026);
+    assert.equal((await accountPost('/customer/packs/'+booked.id+'/pay',{amount:'130',method:'wallet'})).status,302);
+    assert.equal(preview.snapshot().packSubs[0].paidTotal,329);
+    assert.equal((await accountPost('/customer/profile',{name:'Sample student',phone:'9825011111'})).status,302);
+    assert.equal(preview.snapshot().users[0].name,'Sample student');
+    assert.equal((await accountPost('/customer/addresses/add',{label:'School',address:'Sample school, Chala',phone:'9825011111',pin:'396191',area:'Vapi',deliveryLat:'20.389722',deliveryLng:'72.889945'})).status,302);
+    assert.equal(preview.snapshot().addresses.at(-1).label,'School');
+    assert.equal((await accountPost('/customer/addresses/add',{label:'Invalid',address:'Sample address',phone:'wrong',pin:'bad'})).status,400,'Address validation remains enforced after redesign');
+    const response=await fetch('http://127.0.0.1:'+server.address().port+'/notifications/unsubscribe/'+seed.users[0].notificationUnsubscribe,{method:'POST'});
+    assert.equal(response.status,200); pages.set('/notifications/unsubscribed',await response.text());
+    assert.equal(preview.snapshot().users[0].notificationPrefs.email,false);
+  } finally { await new Promise(resolve=>server.close(resolve)); }
+}
+for (const [route,html] of pages) assert.match(html,/href="\/site-overhaul.css\?v=/,route+': shared overhaul stylesheet');
+assert.match(pages.get('/customer/packs'),/class="pack-grid"/);
+assert.equal((pages.get('/customer/packs').match(/class="pack-checkout"/g)||[]).length,3,'Pack payment details are optional until a pack is chosen');
+assert.match(pages.get('/customer/profile'),/class="profile-layout"/);
+assert.match(pages.get('/customer/profile'),/review-disclosure/);
+assert.doesNotMatch(pages.get('/customer/profile'),/<h2[^>]*>Notifications<\/h2>/,'Account does not repeat its inbox');
+assert.ok(pages.get('/customer/wallet').indexOf('id="amount"') < pages.get('/customer/wallet').indexOf('class="grid c2 wallet-offers"'),'Top-up appears beside balance before offers');
+assert.match(pages.get('/customer/orders'),/class="card order-row"/);
+assert.doesNotMatch(pages.get('/customer/orders/preview'),/<li class="done">[^<]*<span[^>]*><\/span><b>[^<]*Payment confirmed/,'An unpaid order never shows payment as completed');
+assert.match(pages.get('/blogs'),/class="journal-grid"/);
+assert.match(pages.get('/terms'),/class="article-toc"/);
+assert.match(pages.get('/login'),/class="signin-visual"/);
 assert.match(pages.get('/login'), /href="\/auth\/google"[\s\S]*?Continue with Google/);
 assert.doesNotMatch(pages.get('/login'), /name="email"|name="password"|code-request|demo-card|\/admin\/login|Shop staff/);
 assert.doesNotMatch(pages.get('/admin/login'), /\/auth\/google/);
 assert.match(pages.get('/admin/login'), /action="\/admin\/login"[\s\S]*name="email"[\s\S]*name="password"/);
 assert.doesNotMatch(loginPage(null,false), /href="\/auth\/google"/);
 assert.match(loginPage(null,false), /temporarily unavailable/);
-for (const route of ['/customer', '/customer/orders/new']) {
+for (const route of ['/customer']) {
   assert.match(pages.get(route), /<nav class="snav"[^>]*>[\s\S]*?<a href="\/customer"[^>]*>[\s\S]*?<span>Home<\/span><\/a>[\s\S]*?<a href="\/customer\/orders\/new"[^>]*>[\s\S]*?<span>Print<\/span><\/a>/);
   assert.match(pages.get(route), /<a href="\/customer\/referrals"[^>]*>[\s\S]*?<span>Refer &amp; Earn<\/span><\/a>/);
 }
-assert.match(pages.get('/customer'), /<a href="\/customer" class="live" aria-current="page">[\s\S]*?<span>Home<\/span><\/a>/);
-assert.match(pages.get('/customer/orders/new'), /<a href="\/customer\/orders\/new" class="live" aria-current="page">[\s\S]*?<span>Print<\/span><\/a>/);
+assert.match(pages.get('/customer'), /<a href="\/customer" class="live"\s+aria-current="page">[\s\S]*?<span>Home<\/span><\/a>/);
+assert.match(pages.get('/customer/orders/new'), /class="order-focus"/);
 for (const [route, html] of pages) {
   if (!route.startsWith('/customer')) continue;
+  if(html.includes('class="order-focus"')){assert.doesNotMatch(html,/class="snav"|class="pk-footer"/);continue;}
   const nav = html.match(/<nav class="snav"[^>]*>([\s\S]*?)<\/nav>/)[1];
-  assert.deepEqual([...nav.matchAll(/<a href="([^"]+)"/g)].slice(0, 6).map(m => m[1]), ['/customer', '/customer/orders/new', '/stationery', '/customer/orders', '/customer/wallet', '/customer/profile'], `${route}: stationery and all basic pages fit the mobile bar`);
+  assert.deepEqual([...nav.matchAll(/<a href="([^"]+)"[^>]*data-mobile-primary/g)].map(m => m[1]), ['/customer/orders/new', '/stationery', '/customer/orders', '/customer/profile'], `${route}: four primary customer tasks fit the mobile bar`);
 }
-for (const route of ['/', '/customer']) {
+for (const route of ['/customer']) {
   const shortcuts = pages.get(route).match(/<nav class="home-account-actions[^>]*>([\s\S]*?)<\/nav>/)[1];
-  assert.match(shortcuts, /href="\/customer\/wallet">(?:<span>)?Wallet \/ Top-up/);
-  assert.match(shortcuts, /href="\/customer\/profile">(?:<span>)?My Account/);
+  assert.equal((shortcuts.match(/<a\b/g)||[]).length, 1, 'Customer home has one primary print action');
+  assert.match(pages.get(route), /href="\/customer\/wallet"/);
+  assert.match(pages.get(route), /href="\/customer\/profile"/);
 }
 assert.match(pages.get('/'), /<nav class="customer-mobile-nav"/);
+const heroActions = pages.get('/').match(/<section class="delivery-hero[\s\S]*?<p class="hero-small">/)[0];
+assert.equal((heroActions.match(/class="btn loud big"/g)||[]).length, 1, 'One primary print action in the hero');
+assert.match(heroActions,/href="\/shops"/);
+assert.match(heroActions, /href="\/order"/);
+assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.public-site\s+\.pk-footer\s*\{[^}]*background\s*:\s*(?:white|#fff(?:fff)?)\b/i, 'Public footer keeps the shared blue background for its white links');
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.site-header\s*\{[^}]*visibility:hidden/);
 assert.match(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.public-site \.interior-wrap\s*\{[^}]*margin-inline:auto/, 'Public page content must remain centered with side gutters');
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /scroll-margin-top:/, 'Use the shared header scroll padding without adding a second anchor offset');
@@ -125,7 +180,7 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
   }
   for (const value of [undefined, '//evil.example', 'https://evil.example', '/customer/../admin', '/customer/wallet?next=https://evil.example', '/customer/wallet\r\n', '/customer/wallet\n', ['/customer/wallet']]) assert.equal(customerDestination(value), '/customer');
   for (const route of ['/customer', '/customer/orders/new', '/customer/packs', '/customer/referrals']) assert.equal(customerDestination(route), route);
-  console.log('Navigation and sign-in checked: visible shortcuts, six mobile destinations including Stationery and safe return to Wallet / My Account.');
+  console.log('Navigation and sign-in checked: one hero action, four mobile destinations including Stationery and safe return to Wallet / My Account.');
 }
 // Exercise the actual OAuth callback, including customer/staff separation, without Google or DB writes.
 {
@@ -152,11 +207,11 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
 }
 assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);
-assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /A4 black &amp; white<\/span><strong>₹7<\/strong>[\s\S]*A4 colour<\/span><strong>₹11<\/strong>/);
-for (const id of ['how-it-works', 'features', 'pricing', 'compare', 'kiosks', 'packs', 'referrals', 'faq']) assert.match(pages.get('/'), new RegExp(`id="${id}"`));
-assert.match(pages.get('/'), /no pickup address has been announced yet/i);
-assert.match(pages.get('/order/options'), /name="deliverySlot" value="college" checked/);
-assert.match(pages.get('/order/options'), /<details class="order-more">/);
+assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /B&amp;W ₹7 per printed side/);
+for (const id of ['how-it-works', 'delivery', 'packs', 'wallet', 'stationery', 'partners', 'faq']) assert.match(pages.get('/'), new RegExp(`id="${id}"`));
+assert.match(pages.get('/'), /Self-service kiosks|IN DEVELOPMENT/);
+assert.match(pages.get('/order/options'), /name="deliverySlot" value="school" checked/);
+assert.match(pages.get('/order/options'), /<details class="order-more"[^>]*>/);
 assert.match(pages.get('/customer/referrals'), /₹20 print credit/);
 assert.doesNotMatch(pages.get('/customer/referrals'), /withdraw|real cash/i);
 
@@ -216,7 +271,7 @@ for (const reducedMotion of [false, true]) {
   assert.equal(look.classList.contains('double'), false);
 }
 console.log('Interaction checks passed: demo replay guard, reduced motion and live paper settings.');
-assert.match(pages.get('/'), /Good prints.<br><em>Zero fuss.<\/em>/);
+assert.match(pages.get('/'), /Your notes\. Your essentials\./);
 
 for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);
@@ -243,7 +298,7 @@ const collectedPage = publicViews.collectPage({state:'collected', message:'Order
 assert.match(collectedPage, /Pickup <em>confirmed/);
 assert.doesNotMatch(collectedPage, /Link <em>expired/);
 // A broken at-rule once swallowed every layout rule after the navigation.
-for (const file of ['qk-landing.css', 'design.css', 'customer.css']) {
+for (const file of ['qk-landing.css', 'design.css', 'customer.css', 'delivery-service.css', 'store.css', 'order-flow.css', 'site-overhaul.css']) {
   const css = readFileSync(new URL('../public/' + file, import.meta.url), 'utf8');
   const tokens = css.replace(/\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, '');
   const stack = [], pairs = { ')': '(', '}': '{', ']': '[' };
@@ -256,8 +311,8 @@ for (const file of ['qk-landing.css', 'design.css', 'customer.css']) {
 console.log('Shared styles checked: balanced rules and media queries.');
 // Every kiosk view uses a real responsive image and no 3D dependencies.
 for (const html of pages.values()) assert.doesNotMatch(html, /kiosk-3d|qp-3d|three[-.]|kiosk\.obj|qk-stage|qk-canvas/);
-for (const route of ['/', '/franchise', '/xerox']) assert.match(pages.get(route), /src="\/images\/kiosk-hero\.webp"[^>]*srcset=[^>]*alt="PrintKarr planned/);
-console.log('Kiosk checked: responsive image across every public view, no 3D renderer.');
+for (const route of ['/franchise', '/kiosks']) assert.match(pages.get(route), /IN DEVELOPMENT/);
+console.log('Kiosk checked: development status, delivery alternatives and no 3D renderer.');
 // Wallet choice updates the existing top-up fields, selected state, and configured reward.
 {
   const html = pages.get('/customer/wallet');
@@ -297,7 +352,7 @@ console.log('Kiosk checked: responsive image across every public view, no 3D ren
   runInNewContext(source, {window:{matchMedia:()=>({matches:false,addEventListener(){}})},document:{querySelector:selector=>selector === '.print-marquee' ? marquee : null,querySelectorAll:()=>[]}});
   button.click(); assert.equal(button['aria-pressed'],'true'); assert.equal(button.textContent,'Resume motion');
   button.click(); assert.equal(button['aria-pressed'],'false'); assert.ok(!classes.has('is-paused'));
-  assert.equal((pages.get('/').match(/class="print-marquee"/g)||[]).length,1);
+  assert.doesNotMatch(pages.get('/'), /class="print-marquee"/, 'Keep the ordering homepage free of repeated moving slogans');
   assert.match(readFileSync(new URL('../public/design.css',import.meta.url),'utf8'),/@view-transition\s*\{\s*navigation:auto/);
   console.log('Motion checked: reduced-motion, changing preference, and missing-library fallback.');
 }
