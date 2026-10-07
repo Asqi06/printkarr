@@ -1,0 +1,62 @@
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+// Run: node scripts/address-ux-check.mjs. Fictional customers, no maps, permission prompts or payments.
+import assert from 'node:assert/strict';
+import {addressPoint, deliveryFeeFor, HUBS} from '../lib/pricing.js';
+import {LOCALITIES} from '../public/localities.js';
+import {deliveryPlan} from '../lib/campus.js';
+import {cartFor, cartQuote, createPurchase, setQuantity} from '../lib/store.js';
+import {previewDb, couponPolicy} from './store-preview.mjs';
+import {createOrderPreview} from './order-preview.mjs';
+import {PDFDocument} from 'pdf-lib';
+const seed=previewDb(true), user=seed.users[0];seed.addresses=[];
+const near=addressPoint('vapi',{localityId:'vapi-chala'}), far=addressPoint('vapi',{localityId:'vapi-chanod-village'});
+assert.equal(near.locationAccuracy,'locality');assert.equal(deliveryFeeFor(seed.pricing,'vapi',near).fee,15);assert.equal(deliveryFeeFor(seed.pricing,'vapi',far).fee,50);
+const gps=addressPoint('vapi',{localityId:far.localityId,deliveryLat:HUBS.vapi.lat,deliveryLng:HUBS.vapi.lng});assert.equal(gps.locationAccuracy,'device');assert.equal(deliveryFeeFor(seed.pricing,'vapi',gps).fee,15,'Device location takes precedence');
+assert.deepEqual(addressPoint('vapi',{},far),far,'Saved locality reused without a new map or GPS request');
+for(const input of [{localityId:'made-up'},{localityId:'daman'},{deliveryLat:'invalid',deliveryLng:HUBS.vapi.lng},{}])assert.throws(()=>addressPoint('vapi',input));
+for(const l of LOCALITIES)assert.equal(addressPoint(l.zone,{localityId:l.id}).localityId,l.id);
+const cart=cartFor(seed,user.id);setQuantity(seed,cart,seed.products[0].id,'green',1);
+const contact={addressId:'__new',deliverySlot:'express',nn_area:'Vapi',nn_address:'Sample building, Chala',nn_pin:'396191',nn_phone:'9825011111',localityId:'vapi-chala'};
+const q=cartQuote(seed,cart,user.id,contact,couponPolicy.validateCoupon);assert.equal(q.deliveryFee,15);assert.equal(q.address.locationAccuracy,'locality');
+const scheduled=deliveryPlan(seed,'local-vapi-afternoon',null,Date.parse('2026-10-06T10:00:00+05:30'));assert.equal(deliveryFeeFor(seed.pricing,'vapi',near,scheduled).fee,10);
+const purchase=createPurchase(seed,cart,user.id,contact,couponPolicy.validateCoupon,true);assert.equal(seed.addresses.length,1);assert.equal(seed.addresses[0].isDefault,true);assert.equal(seed.addresses[0].localityId,'vapi-chala');assert.equal(purchase.address.locationAccuracy,'locality');
+seed.carts=[];seed.purchases=[];
+const preview=createOrderPreview(seed),server=preview.app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const base='http://127.0.0.1:'+server.address().port;
+const request=(url,body,cookie='')=>fetch(base+url,{redirect:'manual',method:body?'POST':'GET',headers:{cookie,'Content-Type':'application/x-www-form-urlencoded'},body:body?new URLSearchParams(body):undefined});
+try{
+ const profile=await(await request('/customer/profile')).text();assert.doesNotMatch(profile,/leaflet|data-delivery-map|data-use-centre/);assert.match(profile,/name="localityId"/);assert.equal(profile.match(/id="field-phone"[^>]*value="([^"]*)"/)?.[1],user.phone);
+ assert.equal((await request('/customer/addresses/add',{phone:'9825011111',address:'School road',area:'Vapi',pin:'396191',localityId:'daman'})).status,400);
+ assert.equal((await request('/customer/addresses/add',{phone:'9825011111',address:'Second sample address',area:'Vapi',pin:'396191',localityId:'vapi-chanod'})).status,302);assert.equal(preview.snapshot().addresses.filter(a=>a.isDefault).length,1,'Adding a second address retains the existing default');
+ const file=await PDFDocument.create();file.addPage();const form=new FormData();form.append('doc',new Blob([await file.save()],{type:'application/pdf'}),'Locality test.pdf');const upload=await fetch(base+'/customer/orders/new/upload',{method:'POST',body:form,redirect:'manual'});assert.equal(upload.status,302);const draft=new URL(upload.headers.get('location'),base).searchParams.get('draft');
+ const options=await(await request('/customer/orders/new?draft='+draft)).text();assert.doesNotMatch(options,/leaflet|data-delivery-map/);assert.match(options,/Default/);
+ const settings={draft,printType:'bw',copies:1,sides:'single',deliverySlot:'express',addressId:seed.addresses[0].id};assert.equal((await request('/customer/orders/new/confirm',settings)).status,302,'Saved address works with no contact / location fields');
+ let state=preview.snapshot();assert.equal(state.addresses.length,2);assert.equal(state.drafts[0].selections.deliveryPoint.locationAccuracy,'locality');
+ assert.equal((await request('/customer/orders/new/confirm',{...settings,addressId:'__new',nn_address:'Third building, Chanod',nn_area:'Vapi',nn_pin:'396191',nn_phone:'9825012222',localityId:'vapi-chanod-village'})).status,302);
+ state=preview.snapshot();assert.equal(state.addresses.length,3);assert.equal(state.addresses.at(-1).locationAccuracy,'locality');assert.equal(state.users[0].phone,'+91 9825012222');
+ const id=state.addresses.at(-1).id;assert.equal((await request('/customer/orders/new/confirm',{...settings,addressId:id})).status,302);assert.equal(preview.snapshot().addresses.length,3,'Reusing the saved address never duplicates it');
+ const summary=await(await request('/customer/orders/new/summary?draft='+draft)).text();assert.match(summary,/Third building, Chanod/);assert.match(summary,/₹50/);
+ assert.equal((await request('/customer/orders/new/confirm',{...settings,addressId:'someone-elses-address'})).status,400);
+ const guestForm=new FormData();guestForm.append('doc',new Blob([await file.save()],{type:'application/pdf'}),'Guest assignment.pdf');
+ const guestUpload=await fetch(base+'/order/upload',{method:'POST',headers:{cookie:'preview_role=guest'},body:guestForm,redirect:'manual'});assert.equal(guestUpload.status,302);
+ const guestDraft=new URL(guestUpload.headers.get('location'),base).searchParams.get('draft'),guestCookie='preview_role=guest; '+guestUpload.headers.get('set-cookie').split(';')[0];
+ assert.equal((await request('/order/options',{draft:guestDraft,printType:'bw',copies:1,sides:'single',area:'Vapi',deliverySlot:'school',institutionName:'Sample Public School'},guestCookie)).status,302);
+ const otp=await request('/order/otp-request',{draft:guestDraft,name:'Sample student',email:'student@example.test',phone:'9825012222',address:'Sample Public School, Chala',pin:'396191',localityId:'vapi-chala'},guestCookie);assert.match(await otp.text(),/000000/);
+ const verified=await request('/order/otp-verify',{draft:guestDraft,code:'000000'},guestCookie);assert.equal(verified.status,302);
+ const guestSaved=preview.snapshot().addresses.find(a=>a.address==='Sample Public School, Chala');assert.equal(guestSaved.localityId,'vapi-chala');assert.equal(guestSaved.locationAccuracy,'locality');assert.equal(guestSaved.isDefault,true);
+ console.log('Address UX passed: locality fee bands, optional GPS precedence, saved information, default retention, no map dependency, coverage validation and customer isolation.');
+}finally{await new Promise(r=>server.close(r));}
+
+// Device-location denial and stale callbacks must never erase the chosen locality.
+const node=()=>({value:'',dataset:{},handlers:{},addEventListener(name,fn){this.handlers[name]=fn;}});
+const locality=node(),lat=node(),lng=node(),status=node(),button=node(),city=node(),address=node();
+locality.value='vapi-chala';locality.options=[{value:'vapi-chala',dataset:{zone:'vapi'}},{value:'daman',dataset:{zone:'daman'}}];city.value='Vapi';
+const controls={'[name="localityId"]':locality,'[name="deliveryLat"]':lat,'[name="deliveryLng"]':lng,'[data-delivery-status]':status,'[data-use-location]':button};
+const form={querySelector:()=>city,querySelectorAll:()=>[address],dispatchEvent(){}};
+const root={dataset:{area:'Vapi'},closest:()=>form,querySelector:s=>controls[s]};let success,denied;
+runInNewContext(readFileSync(new URL('../public/delivery-map.js',import.meta.url),'utf8'),{document:{querySelectorAll:()=>[root],addEventListener(){}},navigator:{geolocation:{getCurrentPosition(ok,fail){success=ok;denied=fail;}}},Event});
+button.handlers.click();denied();assert.equal(locality.value,'vapi-chala');assert.equal(button.disabled,false);assert.match(status.textContent,/Choose your locality/);
+button.handlers.click();locality.handlers.change();success({coords:{latitude:HUBS.vapi.lat,longitude:HUBS.vapi.lng,accuracy:30}});assert.equal(lat.value,'','A late GPS callback cannot override locality selection');
+button.handlers.click();success({coords:{latitude:HUBS.vapi.lat,longitude:HUBS.vapi.lng,accuracy:30}});assert.equal(lat.value,'20.389722');assert.equal(locality.required,false);
+city.value='Daman';city.handlers.change();assert.equal(lat.value,'');assert.equal(locality.value,'');assert.equal(locality.required,true);assert.equal(locality.options[0].disabled,true);
+console.log('Location fallback passed: denial, accuracy validation, city changes and stale device callbacks.');

@@ -13,7 +13,7 @@ import multer from 'multer';
 import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas } from './lib/atlas.js';
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
-import { quote, activePrintJobs, surchargeFees, deliveryPoint, deliveryFeeFor } from './lib/pricing.js';
+import { quote, activePrintJobs, surchargeFees, deliveryPoint, addressPoint, deliveryFeeFor } from './lib/pricing.js';
 import { notifyState, runNotificationJobs } from './lib/notify.js';
 import { installNotificationRoutes } from './lib/notify_routes.js';
 import { influencerStats } from './lib/influencers.js';
@@ -24,7 +24,7 @@ import {
   destroySession, parseCookies, demoLoginOn, customerDestination
 } from './lib/auth.js';
 import { layout, esc, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
-import { analyzeUpload, orderFile, mimeFor } from './lib/files.js';
+import { analyzeUpload, orderFile, mimeFor, splitMixedPdf } from './lib/files.js';
 import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
 import { addPrint, cartFor, cartItems, cartQuote, createPurchase, printNet, checkPackQuota } from './lib/store.js';
 import { installStoreRoutes } from './lib/store_routes.js';
@@ -166,7 +166,7 @@ function waForwardUrl(db, req, order) {
     `- PDF: ${baseUrl(req)}/share/${tok}`
   ];
   const point = deliveryPoint(a.lat, a.lng);
-  if (point && zoneOf(a.area) !== 'pickup') lines.splice(5, 0, `- Map: https://www.google.com/maps?q=${point.lat},${point.lng}`);
+  if (point && zoneOf(a.area) !== 'pickup') lines.splice(5, 0, `- ${a.locationAccuracy === 'locality' ? 'Address search (locality approximate)' : 'Location'}: https://www.google.com/maps?q=${encodeURIComponent(a.locationAccuracy === 'locality' ? [a.address,a.area,a.pin].filter(Boolean).join(', ') : point.lat+','+point.lng)}`);
   if (order.notes) lines.splice(4, 0, `- Note: ${order.notes}`);
   return `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
@@ -992,7 +992,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
     if (!d) {const p=purchaseForDraft(db,req.user.id,req.query.draft);return p ? res.redirect(`/customer/purchases/${p.id}`) : res.status(404).send(oops(req.user,'/customer/orders','That draft <em>expired.</em>'));}
     const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
     const last=db.orders.filter(o=>o.customerId===req.user.id && o.paymentStatus==='paid' && !['CANCELLED','REFUNDED'].includes(o.status)).at(-1);
-    if(last){d.previousPrint=Object.fromEntries(['printType','copies','sides','orientation','binding','mixedPageType'].filter(k=>last[k]!==undefined).map(k=>[k,last[k]]));d.defaults={addressId:last.addressId,deliverySlot:deliveryChoice(last)};}
+    if(last){d.previousPrint=Object.fromEntries(['printType','copies','sides','orientation','binding'].filter(k=>last[k]!==undefined).map(k=>[k,last[k]]));d.defaults={addressId:db.addresses.find(a=>a.customerId===req.user.id && a.isDefault)?.id || last.addressId,deliverySlot:deliveryChoice(last)};}
     return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req)));
   }
   const db = loadDb();
@@ -1002,7 +1002,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
   res.send(uploadStep(req.user, { shop, pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
 });
 
-app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), (req, res) => {
+app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), async (req, res) => {
   if (!req.file) return res.status(400).send(oops(req.user, '/customer/orders/new', 'No file <em>arrived.</em>'));
   if (req.file.size > maxUploadBytes()) {
     try { fs.unlinkSync(req.file.path); } catch {}
@@ -1010,7 +1010,7 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   }
   let file = null;
   try {
-    file = analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
+    file = await analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
   } catch (e) {
     try { fs.unlinkSync(req.file.path); } catch {}
     return res.status(400).send(oops(req.user, '/customer/orders/new', 'That file <em>won\'t print.</em>'));
@@ -1037,15 +1037,27 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   res.redirect(`/customer/orders/new?draft=${draft.id}`);
 });
 
-app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => {
-  const db = loadDb();
-  const d = (db.drafts || []).find((x) => x.id === req.body.draft && x.customerId === req.user.id);
+app.post('/customer/orders/new/confirm', requireRole('customer'), async (req, res) => {
+  let db = loadDb();
+  let d = (db.drafts || []).find((x) => x.id === req.body.draft && x.customerId === req.user.id);
   if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
-  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','orientation','binding','notes','deliverySlot','institutionName','addressId','nn_phone','nn_address','nn_area','nn_pin','nn_landmark','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
+  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes','deliverySlot','institutionName','addressId','nn_phone','nn_address','nn_area','nn_pin','nn_landmark','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
   const fail = (message) => { saveDb(db); return res.status(400).send(optionsStep(req.user, d, db.addresses.filter(a => a.customerId === req.user.id), campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req), message)); };
   let print;
   try { print = printPlan({ ...req.body, range: d.fileType === 'image' ? '' : req.body.range }, d.pages); }
   catch (error) { return fail(error.message); }
+  if (print.splitMixed) {
+    const form = d.form;
+    let splitError;
+    try { await splitMixedPdf(fs.readFileSync(path.join(ROOT,'data','uploads',d.stored)), {...print,filePages:d.pages}); }
+    catch (error) { splitError = error; }
+    // PDF parsing can yield; keep writes made by other requests during splitting.
+    db = loadDb();
+    d = db.drafts.find(x=>x.id === req.body.draft && x.customerId === req.user.id);
+    if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
+    d.form = form;
+    if (splitError) return fail('Could not split this PDF. Upload an unlocked, printable PDF.');
+  }
   let address;
   let plan;
   try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
@@ -1067,27 +1079,26 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), (req, res) => 
       return fail('New address needs <em>address, phone, PIN.</em>');
     }
     address = {
-      id: 'ADR' + Date.now().toString(36), customerId: req.user.id,
+      id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id,
       label: 'Home', name: req.user.name, phone: req.body.nn_phone,
       address: String(req.body.nn_address).trim().slice(0, 200), area: req.body.nn_area,
-      landmark: String(req.body.nn_landmark || '').slice(0, 100), pin: req.body.nn_pin, isDefault: false
+      landmark: String(req.body.nn_landmark || '').slice(0, 100), pin: req.body.nn_pin, isDefault: !db.addresses.some(a => a.customerId === req.user.id && a.isDefault)
     };
   } else {
     address = db.addresses.find((a) => a.id === req.body.addressId && a.customerId === req.user.id);
     if (!address) return fail('Pick a <em>delivery address.</em>');
   }
   if (plan.deliveryMode !== 'pickup') {
-    const phone = normPhone(req.body.nn_phone || address.phone);
+    const phone = normPhone(req.body.nn_phone || address.phone || req.user.phone);
     if (!phone) return fail('Enter a valid <em>contact phone.</em>');
     address.phone = '+91 ' + phone;
   }
   let zone = zoneOf(address.area);
-  const point = zone === 'pickup' ? null : plan.campusId ? deliveryPoint(address.lat, address.lng) : deliveryPoint(req.body.deliveryLat || address.lat, req.body.deliveryLng || address.lng);
-  try { if (point) Object.assign(plan, fulfillmentFor(db, point, { ...plan, zone }, [print])); zone = deliveryFeeFor(db.pricing, zone, point, plan).zone; }
+  let point;
+  try { point = zone === 'pickup' ? null : plan.campusId ? deliveryPoint(address.lat, address.lng) : addressPoint(zone, req.body, address); if (point) Object.assign(plan, fulfillmentFor(db, point, { ...plan, zone }, [print])); zone = deliveryFeeFor(db.pricing, zone, point, plan).zone; }
   catch (error) { return fail(esc(error.message)); }
   address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone];
-  address.lat = point?.lat ?? null;
-  address.lng = point?.lng ?? null;
+  Object.assign(address, point || {lat:null,lng:null});
   if (plan.institutionDelivery) { address = { ...address, institutionName: plan.institutionName, label: 'School / College' }; }
   if (!db.addresses.some(a => a.id === address.id)) db.addresses.push(address);
   d.selections = {
@@ -1160,6 +1171,23 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   res.send(summaryStep(req.user,d,s,qShow,packCover,ref,{coupon:String(req.query.coupon || '').trim().slice(0,40),balance:walletOf(db,req.user.id).balance,gateway:gatewayOn(),prints:previous.prints.map(o=>({...o,net:printNet(o)})),items:previous.items,address:final.address,fulfillmentName:final.fulfillmentName}));
 });
 
+async function sendSplitDraft(req, res, draft) {
+  if (!draft || !draft.stored || path.basename(draft.stored) !== draft.stored || !['bw','color'].includes(req.params.part) || draft.fileType === 'image') return res.sendStatus(404);
+  try {
+    const plan = printPlan({printType:'mixed',splitMixed:'1',mixedRange:req.query.mixedRange,range:req.query.range},draft.pages);
+    const parts = await splitMixedPdf(await fs.promises.readFile(path.join(ROOT,'data','uploads',draft.stored)),{...plan,filePages:draft.pages});
+    res.set('Cache-Control','private, no-store').type('pdf').send(parts.find(p=>p.printType === req.params.part).bytes);
+  } catch (error) { res.status(400).type('text').send('Could not split this PDF. Check the page selection and upload an unlocked, printable PDF.'); }
+}
+app.get('/customer/orders/new/:draftId/split/:part.pdf', requireRole('customer'), (req,res)=> {
+  const draft = loadDb().drafts.find(d=>d.id === req.params.draftId && d.customerId === req.user.id);
+  return sendSplitDraft(req,res,draft);
+});
+app.get('/order/:draft/split/:part.pdf', (req,res)=> {
+  const draft = guestDraft(loadDb(),{headers:req.headers,query:{draft:req.params.draft}});
+  return sendSplitDraft(req,res,draft);
+});
+
 app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const d = (db.drafts || []).find((x) => x.id === req.params.draftId && x.customerId === req.user.id);
@@ -1225,7 +1253,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   }
   const order = {
     id, draftId: d.id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
-    printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, bwRange: s.bwRange, colorRange: s.colorRange, mixedPageType: s.mixedPageType, mixedRange: s.mixedRange, sides: s.sides, paper: 'A4', orientation: s.orientation,
+    printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, bwRange: s.bwRange, colorRange: s.colorRange, mixedPageType: s.mixedPageType, mixedRange: s.mixedRange, splitMixed: s.splitMixed, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, preferredShopId: d.preferredShopId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
     subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
@@ -1406,7 +1434,7 @@ app.post('/customer/orders/:id/reorder', requireRole('customer'), (req, res) => 
   try { fs.copyFileSync(`data/uploads/${orderFile(src.id, src.fileExt)}`, `data/uploads/${stored}`); }
   catch { return res.redirect(`/customer/orders/new?repeat=${encodeURIComponent(src.id)}`); }
   db.drafts.push({ id, customerId: req.user.id, document: src.document, stored, pages: src.filePages || src.pages, fileType: src.fileType || 'pdf', fileExt: src.fileExt || 'pdf', createdAt: new Date().toISOString(),
-    selections: { effPages: src.pages, copies: src.copies, printType: src.printType, bwPages: src.bwPages, colorPages: src.colorPages, bwRange: src.bwRange, colorRange: src.colorRange, mixedPageType: src.mixedPageType, mixedRange: src.mixedRange, sides: src.sides, orientation: src.orientation || 'auto', binding: src.binding || 'none', notes: src.notes || '', range: src.pageRange || null, addressId: src.addressId, zone, zoneLabel: address?.area, deliveryPoint: deliveryPoint(address?.lat, address?.lng), deliveryMode: src.deliveryMode, slotId: src.slotId, campusId: src.campusId }
+    selections: { effPages: src.pages, copies: src.copies, printType: src.printType, bwPages: src.bwPages, colorPages: src.colorPages, bwRange: src.bwRange, colorRange: src.colorRange, mixedPageType: src.mixedPageType, mixedRange: src.mixedRange, splitMixed: src.splitMixed, sides: src.sides, orientation: src.orientation || 'auto', binding: src.binding || 'none', notes: src.notes || '', range: src.pageRange || null, addressId: src.addressId, zone, zoneLabel: address?.area, deliveryPoint: deliveryPoint(address?.lat, address?.lng), deliveryMode: src.deliveryMode, slotId: src.slotId, campusId: src.campusId }
   });
   saveDb(db);
   res.redirect(`/customer/orders/new/summary?draft=${id}`);
@@ -1765,15 +1793,17 @@ app.post('/customer/profile', requireRole('customer'), (req, res) => {
 
 app.post('/customer/addresses/add', requireRole('customer'), (req, res) => {
   const db = loadDb();
-  const point = deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
-  if (!point || !String(req.body.address || '').trim() || String(req.body.address).length > 200 || !normPhone(req.body.phone) || !/^[1-9]\d{5}$/.test(String(req.body.pin || '')) || !['Vapi','Daman','Sarigam','Bhilad'].includes(req.body.area)) return res.status(400).send(oops(req.user,'/customer/profile#addresses','Add a valid address, phone, PIN and delivery location.'));
+  let point;
+  try { point = addressPoint(zoneOf(req.body.area), req.body); } catch (error) { return res.status(400).send(oops(req.user,'/customer/profile#addresses',esc(error.message))); }
+  if (!point || !String(req.body.address || '').trim() || String(req.body.address).length > 200 || !normPhone(req.body.phone) || !/^[1-9]\d{5}$/.test(String(req.body.pin || '')) || !['Vapi','Daman','Sarigam','Bhilad'].includes(req.body.area)) return res.status(400).send(oops(req.user,'/customer/profile#addresses','Add a valid address, phone, PIN and locality.'));
   db.addresses.push({
-    id: 'ADR' + Date.now().toString(36), customerId: req.user.id,
+    id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id,
     ...point, label: String(req.body.label || 'Home').slice(0,40), name: req.user.name, phone: String(req.body.phone).slice(0, 20),
     address: String(req.body.address).slice(0, 200), area: req.body.area || 'Sarigam',
     landmark: String(req.body.landmark || '').slice(0, 100), pin: String(req.body.pin).slice(0, 10),
     isDefault: !db.addresses.some((a) => a.customerId === req.user.id)
   });
+  if (!normPhone(req.user.phone)) db.users.find(u=>u.id===req.user.id).phone = '+91 ' + normPhone(req.body.phone);
   saveDb(db);
   res.redirect('/customer/profile#addresses');
 });
@@ -1827,7 +1857,7 @@ app.get('/order', (req, res) => {
   res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
-app.post('/order/upload', upload.single('doc'), (req, res) => {
+app.post('/order/upload', upload.single('doc'), async (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
   if (!req.file) return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'No file arrived — try again.', maxMb: loadDb().settings.order.maxFileMb }));
   if (req.file.size > maxUploadBytes()) {
@@ -1836,7 +1866,7 @@ app.post('/order/upload', upload.single('doc'), (req, res) => {
   }
   let file = null;
   try {
-    file = analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
+    file = await analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
   } catch {
     try { fs.unlinkSync(req.file.path); } catch {}
     return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That file won\'t print — PDF, PNG or JPG only.', maxMb: loadDb().settings.order.maxFileMb }));
@@ -1868,16 +1898,27 @@ app.get('/order/:draft/preview', (req,res)=>{
   res.set('Cache-Control','private, no-store');res.type(mimeFor(d.fileExt)).sendFile(path.join(ROOT,'data','uploads',d.stored));
 });
 
-app.post('/order/options', (req, res) => {
+app.post('/order/options', async (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
-  const db = loadDb();
-  const d = guestDraft(db, req);
+  let db = loadDb();
+  let d = guestDraft(db, req);
   if (!d) return res.redirect('/order');
-  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','orientation','binding','notes','area','deliverySlot','institutionName'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
+  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes','area','deliverySlot','institutionName'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
   const fail = (message) => { saveDb(db); return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: message, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) })); };
   let print;
   try { print = printPlan({ ...req.body, range: d.fileType === 'image' ? '' : req.body.range }, d.pages); }
   catch (error) { return fail(error.message); }
+  if (print.splitMixed) {
+    const form = d.form;
+    let splitError;
+    try { await splitMixedPdf(fs.readFileSync(path.join(ROOT,'data','uploads',d.stored)), {...print,filePages:d.pages}); }
+    catch (error) { splitError = error; }
+    db = loadDb();
+    d = guestDraft(db, req);
+    if (!d) return res.redirect('/order');
+    d.form = form;
+    if (splitError) return fail('Could not split this PDF. Upload an unlocked, printable PDF.');
+  }
   let plan;
   try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
   catch (error) { return fail(error.message); }
@@ -1909,7 +1950,7 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
   const d = guestDraft(db, req);
   if (!d || !d.selections) return res.redirect('/order');
   if (!req.body.resend) {
-    d.contactForm = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['name','email','phone','address','pin','landmark','referral','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key,value]) => [key,value.slice(0,200)]));
+    d.contactForm = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['name','email','phone','address','pin','landmark','referral','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key,value]) => [key,value.slice(0,200)]));
     saveDb(db);
     const email = normEmail(req.body.email);
     const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
@@ -1920,13 +1961,14 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
     if ((phoneRaw && !phone) || (d.selections.zone !== 'pickup' && !phone)) {
       return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — enter a 10-digit contact number for delivery.' }));
     }
-    const point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : deliveryPoint(req.body.deliveryLat, req.body.deliveryLng);
+    let point;
     try {
+      point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : addressPoint(d.selections.zone, req.body);
       if (point) Object.assign(d.selections, fulfillmentFor(db, point, { ...d.selections, zone: d.selections.zone }, [d.selections]));
       d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
       d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
     }
-    catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point in the area you chose.' })); }
+    catch (error) { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: error.message })); }
     d.contact = {
       name: String(req.body.name).slice(0, 60), email,
       phone: phone ? '+91 ' + phone : '',
@@ -1980,7 +2022,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
     id: 'ADR' + Date.now().toString(36), customerId: user.id, campusId: s.campusId, institutionName: s.institutionName, label: s.institutionDelivery || s.campusId ? 'School / College' : 'Home',
     name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
     area: s.area, landmark: d.contact.landmark, pin: d.contact.pin,
-    lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: true
+    ...d.contact.deliveryPoint, lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: !db.addresses.some(a => a.customerId === user.id && a.isDefault)
   };
   db.addresses.push(address);
   if (d.contact.phone) user.phone = d.contact.phone;
@@ -2053,18 +2095,18 @@ function agentAuth(req, res, next) {
 }
 const agentJob = (o) => ({
   id: o.id, document: o.document, pages: o.pages, copies: o.copies,
-  printType: o.printType, bwPages: o.bwPages, colorPages: o.colorPages, bwRange: o.bwRange, colorRange: o.colorRange, orientation: o.orientation, binding: o.binding, notes: o.notes, sides: o.sides, paper: o.paper || 'A4',
+  splitMixed: o.splitMixed === true, printType: o.printType, bwPages: o.bwPages, colorPages: o.colorPages, bwRange: o.bwRange, colorRange: o.colorRange, orientation: o.orientation, binding: o.binding, notes: o.notes, sides: o.sides, paper: o.paper || 'A4',
   filePages: o.filePages || (o.pageRange ? null : o.pages),
   pageRange: o.pageRange || null, fileType: o.fileType || 'pdf', fileExt: o.fileExt || 'pdf',
   status: o.status
 });
 
-app.get('/api/agent/next', agentAuth, (_req, res) => {
+app.get('/api/agent/next', agentAuth, (req, res) => {
   const db = loadDb();
   const blocked = db.orders.find(o => !o.fulfillmentId && ['PRINTING', 'PRINT_FAILED'].includes(o.status));
   if (blocked) return res.json({ paused: true, reason: `Inspect ${blocked.id} in admin before continuing` });
   const job = db.orders
-    .filter((o) => !o.fulfillmentId && o.status === 'PRINT_QUEUE' && o.printType !== 'mixed')
+    .filter((o) => !o.fulfillmentId && o.status === 'PRINT_QUEUE' && (o.printType !== 'mixed' || o.splitMixed === true && req.query?.splitMixed === '1'))
     .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))[0];
   if (!job) return res.status(204).end();
   res.json({ order: agentJob(job) });
@@ -2075,7 +2117,7 @@ app.get('/api/agent/file/:id', agentAuth, (req, res) => {
   if (!safe) return res.status(400).json({ error: 'Bad ID.' });
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
-  if (!o || o.fulfillmentId || o.printType === 'mixed' || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
+  if (!o || o.fulfillmentId || o.printType === 'mixed' && !o.splitMixed || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
     return res.status(404).json({ error: 'Not printable right now.' });
   }
   const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o.fileExt));
@@ -2091,7 +2133,7 @@ function agentStep(to, note) {
     const db = loadDb();
     const o = db.orders.find((x) => x.id === safe);
     if (!o) return res.status(404).json({ error: 'Unknown order.' });
-    if (o.fulfillmentId || o.printType === 'mixed') return res.status(409).json({ error: 'Mixed printing requires manual operator fulfilment.' });
+    if (o.fulfillmentId || o.printType === 'mixed' && (!o.splitMixed || req.body.splitMixed !== true)) return res.status(409).json({ error: 'This order requires the updated split-print agent or manual fulfilment.' });
     try {
       if (to === 'PRINTING' && db.orders.some(x => !x.fulfillmentId && x.id !== o.id && (['PRINTING', 'PRINT_FAILED'].includes(x.status)))) throw new Error('Print queue paused');
       transition(o, to, { by: 'agent', note: note || req.body.note || null });
@@ -2111,8 +2153,9 @@ app.post('/api/agent/:id/done', agentAuth, (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
   if (!o) return res.status(404).json({ error: 'Unknown order.' });
-  if (o.fulfillmentId || o.printType === 'mixed') return res.status(409).json({ error: 'Mixed printing requires manual operator fulfilment.' });
+  if (o.fulfillmentId || o.printType === 'mixed' && (!o.splitMixed || req.body.splitMixed !== true)) return res.status(409).json({ error: 'This order requires the updated split-print agent or manual fulfilment.' });
   if (o.status !== 'PRINTING') return res.status(409).json({ error: `Cannot report output from ${o.status}.` });
+  if (o.splitMixed && (!Array.isArray(req.body.completedParts) || req.body.completedParts.length !== 2 || !['bw','color'].every(type=>req.body.completedParts.includes(type)))) return res.status(400).json({error:'Both B&W and colour print sets must finish before reporting completion.'});
   if (req.body.queueDrained !== true) return res.status(400).json({ error: 'Printer queue completion report required. Update the print agent.' });
   // Spooler completion is not proof of legible output. An operator confirms the tray.
   o.printAwaitingVerification = true;

@@ -1,3 +1,4 @@
+import { LOCALITIES, kmBetween, distanceFee } from '../public/localities.js';
 import { pageRange, printPlan, printSides, printDescription } from '../public/print-plan.js';
 import { activePrintJobs, surchargeFees } from '../lib/pricing.js';
 // Runnable regression check: node scripts/checkout-check.mjs [--browser]
@@ -11,7 +12,7 @@ import { blankDb } from '../lib/db.js';
 import { addPrint, cartFor, cartItems, cartQuote, printNet, checkPackQuota } from '../lib/store.js';
 import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, walletOf, deliveryPlan, deliveryChoice, validateDestination, batchPrice, validateCampaign } from '../lib/campus.js';
 import { fulfillmentFor } from '../lib/partners.js';
-import { deliveryFeeFor, deliveryPoint, rangePages } from '../lib/pricing.js';
+import { deliveryFeeFor, deliveryPoint, addressPoint, rangePages } from '../lib/pricing.js';
 import { analyzeUpload, orderFile } from '../lib/files.js';
 import { canUseOwnerTestPrint } from '../lib/owner-test.js';
 import { normPhone, normEmail } from '../lib/otp.js';
@@ -28,10 +29,10 @@ function handler(method, route, extra = {}) {
   const start = source.indexOf(`app.${method}('${route}'`), end = source.indexOf('\napp.',start+1);
   assert.ok(start>=0,route);
   const pricing = readFileSync(new URL('../lib/pricing.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ','');
-  const quote = runInNewContext(pricing+'\nquote;', {loadDb:()=>db,Intl,Date,Set,Number,pageRange,printSides});
+  const quote = runInNewContext(pricing+'\nquote;', {loadDb:()=>db,Intl,Date,Set,Number,pageRange,printSides,LOCALITIES,kmBetween,distanceFee});
   runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+source.slice(start,end), {
     app:{[method](...args){result=args.at(-1);result.middleware=args.slice(1,-1).filter(Boolean);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
-    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
+    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, addressPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
     printPlan,printSides,printDescription,optionsStep,activePrintJobs,surchargeFees,normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
     fs:{copyFileSync(){throw new Error('Expired file');},readFileSync:()=>pdf},
     topupTerms,applyTopup,claimWalletFiles,fulfilWalletFiles,siteOrigin(){},qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
@@ -83,7 +84,7 @@ const claim=response();handler('post','/customer/wallet/files/:txId/claim')({use
 const handover=response();handler('post','/admin/customers/:id/files/:txId/fulfil')({user:{id:'staff',role:'admin'},params:{id:user.id,txId:fileTx.id}},handover);assert.equal(handover.url,'/admin/customers/A');assert.ok(fileTx.freeFiles.fulfilledAt);
 assert.equal(walletPrompt(campaignConfig(db),eligibleWalletOffers(db,'A'),1000),'');
 const repeat=response();handler('post','/customer/orders/:id/reorder')({user,params:{id:own.id}},repeat);assert.equal(repeat.url,'/customer/orders/new?repeat=PK-1024');
-const uploaded=response();handler('post','/customer/orders/new/upload')({user,file:{size:pdf.length,originalname:'Updated.pdf',path:'fixture',filename:'new.pdf'},body:{repeat:own.id}},uploaded);
+const uploaded=response();await handler('post','/customer/orders/new/upload')({user,file:{size:pdf.length,originalname:'Updated.pdf',path:'fixture',filename:'new.pdf'},body:{repeat:own.id}},uploaded);
 const newDraft=db.drafts.at(-1);assert.equal(newDraft.selections.copies,2);assert.equal(newDraft.selections.printType,'color');assert.equal(newDraft.pages,1);assert.equal(newDraft.selections.range,undefined,'New file must not inherit stale page ranges');
 // Coupon reservations and prior use are derived from existing orders, including legacy orders.
 const couponDb=blankDb();couponDb.coupons=[{code:'SAVE',type:'fixed',value:10,minOrder:20,active:true,expiry:'2099-12-31'},{code:'NEXT',type:'percent',value:10,active:true}];

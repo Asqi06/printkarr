@@ -45,7 +45,9 @@ export function printPlan(input, total) {
     color = mixedPageType === 'color' ? mixed : selected.filter((n) => !specified.has(n));
   }
   const colors = new Set(color), bw = selected.filter((n) => !colors.has(n));
-  return { printType: type, copies, sides, effPages: selected.length, range: selected.length === total ? null : compactRange(selected), mixedPageType, mixedRange: compactRange(mixed), bwPages: bw.length, colorPages: color.length, bwRange: compactRange(bw), colorRange: compactRange(color) };
+  const splitMixed = type === 'mixed' && [true, '1'].includes(input.splitMixed);
+  if (splitMixed && (!bw.length || !color.length)) throw new Error('Split printing needs both B&W and colour pages. Choose some colour pages, or use all B&W / all colour.');
+  return { splitMixed, printType: type, copies, sides, effPages: selected.length, range: selected.length === total ? null : compactRange(selected), mixedPageType, mixedRange: compactRange(mixed), bwPages: bw.length, colorPages: color.length, bwRange: compactRange(bw), colorRange: compactRange(color) };
 }
 
 export function printSides(order) {
@@ -58,7 +60,7 @@ export function printSides(order) {
 
 export function printDescription(order) {
   if (order.printType !== 'mixed') return order.printType === 'color' ? 'Colour' : 'B&W';
-  return `Mixed · ${order.bwPages} B&W (pages ${order.bwRange || 'none'}) · ${order.colorPages} colour (pages ${order.colorRange || 'none'})`;
+  return `${order.splitMixed ? 'Separate sets' : 'Mixed'} · ${order.bwPages} B&W (pages ${order.bwRange || 'none'}) · ${order.colorPages} colour (pages ${order.colorRange || 'none'})`;
 }
 
 // Extra colour uses the same remaining B&W pool as B&W pages in a mixed order.

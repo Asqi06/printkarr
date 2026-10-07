@@ -16,7 +16,8 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildCoverPdf, validatePdf } from './cover.js';
-import { printSettings, checkRenderedPages } from './print-settings.js';
+import { printSettings, printJobs, checkRenderedPages } from './print-settings.js';
+import { splitMixedPdf } from '../lib/files.js';
 import { acquireAgentLock } from './instance-lock.js';
 
 const BASE = process.env.PRINTKARR_URL || 'http://localhost:3000';
@@ -87,7 +88,7 @@ async function processJob(order) {
   const appData = path.join(workDir, 'sumatra');
   fs.mkdirSync(workDir, { recursive: true });
   try {
-    await api(`/api/agent/${order.id}/started`, { method: 'POST', body: '{}' });
+    await api(`/api/agent/${order.id}/started`, { method: 'POST', body: JSON.stringify({splitMixed:order.splitMixed === true}) });
     console.log(`job ${order.id}: ${order.document} (${order.pages}p x${order.copies}, ${order.printType})`);
     const dl = await fetch(`${BASE}/api/agent/file/${order.id}`, { headers: { Authorization: 'Bearer ' + TOKEN }, signal: AbortSignal.timeout(120000) });
     if (!dl.ok) throw new Error(`download -> ${dl.status}`);
@@ -98,18 +99,32 @@ async function processJob(order) {
     fs.writeFileSync(srcPdf, bytes);
     fs.mkdirSync(appData, { recursive: true });
     fs.writeFileSync(path.join(appData, 'SumatraPDF-settings.txt'), 'ReuseInstance = false\nRememberOpenedFiles = false\nRememberStatePerDocument = false\nRestoreSession = false\nCheckForUpdates = false\n');
-    printSettings(order, process.env.PRINT_SETTINGS); // Reject a bad range before any paper moves.
+    const jobs = printJobs(order);
+    if (order.splitMixed && process.env.PRINT_SETTINGS) throw new Error('Clear PRINT_SETTINGS for split printing: each PDF must use its own colour and sides settings.');
+    for (const job of jobs) printSettings(job, process.env.PRINT_SETTINGS);
+    const files = new Map([['document',srcPdf]]);
+    if (order.splitMixed) {
+      for (const part of await splitMixedPdf(bytes,order)) {
+        const file=path.join(workDir,`${order.id}-${part.printType}.pdf`);
+        fs.writeFileSync(file,part.bytes); files.set(part.printType,file);
+      }
+    }
     if (order.sides === 'double' && /L3250/i.test(PRINTER)) throw new Error('L3250 requires manual duplex; print this order manually and confirm output');
     if (!DRY) {
       const log = await run(SUMATRA, ['-appdata', appData, '-bench', srcPdf], Math.max(180000, Number(order.filePages || order.pages) * 10000), true);
       order.filePages = checkRenderedPages(log, order.filePages || (order.pageRange ? null : order.pages));
-      printSettings(order, process.env.PRINT_SETTINGS); // Validate against the renderer's actual page count.
+      if (order.splitMixed) {
+        for (const job of jobs) {
+          const partLog = await run(SUMATRA,['-appdata',appData,'-bench',files.get(job.tag)],Math.max(180000,job.filePages*10000),true);
+          checkRenderedPages(partLog,job.filePages);
+        }
+      } else { jobs[0].filePages=order.filePages; printSettings(jobs[0],process.env.PRINT_SETTINGS); }
       console.log(`job ${order.id}: all source pages rendered before printing`);
     }
     const cover = buildCoverPdf(`PRINTKARR ${order.id}`, [
       ['Document', order.document],
       ['Pages x copies', `${order.pages} x ${order.copies}${order.pageRange ? ` (${order.pageRange})` : ''}`],
-      ['Spec', `${order.printType === 'bw' ? 'B&W' : 'Colour'} / ${order.sides}-sided / ${order.paper}`],
+      ['Spec', `${order.splitMixed ? 'Separate B&W / colour PDFs' : order.printType === 'bw' ? 'B&W' : 'Colour'} / ${order.sides}-sided / ${order.paper}`],
       ['Printer', PRINTER],
       ['Queued', new Date().toLocaleString('en-IN')]
     ]);
@@ -121,8 +136,15 @@ async function processJob(order) {
     // Cover stays its own single-sided job: merging it into a duplexed
     // document would share its sheet with page 1. Two jobs, correct output.
     await printFile(coverPdf, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'cover', appData);
-    const report = await printFile(srcPdf, order, 'document', appData);
-    const doneRes = await api(`/api/agent/${order.id}/done`, { method: 'POST', body: JSON.stringify({ queueDrained: report.queueDrained === true, observedJobs: report.observedJobs || 0 }) });
+    const report = {queueDrained:true,observedJobs:0};
+    const completedParts=[];
+    for (const job of jobs) {
+      const partReport = await printFile(files.get(job.tag),job,job.tag,appData);
+      report.queueDrained = report.queueDrained && partReport.queueDrained === true;
+      report.observedJobs += partReport.observedJobs || 0;
+      completedParts.push(job.tag);
+    }
+    const doneRes = await api(`/api/agent/${order.id}/done`, { method: 'POST', body: JSON.stringify({ splitMixed:order.splitMixed === true, completedParts, queueDrained: report.queueDrained === true, observedJobs: report.observedJobs || 0 }) });
     console.log(`job ${order.id}: ${doneRes?.verificationRequired ? 'OUTPUT CHECK REQUIRED — confirm all pages in admin before the queue continues' : 'READY'}`);
   } catch (e) {
     console.log(`job ${order.id}: FAILED — ${e.message}`);
@@ -149,7 +171,7 @@ async function main() {
     }
     let next = null;
     try {
-      const d = await api('/api/agent/next');
+      const d = await api('/api/agent/next?splitMixed=1');
       next = d && d.order;
       if (d?.paused && d.reason !== pauseReason) console.log(`queue paused: ${d.reason}`);
       pauseReason = d?.reason || '';

@@ -6,7 +6,7 @@ import nodePath from 'node:path';
 import { tmpdir } from 'node:os';
 import { saveDb } from '../lib/db.js';
 import { janitor } from '../lib/janitor.js';
-import { cartFor, setQuantity, addPrint, cartQuote, createPurchase, confirmPurchase, cancelPurchase, availableStock, saveProduct, checkPackQuota } from '../lib/store.js';
+import { cartFor, setQuantity, addPrint, cartQuote, createPurchase, confirmPurchase, cancelPurchase, availableStock, saveProduct, checkPackQuota, catalogue } from '../lib/store.js';
 import { previewDb, createStorePreview, couponPolicy } from './store-preview.mjs';
 import { walletOf, topupTerms, applyTopup, settleWallets, deliveryPlan } from '../lib/campus.js';
 const validate = couponPolicy.validateCoupon, customer = 'preview-customer';
@@ -36,8 +36,16 @@ for (const type of ['stationery', 'prints', 'mixed']) for (const amount of [148.
   assert.throws(() => saveProduct(db, {name:'X',category:'Y',price:1,stock:1,image:'javascript:alert(1)'}), /photo/);
 }
 {
-  const db = previewDb(), cart = cartFor(db, customer); setQuantity(db, cart, 'demo-file', 'orange', 1);
-  assert.throws(() => createPurchase(db, cart, customer, selection, validate), /Demo products/);
+  const db = previewDb(), cart = cartFor(db, customer);
+  assert.deepEqual(catalogue(db),[], 'Demo products stay out of the customer catalogue');
+  assert.deepEqual(catalogue({products:[]}),[], 'An empty catalogue never falls back to demo products');
+  assert.throws(() => setQuantity(db,cart,'demo-file','orange',1),/available product/);
+  cart.lines=[{productId:'demo-file',color:'orange',quantity:1}];
+  assert.throws(() => createPurchase(db,cart,customer,selection,validate),/no longer available/);
+  assert.deepEqual(cartFor(db,customer).lines,[], 'Unpaid carts stop displaying old sample items');
+  const published=saveProduct(db,{id:'demo-file',name:'Owner verified file',category:'Files',price:25,stock:5,colors:'green',active:'on'});
+  assert.equal(published.demo,false);assert.equal(catalogue(db).length,1);assert.equal(availableStock(db,published.id),5,'A sample can be replaced with verified real stock');
+  setQuantity(db,cart,published.id,'green',1);assert.equal(cartQuote(db,cart,customer,selection,validate).items[0].demo,false);
 }
 {
   const db = previewDb(true), cart = cartFor(db, customer); db.products[0].stock = 2;
@@ -129,6 +137,7 @@ try {
   assert.equal((await request(path.replace('/customer/','/admin/')+'/status',{to:'DELIVERED'})).status,302);
   assert.equal(fixture.snapshot().purchases[0].status,'DELIVERED','Whole-basket fulfilment works');
   assert.equal((await request('/admin/catalogue',{name:'Owner supplied file',category:'Files',price:'149',stock:'5',colors:'orange, green, red, yellow',active:'on',demo:'on'})).status,302);
+  const publicShop=await(await request('/stationery')).text();assert.ok(!publicShop.includes('Owner supplied file'),'Sample drafts stay hidden from customers');
   assert.equal(fixture.snapshot().products.at(-1).name,'Owner supplied file');assert.deepEqual(fixture.snapshot().products.at(-1).colors,['orange','green','red','yellow']);
   const png = readFileSync('public/favicon-32x32.png');
   async function uploadPhoto(bytes, filename, fields = {}, headers = {}) {

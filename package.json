@@ -1,7 +1,7 @@
 {
   "name": "printkarr",
   "version": "0.1.0",
-  "description": "Printkarr \u00e2\u20ac\u201d hyperlocal print + stationery ordering and delivery (demo build, PRD Phase 1).",
+  "description": "Printkarr â€” hyperlocal print + stationery ordering and delivery (demo build, PRD Phase 1).",
   "type": "module",
   "main": "server.mjs",
   "scripts": {
@@ -18,7 +18,7 @@
     "test:delivery": "node scripts/delivery-service-check.mjs",
     "test:checkout": "node scripts/checkout-check.mjs",
     "test:store": "node scripts/store-check.mjs",
-    "test:ux": "node scripts/mixed-print-check.mjs",
+    "test:ux": "node scripts/mixed-print-check.mjs && node scripts/split-print-check.mjs && node scripts/address-ux-check.mjs",
     "preview:orders": "node scripts/order-preview.mjs",
     "preview:store": "node scripts/store-preview.mjs",
     "test:seo": "node scripts/seo-check.mjs",
@@ -36,6 +36,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.4.0",
     "nodemailer": "^10.0.10",
+    "pdf-lib": "1.17.1",
     "qrcode": "^1.5.4"
   },
   "engines": {

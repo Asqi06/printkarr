@@ -8,7 +8,7 @@ import {execFileSync} from 'node:child_process';
 import {janitor} from '../lib/janitor.js';
 import {blankDb,loadDb,saveDb} from '../lib/db.js';
 import {transition,canTransition} from '../lib/machine.js';
-import {printSettings,checkRenderedPages} from '../agent/print-settings.js';
+import {printSettings,printJobs,checkRenderedPages} from '../agent/print-settings.js';
 import {buildCoverPdf,validatePdf} from '../agent/cover.js';
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'printkarr-safety-'));
 try {
@@ -45,14 +45,20 @@ try {
   const unblocked=response();handler('get','/api/agent/next')({},unblocked);assert.equal(unblocked.body.order.id,'PK-TWO');
   const agent=fs.readFileSync(new URL('../agent/print-agent.mjs',import.meta.url),'utf8');
   const jobFunction=agent.slice(agent.indexOf('async function processJob('),agent.indexOf('\nlet stopping'));
-  const prints=[],calls=[];let broken=false;
+  const prints=[],calls=[],reports=[];let broken=false, splitMode=false, failColour=false;
+  const render=count=>'page count: '+count+'\n'+Array.from({length:count},(_,i)=>`pagerender ${i+1}: 1 ms`).join('\n');
   const log='page count: 36\n'+Array.from({length:36},(_,i)=>`pagerender ${i+1}: 1 ms`).join('\n');
-  const context={path,TMP:root,fs:{mkdirSync(){},writeFileSync(){},rmSync(){}},DRY:false,PRINTER:'Fake printer',SUMATRA:'mock',BASE:'fixture',TOKEN:'fixture',process:{env:{}},Buffer,AbortSignal,console:{log(){}},printSettings,checkRenderedPages,buildCoverPdf,validatePdf,stopping:false,
-    api:async(p,opts)=>{calls.push(p);return {verificationRequired:true};},fetch:async()=>({ok:true,arrayBuffer:async()=>buildCoverPdf('Mock',[['Sample','No paper']])}),run:async()=>broken ? log.replace('pagerender 36:', 'missing 36:') : log,
-    printFile:async(file,order,tag)=>{prints.push(tag);return {queueDrained:true,observedJobs:1};}};
+  const context={path,TMP:root,fs:{mkdirSync(){},writeFileSync(){},rmSync(){}},DRY:false,PRINTER:'Fake printer',SUMATRA:'mock',BASE:'fixture',TOKEN:'fixture',process:{env:{}},Buffer,AbortSignal,console:{log(){}},printSettings,printJobs,checkRenderedPages,buildCoverPdf,validatePdf,stopping:false,
+    api:async(p,opts)=>{calls.push(p);if(p.endsWith('/done'))reports.push(JSON.parse(opts.body));return {verificationRequired:true};},fetch:async()=>({ok:true,arrayBuffer:async()=>buildCoverPdf('Mock',[['Sample','No paper']])}),splitMixedPdf:async()=>[{printType:'bw',bytes:Buffer.from('mock')},{printType:'color',bytes:Buffer.from('mock')}],run:async(_exe,args)=>splitMode ? broken && args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-color.pdf')) ? render(1) : render(args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-bw.pdf')) ? 3 : args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-color.pdf')) ? 2 : 5) : broken ? log.replace('pagerender 36:', 'missing 36:') : log,
+    printFile:async(file,order,tag)=>{prints.push(tag);if(failColour && tag==='color')throw new Error('Colour printer fault');return {queueDrained:true,observedJobs:1};}};
   const job=runInNewContext(jobFunction+'\nprocessJob;',context);
   await job({id:'PK-CHECK',pages:36,filePages:36,copies:1,sides:'single',printType:'bw'});assert.deepEqual(prints,['cover','document']);assert.ok(calls.includes('/api/agent/PK-CHECK/done'));
   prints.length=0;calls.length=0;broken=true;await job({id:'PK-CHECK',pages:36,filePages:36,copies:1,sides:'single',printType:'bw'});assert.equal(prints.length,0);assert.ok(calls.includes('/api/agent/PK-CHECK/failed'));assert.equal(context.stopping,true);
+  splitMode=true;broken=false;context.stopping=false;prints.length=calls.length=0;
+  const split={id:'PK-SPLIT',pages:5,filePages:5,copies:2,sides:'single',printType:'mixed',splitMixed:true,bwPages:3,colorPages:2,bwRange:'1-3',colorRange:'4-5'};
+  await job({...split});assert.deepEqual(prints,['cover','bw','color']);assert.deepEqual(reports.at(-1).completedParts,['bw','color']);assert.equal(reports.at(-1).observedJobs,2);
+  broken=true;prints.length=calls.length=0;await job({...split});assert.deepEqual(prints,[]);assert.ok(calls.includes('/api/agent/PK-SPLIT/failed'),'Every split set renders before any paper');
+  broken=false;failColour=true;prints.length=calls.length=0;await job({...split});assert.ok(calls.includes('/api/agent/PK-SPLIT/failed'));assert.ok(!calls.includes('/api/agent/PK-SPLIT/done'),'Partial printing cannot report success');
   if (process.platform === 'win32') {
     const monitor=path.resolve('agent/print-monitored.ps1'), mock=path.join(root,'monitor-mock.ps1');
     fs.writeFileSync(mock,`param([string]$Mode,[string]$Monitor)

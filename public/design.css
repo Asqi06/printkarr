@@ -458,3 +458,5 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
 .app-customer .dashboard-pricing{border-radius:12px;background:white}
 .app-partner .main,.app-rider .main{max-width:1200px}
 @media(max-width:760px){.btn.big{font-size:13px}.field input,.field select,.field textarea{font-size:16px}.app-customer .dashboard-action{min-height:140px}}
+
+.address-fields{border:0;padding:0;margin:16px 0 0;min-width:0}.address-fields[hidden]{display:none}

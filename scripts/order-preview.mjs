@@ -10,6 +10,7 @@ import { COOKIE, parseCookies } from '../lib/auth.js';
 import { esc } from '../lib/views.js';
 import * as print from '../public/print-plan.js';
 import * as pricing from '../lib/pricing.js';
+import { LOCALITIES, distanceFee } from '../public/localities.js';
 import * as campaign from '../lib/campus.js';
 import * as packs from '../lib/packs.js';
 import * as referrals from '../lib/referrals.js';
@@ -41,8 +42,8 @@ export function createOrderPreview(seed = previewDb()) {
       app.get('/shops',(_req,res)=>res.send(publicViews.nearbyShopsPage(loadDb().partners || [])));
       app.get('/kiosks',(_req,res)=>res.send(publicViews.kioskStatusPage()));
       const upload = multer({dest:uploadsDir,limits:{fileSize:20*1024*1024}});
-      const disk = { ...fs, readFileSync: name => fs.readFileSync(path.join(uploadsDir,path.basename(name))), renameSync:(from,to)=>fs.renameSync(path.join(uploadsDir,path.basename(from)),path.join(uploadsDir,path.basename(to))) };
-      const scope = { ...print, ...pricing, ...campaign, ...packs, ...referrals, ...files, ...account, ...publicViews, ...packViews, ...referralViews, app, loadDb, saveDb, currentUser, requireRole, upload, fs:disk, crypto, path, Buffer, URL, COOKIE,
+      const disk = { ...fs, promises: { ...fs.promises, readFile: name => fs.promises.readFile(path.join(uploadsDir,path.basename(name))) }, readFileSync: name => fs.readFileSync(path.join(uploadsDir,path.basename(name))), renameSync:(from,to)=>fs.renameSync(path.join(uploadsDir,path.basename(from)),path.join(uploadsDir,path.basename(to))) };
+      const scope = { ...print, ...pricing, LOCALITIES, distanceFee, ...campaign, ...packs, ...referrals, ...files, ...account, ...publicViews, ...packViews, ...referralViews, app, loadDb, saveDb, currentUser, requireRole, upload, fs:disk, crypto, path, Buffer, URL, COOKIE,
         ROOT:path.dirname(uploadsDir), parseCookies, normEmail, normPhone, esc, firstOffers, fulfillmentFor, addPrint, cartFor, cartItems, cartQuote, printNet, createPurchase:(db,cart,id,selection,validate)=>createPurchase(db,cart,id,selection,validate,true), gatewayOn:()=>false, checkPackQuota, canUseOwnerTestPrint, transition,
         offerDevice(){}, maxUploadBytes:()=>20*1024*1024, otpLimiter:(_req,_res,next)=>next(),
         requestEmailOtp:async()=>({ok:true,mailed:false,demo:'000000',error:'LOCAL PREVIEW: no email is sent. Use the demo code.'}), verifyEmailOtp:(_email,code)=>({ok:code==='000000',error:'Use local demo code 000000.'}), createSession:id=>id,
@@ -73,9 +74,13 @@ export function createOrderPreview(seed = previewDb()) {
       app.get('/customer/orders/new/:draftId/preview.pdf',requireRole('customer'),(req,res)=>{const d=loadDb().drafts.find(d=>d.id===req.params.draftId&&d.customerId===req.user.id);if(!d)return res.sendStatus(404);res.type(files.mimeFor(d.fileExt)).sendFile(path.join(uploadsDir,path.basename(d.stored)));});
       app.get('/customer',requireRole('customer'),(req,res)=>{const db=loadDb();res.send(customerDashboard(req.user,{pricing:db.pricing,notes:db.notifications.filter(n=>n.customerId===req.user.id),current:db.orders.find(o=>o.customerId===req.user.id && !['DELIVERED','CANCELLED','REFUNDED'].includes(o.status)),packsHtml:packViews.packDashboardHtml(packs.mySubs(db,req.user.id)),walletBalance:campaign.walletOf(db,req.user.id).balance}));});
       app.get('/admin/orders/:id',requireRole('admin'),(req,res)=>{const db=loadDb(),o=db.orders.find(o=>o.id===req.params.id);if(!o)return res.sendStatus(404);res.send(adminOrderDetail(req.user,o,db.users.find(u=>u.id===o.customerId),db.addresses.find(a=>a.id===o.addressId)||{},nextStates(o.status),null,Date.now()));});
+      runInNewContext(source.match(/async function sendSplitDraft\([^]*?\n\}/)[0],scope);
+      runInNewContext(body('get','/customer/orders/new/:draftId/split/:part.pdf'),scope);
+      runInNewContext(body('get','/order/:draft/split/:part.pdf'),scope);
       const agentSource = source.slice(source.indexOf('const agentJob ='),source.indexOf("app.get('/api/agent/file/:id'"));
       runInNewContext(agentSource,scope);
       runInNewContext(source.slice(source.indexOf('function agentStep('),source.indexOf("app.post('/api/agent/:id/done'")),scope);
+      runInNewContext(body('post','/api/agent/:id/done'),scope);
     }
   });
 }

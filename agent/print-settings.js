@@ -1,3 +1,5 @@
+import { printSides } from '../public/print-plan.js';
+
 // SumatraPDF accepts page ranges and copy counts in -print-settings.
 export function printSettings(order, override = '') {
   if (order.printType === 'mixed') throw new Error('Mixed printing requires an operator: preserve page order and colour assignments; do not submit as one colour mode.');
@@ -28,4 +30,13 @@ export function checkRenderedPages(log, expectedPages) {
   }
   if (expectedPages && count !== Number(expectedPages)) throw new Error(`Document has ${count} pages; order recorded ${expectedPages}. Review before printing`);
   return count;
+}
+
+// Separate PDFs deliberately keep their own duplex boundaries and colour mode.
+export function printJobs(order) {
+  if (order.printType !== 'mixed') { printSettings(order); return [{...order,tag:'document'}]; }
+  if (!order.splitMixed) throw new Error('Legacy mixed printing requires an operator to preserve page order.');
+  printSides(order);
+  if (!order.bwPages || !order.colorPages) throw new Error('Both split print sets must contain pages.');
+  return ['bw','color'].map(type=>({...order,printType:type,tag:type,effPages:order[type+'Pages'],pages:order[type+'Pages'],filePages:order[type+'Pages'],pageRange:null}));
 }
