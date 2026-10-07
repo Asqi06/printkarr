@@ -13,3 +13,7 @@ Vapi rates retain their distance bands: ₹15–₹50 express and ₹10–₹25 
 The customer stationery catalogue has no demo fallback. Only real products appear and can enter a cart. Admin `/admin/catalogue` and shop `/partner/catalogue` support product names, photos, prices, stock, visibility and ownership. Sample/draft listings remain private until published as real stock.
 
 Checks: `npm test`, `npm run test:ux`, `npm run test:checkout`, `npm run test:store`, `npm run test:delivery`, `npm run test:design`, `npm run test:print-safety`. Print checks use temporary files, a fictional wallet and mocked printer calls; no real money, customer document, email or paper is used.
+
+Hardware check: stop the automatic agent only when its app and printer queues are idle, then run `npm run test:print`. This submits three real sheets (cover, B&W page, colour page) through the actual agent and Sumatra using an isolated loopback queue. It never inserts paid test orders or changes customer data. Restart the scheduled task afterwards. The final ink/page-quality check must be made at the output tray.
+
+Verification on 7 October 2026: live checkout assets match the pushed source, the live stationery catalogue has no demo cards, and the updated Windows scheduled agent resumed live polling. The real printer check rendered the source and both split PDFs, then stopped on a printer error; the owner confirmed the printer was off/disconnected. Physical output is still unverified. The test's failed job was removed from its own spool queue; no customer order was created or changed.

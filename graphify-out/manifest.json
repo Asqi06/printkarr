@@ -1056,9 +1056,9 @@
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
-    "mtime": 1790962773.5052145,
-    "seen": 1790962829.716506,
-    "ast_hash": "d17246ef11d95881f8719e8f1a7bdaf0",
+    "mtime": 1791366817.3894296,
+    "seen": 1791366948.9289513,
+    "ast_hash": "8891a74a3aaf4f35057124768e4a4c07",
     "semantic_hash": ""
   },
   "server.mjs": {
@@ -3660,9 +3660,9 @@
     "semantic_hash": ""
   },
   "docs/print-and-address-ux.md": {
-    "mtime": 1791365507.2251089,
-    "seen": 1791366018.960857,
-    "ast_hash": "8e037d691c367400ae3283d83d470bf2",
+    "mtime": 1791366819.0289528,
+    "seen": 1791366948.9790204,
+    "ast_hash": "91d0b53e04e714eaf727e3ac04494d4c",
     "semantic_hash": ""
   },
   "docs/order-ux-preview/locality-checkout-mobile.jpg": {
@@ -3681,6 +3681,18 @@
     "mtime": 1791288674.4503024,
     "seen": 1791366019.0257576,
     "ast_hash": "bf1701592fadd50d3e6b394bdc6f3bfc",
+    "semantic_hash": ""
+  },
+  "docs/order-ux-preview/split-print-desktop.jpg": {
+    "mtime": 1791366117.3649118,
+    "seen": 1791366949.0331361,
+    "ast_hash": "de311570765eaee8197614ed041f8a10",
+    "semantic_hash": ""
+  },
+  "docs/order-ux-preview/split-print-mobile.jpg": {
+    "mtime": 1791366026.8745968,
+    "seen": 1791366949.0331435,
+    "ast_hash": "e6a8b9b0d63fe523f0a2b3c0394ee372",
     "semantic_hash": ""
   }
 }
