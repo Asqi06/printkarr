@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { buildCoverPdf, validatePdf } from './cover.js';
+import { buildOrderCover } from './cover.js';
 import { printSettings, printJobs, checkRenderedPages } from './print-settings.js';
 import { splitMixedPdf } from '../lib/files.js';
 import { acquireAgentLock } from './instance-lock.js';
@@ -121,21 +121,14 @@ async function processJob(order) {
       } else { jobs[0].filePages=order.filePages; printSettings(jobs[0],process.env.PRINT_SETTINGS); }
       console.log(`job ${order.id}: all source pages rendered before printing`);
     }
-    const cover = buildCoverPdf(`PRINTKARR ${order.id}`, [
-      ['Document', order.document],
-      ['Pages x copies', `${order.pages} x ${order.copies}${order.pageRange ? ` (${order.pageRange})` : ''}`],
-      ['Spec', `${order.splitMixed ? 'Separate B&W / colour PDFs' : order.printType === 'bw' ? 'B&W' : 'Colour'} / ${order.sides}-sided / ${order.paper}`],
-      ['Printer', PRINTER],
-      ['Queued', new Date().toLocaleString('en-IN')]
-    ]);
+    const cover = await buildOrderCover(order);
     const coverPdf = path.join(workDir, `${order.id}-cover.pdf`);
     fs.writeFileSync(coverPdf, cover);
-    const cv = validatePdf(cover);
-    console.log(`job ${order.id}: cover slip ${cover.length} bytes (${cv.ok ? 'xref ok' : 'INVALID: ' + cv.error})`);
-    if (!cv.ok) throw new Error(`Invalid cover PDF: ${cv.error}`);
+    if (!DRY) checkRenderedPages(await run(SUMATRA,['-appdata',appData,'-bench',coverPdf],180000,true),1);
+    console.log(`job ${order.id}: branded cover ${cover.length} bytes (one page)`);
     // Cover stays its own single-sided job: merging it into a duplexed
     // document would share its sheet with page 1. Two jobs, correct output.
-    await printFile(coverPdf, { ...order, sides: 'single', printType: 'bw', pageRange: null, copies: 1 }, 'cover', appData);
+    await printFile(coverPdf, { ...order, sides: 'single', printType: 'color', pageRange: null, copies: 1 }, 'cover', appData);
     const report = {queueDrained:true,observedJobs:0};
     const completedParts=[];
     for (const job of jobs) {

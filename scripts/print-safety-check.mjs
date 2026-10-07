@@ -9,7 +9,7 @@ import {janitor} from '../lib/janitor.js';
 import {blankDb,loadDb,saveDb} from '../lib/db.js';
 import {transition,canTransition} from '../lib/machine.js';
 import {printSettings,printJobs,checkRenderedPages} from '../agent/print-settings.js';
-import {buildCoverPdf,validatePdf} from '../agent/cover.js';
+import {buildCoverPdf,buildOrderCover} from '../agent/cover.js';
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'printkarr-safety-'));
 try {
   const uploads=path.join(root,'data','uploads'), dbFile=path.join(root,'db.json');fs.mkdirSync(uploads,{recursive:true});
@@ -25,10 +25,10 @@ try {
   assert.equal(loadDb(dbFile).drafts.length,1);assert.ok(loadDb(dbFile).orders[0].fileDeletedAt);assert.equal(janitor(root,15,dbFile),0);
   const atlasSource=fs.readFileSync(new URL('../lib/atlas.js',import.meta.url),'utf8');
   const syncBody=atlasSource.slice(atlasSource.indexOf('async function syncFiles()'),atlasSource.indexOf('export async function flushAtlas()'));
-  const cloud=[{_id:'active-current',filename:'PK-ACTIVE.pdf'},{_id:'active-old',filename:'PK-ACTIVE.pdf'},{_id:'deleted-current',filename:'PK-OLD.pdf'},{_id:'deleted-old',filename:'PK-OLD.pdf'}],deleted=[];
+  const cloud=[{_id:'02',filename:'PK-ACTIVE.pdf'},{_id:'01',filename:'PK-ACTIVE.pdf'},{_id:'04',filename:'PK-OLD.pdf'},{_id:'03',filename:'PK-OLD.pdf'},{_id:'05',filename:'PK-ACTIVE.pdf'},{_id:'06',filename:'NEW-OTHER-INSTANCE.pdf'}],deleted=[];
   const activeStat=fs.statSync(path.join(uploads,'PK-ACTIVE.pdf'));
-  const sync=runInNewContext(syncBody+'\n syncFiles;',{fs:{...fs,readdirSync:()=>['PK-ACTIVE.pdf']},path,uploadsDir:uploads,remoteFiles:new Map([['PK-ACTIVE.pdf',{id:'active-current',size:activeStat.size,mtimeMs:Math.round(activeStat.mtimeMs)}],['PK-OLD.pdf',{id:'deleted-current'}]]),files:{find:()=>({toArray:async()=>cloud})},bucket:{delete:async id=>deleted.push(id)}});
-  await sync();assert.deepEqual(deleted,['active-old','deleted-current','deleted-old']);
+  const sync=runInNewContext(syncBody+'\n syncFiles;',{fs:{...fs,readdirSync:()=>['PK-ACTIVE.pdf']},path,uploadsDir:uploads,remoteFiles:new Map([['PK-ACTIVE.pdf',{id:'02',size:activeStat.size,mtimeMs:Math.round(activeStat.mtimeMs)}],['PK-OLD.pdf',{id:'04'}]]),files:{find:()=>({toArray:async()=>cloud})},bucket:{delete:async id=>deleted.push(id)}});
+  await sync();assert.deepEqual(deleted,['01','04','03']);
   const source=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8').replaceAll('\r\n','\n');
   const memory=blankDb();memory.orders=[{id:'PK-ONE',status:'PRINTING',pages:36,copies:1,history:[]},{id:'PK-TWO',status:'PRINT_QUEUE',createdAt:old,history:[]}];
   function handler(method,route){
@@ -45,14 +45,16 @@ try {
   const unblocked=response();handler('get','/api/agent/next')({},unblocked);assert.equal(unblocked.body.order.id,'PK-TWO');
   const agent=fs.readFileSync(new URL('../agent/print-agent.mjs',import.meta.url),'utf8');
   const jobFunction=agent.slice(agent.indexOf('async function processJob('),agent.indexOf('\nlet stopping'));
-  const prints=[],calls=[],reports=[];let broken=false, splitMode=false, failColour=false;
+  const prints=[],calls=[],reports=[],specs=[];let broken=false, splitMode=false, failColour=false, coverBroken=false;
   const render=count=>'page count: '+count+'\n'+Array.from({length:count},(_,i)=>`pagerender ${i+1}: 1 ms`).join('\n');
   const log='page count: 36\n'+Array.from({length:36},(_,i)=>`pagerender ${i+1}: 1 ms`).join('\n');
-  const context={path,TMP:root,fs:{mkdirSync(){},writeFileSync(){},rmSync(){}},DRY:false,PRINTER:'Fake printer',SUMATRA:'mock',BASE:'fixture',TOKEN:'fixture',process:{env:{}},Buffer,AbortSignal,console:{log(){}},printSettings,printJobs,checkRenderedPages,buildCoverPdf,validatePdf,stopping:false,
-    api:async(p,opts)=>{calls.push(p);if(p.endsWith('/done'))reports.push(JSON.parse(opts.body));return {verificationRequired:true};},fetch:async()=>({ok:true,arrayBuffer:async()=>buildCoverPdf('Mock',[['Sample','No paper']])}),splitMixedPdf:async()=>[{printType:'bw',bytes:Buffer.from('mock')},{printType:'color',bytes:Buffer.from('mock')}],run:async(_exe,args)=>splitMode ? broken && args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-color.pdf')) ? render(1) : render(args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-bw.pdf')) ? 3 : args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-color.pdf')) ? 2 : 5) : broken ? log.replace('pagerender 36:', 'missing 36:') : log,
-    printFile:async(file,order,tag)=>{prints.push(tag);if(failColour && tag==='color')throw new Error('Colour printer fault');return {queueDrained:true,observedJobs:1};}};
+  const context={path,TMP:root,fs:{mkdirSync(){},writeFileSync(){},rmSync(){}},DRY:false,PRINTER:'Fake printer',SUMATRA:'mock',BASE:'fixture',TOKEN:'fixture',process:{env:{}},Buffer,AbortSignal,console:{log(){}},printSettings,printJobs,checkRenderedPages,buildOrderCover,stopping:false,
+    api:async(p,opts)=>{calls.push(p);if(p.endsWith('/done'))reports.push(JSON.parse(opts.body));return {verificationRequired:true};},fetch:async()=>({ok:true,arrayBuffer:async()=>buildCoverPdf('Mock',[['Sample','No paper']])}),splitMixedPdf:async()=>[{printType:'bw',bytes:Buffer.from('mock')},{printType:'color',bytes:Buffer.from('mock')}],run:async(_exe,args)=>args.some(a=>a.endsWith('-cover.pdf')) ? coverBroken ? 'page count: 1\nmissing 1:' : render(1) : splitMode ? broken && args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-color.pdf')) ? render(1) : render(args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-bw.pdf')) ? 3 : args.includes(path.join(root,'PK-SPLIT','PK-SPLIT-color.pdf')) ? 2 : 5) : broken ? log.replace('pagerender 36:', 'missing 36:') : log,
+    printFile:async(file,order,tag)=>{prints.push(tag);specs.push([tag,order.printType,order.sides,order.copies,order.pageRange]);if(failColour && tag==='color')throw new Error('Colour printer fault');return {queueDrained:true,observedJobs:1};}};
   const job=runInNewContext(jobFunction+'\nprocessJob;',context);
   await job({id:'PK-CHECK',pages:36,filePages:36,copies:1,sides:'single',printType:'bw'});assert.deepEqual(prints,['cover','document']);assert.ok(calls.includes('/api/agent/PK-CHECK/done'));
+  assert.deepEqual(specs[0],['cover','color','single',1,null],'Branded cover is one separate colour sheet');
+  coverBroken=true;prints.length=calls.length=0;await job({id:'PK-CHECK',pages:36,filePages:36,copies:1,sides:'single',printType:'bw'});assert.deepEqual(prints,[]);assert.ok(calls.includes('/api/agent/PK-CHECK/failed'),'Cover render failure must stop before paper moves');coverBroken=false;
   prints.length=0;calls.length=0;broken=true;await job({id:'PK-CHECK',pages:36,filePages:36,copies:1,sides:'single',printType:'bw'});assert.equal(prints.length,0);assert.ok(calls.includes('/api/agent/PK-CHECK/failed'));assert.equal(context.stopping,true);
   splitMode=true;broken=false;context.stopping=false;prints.length=calls.length=0;
   const split={id:'PK-SPLIT',pages:5,filePages:5,copies:2,sides:'single',printType:'mixed',splitMixed:true,bwPages:3,colorPages:2,bwRange:'1-3',colorRange:'4-5'};

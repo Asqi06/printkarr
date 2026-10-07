@@ -900,15 +900,15 @@
     "semantic_hash": "02cfe88f4fbe9f37cf98f9b8a5655270"
   },
   "agent/cover.js": {
-    "mtime": 1789805705.544942,
-    "seen": 1790361127.8099387,
-    "ast_hash": "edfebb5f854ade06768e1f27115ea241",
-    "semantic_hash": "edfebb5f854ade06768e1f27115ea241"
+    "mtime": 1791368631.349429,
+    "seen": 1791369535.627242,
+    "ast_hash": "fe08b0abe33c26a05a0cb8cbfbeefa66",
+    "semantic_hash": ""
   },
   "agent/print-agent.mjs": {
-    "mtime": 1791362519.7440403,
-    "seen": 1791366018.869146,
-    "ast_hash": "bdf20a4442e770762be3378fa58a5c2b",
+    "mtime": 1791368632.909912,
+    "seen": 1791369535.6278002,
+    "ast_hash": "6b88f3f9c42ae6d368f255cc9677ce94",
     "semantic_hash": ""
   },
   "data/reset.js": {
@@ -1026,9 +1026,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1791364624.3327863,
-    "seen": 1791366018.8963578,
-    "ast_hash": "f9339cd1cc7284b15bfe7e71a326877d",
+    "mtime": 1791369304.3296075,
+    "seen": 1791369535.6443837,
+    "ast_hash": "59c7337bdb5ac32bf89376721a1e1dc6",
     "semantic_hash": ""
   },
   "public/delivery-map.js": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "server.mjs": {
-    "mtime": 1791365780.1005077,
-    "seen": 1791366018.9085493,
-    "ast_hash": "32c52aabc0812b937bd6e4c5022d31f6",
+    "mtime": 1791369261.5865126,
+    "seen": 1791369535.649908,
+    "ast_hash": "172e7143135374a49a0bc5f4eeeaca54",
     "semantic_hash": ""
   },
   ".opencode/skills/graphify/SKILL.md": {
@@ -2100,9 +2100,9 @@
     "semantic_hash": ""
   },
   "lib/atlas.js": {
-    "mtime": 1790963109.5615466,
-    "seen": 1790963178.1400728,
-    "ast_hash": "9b0023dec949bbab860749ac5502dbf0",
+    "mtime": 1791369300.9476054,
+    "seen": 1791369535.6350555,
+    "ast_hash": "a5791e8a7bf0ba501a76b6ca81cee527",
     "semantic_hash": ""
   },
   "scripts/init-atlas.mjs": {
@@ -2112,9 +2112,9 @@
     "semantic_hash": ""
   },
   "scripts/test-atlas.mjs": {
-    "mtime": 1790497458.6876113,
-    "seen": 1790510891.0611997,
-    "ast_hash": "e47b1d70472d217ae0a670ee2bb4befe",
+    "mtime": 1791369211.1806474,
+    "seen": 1791369535.6497228,
+    "ast_hash": "53f902a59a3061c176ff180f2a40949c",
     "semantic_hash": ""
   },
   "lib/seo.js": {
@@ -2814,9 +2814,9 @@
     "semantic_hash": ""
   },
   "scripts/print-safety-check.mjs": {
-    "mtime": 1791364294.8155713,
-    "seen": 1791366018.9058938,
-    "ast_hash": "d45069d53ad46181f4fc50c6cc83253c",
+    "mtime": 1791369300.9476054,
+    "seen": 1791369535.649,
+    "ast_hash": "19aa6ac9617da316ad0cff5f68d7112b",
     "semantic_hash": ""
   },
   "lib/reviews.js": {
@@ -3510,9 +3510,9 @@
     "semantic_hash": ""
   },
   "lib/partner_routes.js": {
-    "mtime": 1791364294.8115683,
-    "seen": 1791366018.8923817,
-    "ast_hash": "9800a0fd4df717431c4d5761a920bbf7",
+    "mtime": 1791369215.901987,
+    "seen": 1791369535.6411753,
+    "ast_hash": "f08b29b8c5f51b75f8e623f4ff36cbe5",
     "semantic_hash": ""
   },
   "lib/partners.js": {
@@ -3654,15 +3654,15 @@
     "semantic_hash": ""
   },
   "scripts/split-print-check.mjs": {
-    "mtime": 1791365914.4354303,
-    "seen": 1791366018.906855,
-    "ast_hash": "4e973422cdb670fa8da8100d1be0290f",
+    "mtime": 1791369215.902643,
+    "seen": 1791369535.6493618,
+    "ast_hash": "172284db65ecd801c68cbc3d105f239c",
     "semantic_hash": ""
   },
   "docs/print-and-address-ux.md": {
-    "mtime": 1791366819.0289528,
-    "seen": 1791366948.9790204,
-    "ast_hash": "91d0b53e04e714eaf727e3ac04494d4c",
+    "mtime": 1791369650.6464236,
+    "seen": 1791369758.1174533,
+    "ast_hash": "5e51f423bf932461241bf219a361ef2d",
     "semantic_hash": ""
   },
   "docs/order-ux-preview/locality-checkout-mobile.jpg": {
@@ -3693,6 +3693,48 @@
     "mtime": 1791366026.8745968,
     "seen": 1791366949.0331435,
     "ast_hash": "e6a8b9b0d63fe523f0a2b3c0394ee372",
+    "semantic_hash": ""
+  },
+  "agent/cover.test.js": {
+    "mtime": 1791368757.2199774,
+    "seen": 1791369535.6272473,
+    "ast_hash": "0f50e8cb7a14aeabe34d0d3082ec6455",
+    "semantic_hash": ""
+  },
+  "scripts/atlas-safety-check.mjs": {
+    "mtime": 1791369649.0032377,
+    "seen": 1791369758.0766518,
+    "ast_hash": "686876e44a3e01f253b937a2b79d47ec",
+    "semantic_hash": ""
+  },
+  "agent/assets/order-cover.pdf": {
+    "mtime": 1791310648.943935,
+    "seen": 1791369535.6860142,
+    "ast_hash": "f63663049bca4fe5f2fcbe74a4a98df4",
+    "semantic_hash": ""
+  },
+  "output/pdf/printkarr-cover-preview.pdf": {
+    "mtime": 1791368640.2110617,
+    "seen": 1791369535.6863656,
+    "ast_hash": "8dc3776a74ce7772db42efb4c24c1d19",
+    "semantic_hash": ""
+  },
+  "tmp/pdfs/cover-preview.png": {
+    "mtime": 1791368641.2745235,
+    "seen": 1791369535.756701,
+    "ast_hash": "b1fe3ae8d9205b638d0f1ff1ede2fb78",
+    "semantic_hash": ""
+  },
+  "tmp/pdfs/cover-source.png": {
+    "mtime": 1791368380.2342732,
+    "seen": 1791369535.7567084,
+    "ast_hash": "4b323c944e76d7dd8343305a3aac9bd8",
+    "semantic_hash": ""
+  },
+  "tmp/cover-bench/SumatraPDF-settings.txt": {
+    "mtime": 1791369516.0226977,
+    "seen": 1791369758.1275718,
+    "ast_hash": "c7c88c448f1f637ffbf794b48d12d828",
     "semantic_hash": ""
   }
 }

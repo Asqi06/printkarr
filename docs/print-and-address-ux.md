@@ -6,6 +6,12 @@ The updated agent downloads the original PDF, creates two temporary PDFs, valida
 
 These are **separate sets**: duplex applies within each set. The shop must arrange original page order or bind after printing. Epson L3250 duplex remains manual. Existing mixed orders retain their manual workflow; old agents cannot claim new split orders. Run `npm ci` and restart the laptop agent after updating its checkout. Real printer output still needs an operator check.
 
+The agent cover uses the supplied PrintKarr artwork in `agent/assets/order-cover.pdf`. It preserves the design and QR, adds compact order metadata in the clear upper-right corner, and prints one separate single-sided colour sheet per order. The cover renders before any paper is submitted; document copies, colour mode and duplex settings remain separate. Metadata uses standard Latin fonts with clipped long names and replacement characters for unsupported scripts.
+
+Assigned partner shops can download the same cover through their protected order desk. The generated preview also passed the actual Sumatra render check. Its physical test is pending while existing Epson jobs finish; their queue was left untouched.
+
+Atlas startup reloads the latest state after file restoration and retries only boot maintenance on a version conflict, up to three attempts. A failed boot closes its database connection and starts no background timers. Background maintenance refreshes Atlas before changing data. Stale writes stop before file sync; cleanup preserves unknown/newer uploads from other instances. Customer writes retain the version guard. Run `npm run test:atlas-safety` for the offline regression and `npm run test:atlas` for persistence in a separate temporary database.
+
 Address checkout uses saved addresses directly, with a default first. A new address asks for the full written address, city, PIN, phone and locality. It is saved for the next order. Locality coordinates estimate the delivery fee and shop proximity; optional device location takes precedence. GPS denial does not block locality checkout, and a late GPS callback cannot overwrite a changed locality or city. No map library or API key is required for address entry.
 
 Vapi rates retain their distance bands: ₹15–₹50 express and ₹10–₹25 scheduled. Distance remains a 1.25× straight-line estimate, rather than a road route. School / college rates remain ₹10 scheduled / ₹25 express. Approximate locality centres are labelled; rider navigation searches the full written address instead of claiming the locality centre is the doorstep.

@@ -61,6 +61,7 @@ async function stop() {
 
 try {
   fs.cpSync(path.join(root, 'lib'), path.join(dir, 'lib'), { recursive: true });
+  fs.cpSync(path.join(root, 'agent'), path.join(dir, 'agent'), { recursive: true });
   fs.cpSync(path.join(root, 'public'), path.join(dir, 'public'), { recursive: true });
   fs.copyFileSync(path.join(root, 'server.mjs'), path.join(dir, 'server.mjs'));
   fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"module"}');

@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import multer from 'multer';
-import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas } from './lib/atlas.js';
+import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas, closeAtlas } from './lib/atlas.js';
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
 import { quote, activePrintJobs, surchargeFees, deliveryPoint, addressPoint, deliveryFeeFor } from './lib/pricing.js';
@@ -2200,13 +2200,6 @@ app.get('/qr.png', async (req, res) => {
   }
 });
 
-// Every 5 minutes: completed-file retention plus abandoned-upload cleanup.
-// Order records and history stay; document files are removed.
-setInterval(() => {
-  try { janitor(ROOT); } catch (error) { console.error('File cleanup failed:', error.message); }
-  if (atlasEnabled) flushAtlas().catch((error) => console.error('Atlas file cleanup failed:', error.message));
-}, 300e3).unref();
-
 function safeToken(t) {
   return /^[a-f0-9]{32}$/.test(String(t || '')) ? String(t) : null;
 }
@@ -2556,6 +2549,7 @@ function diskCheck() {
 async function bootstrap() {
   assertPersistentStorage();
   await initAtlas(DATA_FILE, path.join(DATA_DIR, 'uploads'));
+  await refreshAtlas(); // File restoration can take long enough for another instance to update Atlas.
   if (!atlasEnabled && process.env.NODE_ENV === 'production' && !fs.existsSync(DATA_FILE) && process.env.INIT_EMPTY_DB === 'yes') {
     if (fs.existsSync(path.join(DATA_DIR, '.diskid'))) throw new Error('Previously initialized data volume has no database; restore its backup before starting.');
     saveDb(blankDb());
@@ -2573,13 +2567,6 @@ async function bootstrap() {
   const db = loadDb();
   campaignConfig(db);
   if (settleWallets(db)) saveDb(db);
-  setInterval(() => {
-    try { const current = loadDb(); if (settleWallets(current)) saveDb(current); }
-    catch (error) { console.error('Wallet settlement failed:', error.message); }
-  }, 60000).unref();
-  setInterval(() => {
-    runNotificationJobs().catch((error) => console.error('Notification delivery failed:', error.message));
-  }, 60000).unref();
   // Backfill referral codes + config for databases created before referrals.
   let touched = false;
   for (const u of db.users) {
@@ -2620,9 +2607,33 @@ async function bootstrap() {
   }
   await flushAtlas();
 }
-bootstrap().then(() => app.listen(PORT, () =>
-  console.log(`Printkarr (${process.env.NODE_ENV === 'production' ? 'production' : 'demo'}) live on port ${PORT}`)
-)).catch((error) => {
+async function start() {
+  // Only boot maintenance is retried; customer writes must still fail on a version conflict.
+  for (let attempt = 0; ; attempt++) {
+    try { await bootstrap(); break; }
+    catch (error) {
+      if (error.code !== 'ATLAS_VERSION_CONFLICT' || attempt >= 2) throw error;
+      console.warn('Atlas changed during startup; reloading the latest data.');
+    }
+  }
+  const server = app.listen(PORT);
+  await new Promise((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });
+  console.log(`Printkarr (${process.env.NODE_ENV === 'production' ? 'production' : 'demo'}) live on port ${PORT}`);
+  setInterval(async () => {
+    try { await refreshAtlas(); janitor(ROOT); await flushAtlas(); }
+    catch (error) { console.error('File cleanup failed:', error.message); }
+  }, 300e3).unref();
+  setInterval(async () => {
+    try { await refreshAtlas(); const current = loadDb(); if (settleWallets(current)) saveDb(current); await flushAtlas(); }
+    catch (error) { console.error('Wallet settlement failed:', error.message); }
+  }, 60000).unref();
+  setInterval(async () => {
+    try { await refreshAtlas(); await runNotificationJobs(); }
+    catch (error) { console.error('Notification delivery failed:', error.message); }
+  }, 60000).unref();
+}
+start().catch(async (error) => {
   console.error('Startup refused:', error.message);
+  await closeAtlas().catch(() => {});
   process.exitCode = 1;
 });
