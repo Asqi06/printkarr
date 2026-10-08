@@ -76,7 +76,12 @@ async function printFile(file, order, tag, appData) {
   }
   const started = Date.now();
   if (process.platform !== 'win32') throw new Error('Monitored printing requires Windows');
-  const report = JSON.parse(await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', MONITOR, '-Printer', PRINTER, '-Sumatra', SUMATRA, '-File', file, '-Settings', settings, '-AppData', appData, '-TimeoutSeconds', String(PRINT_TIMEOUT)], (PRINT_TIMEOUT + 30) * 1000));
+  const cancellationFile=path.join(appData,'stop-'+tag);let checking=false,closed=false;
+  const timer=setInterval(async()=>{if(checking)return;checking=true;try{if((await api(`/api/agent/${order.id}/progress`)).stopRequested && !closed)fs.writeFileSync(cancellationFile,'stop');}catch(error){console.log(`Stop check unavailable: ${error.message}`);}finally{checking=false;}},2000);
+  let report;
+  try { report = JSON.parse(await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', MONITOR, '-Printer', PRINTER, '-Sumatra', SUMATRA, '-File', file, '-Settings', settings, '-AppData', appData, '-TimeoutSeconds', String(PRINT_TIMEOUT),'-CancellationFile',cancellationFile], (PRINT_TIMEOUT + 30) * 1000)); }
+  finally {closed=true;clearInterval(timer);}
+  if(report.observedJobs<1)throw new Error('No printer spool job observed; inspect output before retrying');
   if (!report.queueDrained) throw new Error('Printer queue did not drain');
   console.log(`queue drained [${tag}] ${path.basename(file)} (${settings}) in ${Date.now() - started}ms`);
   return report;
@@ -86,9 +91,11 @@ async function processJob(order) {
   if (!/^PK-[A-Z0-9-]{3,}$/.test(String(order.id))) throw new Error('Invalid order ID from server');
   const workDir = path.join(TMP, order.id);
   const appData = path.join(workDir, 'sumatra');
-  fs.mkdirSync(workDir, { recursive: true });
+  try { await api(`/api/agent/${order.id}/started`, { method: 'POST', body: JSON.stringify({splitMixed:order.splitMixed === true}) }); }
+  catch(error){console.log(`job ${order.id}: claim skipped — ${error.message}`);return;}
+  const completedParts=[];
   try {
-    await api(`/api/agent/${order.id}/started`, { method: 'POST', body: JSON.stringify({splitMixed:order.splitMixed === true}) });
+    fs.mkdirSync(workDir, { recursive: true });
     console.log(`job ${order.id}: ${order.document} (${order.pages}p x${order.copies}, ${order.printType})`);
     const dl = await fetch(`${BASE}/api/agent/file/${order.id}`, { headers: { Authorization: 'Bearer ' + TOKEN }, signal: AbortSignal.timeout(120000) });
     if (!dl.ok) throw new Error(`download -> ${dl.status}`);
@@ -128,16 +135,18 @@ async function processJob(order) {
     console.log(`job ${order.id}: branded cover ${cover.length} bytes (one page)`);
     // Cover stays its own single-sided job: merging it into a duplexed
     // document would share its sheet with page 1. Two jobs, correct output.
+    if((await api(`/api/agent/${order.id}/progress`,{method:'POST',body:JSON.stringify({phase:'cover',completedParts})})).stopRequested)throw new Error('Print stopped from admin before cover submission');
     await printFile(coverPdf, { ...order, sides: 'single', printType: 'color', pageRange: null, copies: 1 }, 'cover', appData);
     const report = {queueDrained:true,observedJobs:0};
-    const completedParts=[];
+    completedParts.push('cover');
     for (const job of jobs) {
+      if((await api(`/api/agent/${order.id}/progress`,{method:'POST',body:JSON.stringify({phase:job.tag,completedParts})})).stopRequested)throw new Error('Print stopped from admin before next set');
       const partReport = await printFile(files.get(job.tag),job,job.tag,appData);
       report.queueDrained = report.queueDrained && partReport.queueDrained === true;
       report.observedJobs += partReport.observedJobs || 0;
       completedParts.push(job.tag);
     }
-    const doneRes = await api(`/api/agent/${order.id}/done`, { method: 'POST', body: JSON.stringify({ splitMixed:order.splitMixed === true, completedParts, queueDrained: report.queueDrained === true, observedJobs: report.observedJobs || 0 }) });
+    const doneRes = await api(`/api/agent/${order.id}/done`, { method: 'POST', body: JSON.stringify({ splitMixed:order.splitMixed === true, completedParts:completedParts.filter(p=>p!=='cover'), queueDrained: report.queueDrained === true, observedJobs: report.observedJobs || 0 }) });
     console.log(`job ${order.id}: ${doneRes?.verificationRequired ? 'OUTPUT CHECK REQUIRED — confirm all pages in admin before the queue continues' : 'READY'}`);
   } catch (e) {
     console.log(`job ${order.id}: FAILED — ${e.message}`);

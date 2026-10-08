@@ -2,6 +2,7 @@
 // Email verification is a labelled local simulation; payments and printers are disconnected.
 import fs from 'node:fs';
 import path from 'node:path';
+import {tmpdir} from 'node:os';
 import crypto from 'node:crypto';
 import multer from 'multer';
 import { runInNewContext } from 'node:vm';
@@ -25,7 +26,8 @@ import { installNotificationRoutes } from '../lib/notify_routes.js';
 import { saveReview } from '../lib/reviews.js';
 const {adminOrderDetail} = adminViews;
 import { orderDetail, customerDashboard, ordersList } from '../lib/views_customer.js';
-import { transition, nextStates } from '../lib/machine.js';
+import { buildOrderCover } from '../agent/cover.js';
+import { transition, nextStates, canTransition, canFulfil } from '../lib/machine.js';
 import { fulfillmentFor } from '../lib/partners.js';
 import { installPartnerRoutes } from '../lib/partner_routes.js';
 import { firstOffers } from '../lib/offers.js';
@@ -36,7 +38,8 @@ const source = fs.readFileSync(new URL('../server.mjs', import.meta.url), 'utf8'
 const body = (method, route) => { const start = source.indexOf(`app.${method}('${route}'`), end = source.indexOf('\n});',start)+4; if (start < 0) throw new Error(route); return source.slice(start,end); };
 
 export function createOrderPreview(seed = previewDb()) {
-  return createStorePreview(seed, {
+  const uploadsDir=path.join(fs.mkdtempSync(path.join(tmpdir(),'printkarr-order-preview-')),'data','uploads');fs.mkdirSync(uploadsDir,{recursive:true});
+  return createStorePreview(seed, { uploadsDir,
     resolveUser(db, req) { const cookies = parseCookies(req.headers.cookie); if (cookies[COOKIE]) return db.users.find(u => u.id === cookies[COOKIE]) || null; const role = cookies.preview_role || 'customer'; return role === 'guest' ? null : db.users.find(u => u.role === role); },
     installPrintRoutes({ app, loadDb, saveDb, currentUser, requireRole, uploadsDir }) {
       installPartnerRoutes(app, {loadDb, saveDb, requireRole, siteOrigin:(_req,_res,next)=>next(), uploadsDir, notifyState(){}, qualifyForOrder(){}});
@@ -45,7 +48,7 @@ export function createOrderPreview(seed = previewDb()) {
       const upload = multer({dest:uploadsDir,limits:{fileSize:20*1024*1024}});
       const disk = { ...fs, promises: { ...fs.promises, readFile: name => fs.promises.readFile(path.join(uploadsDir,path.basename(name))) }, readFileSync: name => fs.readFileSync(path.join(uploadsDir,path.basename(name))), renameSync:(from,to)=>fs.renameSync(path.join(uploadsDir,path.basename(from)),path.join(uploadsDir,path.basename(to))) };
       const scope = { ...print, ...pricing, ...printPricingPolicy, LOCALITIES, distanceFee, ...campaign, ...packs, ...referrals, ...files, ...account, ...publicViews, ...packViews, ...referralViews, app, loadDb, saveDb, currentUser, requireRole, upload, fs:disk, crypto, path, Buffer, URL, COOKIE,
-        ROOT:path.dirname(uploadsDir), parseCookies, normEmail, normPhone, esc, firstOffers, fulfillmentFor, addPrint, cartFor, cartItems, cartQuote, printNet, createPurchase:(db,cart,id,selection,validate)=>createPurchase(db,cart,id,selection,validate,true), gatewayOn:()=>false, checkPackQuota, canUseOwnerTestPrint, transition,
+        ROOT:path.resolve(uploadsDir,'../..'), parseCookies, normEmail, normPhone, esc, firstOffers, fulfillmentFor, addPrint, cartFor, cartItems, cartQuote, printNet, createPurchase:(db,cart,id,selection,validate)=>createPurchase(db,cart,id,selection,validate,true), gatewayOn:()=>false, checkPackQuota, canUseOwnerTestPrint, transition, canTransition, canFulfil, buildOrderCover, agentSeenAt:Date.now(),refundPaidOrder(){},finishPrintAtKiosk(db,o,by){o.printAwaitingVerification=false;transition(o,'PRINTED',{by});transition(o,'READY_FOR_PICKUP',{by});saveDb(db);},
         offerDevice(){}, maxUploadBytes:()=>20*1024*1024, otpLimiter:(_req,_res,next)=>next(),
         requestEmailOtp:async()=>({ok:true,mailed:false,demo:'000000',error:'LOCAL PREVIEW: no email is sent. Use the demo code.'}), verifyEmailOtp:(_email,code)=>({ok:code==='000000',error:'Use local demo code 000000.'}), createSession:id=>id,
         referralCodeFor:referrals.codeFor, validateCoupon:couponPolicy.validateCoupon, notifyState(){}, waForwardUrl:()=>null,
@@ -78,6 +81,12 @@ export function createOrderPreview(seed = previewDb()) {
       runInNewContext(source.match(/async function sendSplitDraft\([^]*?\n\}/)[0],scope);
       runInNewContext(body('get','/customer/orders/new/:draftId/split/:part.pdf'),scope);
       runInNewContext(body('get','/order/:draft/split/:part.pdf'),scope);
+      runInNewContext(body('post','/admin/orders/:id/transition'),scope);
+      runInNewContext(body('get','/api/agent/file/:id'),scope);
+      runInNewContext(body('get','/admin/orders/:id/file'),scope);
+      runInNewContext(body('get','/api/agent/:id/progress'),scope);
+      runInNewContext(body('post','/api/agent/:id/progress'),scope);
+      runInNewContext(body('post','/api/agent/:id/failed'),scope);
       const agentSource = source.slice(source.indexOf('const agentJob ='),source.indexOf("app.get('/api/agent/file/:id'"));
       runInNewContext(agentSource,scope);
       runInNewContext(source.slice(source.indexOf('function agentStep('),source.indexOf("app.post('/api/agent/:id/done'")),scope);

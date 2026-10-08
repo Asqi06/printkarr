@@ -6,7 +6,12 @@ import { blankDb } from '../lib/db.js';
 import { pages } from './design-check.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { get as httpGet } from 'node:http';
+import {runInNewContext} from 'node:vm';
 
+const serverSource=readFileSync(new URL('../server.mjs',import.meta.url),'utf8').replaceAll('\r\n','\n');
+const origin=runInNewContext(serverSource.match(/function baseUrl\(req\) \{[^]*?\n\}/)[0]+'\n'+serverSource.match(/function googleRedirectUri\(req\) \{[^]*?\n\}/)[0]+'\n({baseUrl,googleRedirectUri});',{SITE,URL});
+for(const hostname of ['printkarr.onrender.com','printkarr.in','www.printkarr.in']){const req={hostname,protocol:'https',get:()=> 'printkarr.onrender.com'};assert.equal(origin.baseUrl(req),SITE);assert.equal(origin.googleRedirectUri(req),SITE+'/auth/google/callback');}
+assert.equal(origin.baseUrl({hostname:'localhost',protocol:'http',get:()=> 'localhost:3000'}),'http://localhost:3000');
 const app = express();
 discoveryRoutes(app, POSTS);
 const server = app.listen(0, '127.0.0.1');
@@ -58,12 +63,15 @@ try {
     const response = await fetch(base + path, { redirect:'manual' });
     assert.equal(response.status, 301, path); assert.equal(response.headers.get('location'), target);
   }
-  const withHost = host => new Promise((resolve,reject) => {
-    httpGet(base + '/about?source=check', { headers:{host} }, res => { res.resume(); resolve({status:res.statusCode,location:res.headers.location}); }).on('error',reject);
+  const withHost = (host,route='/about?source=check') => new Promise((resolve,reject) => {
+    httpGet(base + route, { headers:{host} }, res => { res.resume(); resolve({status:res.statusCode,location:res.headers.location}); }).on('error',reject);
   });
   const hostRedirect = await withHost('www.' + new URL(SITE).host);
   assert.equal(hostRedirect.status,301); assert.equal(hostRedirect.location,SITE + '/about?source=check');
   assert.equal((await withHost('unrelated.example')).status,404, 'No host-header-driven external redirect');
+  for(const route of ['/order?draft=demo','/customer/purchases/demo','/auth/google']){const redirect=await withHost('printkarr.onrender.com',route);assert.equal(redirect.status,302);assert.equal(redirect.location,SITE+route);}
+  assert.equal((await withHost('printkarr.onrender.com','/api/agent/next')).status,404,'Agent authorization is not redirected across origins');
+  assert.match(readFileSync(new URL('../server.mjs',import.meta.url),'utf8'),/referrerPolicy: \{ policy: 'strict-origin-when-cross-origin' \}/,'Checkout can identify its registered origin');
   assert.equal((await fetch(base + '/PRINTING-IN-VAPI/', { method:'POST', redirect:'manual' })).status,404, 'Do not redirect order/form POSTs');
   for (const path of ['/login','/admin/login','/customer','/customer/wallet','/order']) assert.match(pages.get(path), /name="robots" content="noindex,nofollow"/, path + ' private pages excluded');
   for (const html of pages.values()) assert.doesNotMatch(html, /kiosk-3d|three-0/, 'Kiosk stays an image on all pages');

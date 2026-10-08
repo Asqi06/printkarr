@@ -64,11 +64,13 @@
       const response=await fetch(`/customer/purchases/${encodeURIComponent(id)}/gateway`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
       const result=await response.json();if(!response.ok)throw new Error(result.error || 'Could not open payment.');
       if(!window.Razorpay)throw new Error('Payment provider is still loading. Please retry.');
-      new window.Razorpay({key:result.keyId,order_id:result.id,amount:result.amount,currency:'INR',name:'PrintKarr',description:'Prints & stationery',modal:{ondismiss:()=>{button.disabled=false;}},handler(proof){
+      const checkout=new window.Razorpay({key:result.keyId,order_id:result.id,amount:result.amount,currency:'INR',name:'PrintKarr',description:'Prints & stationery',modal:{ondismiss:()=>{button.disabled=false;}},handler(proof){
         const proofForm=document.createElement('form');proofForm.method='POST';proofForm.action=`/customer/purchases/${encodeURIComponent(id)}/verify`;
         Object.entries(proof).forEach(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;proofForm.append(input);});
         document.body.append(proofForm);proofForm.submit();
-      }}).open();
+      }});
+      checkout.on?.('payment.failed',event=>{message.textContent=event.error?.description || 'Payment failed. Your checkout is saved; retry online payment. Contact support if money was deducted.';message.hidden=false;button.disabled=false;});
+      checkout.open();
     }catch(error){message.textContent=error.message;message.hidden=false;button.disabled=false;}
   }
   document.addEventListener('click',event=>{if(event.target.closest('[data-store-gateway]'))pay(event);});

@@ -39,6 +39,7 @@ async function main(){
    if(offered){res.writeHead(204);return res.end();}offered=true;return json(200,{order});
   }
   if(req.method==='GET' && req.url==='/api/agent/file/'+order.id && started){res.writeHead(200,{'Content-Type':'application/pdf'});return res.end(bytes);}
+  if(req.url===`/api/agent/${order.id}/progress`)return json(200,{ok:true,stopRequested:false});
   let body='';for await(const part of req)body+=part;
   let input;try{input=JSON.parse(body);}catch{return json(400,{error:'Invalid fixture request.'});}
   if(req.method==='POST' && req.url===`/api/agent/${order.id}/started`){if(input.splitMixed!==true)return json(400,{error:'Split capability required.'});started=true;return json(200,{ok:true});}

@@ -49,6 +49,35 @@ try{
  assert.equal((await request('/api/agent/'+order.id+'/started',{})).status,409);assert.equal((await request('/api/agent/'+order.id+'/started',{splitMixed:'true'})).status,409,'Capability flag must be a boolean, not arbitrary text');
  const agentPost=(route,body)=>fetch(base+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  assert.equal((await agentPost('/api/agent/'+order.id+'/started',{splitMixed:true})).status,200);assert.equal((await agentPost('/api/agent/'+order.id+'/done',{splitMixed:true,queueDrained:true,completedParts:['bw']})).status,400);assert.equal((await agentPost('/api/agent/'+order.id+'/done',{splitMixed:true,queueDrained:true,completedParts:['bw','color'],observedJobs:2})).status,200);assert.equal(preview.snapshot().orders[0].status,'PRINTING');assert.equal(preview.snapshot().orders[0].printAwaitingVerification,true);
+
+ // Exercise admin recovery and automatic ownership through the actual HTTP handlers.
+ const admin=(to,from,extra={})=>request('/admin/orders/'+order.id+'/transition',{to,from,...extra},'preview_role=admin');
+ assert.equal((await admin('PRINTING','PRINT_QUEUE')).status,302,'Stale forms refresh harmlessly');
+ assert.equal(preview.snapshot().orders[0].printAwaitingVerification,true);
+ assert.equal((await admin('PRINTED','PRINTING')).status,302);assert.equal(preview.snapshot().orders[0].status,'READY_FOR_PICKUP');
+ for(const [part,count] of [['cover',1],['bw',5],['color',2]]){const file=await request('/admin/orders/'+order.id+'/file?part='+part,undefined,'preview_role=admin');assert.equal(file.status,200,await file.clone().text());assert.equal((await PDFDocument.load(await file.arrayBuffer())).getPageCount(),count);}
+ assert.equal((await request('/admin/orders/'+order.id+'/file?part=bw')).status,403,'Customer cannot use admin downloads');
+ seed.orders=[{...order,status:'PRINT_QUEUE',paymentStatus:'pending'}];preview.reset();
+ assert.equal((await request('/api/agent/next?splitMixed=1')).status,204,'Unpaid jobs stay out of the queue');
+ assert.equal((await request('/api/agent/file/'+order.id)).status,404);
+ assert.equal((await admin('PRINTING','PRINT_QUEUE')).status,409);assert.equal((await agentPost('/api/agent/'+order.id+'/started',{splitMixed:true})).status,409);
+ seed.orders=[{...order,status:'PRINT_FAILED',paymentStatus:'pending',purchaseId:null}];preview.reset();
+ assert.equal((await admin('PAYMENT_PENDING','PRINT_FAILED')).status,400);assert.equal((await admin('PAYMENT_PENDING','PRINT_FAILED',{confirmRetry:'1'})).status,302);assert.equal(preview.snapshot().orders[0].status,'PAYMENT_PENDING');
+ seed.orders=[{...order,status:'PRINT_QUEUE'}];preview.reset();
+ assert.equal((await agentPost('/api/agent/'+order.id+'/started',{splitMixed:true})).status,200);
+ assert.equal((await agentPost('/api/agent/'+order.id+'/started',{splitMixed:true})).status,409,'Double claims cannot own the printer');
+ assert.equal((await admin('PRINTED','PRINTING')).status,409,'Agent must finish before output can be confirmed');
+ assert.equal((await admin('PRINT_FAILED','PRINTING')).status,302);assert.equal(preview.snapshot().orders[0].status,'PRINTING','Stop request retains ownership until acknowledgement');
+ assert.equal((await request('/api/agent/'+order.id+'/progress')).status,200);assert.equal((await (await request('/api/agent/'+order.id+'/progress')).json()).stopRequested,true);
+ assert.equal((await agentPost('/api/agent/'+order.id+'/progress',{phase:'bw',completedParts:['cover']})).status,200);
+ assert.equal((await agentPost('/api/agent/'+order.id+'/progress',{phase:'evil',completedParts:[]})).status,400);
+ assert.equal((await agentPost('/api/agent/'+order.id+'/failed',{error:'Stopped safely'})).status,200);
+ assert.equal((await agentPost('/api/agent/'+order.id+'/failed',{error:'Repeated acknowledgement'})).status,200);
+ assert.equal((await admin('PRINT_QUEUE','PRINT_FAILED')).status,400,'Full retries require explicit duplicate-page consent');
+ assert.equal((await admin('PRINT_QUEUE','PRINT_FAILED',{confirmRetry:'1'})).status,302);
+ assert.equal((await admin('PRINTING','PRINT_QUEUE')).status,302);assert.equal(preview.snapshot().orders[0].printOwner,'manual');
+ assert.equal((await agentPost('/api/agent/'+order.id+'/failed',{error:'Lost claim'})).status,409,'An agent cannot fail a manually owned job');
+ assert.equal((await agentPost('/api/agent/'+order.id+'/done',{splitMixed:true,queueDrained:true,completedParts:['bw','color'],observedJobs:2})).status,409);
  seed.orders=[{...order,status:'PRINTING',fulfillmentId:'test-shop',purchaseId:'test-purchase'}];seed.users.push({id:'test-staff',role:'partner',name:'Sample shop staff'},{id:'other-staff',role:'partner',name:'Other shop staff'});seed.partners=[{id:'test-shop',staffId:'test-staff'},{id:'other-shop',staffId:'other-staff'}];seed.purchases=[{id:'test-purchase',partnerState:'ACCEPTED'}];preview.reset();
  const partnerUrl='/partner/files/'+order.id+'/color.pdf';const partnerRes=await request(partnerUrl,undefined,'pk_demo=test-staff');assert.equal(partnerRes.status,200);assert.equal((await PDFDocument.load(await partnerRes.arrayBuffer())).getPageCount(),2);assert.equal((await request(partnerUrl,undefined,'pk_demo=other-staff')).status,404,'Another shop cannot download the split customer file');
  const coverUrl='/partner/files/'+order.id+'/cover.pdf', coverRes=await request(coverUrl,undefined,'pk_demo=test-staff');assert.equal(coverRes.status,200);assert.equal(coverRes.headers.get('cache-control'),'private, no-store');const cover=await PDFDocument.load(await coverRes.arrayBuffer());assert.equal(cover.getPageCount(),1);assert.equal(cover.getTitle(),'PrintKarr cover - '+order.id);assert.equal((await request(coverUrl,undefined,'pk_demo=other-staff')).status,404);

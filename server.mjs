@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import multer from 'multer';
 import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas, closeAtlas } from './lib/atlas.js';
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
-import { transition, canTransition, nextStates, printedAt } from './lib/machine.js';
+import { transition, canTransition, nextStates, printedAt, canFulfil } from './lib/machine.js';
 import { quote, activePrintJobs, surchargeFees, deliveryPoint, addressPoint, deliveryFeeFor } from './lib/pricing.js';
 import { notifyState, runNotificationJobs } from './lib/notify.js';
 import { installNotificationRoutes } from './lib/notify_routes.js';
@@ -50,6 +50,7 @@ import { emailConfigured } from './lib/email.js';
 import { POSTS, vapiPage, damanPage, printPricesPage, landing, nearbyShopsPage, kioskStatusPage, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import { discoveryRoutes, SITE } from './lib/seo.js';
 import QRCode from 'qrcode';
+import { buildOrderCover } from './agent/cover.js';
 import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -94,7 +95,7 @@ function kioskBlockers() {
 const oauthStates = new Map(); // state -> expiresAt (CSRF guard, 10 min)
 
 function googleRedirectUri(req) {
-  return `${req.protocol}://${req.get('host')}/auth/google/callback`;
+  return `${baseUrl(req)}/auth/google/callback`;
 }
 
 const loginView = (err) => loginPage(err, !!GOOGLE.id);
@@ -146,7 +147,8 @@ function shareTokenFor(db, orderId) {
 }
 
 function baseUrl(req) {
-  return `${req.protocol}://${req.get('host')}`;
+  const hostname=new URL(SITE).hostname;
+  return [hostname,'www.'+hostname,'printkarr.onrender.com'].includes(req.hostname) ? SITE : `${req.protocol}://${req.get('host')}`;
 }
 
 // Full order brief → wa.me chat with the owner. No API key involved.
@@ -174,7 +176,7 @@ function waForwardUrl(db, req, order) {
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1); // correct req.protocol/secure cookies behind Render/Railway/nginx
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
 app.use(compression());
 discoveryRoutes(app, POSTS);
 app.use(['/admin', '/customer', '/order', '/login', '/logout', '/auth', '/api', '/share', '/c', '/qr.png'], (_req, res, next) => {
@@ -553,11 +555,19 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   const o = db.orders.find((x) => x.id === req.params.id);
   if (!o) return res.status(404).send(oops(req.user, '/admin/orders', 'Order <em>not found.</em>'));
   const to = req.body.to;
+  if (to === o.status || req.body.from && req.body.from !== o.status) return res.redirect(`/admin/orders/${o.id}`);
+  if (['CONFIRMED','PRINT_QUEUE','PRINTING','PRINTED'].includes(to) && !canFulfil(o)) return res.status(409).send(oops(req.user, `/admin/orders/${o.id}`, 'Payment is not confirmed. Ask the customer to complete online/wallet payment or confirm cash from their checkout before printing.'));
+  if (o.printAgentActive && !o.printAwaitingVerification) {
+    if (to === 'PRINT_FAILED') { o.printStopRequested=true;saveDb(db);return res.redirect(`/admin/orders/${o.id}`); }
+    return res.status(409).send(oops(req.user, `/admin/orders/${o.id}`, 'The automatic agent is still printing. Wait for it to finish or request a safe stop before changing this job.'));
+  }
+  if(to==='PAYMENT_PENDING' && o.status==='PRINT_FAILED' && (canFulfil(o) || o.purchaseId))return res.status(409).send(oops(req.user,`/admin/orders/${o.id}`,'Only an unpaid standalone print can return to checkout. Use the shared purchase for other payment changes.'));
+  if (['PRINT_QUEUE','PAYMENT_PENDING'].includes(to) && o.status==='PRINT_FAILED' && req.body.confirmRetry!=='1') return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'A retry prints the cover and whole document again. Confirm this, or download the split sets to print only missing pages manually.'));
   if (o.purchaseId && ['PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(to)) return res.status(409).send(oops(req.user, `/admin/purchases/${o.purchaseId}`, 'Pack and fulfil all items together from the shared purchase.'));
   if (['CANCELLED', 'REFUNDED'].includes(to) && o.purchaseId) return res.status(409).send(oops(req.user, `/admin/purchases/${o.purchaseId}`, 'Cancel and refund the whole shared purchase from its receipt.'));
   if (['CANCELLED', 'REFUNDED'].includes(to) && (db.purchases || []).some((p) => p.status === 'CREATED' && p.printIds.includes(o.id))) return res.status(409).send(oops(req.user, '/admin/purchases', 'Cancel the shared checkout before changing this print.'));
   if (!canTransition(o.status, to) || to === 'RIDER_ASSIGNED') {
-    return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>'));
+    return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, `This job is now ${esc(o.status)}. Refresh and use the available next action.`));
   }
   if (to === 'PRINTED') {
     const pr = db.printers[0];
@@ -569,9 +579,9 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   }
   try {
     if (to === 'PRINTED') finishPrintAtKiosk(db, o, req.user.id);
-    else transition(o, to, { by: req.user.id });
+    else { transition(o, to, { by: req.user.id });if(to==='PRINTING'){o.printOwner='manual';o.printAgentActive=false;}if(['PRINT_QUEUE','PAYMENT_PENDING'].includes(to)){o.printOwner=null;o.printAgentActive=false;o.printAwaitingVerification=false;o.printStopRequested=false;if(to==='PRINT_QUEUE')o.printProgress=null;} }
   }
-  catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'Illegal <em>move.</em>')); }
+  catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, `This job is now ${esc(o.status)}. Refresh and use the available next action.`)); }
   if (['CANCELLED', 'REFUNDED'].includes(to)) { refundPaidOrder(db, o); voidPendingForOrder(db, o.id); }
   if (to === 'DELIVERED') { qualifyForOrder(db, o); settleWallets(db); }
   if (to !== 'PRINTED') {
@@ -586,14 +596,19 @@ function safeOrderId(id) {
   if (!/^(PK-[A-Z0-9-]{3,}|D[A-Za-z0-9]{6,})$/.test(s)) return null;
   return s;
 }
-app.get('/admin/orders/:id/file', requireRole('admin'), (req, res) => {
+app.get('/admin/orders/:id/file', requireRole('admin'), async (req, res) => {
   const safe = safeOrderId(req.params.id);
   if (!safe) return res.status(400).send(oops(req.user, '/admin/orders', 'Bad <em>ID.</em>'));
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
   const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o && o.fileExt));
   if (!fs.existsSync(p)) return res.status(404).send(oops(req.user, '/admin/orders', 'File <em>missing.</em>'));
-  res.download(p, orderFile(safe, o && o.fileExt));
+  try {
+    if(req.query.part==='cover')return res.type('pdf').attachment(safe+'-cover.pdf').send(await buildOrderCover(o));
+    if(['bw','color'].includes(req.query.part)) { const part=(await splitMixedPdf(fs.readFileSync(p),o)).find(p=>p.printType===req.query.part);return res.type('pdf').attachment(safe+'-'+req.query.part+'.pdf').send(part.bytes); }
+    if(req.query.part)return res.status(400).send('Choose the cover, B&W or colour set.');
+    res.download(p, orderFile(safe, o && o.fileExt));
+  }catch{return res.status(400).send(oops(req.user,`/admin/orders/${safe}`,'Could not prepare this print set. Review the original PDF before printing.'));}
 });
 
 // §47 route map: printer status lives inside the print queue — canonical redirect.
@@ -602,7 +617,7 @@ app.get('/admin/printers', requireRole('admin'), (_req, res) => {
 });
 
 app.get('/admin/qr', requireRole('admin'), (req, res) => {
-  res.send(classroomQr(req.user, `${req.protocol}://${req.get('host')}/order`));
+  res.send(classroomQr(req.user, `${baseUrl(req)}/order`));
 });
 
 app.get('/admin/print-queue', requireRole('admin'), (req, res) => {
@@ -1645,7 +1660,7 @@ app.get('/customer/referrals', requireRole('customer'), (req, res) => {
     cfg, code,
     stats: referralStats(db, req.user.id),
     cash, credit, payouts,
-    shareText: `Assignment ka print chahiye? PrintKarr pe PDF upload karo. Add ₹${cfg.minTopup}+ to your wallet and complete your first paid order to get ₹${cfg.friendOff} credit: ${req.protocol}://${req.get('host')}/order?ref=${code}`
+    shareText: `Assignment ka print chahiye? PrintKarr pe PDF upload karo. Add ₹${cfg.minTopup}+ to your wallet and complete your first paid order to get ₹${cfg.friendOff} credit: ${baseUrl(req)}/order?ref=${code}`
   }));
 });
 
@@ -2108,7 +2123,7 @@ app.get('/api/agent/next', agentAuth, (req, res) => {
   const blocked = db.orders.find(o => !o.fulfillmentId && ['PRINTING', 'PRINT_FAILED'].includes(o.status));
   if (blocked) return res.json({ paused: true, reason: `Inspect ${blocked.id} in admin before continuing` });
   const job = db.orders
-    .filter((o) => !o.fulfillmentId && o.status === 'PRINT_QUEUE' && (o.printType !== 'mixed' || o.splitMixed === true && req.query?.splitMixed === '1'))
+    .filter((o) => !o.fulfillmentId && o.status === 'PRINT_QUEUE' && canFulfil(o) && (o.printType !== 'mixed' || o.splitMixed === true && req.query?.splitMixed === '1'))
     .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))[0];
   if (!job) return res.status(204).end();
   res.json({ order: agentJob(job) });
@@ -2119,7 +2134,7 @@ app.get('/api/agent/file/:id', agentAuth, (req, res) => {
   if (!safe) return res.status(400).json({ error: 'Bad ID.' });
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
-  if (!o || o.fulfillmentId || o.printType === 'mixed' && !o.splitMixed || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
+  if (!o || !canFulfil(o) || o.fulfillmentId || o.printType === 'mixed' && !o.splitMixed || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
     return res.status(404).json({ error: 'Not printable right now.' });
   }
   const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o.fileExt));
@@ -2137,9 +2152,10 @@ function agentStep(to, note) {
     if (!o) return res.status(404).json({ error: 'Unknown order.' });
     if (o.fulfillmentId || o.printType === 'mixed' && (!o.splitMixed || req.body.splitMixed !== true)) return res.status(409).json({ error: 'This order requires the updated split-print agent or manual fulfilment.' });
     try {
+      if(to==='PRINTING' && !canFulfil(o))throw new Error('Payment not confirmed');
       if (to === 'PRINTING' && db.orders.some(x => !x.fulfillmentId && x.id !== o.id && (['PRINTING', 'PRINT_FAILED'].includes(x.status)))) throw new Error('Print queue paused');
       transition(o, to, { by: 'agent', note: note || req.body.note || null });
-      if (to === 'PRINTING') o.printAwaitingVerification = false;
+      if (to === 'PRINTING') Object.assign(o,{printOwner:'agent',printAgentActive:true,printStopRequested:false,printAwaitingVerification:false,printProgress:{phase:'preparing',completedParts:[],at:new Date().toISOString()}});
     } catch {
       return res.status(409).json({ error: `Cannot move to ${to} from ${o.status}.` });
     }
@@ -2148,6 +2164,19 @@ function agentStep(to, note) {
     res.json({ ok: true, order: agentJob(o) });
   };
 }
+app.get('/api/agent/:id/progress', agentAuth, (req,res)=>{
+  const o=loadDb().orders.find(o=>o.id===req.params.id);
+  if(!o || o.fulfillmentId)return res.status(404).json({error:'Unknown central print job.'});
+  res.json({stopRequested:o.printStopRequested===true || o.status!=='PRINTING' || o.printOwner==='manual'});
+});
+app.post('/api/agent/:id/progress', agentAuth, (req,res)=>{
+  const db=loadDb(),o=db.orders.find(o=>o.id===req.params.id);
+  if(!o || o.fulfillmentId || o.status!=='PRINTING' || o.printOwner!=='agent')return res.status(409).json({error:'This job is no longer claimed by the automatic agent.'});
+  const phase=req.body.phase, parts=req.body.completedParts;
+  if(!['preparing','cover','bw','color','document','verify'].includes(phase) || !Array.isArray(parts) || parts.some(p=>!['cover','bw','color','document'].includes(p)))return res.status(400).json({error:'Invalid print progress.'});
+  o.printProgress={phase,completedParts:[...new Set(parts)],at:new Date().toISOString()};saveDb(db);
+  res.json({ok:true,stopRequested:o.printStopRequested===true});
+});
 app.post('/api/agent/:id/started', agentAuth, agentStep('PRINTING', 'agent picked up'));
 app.post('/api/agent/:id/done', agentAuth, (req, res) => {
   const safe = safeOrderId(req.params.id);
@@ -2156,10 +2185,13 @@ app.post('/api/agent/:id/done', agentAuth, (req, res) => {
   const o = db.orders.find((x) => x.id === safe);
   if (!o) return res.status(404).json({ error: 'Unknown order.' });
   if (o.fulfillmentId || o.printType === 'mixed' && (!o.splitMixed || req.body.splitMixed !== true)) return res.status(409).json({ error: 'This order requires the updated split-print agent or manual fulfilment.' });
-  if (o.status !== 'PRINTING') return res.status(409).json({ error: `Cannot report output from ${o.status}.` });
+  if (o.status !== 'PRINTING' || o.printOwner==='manual') return res.status(409).json({ error: `Automatic output cannot be reported for this ${o.status} job.` });
   if (o.splitMixed && (!Array.isArray(req.body.completedParts) || req.body.completedParts.length !== 2 || !['bw','color'].every(type=>req.body.completedParts.includes(type)))) return res.status(400).json({error:'Both B&W and colour print sets must finish before reporting completion.'});
+  if (!Number.isInteger(req.body.observedJobs) || req.body.observedJobs<(o.splitMixed ? 2 : 1) || req.body.observedJobs>1000)return res.status(400).json({error:'No printer submission was observed for every document set. Inspect output before retrying.'});
+  if(!o.splitMixed && req.body.completedParts !== undefined && (!Array.isArray(req.body.completedParts) || req.body.completedParts.length!==1 || req.body.completedParts[0]!=='document'))return res.status(400).json({error:'Invalid document completion report.'});
   if (req.body.queueDrained !== true) return res.status(400).json({ error: 'Printer queue completion report required. Update the print agent.' });
   // Spooler completion is not proof of legible output. An operator confirms the tray.
+  o.printAgentActive=false;o.printProgress={...o.printProgress,phase:'verify',completedParts:req.body.completedParts || ['document'],at:new Date().toISOString()};
   o.printAwaitingVerification = true;
   o.printReport = { queueDrainedAt: new Date().toISOString(), observedJobs: Math.max(0, Math.min(1000, Number(req.body.observedJobs) || 0)) };
   saveDb(db);
@@ -2171,10 +2203,12 @@ app.post('/api/agent/:id/failed', agentAuth, (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
   if (!o) return res.status(404).json({ error: 'Unknown order.' });
-  if (!['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
-    return res.status(409).json({ error: `Cannot fail from ${o.status}.` });
+  if(o.status==='PRINT_FAILED'){o.printAgentActive=false;saveDb(db);return res.json({ok:true,order:agentJob(o)});}
+  if (o.fulfillmentId || o.printOwner==='manual' || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
+    return res.status(409).json({ error: `Cannot fail this ${o.status} job from the automatic agent.` });
   }
   try {
+    o.printAgentActive=false;
     transition(o, 'PRINT_FAILED', { by: 'agent', note: String(req.body.error || 'print failed').slice(0, 200) });
   } catch {
     return res.status(409).json({ error: `Cannot fail from ${o.status}.` });
@@ -2188,7 +2222,7 @@ app.post('/api/agent/:id/failed', agentAuth, (req, res) => {
 // printed QR works wherever the laptop sits (LAN IP included).
 const qrCache = new Map();
 app.get('/qr.png', async (req, res) => {
-  const url = `${req.protocol}://${req.get('host')}/order`;
+  const url = `${baseUrl(req)}/order`;
   try {
     if (!qrCache.has(url)) {
       qrCache.set(url, await QRCode.toBuffer(url, { width: 640, margin: 2 }));
@@ -2229,7 +2263,7 @@ app.get('/share/:token', (req, res) => {
 // customer scans it with their phone and confirms pickup — no login, the
 // token IS the key. Single-use, order must still await pickup.
 function collectUrl(req, token) {
-  return `${req.protocol}://${req.get('host')}/c/${token}`;
+  return `${baseUrl(req)}/c/${token}`;
 }
 app.get('/c/:token', (req, res) => {
   const tok = safeToken(req.params.token);
