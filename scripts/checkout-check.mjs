@@ -11,7 +11,7 @@ import { readFileSync, mkdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { blankDb } from '../lib/db.js';
 import { addPrint, cartFor, cartItems, cartQuote, printNet, checkPackQuota } from '../lib/store.js';
-import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, walletOf, deliveryPlan, deliveryChoice, validateDestination, batchPrice, validateCampaign } from '../lib/campus.js';
+import { campaignConfig, eligibleWalletOffers, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, walletOf, deliveryPlan, deliveryChoice, validateDestination, institutionAddress, batchPrice, validateCampaign } from '../lib/campus.js';
 import { fulfillmentFor } from '../lib/partners.js';
 import { deliveryFeeFor, deliveryPoint, addressPoint, rangePages } from '../lib/pricing.js';
 import { analyzeUpload, orderFile } from '../lib/files.js';
@@ -33,8 +33,8 @@ function handler(method, route, extra = {}) {
   const quote = runInNewContext(pricing+'\nquote;', {...printPricingPolicy,loadDb:()=>db,Intl,Date,Set,Number,pageRange,printSides,LOCALITIES,kmBetween,distanceFee});
   runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+source.slice(start,end), {
     app:{[method](...args){result=args.at(-1);result.middleware=args.slice(1,-1).filter(Boolean);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
-    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, addressPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
-    printPlan,printSides,printDescription,optionsStep,activePrintJobs,surchargeFees,normPhone,normEmail,esc,crypto,path,Buffer,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
+    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, institutionAddress, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, addressPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
+    printPlan,printSides,printDescription,optionsStep,activePrintJobs,surchargeFees,normPhone,normEmail,esc,crypto,path,Buffer,URLSearchParams,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
     fs:{copyFileSync(){throw new Error('Expired file');},readFileSync:()=>pdf},
     topupTerms,applyTopup,claimWalletFiles,fulfilWalletFiles,siteOrigin(){},qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
     fetch:async()=>{gatewayCalls++;return {ok:true,json:async()=>({id:'rzp-fixture',amount:4900})};},

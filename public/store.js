@@ -32,29 +32,63 @@
       finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     });
   });
-  for(const form of document.querySelectorAll('[data-print-payment]')) {
-    const total=form.querySelector('[data-payment-total]');
-    if(!total)continue;
-    const update=()=>{const cash=form.elements.paymentMethod.value==='cod';total.firstChild.nodeValue='\u20b9'+Number(cash ? total.dataset.cashTotal : total.dataset.onlineTotal).toLocaleString('en-IN');total.querySelector('small').textContent=cash ? 'Cash total · includes extra COD fee' : 'Online / wallet total';form.querySelector('.order-continue button').textContent=cash ? 'Review cash order →' : 'Continue to payment →';};
-    form.addEventListener('change',update);update();
+  function initPayment() {
+    for(const form of document.querySelectorAll('[data-print-payment]')) {
+      if(form.dataset.paymentReady)continue;form.dataset.paymentReady='1';
+      const total=form.querySelector('[data-payment-total]');
+      const update=()=>{const cash=form.elements.paymentMethod.value==='cod',consent=form.querySelector('[data-cash-consent]');if(consent){consent.hidden=!cash;consent.querySelector('input').disabled=!cash;consent.querySelector('input').required=cash;}if(!total)return;const due=Number(cash ? total.dataset.cashTotal : total.dataset.onlineTotal);total.firstChild.nodeValue='\u20b9'+due.toLocaleString('en-IN');total.querySelector('small').textContent=cash ? 'Cash total · includes extra COD fee' : 'Online / wallet total';if(consent)consent.querySelector('[data-cash-due]').textContent='\u20b9'+due.toLocaleString('en-IN');form.querySelector('.order-continue button').textContent=cash ? 'Confirm cash order →' : 'Pay & place order →';};
+      form.addEventListener('change',update);update();
+    }
   }
+  initPayment();document.addEventListener('print-screen',initPayment);
   async function pay(event) {
     const form=event.target.closest('form[data-print-payment]');
     const button=form ? form.querySelector('.order-continue [type=submit]') : event.target.closest('[data-store-gateway]');
     if(!button || form && event.type!=='submit')return;
-    if(form && event.submitter?.value==='add')return;
-    event.preventDefault();let id=button.dataset.storeGateway;const message=document.querySelector('[data-payment-error]');
+    event.preventDefault();let id=button.dataset.storeGateway;const message=form?.querySelector('[data-payment-error]') || document.querySelector('[data-payment-error]');
     if(button.disabled)return;button.disabled=true;message.hidden=true;
     try {
       if(form){
-        const response=await fetch(form.action,{method:'POST',headers:{Accept:'application/json'},body:new URLSearchParams(new FormData(form,event.submitter))});
+        if(form.dataset.purchaseId){location.assign(`/customer/purchases/${encodeURIComponent(form.dataset.purchaseId)}`);return;}
+        const data=new URLSearchParams(new FormData(form,event.submitter));
+        let action=form.action;
+        if(action.endsWith('/customer/orders/new/confirm')) {
+          const checked=await fetch(action,{method:'POST',body:data});
+          const doc=new DOMParser().parseFromString(await checked.text(),'text/html'), confirmed=doc.querySelector('[data-print-payment]');
+          if(!checked.ok || !confirmed)throw new Error(doc.querySelector('[role=alert]')?.textContent || 'Could not check your settings. Please retry.');
+          if(confirmed.querySelector('.order-continue button').disabled)throw new Error(doc.querySelector('[role=alert]')?.textContent || 'Check the code before payment.');
+          const exact=Number(confirmed.elements.expectedTotal.value);
+          if(event.submitter?.value!=='add' && event.submitter?.value!=='wallet' && (exact!==Number(data.get('expectedTotal')) || data.get('coupon') || data.get('referral'))) {
+            // Keep review on this page. No order or payment exists until the final amount is accepted.
+            if(form.dataset.reviewedTotal!==String(exact)) {
+              form.dataset.reviewedTotal=String(exact);form.elements.expectedTotal.value=exact;
+              form.querySelector('[data-final-review]')?.remove();
+              const review=doc.querySelector('.order-totals');review.dataset.finalReview='1';const codLine=doc.createElement('div');codLine.className='sumrow';codLine.dataset.finalCod='';codLine.hidden=form.elements.paymentMethod.value!=='cod';codLine.innerHTML='<span>Extra COD cash handling</span><span>₹10</span>';review.querySelector('.total').before(codLine);review.querySelector('.total span:last-child').textContent='₹'+(exact+(form.elements.paymentMethod.value==='cod'?10:0)).toLocaleString('en-IN');form.querySelector('[data-print-breakdown]').hidden=true;
+              form.querySelector('[data-print-breakdown]').before(review);
+              form.querySelector('[data-print-quote] b').textContent='\u20b9'+(exact+(form.elements.paymentMethod.value==='cod'?10:0)).toLocaleString('en-IN');
+              form.querySelector('[data-print-quote] span').textContent='Final total';
+              const cashDue=form.querySelector('[data-cash-due]');if(cashDue)cashDue.textContent='\u20b9'+(exact+10).toLocaleString('en-IN');
+              form.querySelector('[data-cash-consent] input').checked=false;form.querySelector('[name="paymentMethod"]:checked').dispatchEvent(new Event('change',{bubbles:true}));
+              message.textContent='Your final price is shown below. Review the breakdown, then confirm to place your order.';message.hidden=false;
+              review.scrollIntoView({behavior:'auto',block:'center'});button.disabled=false;return;
+            }
+          }
+          data.set('expectedTotal',exact);action=confirmed.getAttribute('action');
+        }
+        const response=await fetch(action,{method:'POST',headers:{Accept:'application/json'},body:data});
+        if(response.ok && event.submitter?.value==='add'){location.assign('/customer/orders/new?fresh=1');return;}
         const json=response.headers.get('content-type')?.includes('application/json');
         const result=json?await response.json():{error:new DOMParser().parseFromString(await response.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Could not prepare your order. Please retry.'};
         if(!response.ok || !result.id)throw new Error(result.error || 'Could not prepare your order.');
-        id=result.id;
-        if(result.paid || Number(form.elements.expectedTotal.value)!==result.total){location.assign(`/customer/purchases/${encodeURIComponent(id)}`);return;}
+        id=result.id;form.dataset.purchaseId=id;
+        if(result.paid || Number(data.get('expectedTotal'))!==result.total){location.assign(`/customer/purchases/${encodeURIComponent(id)}`);return;}
         if(event.submitter?.value==='wallet'){location.assign(`/customer/wallet?purchase=${encodeURIComponent(id)}`);return;}
-        if(form.elements.paymentMethod.value==='cod'){location.assign(`/customer/purchases/${encodeURIComponent(id)}#cash-choice`);return;}
+        if(form.elements.paymentMethod.value==='cod'){
+          if(data.get('confirmCash')!=='1'){location.assign(`/customer/purchases/${encodeURIComponent(id)}#cash-choice`);return;}
+          const confirmed=await fetch(`/customer/purchases/${encodeURIComponent(id)}/cod`,{method:'POST',body:new URLSearchParams({confirmCash:'1',expectedTotal:result.total})});
+          if(!confirmed.ok)throw new Error(new DOMParser().parseFromString(await confirmed.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Cash confirmation failed. Your checkout is saved; please retry.');
+          location.assign(confirmed.url);return;
+        }
         if(form.elements.paymentMethod.value==='wallet'){
           const paid=await fetch(`/customer/purchases/${encodeURIComponent(id)}/wallet`,{method:'POST'});
           if(!paid.ok)throw new Error(new DOMParser().parseFromString(await paid.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Payment could not be completed. Please retry.');

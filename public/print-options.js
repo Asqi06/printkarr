@@ -1,4 +1,4 @@
-import { printPricing, processingFee, collegeDeliveryFee } from './print-pricing.js?v=20261008-cash-bulk';
+import { printPricing, processingFee, collegeDeliveryFee, COD_FEE } from './print-pricing.js?v=20261008-cash-bulk';
 import { kmBetween, distanceFee } from './localities.js?v=20261007-split-print';
 import { printPlan, packCovers, pageRange, compactRange } from './print-plan.js?v=20261007-split-print';
 
@@ -51,10 +51,20 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       const net = Math.round((printing-discount)*100)/100;
       const variable = zone === 'vapi' && !slot.startsWith('school'), free = scheduled && net + Number(cfg.otherSubtotal || 0) >= 149;
       const fee = free ? 0 : slot.startsWith('school') && slot !== 'school-express' ? Math.min(cfg.campusFee ?? 10,delivery) : delivery;
-      const total = Math.round((net + Number(cfg.otherSubtotal || 0) + processFee + Number(fee || 0) + late + surge)*100)/100;
-      quote.querySelector('span').textContent = variable || cfg.guest || cfg.otherPrintedSides ? 'Estimate · final before payment' : 'Total';
-      quote.querySelector('b').textContent = '₹'+total.toLocaleString('en-IN');
-      quote.querySelector('button').textContent = 'Continue · ₹'+total.toLocaleString('en-IN')+' →';
+      let total = Math.round((net + Number(cfg.otherSubtotal || 0) + processFee + Number(fee || 0) + late + surge)*100)/100;
+      if(form.dataset.reviewedTotal)total=Number(form.dataset.reviewedTotal);
+      if(form.elements.expectedTotal)form.elements.expectedTotal.value=total;
+      const cash=get('paymentMethod')==='cod', due=total+(cash ? COD_FEE : 0);
+      const wallet=form.querySelector('[name="paymentMethod"][value="wallet"]');
+      if(wallet)wallet.disabled=Number(cfg.balance || 0)<total;
+      if(wallet?.checked && wallet.disabled){const available=form.querySelector('[name="paymentMethod"][value="online"]') || form.querySelector('[name="paymentMethod"][value="cod"]');available.checked=true;update();return;}
+      for(const [selector,cost] of [['[data-other-cost]',Number(cfg.otherSubtotal || 0)],['[data-night-cost]',late],['[data-demand-cost]',surge]]){const line=form.querySelector(selector);if(line){line.textContent='₹'+cost.toLocaleString('en-IN');line.closest('div').hidden=!cost;}}
+      const final=form.querySelector('[data-final-review]');if(final){final.querySelector('[data-final-cod]').hidden=!cash;final.querySelector('.total span:last-child').textContent='₹'+due.toLocaleString('en-IN');}
+      const feeLine=form.querySelector('[data-cod-cost]');if(feeLine){feeLine.closest('div').hidden=!cash;feeLine.textContent='₹'+COD_FEE;}
+      const consent=form.querySelector('[data-cash-consent]');if(consent){consent.hidden=!cash;consent.querySelector('input').disabled=!cash;consent.querySelector('input').required=cash;consent.querySelector('[data-cash-due]').textContent='₹'+due.toLocaleString('en-IN');}
+      quote.querySelector('span').textContent = form.dataset.reviewedTotal ? cash ? 'Cash total · final' : 'Final total' : variable || cfg.guest || cfg.otherPrintedSides ? 'Estimate · checked before payment' : cash ? 'Cash total' : 'Total';
+      quote.querySelector('b').textContent = '₹'+due.toLocaleString('en-IN');
+      quote.querySelector('button').textContent = (cfg.guest ? 'Continue' : cash ? 'Confirm cash order' : get('paymentMethod')==='wallet' ? 'Pay with wallet' : 'Pay online')+' →';
       form.querySelector('[data-print-cost]').textContent = '₹'+net.toLocaleString('en-IN')+(pack ? ' · pack' : discount ? ' · offer applied' : '');
       form.querySelector('[data-delivery-cost]').textContent = fee === 0 ? 'FREE' : variable ? scheduled ? Number.isFinite(delivery) && lat && lng ? '₹'+delivery+' · estimate' : '₹10–₹25 · estimate' : Number.isFinite(delivery) && lat && lng ? '₹'+delivery+' · estimate' : '₹15–₹50 · estimate' : Number.isFinite(fee) ? '₹'+fee : 'Confirmed at checkout';
     } catch (error) {
@@ -71,18 +81,20 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
     }
     try { sessionStorage.setItem(key, JSON.stringify(input)); } catch {}
   }
-  form.querySelector('[data-last-print]')?.addEventListener('click',event=>{const previous=JSON.parse(event.currentTarget.dataset.lastPrint);for(const [name,value] of Object.entries(previous))if(form.elements[name])form.elements[name].value=value;update();});
+  form.querySelector('[data-last-print]')?.addEventListener('click',event=>{const previous=JSON.parse(event.currentTarget.dataset.lastPrint);for(const [name,value] of Object.entries(previous))if(form.elements[name])form.elements[name].value=value;form.dispatchEvent(new Event('input',{bubbles:true}));});
   form.querySelector('[data-mixed-fields]').addEventListener('click',event=>{
     const button=event.target.closest('[data-colour-page]'); if(!button)return;
     let picked; try { picked=new Set(get('mixedRange').trim() ? pageRange(get('mixedRange'),pages) : []); } catch { picked=new Set(); }
     const page=Number(button.dataset.colourPage); picked.has(page) ? picked.delete(page) : picked.add(page);
-    form.elements.mixedRange.value=compactRange([...picked].sort((a,b)=>a-b)); update();
+    form.elements.mixedRange.value=compactRange([...picked].sort((a,b)=>a-b)); form.dispatchEvent(new Event('input',{bubbles:true}));
   });
+  const clearReview=event=>{if(['paymentMethod','confirmCash'].includes(event.target.name))return;delete form.dataset.reviewedTotal;form.querySelector('[data-final-review]')?.remove();form.querySelector('[data-print-breakdown]').hidden=false;if(form.querySelector('[data-cash-consent] input'))form.querySelector('[data-cash-consent] input').checked=false;};
+  form.addEventListener('input',clearReview,true);form.addEventListener('change',clearReview,true);
   form.addEventListener('input', update); form.addEventListener('change', update);
   form.addEventListener('invalid', event => { const details = event.target.closest('details'); if (details) details.open = true; }, true);
   const area = form.elements.area;
   if (area && form.dataset.area) area.value = form.dataset.area;
-  for (const id of ['cMinus','cPlus']) form.querySelector('#'+id)?.addEventListener('click', () => { form.elements.copies.value = Math.max(1, Math.min(200, Number(get('copies')) + (id === 'cMinus' ? -1 : 1))); update(); });
+  for (const id of ['cMinus','cPlus']) form.querySelector('#'+id)?.addEventListener('click', () => { form.elements.copies.value = Math.max(1, Math.min(200, Number(get('copies')) + (id === 'cMinus' ? -1 : 1))); form.dispatchEvent(new Event('input',{bubbles:true})); });
   update();
 }
 

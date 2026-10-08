@@ -50,3 +50,7 @@
 .address-heading{font-size:16px;margin:24px 0 12px}.quick-order [data-address-fields]>.pick{margin:8px 0}.quick-order [data-new-address]{margin-top:16px}.delivery-picker small{display:block;line-height:1.6;margin-top:6px}.delivery-picker [data-delivery-status]{margin-bottom:0}
 
 .order-continue > div{min-width:0;flex:1}.order-continue .btn{flex-shrink:0;white-space:nowrap}.order-continue div span{line-height:1.4}
+
+.school-destination{border:0;padding:20px 0 0;margin:0}.school-destination>legend{font-size:14px;font-weight:600}.cash-consent .pick{background:#f1f5ff;border:1px solid var(--primary);padding:16px;align-items:flex-start}.cash-consent input{margin-top:4px;flex-shrink:0}.cash-consent small{display:block;line-height:1.6;margin-top:6px}.order-price-lines[hidden],.cash-consent[hidden],.school-destination[hidden]{display:none}.order-main .order-continue{margin-inline:-32px;padding-inline:32px}.order-section .order-choice>.pick{margin:8px 0}.order-main [data-final-review]{border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:20px}
+@media(max-width:760px){.order-main .order-continue{margin-inline:-20px;padding-inline:20px;gap:12px}.order-continue .btn{min-width:0;white-space:normal;max-width:65%}.order-continue b{font-size:21px}}
+@media(max-width:360px){.order-main .order-continue{margin-inline:-16px;padding-inline:16px}}

@@ -17,7 +17,7 @@
     "test": "node --test lib/pricing-cod.test.js agent/cover.test.js agent/print-settings.test.js lib/machine.test.js lib/packs.test.js lib/referrals.test.js lib/campus.test.js lib/kiosk.test.js lib/collect.test.js lib/files.test.js lib/db.test.js lib/owner-test.test.js agent/instance-lock.test.js lib/reviews.test.js lib/notify.test.js lib/influencers.test.js",
     "test:design": "node scripts/design-check.mjs",
     "test:delivery": "node scripts/delivery-service-check.mjs",
-    "test:checkout": "node scripts/checkout-check.mjs",
+    "test:checkout": "node scripts/checkout-check.mjs && node scripts/direct-checkout-check.mjs",
     "test:store": "node scripts/store-check.mjs",
     "test:ux": "node scripts/mixed-print-check.mjs && node scripts/split-print-check.mjs && node scripts/address-ux-check.mjs",
     "preview:orders": "node scripts/order-preview.mjs",
