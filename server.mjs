@@ -966,9 +966,9 @@ function printQuoteExtras(db, user, req) {
     return leftOf(reserved);
   });
   const cart=(db.carts || []).find(c=>c.customerId===user.id);
-  let otherSubtotal=0;try{if(cart && !cart.purchaseId)otherSubtotal=cartItems(db,cart,user.id).subtotal;}catch{}
+  let otherSubtotal=0,otherPrintedSides=0;try{if(cart && !cart.purchaseId){const contents=cartItems(db,cart,user.id);otherSubtotal=contents.subtotal;otherPrintedSides=contents.prints.reduce((n,o)=>{const s=printSides(o);return n+s.bw+s.color;},0);}}catch{}
   let campusFee=10,campusSlot='';try{const plan=deliveryPlan(db,'school');campusSlot=plan.slot;campusFee=batchPrice(db,user.id,plan,0,10).fee;}catch{}
-  return {...extra,firstPrintPages:first.print,packs,otherSubtotal,campusFee,campusSlot};
+  return {...extra,firstPrintPages:first.print,packs,otherSubtotal,otherPrintedSides,campusFee,campusSlot};
 }
 
 function purchaseForDraft(db, customerId, draftId) {
@@ -1162,12 +1162,12 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   const cart=cartFor(db,req.user.id,parseCookies(req.headers.cookie).pk_cart);
   if(cart.purchaseId)return res.redirect(`/customer/purchases/${cart.purchaseId}`);
   const previous=cartItems(db,cart,req.user.id);
-  const temporary={id:'DRAFT-'+d.id,customerId:req.user.id,status:'CREATED',paymentStatus:'pending',...s,pages:s.effPages,deliveryZone:s.zone,subtotal:q.subtotal,packSubId:packCover?.id || null,packDiscount,firstPrintDiscount:offers.print,firstDeliveryDiscount:offers.delivery,firstBatchFree:batch.firstBatchFree,couponCode,couponDiscount,influencer,referralDiscount:ref.discount};
+  const temporary={id:'DRAFT-'+d.id,pricingVersion:1,customerId:req.user.id,status:'CREATED',paymentStatus:'pending',...s,pages:s.effPages,deliveryZone:s.zone,subtotal:q.subtotal,packSubId:packCover?.id || null,packDiscount,firstPrintDiscount:offers.print,firstDeliveryDiscount:offers.delivery,firstBatchFree:batch.firstBatchFree,couponCode,couponDiscount,influencer,referralDiscount:ref.discount};
   db.orders.push(temporary);
   let final;
   try{final=cartQuote(db,{...cart,printIds:[...cart.printIds,temporary.id]},req.user.id,{addressId:s.addressId,deliverySlot:deliveryChoice(s)},validateCoupon);}
   catch(error){return res.status(400).send(oops(req.user,`/customer/orders/new?draft=${d.id}`,esc(error.message)));}
-  const qShow={...q,subtotal:q.subtotal+previous.subtotal,firstPrintDiscount:offers.print,packDiscount,couponDiscount,deliveryFee:final.deliveryFee,lateNightFee:final.lateNightFee,surgeFee:final.surgeFee,total:final.total};
+  const qShow={...q,subtotal:final.subtotal+(temporary.packDiscount || 0)+(temporary.firstPrintDiscount || 0)+(temporary.couponDiscount || 0)+ref.discount,bulkDiscount:final.bulkDiscount,processingFee:final.processingFee,printedSides:final.printedSides,firstPrintDiscount:temporary.firstPrintDiscount,packDiscount:temporary.packDiscount,couponDiscount:temporary.couponDiscount,deliveryFee:final.deliveryFee,lateNightFee:final.lateNightFee,surgeFee:final.surgeFee,total:final.total};
   res.send(summaryStep(req.user,d,s,qShow,packCover,ref,{coupon:String(req.query.coupon || '').trim().slice(0,40),balance:walletOf(db,req.user.id).balance,gateway:gatewayOn(),prints:previous.prints.map(o=>({...o,net:printNet(o)})),items:previous.items,address:final.address,fulfillmentName:final.fulfillmentName}));
 });
 
@@ -1256,13 +1256,13 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, bwRange: s.bwRange, colorRange: s.colorRange, mixedPageType: s.mixedPageType, mixedRange: s.mixedRange, splitMixed: s.splitMixed, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
     addressId: s.addressId, preferredShopId: d.preferredShopId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
-    subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
+    pricingVersion:1,regularSubtotal:q.regularSubtotal,bulkDiscount:q.bulkDiscount,printedSides:q.printedSides,bwRate:q.bwRate,colorRate:q.colorRate,processingFee:q.processingFee,subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode, couponDiscount, influencer, packSubId: packCover ? packCover.id : null, packDiscount,
     firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
     offerDevice: parseCookies(req.headers.cookie).pk_offer_device || null,
     campus: plan.campus || (s.zone === 'pickup' ? 'LIT Sarigam' : null),
     referralCode, referralDiscount,
-    total: Math.round((q.subtotal - packDiscount - offers.print - couponDiscount - referralDiscount + q.deliveryFee - offers.delivery + q.lateNightFee + q.surgeFee) * 100) / 100,
+    total: Math.round((q.subtotal - packDiscount - offers.print - couponDiscount - referralDiscount + q.processingFee + q.deliveryFee - offers.delivery + q.lateNightFee + q.surgeFee) * 100) / 100,
     paymentStatus: 'pending', paymentMethod: null,
     status: 'CREATED', history: [{ from: '—', to: 'CREATED', at: new Date().toISOString(), by: req.user.id, note: null }],
     riderId: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
@@ -1291,7 +1291,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
   db.drafts.splice(di,1);
   saveDb(db);
   if(purchase && req.get('accept')?.includes('application/json'))return res.json({id:purchase.id,total:purchase.total,paid:false});
-  res.redirect(ownerTest ? `/customer/orders/${id}/pay` : req.body.next==='add' ? '/customer/orders/new?fresh=1' : purchase ? `/customer/purchases/${purchase.id}` : '/cart');
+  res.redirect(ownerTest ? `/customer/orders/${id}/pay` : req.body.next==='add' ? '/customer/orders/new?fresh=1' : purchase ? req.body.next==='wallet' ? `/customer/wallet?purchase=${purchase.id}` : `/customer/purchases/${purchase.id}${req.body.paymentMethod==='cod' ? '#cash-choice' : ''}` : '/cart');
 });
 
 app.get('/customer/orders/:id/preview.pdf', requireRole('customer'), (req, res) => {
@@ -1472,9 +1472,10 @@ app.get('/customer/wallet', requireRole('customer'), (req, res) => {
   const tx = (db.walletTx || []).filter((t) => t.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
   const cash = cashWalletOf(db, req.user.id).balance;
   const rcfg = referralConfig(db);
+  const returnPurchase=(db.purchases || []).find(p=>p.id===req.query.purchase && p.customerId===req.user.id && p.status==='CREATED')?.id;
   const returnOrder = db.orders.find((o) => o.id === req.query.order && o.customerId === req.user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status))?.id;
   saveDb(db);
-  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, returnOrder, selectedOffer: String(req.query.offer || '').slice(0, 32), refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', institutionDelivery: true }, 0, 10).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: eligibleWalletOffers(db, req.user.id), fileGifts: db.walletTx.filter((t) => t.customerId === req.user.id && t.freeFiles) }));
+  res.send(walletPage(req.user, w, tx, db.pricing, { livePay: livePayFor(db), razorpay: gatewayOn(), cash, returnOrder, returnPurchase, selectedOffer: String(req.query.offer || '').slice(0, 32), refErr: req.query.referrError || null, refMin: rcfg.minTopup, refBonus: rcfg.friendOff, campaign: campaignConfig(db), firstBatchAvailable: batchPrice(db, req.user.id, { deliveryMode: 'batch', institutionDelivery: true }, 0, 10).firstBatchFree, bonusBalance: db.walletTx.filter((t) => t.customerId === req.user.id && t.remaining > 0).reduce((n, t) => n + t.remaining, 0), offers: eligibleWalletOffers(db, req.user.id), fileGifts: db.walletTx.filter((t) => t.customerId === req.user.id && t.freeFiles) }));
 });
 
 app.post('/customer/wallet/files/:txId/claim', requireRole('customer'), siteOrigin, (req, res) => {
@@ -1503,7 +1504,8 @@ app.post('/customer/wallet/add', requireRole('customer'), (req, res) => {
   qualifyForTopup(db, topTx.id, req.user.id);
   saveDb(db);
   const order = db.orders.find((o) => o.id === req.body.orderId && o.customerId === req.user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status));
-  res.redirect(order ? `/customer/orders/${encodeURIComponent(order.id)}/pay` : '/customer/wallet');
+  const purchase=(db.purchases || []).find(p=>p.id===req.body.purchaseId && p.customerId===req.user.id && p.status==='CREATED');
+  res.redirect(purchase ? `/customer/purchases/${encodeURIComponent(purchase.id)}` : order ? `/customer/orders/${encodeURIComponent(order.id)}/pay` : '/customer/wallet');
 });
 
 // ---- Semester packs (§-packs): ₹199 secures, rest in installments ----
@@ -2354,6 +2356,8 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
   if (!user || user.role !== 'customer') return res.status(401).json({ error: 'Not signed in.' });
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
   const db0 = loadDb();
+  const returnPurchase=req.body.purchaseId ? (db0.purchases || []).find(p=>p.id===req.body.purchaseId && p.customerId===user.id && p.status==='CREATED') : null;
+  if(req.body.purchaseId && !returnPurchase)return res.status(400).json({error:'That checkout is unavailable.'});
   const returnOrder = req.body.orderId ? db0.orders.find((o) => o.id === req.body.orderId && o.customerId === user.id && ['CREATED', 'PAYMENT_PENDING'].includes(o.status)) : null;
   if (req.body.orderId && !returnOrder) return res.status(400).json({ error: 'That checkout is unavailable. Return to your orders.' });
   let terms;
@@ -2383,7 +2387,7 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
     if (!r.ok || !d.id) return res.status(502).json({ error: 'Gateway refused the order.' });
     const db = loadDb();
     db.topups ||= [];
-    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, terms, referral: refIn || null, returnOrderId: returnOrder?.id || null, used: false, at: new Date().toISOString() });
+    db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, terms, referral: refIn || null, returnPurchaseId:returnPurchase?.id || null,returnOrderId: returnOrder?.id || null, used: false, at: new Date().toISOString() });
     saveDb(db);
     res.json({ keyId: RAZORPAY.id, rzpOrderId: d.id, amount: d.amount });
   } catch {
@@ -2420,7 +2424,7 @@ app.post('/customer/wallet/topup-verify', requireRole('customer'), (req, res) =>
   if (referrer) createReferral(db, { referrerId: referrer.id, refereeId: req.user.id, code: pending.referral, friendDiscount: 0, sourceKind: 'topup', sourceId: topTx.id });
   qualifyForTopup(db, topTx.id, req.user.id);
   saveDb(db);
-  res.redirect(pending.returnOrderId ? `/customer/orders/${encodeURIComponent(pending.returnOrderId)}/pay` : '/customer/wallet');
+  res.redirect(pending.returnPurchaseId ? `/customer/purchases/${encodeURIComponent(pending.returnPurchaseId)}` : pending.returnOrderId ? `/customer/orders/${encodeURIComponent(pending.returnOrderId)}/pay` : '/customer/wallet');
 });
 
 // Razorpay: verify signature, then confirm exactly like a normal payment.
@@ -2565,6 +2569,7 @@ async function bootstrap() {
     console.warn('Fresh data marker created. Confirm this is the intended data directory and verify customer, order, coupon and pricing records before accepting traffic.');
   }
   const db = loadDb();
+  if(!db.pricing.bulkPricingV1){if(db.pricing.color===5 && db.pricing.studentColor===4)db.pricing.color=4;db.pricing.bulkPricingV1=true;saveDb(db);}
   campaignConfig(db);
   if (settleWallets(db)) saveDb(db);
   // Backfill referral codes + config for databases created before referrals.

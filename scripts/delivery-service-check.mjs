@@ -32,7 +32,7 @@ const hash=hashPassword('local-test-password');assert.ok(passwordMatches('local-
 const validate=couponPolicy.validateCoupon;
 const cart=cartFor(db,user.id);db.orders.push({id:'test-print',customerId:user.id,status:'CREATED',paymentStatus:'pending',document:'Notes.pdf',pages:100,bwPages:100,colorPages:0,copies:1,printType:'bw',sides:'single',binding:'none',subtotal:200,addressId:'preview-address'});cart.printIds=['test-print'];
 assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'express'},validate).deliveryFee,15,'Large basket does not waive express');
-assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'school',institutionName:'Example School'},validate).deliveryFee,10,'Large school order stays ₹10');
+assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'school',institutionName:'Example School'},validate).deliveryFee,7,'100-side school order gets reduced delivery');
 assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'local-vapi-afternoon'},validate).deliveryFee,0,'Scheduled address basket offer retained');
 {
   const newDb=previewDb(true);newDb.addresses=[];newDb.users[0].phone='';

@@ -1,3 +1,4 @@
+import * as printPricingPolicy from '../public/print-pricing.js';
 import { LOCALITIES, kmBetween, distanceFee } from '../public/localities.js';
 import { pageRange, printPlan, printSides, printDescription } from '../public/print-plan.js';
 import { activePrintJobs, surchargeFees } from '../lib/pricing.js';
@@ -29,7 +30,7 @@ function handler(method, route, extra = {}) {
   const start = source.indexOf(`app.${method}('${route}'`), end = source.indexOf('\napp.',start+1);
   assert.ok(start>=0,route);
   const pricing = readFileSync(new URL('../lib/pricing.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ','');
-  const quote = runInNewContext(pricing+'\nquote;', {loadDb:()=>db,Intl,Date,Set,Number,pageRange,printSides,LOCALITIES,kmBetween,distanceFee});
+  const quote = runInNewContext(pricing+'\nquote;', {...printPricingPolicy,loadDb:()=>db,Intl,Date,Set,Number,pageRange,printSides,LOCALITIES,kmBetween,distanceFee});
   runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+source.slice(start,end), {
     app:{[method](...args){result=args.at(-1);result.middleware=args.slice(1,-1).filter(Boolean);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
     loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, addressPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
@@ -60,7 +61,7 @@ handler('post','/customer/orders/new/confirm')({user,body:{draft:'D',deliverySlo
 assert.match(confirm.url,/summary/); assert.equal(db.drafts[0].selections.deliveryMode,'scheduled');
 const review=response();
 handler('get','/customer/orders/new/summary',{firstOffers:()=>({print:0,delivery:0}),coverFor:()=>null,parseCookies:()=>({}),summaryStep:(u,d,s,q)=>({s,q})})({user,query:{draft:'D'},headers:{}},review);
-assert.equal(review.body.q.deliveryFee,10); assert.equal(review.body.q.total,130);
+assert.equal(review.body.q.deliveryFee,10); assert.equal(review.body.q.total,110);
 db.settings.campaign.delivery.local.vapi.enabled=false;
 const disabled=response();handler('get','/customer/orders/new/summary')({user,query:{draft:'D'},headers:{}},disabled);assert.equal(disabled.code,400);
 const saved = optionsStep(user,db.drafts[0],db.addresses,campaignConfig(db),db.pricing);
@@ -74,10 +75,12 @@ assert.ok(!eligibleWalletOffers(db,'A').some(o=>o.id==='first'),'Pending first o
 const proof={razorpay_order_id:'rzp-fixture',razorpay_payment_id:'pay-fixture'};proof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(proof.razorpay_order_id+'|'+proof.razorpay_payment_id).digest('hex');
 const verify=response();handler('post','/customer/wallet/topup-verify')({user,body:proof},verify);assert.equal(verify.url,'/customer/orders/PK-1024/pay');assert.equal(walletOf(db,'A').balance,59);
 const replay=response();handler('post','/customer/wallet/topup-verify')({user,body:proof},replay);assert.equal(replay.code,400);assert.equal(walletOf(db,'A').balance,59);
-const fileTopup=response();await handler('post','/api/wallet/topup-order',{fetch:async()=>({ok:true,json:async()=>({id:'rzp-files',amount:14900})})})({body:{amount:149,offerId:'files',freeFiles:999}},fileTopup);
-assert.equal(fileTopup.code,200);assert.equal(db.topups.at(-1).terms.freeFiles,3);assert.ok(!db.walletTx.some(t=>t.freeFiles));
+db.purchases=[{id:'SHOP-RETURN',customerId:'A',status:'CREATED'},{id:'SHOP-OTHER',customerId:'B',status:'CREATED'}];
+const deniedPurchase=response();await handler('post','/api/wallet/topup-order')({body:{purchaseId:'SHOP-OTHER',amount:149,offerId:'files'}},deniedPurchase);assert.equal(deniedPurchase.code,400);
+const fileTopup=response();await handler('post','/api/wallet/topup-order',{fetch:async()=>({ok:true,json:async()=>({id:'rzp-files',amount:14900})})})({body:{amount:149,offerId:'files',freeFiles:999,purchaseId:'SHOP-RETURN'}},fileTopup);
+assert.equal(fileTopup.code,200);assert.equal(db.topups.at(-1).returnPurchaseId,'SHOP-RETURN');assert.equal(db.topups.at(-1).terms.freeFiles,3);assert.ok(!db.walletTx.some(t=>t.freeFiles));
 const fileProof={razorpay_order_id:'rzp-files',razorpay_payment_id:'pay-files'};fileProof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(fileProof.razorpay_order_id+'|'+fileProof.razorpay_payment_id).digest('hex');
-const fileVerify=response();handler('post','/customer/wallet/topup-verify')({user,body:fileProof},fileVerify);assert.equal(fileVerify.url,'/customer/wallet');assert.equal(walletOf(db,'A').balance,208);
+const fileVerify=response();handler('post','/customer/wallet/topup-verify')({user,body:fileProof},fileVerify);assert.equal(fileVerify.url,'/customer/purchases/SHOP-RETURN');assert.equal(walletOf(db,'A').balance,208);
 const fileTx=db.walletTx.find(t=>t.freeFiles);assert.equal(fileTx.freeFiles.quantity,3);
 const fileReplay=response();handler('post','/customer/wallet/topup-verify')({user,body:fileProof},fileReplay);assert.equal(fileReplay.code,400);assert.equal(db.walletTx.filter(t=>t.freeFiles).length,1);
 const claim=response();handler('post','/customer/wallet/files/:txId/claim')({user,params:{txId:fileTx.id},body:{color:'green'}},claim);assert.equal(claim.url,'/customer/wallet#free-files');assert.equal(fileTx.freeFiles.color,'green');

@@ -19,7 +19,7 @@ for (const type of ['stationery', 'prints', 'mixed']) for (const amount of [148.
   if (type !== 'stationery') { print(db, 'PK-1', type === 'mixed' ? 50 : amount); addPrint(db, customer, 'PK-1'); }
   const q = cartQuote(db, cart, customer, selection, validate);
   assert.equal(q.net, amount); assert.equal(q.deliveryFee, 15, `${type} express ${amount}`);
-  const scheduled=cartQuote(db,cart,customer,{...selection,deliverySlot:'local-vapi-afternoon'},validate);assert.equal(scheduled.deliveryFee,amount<149?10:0,`${type} scheduled ${amount}`); assert.equal(q.total, amount + q.deliveryFee);
+  const scheduled=cartQuote(db,cart,customer,{...selection,deliverySlot:'local-vapi-afternoon'},validate);assert.equal(scheduled.deliveryFee,amount<149?10:0,`${type} scheduled ${amount}`); assert.equal(q.total, amount + q.deliveryFee + q.processingFee);
 }
 {
   const db = previewDb(true), cart = cartFor(db, customer);

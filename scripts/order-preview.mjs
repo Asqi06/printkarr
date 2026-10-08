@@ -10,6 +10,7 @@ import { COOKIE, parseCookies } from '../lib/auth.js';
 import { esc } from '../lib/views.js';
 import * as print from '../public/print-plan.js';
 import * as pricing from '../lib/pricing.js';
+import * as printPricingPolicy from '../public/print-pricing.js';
 import { LOCALITIES, distanceFee } from '../public/localities.js';
 import * as campaign from '../lib/campus.js';
 import * as packs from '../lib/packs.js';
@@ -43,7 +44,7 @@ export function createOrderPreview(seed = previewDb()) {
       app.get('/kiosks',(_req,res)=>res.send(publicViews.kioskStatusPage()));
       const upload = multer({dest:uploadsDir,limits:{fileSize:20*1024*1024}});
       const disk = { ...fs, promises: { ...fs.promises, readFile: name => fs.promises.readFile(path.join(uploadsDir,path.basename(name))) }, readFileSync: name => fs.readFileSync(path.join(uploadsDir,path.basename(name))), renameSync:(from,to)=>fs.renameSync(path.join(uploadsDir,path.basename(from)),path.join(uploadsDir,path.basename(to))) };
-      const scope = { ...print, ...pricing, LOCALITIES, distanceFee, ...campaign, ...packs, ...referrals, ...files, ...account, ...publicViews, ...packViews, ...referralViews, app, loadDb, saveDb, currentUser, requireRole, upload, fs:disk, crypto, path, Buffer, URL, COOKIE,
+      const scope = { ...print, ...pricing, ...printPricingPolicy, LOCALITIES, distanceFee, ...campaign, ...packs, ...referrals, ...files, ...account, ...publicViews, ...packViews, ...referralViews, app, loadDb, saveDb, currentUser, requireRole, upload, fs:disk, crypto, path, Buffer, URL, COOKIE,
         ROOT:path.dirname(uploadsDir), parseCookies, normEmail, normPhone, esc, firstOffers, fulfillmentFor, addPrint, cartFor, cartItems, cartQuote, printNet, createPurchase:(db,cart,id,selection,validate)=>createPurchase(db,cart,id,selection,validate,true), gatewayOn:()=>false, checkPackQuota, canUseOwnerTestPrint, transition,
         offerDevice(){}, maxUploadBytes:()=>20*1024*1024, otpLimiter:(_req,_res,next)=>next(),
         requestEmailOtp:async()=>({ok:true,mailed:false,demo:'000000',error:'LOCAL PREVIEW: no email is sent. Use the demo code.'}), verifyEmailOtp:(_email,code)=>({ok:code==='000000',error:'Use local demo code 000000.'}), createSession:id=>id,

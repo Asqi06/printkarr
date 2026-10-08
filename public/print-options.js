@@ -1,3 +1,4 @@
+import { printPricing, processingFee, collegeDeliveryFee } from './print-pricing.js?v=20261008-cash-bulk';
 import { kmBetween, distanceFee } from './localities.js?v=20261007-split-print';
 import { printPlan, packCovers, pageRange, compactRange } from './print-plan.js?v=20261007-split-print';
 
@@ -26,7 +27,9 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
     } catch {}
     const hint = form.querySelector('#range-err');
     try {
-      const plan = printPlan(input, pages), printing = Math.round((plan.bwPages * cfg.bw + plan.colorPages * cfg.color) * plan.copies * 100) / 100;
+      const plan = printPlan(input, pages), printedSides=plan.effPages*plan.copies+Number(cfg.otherPrintedSides || 0);
+      const printing=printPricing({bw:plan.bwPages*plan.copies,color:plan.colorPages*plan.copies},{bw:cfg.bw,color:cfg.color},false,printedSides).subtotal, processFee=processingFee(printedSides);
+      form.querySelector('[data-processing-cost]').textContent='₹'+processFee;
       hint.hidden = true;
       form.querySelector('[data-bw-pages]').textContent = `${plan.bwPages} pages · ${plan.bwRange || 'none'}`;
       form.querySelector('[data-colour-pages]').textContent = `${plan.colorPages} pages · ${plan.colorRange || 'none'}`;
@@ -37,7 +40,7 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       const slot = get('deliverySlot') || 'express', scheduled = slot.startsWith('local-');
       const address = form.querySelector('[name="addressId"]:checked');
       const zone = (scheduled ? slot.split('-')[1] : address && address.value !== '__new' ? address.dataset.area : get('area') || get('nn_area') || 'Vapi').toLowerCase();
-      let delivery = slot === 'pickup' ? 0 : slot.startsWith('school') ? slot === 'school-express' ? 25 : 10 : slot === 'college' ? 3 : slot === 'college-express' ? 25 : scheduled ? cfg.local[zone]?.fee : cfg.fees[zone];
+      let delivery = slot === 'pickup' ? 0 : slot.startsWith('school') ? slot === 'school-express' ? 25 : collegeDeliveryFee(printedSides) : slot === 'college' ? Math.min(cfg.campusFee ?? 3,collegeDeliveryFee(printedSides)) : slot === 'college-express' ? 25 : scheduled ? cfg.local[zone]?.fee : cfg.fees[zone];
       const locality=form.elements.localityId?.selectedOptions[0];
       const lat=Number(address && address.value!=='__new' ? address.dataset.lat : get('deliveryLat') || locality?.dataset.lat);
       const lng=Number(address && address.value!=='__new' ? address.dataset.lng : get('deliveryLng') || locality?.dataset.lng);
@@ -47,9 +50,9 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       const discount = pack ? printing : Math.min(printing, Math.min(Number(cfg.firstPrintPages || 0),plan.bwPages*plan.copies)*cfg.bw);
       const net = Math.round((printing-discount)*100)/100;
       const variable = zone === 'vapi' && !slot.startsWith('school'), free = scheduled && net + Number(cfg.otherSubtotal || 0) >= 149;
-      const fee = free ? 0 : slot.startsWith('school') && slot !== 'school-express' ? cfg.campusFee ?? 10 : delivery;
-      const total = Math.round((net + Number(cfg.otherSubtotal || 0) + Number(fee || 0) + late + surge)*100)/100;
-      quote.querySelector('span').textContent = variable || cfg.guest ? 'Estimate · final before payment' : 'Total';
+      const fee = free ? 0 : slot.startsWith('school') && slot !== 'school-express' ? Math.min(cfg.campusFee ?? 10,delivery) : delivery;
+      const total = Math.round((net + Number(cfg.otherSubtotal || 0) + processFee + Number(fee || 0) + late + surge)*100)/100;
+      quote.querySelector('span').textContent = variable || cfg.guest || cfg.otherPrintedSides ? 'Estimate · final before payment' : 'Total';
       quote.querySelector('b').textContent = '₹'+total.toLocaleString('en-IN');
       quote.querySelector('button').textContent = 'Continue · ₹'+total.toLocaleString('en-IN')+' →';
       form.querySelector('[data-print-cost]').textContent = '₹'+net.toLocaleString('en-IN')+(pack ? ' · pack' : discount ? ' · offer applied' : '');

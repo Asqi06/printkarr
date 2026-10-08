@@ -1,4 +1,5 @@
 (() => {
+  if(location.hash==='#cash-choice')document.getElementById('cash-choice')?.setAttribute('open','');
   const cards = [...document.querySelectorAll('[data-product]')];
   let category = 'all';
   const search = document.querySelector('[data-product-search]');
@@ -31,6 +32,12 @@
       finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     });
   });
+  for(const form of document.querySelectorAll('[data-print-payment]')) {
+    const total=form.querySelector('[data-payment-total]');
+    if(!total)continue;
+    const update=()=>{const cash=form.elements.paymentMethod.value==='cod';total.firstChild.nodeValue='\u20b9'+Number(cash ? total.dataset.cashTotal : total.dataset.onlineTotal).toLocaleString('en-IN');total.querySelector('small').textContent=cash ? 'Cash total · includes extra COD fee' : 'Online / wallet total';form.querySelector('.order-continue button').textContent=cash ? 'Review cash order →' : 'Continue to payment →';};
+    form.addEventListener('change',update);update();
+  }
   async function pay(event) {
     const form=event.target.closest('form[data-print-payment]');
     const button=form ? form.querySelector('.order-continue [type=submit]') : event.target.closest('[data-store-gateway]');
@@ -40,12 +47,14 @@
     if(button.disabled)return;button.disabled=true;message.hidden=true;
     try {
       if(form){
-        const response=await fetch(form.action,{method:'POST',headers:{Accept:'application/json'},body:new URLSearchParams(new FormData(form))});
+        const response=await fetch(form.action,{method:'POST',headers:{Accept:'application/json'},body:new URLSearchParams(new FormData(form,event.submitter))});
         const json=response.headers.get('content-type')?.includes('application/json');
         const result=json?await response.json():{error:new DOMParser().parseFromString(await response.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Could not prepare your order. Please retry.'};
         if(!response.ok || !result.id)throw new Error(result.error || 'Could not prepare your order.');
         id=result.id;
         if(result.paid || Number(form.elements.expectedTotal.value)!==result.total){location.assign(`/customer/purchases/${encodeURIComponent(id)}`);return;}
+        if(event.submitter?.value==='wallet'){location.assign(`/customer/wallet?purchase=${encodeURIComponent(id)}`);return;}
+        if(form.elements.paymentMethod.value==='cod'){location.assign(`/customer/purchases/${encodeURIComponent(id)}#cash-choice`);return;}
         if(form.elements.paymentMethod.value==='wallet'){
           const paid=await fetch(`/customer/purchases/${encodeURIComponent(id)}/wallet`,{method:'POST'});
           if(!paid.ok)throw new Error(new DOMParser().parseFromString(await paid.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Payment could not be completed. Please retry.');
