@@ -1,0 +1,5 @@
+
+> printkarr@0.1.0 test:checklist
+> node scripts/checklist-check.mjs
+
+Checklist checks passed: failed writes, bounded contact fields, origin aliases/rejection, escaped errors, real 404, HTTPS POST upgrade, disabled GA4, opt-in/rejection/withdrawal, safe event metadata, and paid-only deduplicated purchase events.

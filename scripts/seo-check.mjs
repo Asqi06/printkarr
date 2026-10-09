@@ -35,6 +35,9 @@ try {
     const html = pages.get(path);
     assert.ok(html, path + ' public page is rendered');
     assert.match(html, new RegExp(`<link rel="canonical" href="${SITE + path}"`));
+    const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1]?.replaceAll('&amp;','&');
+    assert.ok(description?.length >= 150 && description.length <= 160, path+' description is 150–160 characters: '+description?.length);
+    for(const img of html.matchAll(/<img\b[^>]*>/g)) assert.match(img[0], /alt="[^"]*"/, path+' image alt text');
     const json = html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)?.[1];
     assert.ok(json, path + ' structured data');
     const data = JSON.parse(json);
@@ -57,6 +60,8 @@ try {
       assert.equal(data['@graph'].find(n => n['@type'] === 'BreadcrumbList').itemListElement.length, 3);
     }
   }
+  const titles = [...Object.keys(PAGES),...POSTS.map(p=>'/blogs/'+p.slug)].map(path=>pages.get(path).match(/<title>([^<]*)<\/title>/)[1]);
+  assert.equal(new Set(titles).size,titles.length,'Public page titles are unique');
   assert.equal([...sitemap.matchAll(/<lastmod>/g)].length, POSTS.length, 'Sitemap dates track actual article revisions');
   assert.match(printPricesPage({ pricing:{...blankDb().pricing, bw:7, color:11, studentBw:6} }), /Black & white<\/h2><strong>₹7<\/strong>[\s\S]*Colour<\/h2><strong>₹11<\/strong>[\s\S]*Student B&W<\/h2><strong>₹6<\/strong>/, 'Public prices use actual configured rates');
   for (const [path, target] of [['/PRINTING-IN-VAPI/?utm_source=check','/printing-in-vapi?utm_source=check'], ['/printing-in-daman/','/printing-in-daman'], ['/index.html','/']]) {

@@ -1,0 +1,9 @@
+## Complete page overhaul
+
+All rendered screen families now share the redesigned navigation, content layout, typography, forms, tables, cards, empty/error states and mobile behavior. The operations area has a cobalt sidebar, grouped navigation, a rebuilt daily dashboard, section links for settings, and coordinated pricing, order, catalogue, customer, referral, pack, notification, analytics, partner and delivery screens. Customer screens include a new illustrated greeting, balance cards, account/address forms and consistent order/payment layouts. Public information pages, guides, legal pages, sign-in and shopping use the same paper identity.
+
+The route inventory contains 99 screens/states in [page-inventory.json](page-inventory.json), including populated and empty operational screens. [page-coverage.json](page-coverage.json) records 198 desktop/mobile renders; screenshots are in [pages/](pages/). Run `npm run preview:pages` for the local read-only review gallery at `http://127.0.0.1:3140/__design`. Figures and accounts are labelled sample fixtures. The interactive local order preview is at `http://127.0.0.1:3137` while its process is running.
+
+The audit also fixed a shared checkout race: the focused shell had changed deferred payment scripts to async, allowing initialization before payment fields were parsed. The shell now retains each script's defer attribute. Dynamic upload-to-settings replacement retains its existing initialization event.
+
+## Preserved features

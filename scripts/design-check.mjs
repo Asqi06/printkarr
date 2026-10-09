@@ -148,9 +148,10 @@ for (const route of ['/customer']) {
   assert.match(pages.get(route), /href="\/customer\/profile"/);
 }
 assert.match(pages.get('/'), /<nav class="customer-mobile-nav"/);
-const heroActions = pages.get('/').match(/<section class="delivery-hero[\s\S]*?<p class="hero-small">/)[0];
-assert.equal((heroActions.match(/class="btn loud big"/g)||[]).length, 1, 'One primary print action in the hero');
-assert.match(heroActions,/href="\/shops"/);
+const heroActions = pages.get('/').match(/<section class="studio-hero[\s\S]*?<\/section>/)[0];
+assert.equal((heroActions.match(/data-home-upload/g)||[]).length, 1, 'One real upload form in the hero');
+assert.match(heroActions,/enctype="multipart\/form-data"/);
+assert.match(pages.get('/'),/href="\/shops"/);
 assert.match(heroActions, /href="\/order"/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.public-site\s+\.pk-footer\s*\{[^}]*background\s*:\s*(?:white|#fff(?:fff)?)\b/i, 'Public footer keeps the shared blue background for its white links');
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.site-header\s*\{[^}]*visibility:hidden/);
@@ -214,7 +215,7 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
 }
 assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);
-assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /B&amp;W ₹7 per printed side/);
+assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /BLACK &amp; WHITE<\/span><b>₹7 <small>\/ side/);
 for (const id of ['how-it-works', 'delivery', 'packs', 'wallet', 'stationery', 'partners', 'faq']) assert.match(pages.get('/'), new RegExp(`id="${id}"`));
 assert.match(pages.get('/'), /Self-service kiosks|IN DEVELOPMENT/);
 assert.match(pages.get('/order/options'), /name="deliverySlot" value="school" checked/);
@@ -278,7 +279,7 @@ for (const reducedMotion of [false, true]) {
   assert.equal(look.classList.contains('double'), false);
 }
 console.log('Interaction checks passed: demo replay guard, reduced motion and live paper settings.');
-assert.match(pages.get('/'), /Your notes\. Your essentials\./);
+assert.match(pages.get('/'), /Good ideas\.<br><span>Great on paper\./);
 
 for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);

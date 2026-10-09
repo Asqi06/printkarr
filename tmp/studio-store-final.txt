@@ -1,0 +1,7 @@
+
+> printkarr@0.1.0 test:store
+> node scripts/store-check.mjs
+
+Cart checks passed: all basket types below/at/above ₹149, discounted threshold, serviceability, ownership, colours, stock, coupon reuse, pack reservations and payment/refund replay.
+Product photo checks passed: local upload, authentication, origin, signatures, size, public delivery, edit retention and orphan cleanup.
+HTTP checks passed: origin and role guards, native cart/quote/checkout, server totals, wallet replay, bound captured gateway payment and replay.

@@ -1,0 +1,1 @@
+import fs from 'node:fs';let s=fs.readFileSync('lib/views_public.js','utf8').replace('id="network" data-chapter="4"','id="network" data-chapter="4"').replace('<div class="scene-slot network-slot"','<span id="partners" class="sr-only"></span><div class="scene-slot network-slot"');fs.writeFileSync('lib/views_public.js',s);

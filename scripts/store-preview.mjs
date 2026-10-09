@@ -38,7 +38,7 @@ export function createStorePreview(seed = previewDb(), { preview = true, gateway
   const siteOrigin = runInNewContext(source.match(/function siteOrigin\(req, res, next\) \{[\s\S]*?\n\}/)[0] + '\nsiteOrigin;', { SITE: 'https://printkarr.in', URL });
   const restorePackQuota = (db, o) => { const sub = db.packSubs.find((s) => s.id === o.packSubId); if (sub && !o.packRestored) { const sides = printSides(o); sub.bwUsed = Math.max(0,(sub.bwUsed||0)-sides.bw); sub.colorUsed = Math.max(0,(sub.colorUsed||0)-sides.color); o.packRestored = true; } };
   installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon: couponPolicy.validateCoupon, notifyState() {}, restorePackQuota, voidPendingForOrder() {}, qualifyForOrder() {}, gateway, preview, fetchGateway, uploadsDir });
-  app.get('/', (_req, res) => res.send(landing({ pricing: db.pricing, campaign: db.settings.campaign, walletOffers: db.settings.campaign.wallets.filter((o) => o.enabled) })));
+  app.get('/', (req, res) => res.send(landing({ signedIn: currentUser(req)?.role === 'customer', pricing: db.pricing, campaign: db.settings.campaign, walletOffers: db.settings.campaign.wallets.filter((o) => o.enabled) })));
   app.get('/preview/role/:role', (req, res) => { if (!['customer', 'admin', 'guest'].includes(req.params.role)) return res.sendStatus(404); res.cookie('preview_role', req.params.role, { httpOnly: true, sameSite: 'lax' }); res.redirect(req.params.role === 'admin' ? '/admin/catalogue' : '/stationery'); });
   app.get('/login', (_req, res) => { res.cookie('preview_role', 'customer', { httpOnly: true, sameSite: 'lax' }); res.redirect('/cart'); });
   if (installPrintRoutes) installPrintRoutes({ app, loadDb, saveDb, currentUser, requireRole, uploadsDir });

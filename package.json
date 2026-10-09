@@ -25,7 +25,11 @@
     "test:seo": "node scripts/seo-check.mjs",
     "agent:install": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1",
     "agent:status": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1 -Mode Status",
-    "agent:uninstall": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1 -Mode Uninstall"
+    "agent:uninstall": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1 -Mode Uninstall",
+    "test:studio": "node scripts/studio-check.mjs",
+    "test:checklist": "node scripts/checklist-check.mjs",
+    "test:pages": "node scripts/site-coverage-check.mjs",
+    "preview:pages": "node scripts/site-coverage-check.mjs --serve"
   },
   "dependencies": {
     "compression": "^1.7.4",

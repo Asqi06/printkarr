@@ -47,7 +47,7 @@ import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
-import { POSTS, vapiPage, damanPage, printPricesPage, landing, nearbyShopsPage, kioskStatusPage, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { POSTS, vapiPage, damanPage, printPricesPage, landing, nearbyShopsPage, kioskStatusPage, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, CONTACT_TOPICS, contactThankYouPage, notFoundPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import { discoveryRoutes, SITE } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { buildOrderCover } from './agent/cover.js';
@@ -179,7 +179,7 @@ app.set('trust proxy', 1); // correct req.protocol/secure cookies behind Render/
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
 app.use(compression());
 discoveryRoutes(app, POSTS);
-app.use(['/admin', '/customer', '/order', '/login', '/logout', '/auth', '/api', '/share', '/c', '/qr.png'], (_req, res, next) => {
+app.use(['/admin', '/customer', '/partner', '/rider', '/cart', '/order', '/login', '/logout', '/auth', '/api', '/share', '/c', '/qr.png'], (_req, res, next) => {
   res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   next();
 });
@@ -2514,7 +2514,7 @@ app.get('/', (req, res) => {
     .filter((o) => Date.parse(o.createdAt) >= weekAgo && o.status !== 'CANCELLED')
     .reduce((s, o) => s + o.pages * o.copies, 0);
   const queueDepth = db.orders.filter((o) => ['PRINT_QUEUE', 'PRINTING'].includes(o.status)).length;
-  res.send(landing({ pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb, campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db) : [], reviews: publicReviews(db, user) }));
+  res.send(landing({ signedIn: user?.role === 'customer', pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb, campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db) : [], reviews: publicReviews(db, user) }));
 });
 
 // Marketing pages — Grok workspace port (server-rendered, no auth).
@@ -2525,15 +2525,33 @@ app.get('/how-it-works', (_req, res) => res.send(howItWorksPage()));
 app.get('/about', (_req, res) => res.send(aboutPage()));
 app.get('/franchise', (_req, res) => res.send(franchisePage()));
 app.get('/xerox', (_req, res) => res.send(xeroxPage()));
-app.get('/contact', (req, res) => res.send(contactPage({ sent: req.query.sent === '1' })));
-app.post('/contact', express.urlencoded({ extended: true }), (req, res) => {
+// Public enquiries: bounded fields, honeypot, origin check and per-IP throttling.
+// ponytail: per-process limit resets on restart; use a shared rate-limit store before adding replicas.
+const contactLimiter = rateLimit({ windowMs: 15 * 60_000, max: 5, standardHeaders: 'draft-7', legacyHeaders: false,
+  handler: (_req,res) => res.status(429).send(contactPage({error:'Too many enquiries. Please try again in 15 minutes, or call us for urgent order help.'})) });
+app.get('/contact', (_req, res) => res.send(contactPage()));
+app.get('/contact/thank-you', (req,res) => {
+  const confirmed = parseCookies(req.headers.cookie).pk_contact_sent === '1';
+  res.clearCookie('pk_contact_sent', {path:'/contact/thank-you'});
+  res.set('Cache-Control','no-store').set('X-Robots-Tag','noindex,nofollow').send(contactThankYouPage({confirmed}));
+});
+app.post('/contact', contactLimiter, siteOrigin, (req, res) => {
+  const body = req.body || {}, values = {};
+  const limits = {model:80,name:100,phone:24,email:254,message:4000};
+  for (const [key,max] of Object.entries(limits)) values[key] = typeof body[key] === 'string' ? body[key].trim().slice(0,max) : '';
+  if (body.website) return res.redirect(303,'/contact/thank-you');
+  const invalid = Object.entries(limits).some(([key,max]) => typeof body[key] !== 'string' || body[key].length > max) || !CONTACT_TOPICS.includes(values.model) || !values.name || !values.message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email) || !/^[+()\d\s-]+$/.test(values.phone) || !/^\d{7,15}$/.test(values.phone.replace(/\D/g,''));
+  if (invalid) return res.status(400).send(contactPage({error:'Check your name, email, phone, enquiry type and message, then send again.',values}));
   try {
     const db = loadDb();
     db.leads = db.leads || [];
-    db.leads.unshift({ at: new Date().toISOString(), ...(req.body || {}) });
+    db.leads.unshift({ at: new Date().toISOString(), ...values });
     saveDb(db);
-  } catch {}
-  res.redirect('/contact?sent=1');
+  } catch {
+    return res.status(503).send(contactPage({error:'Your enquiry could not be saved. Your details are below; please try again or call us.',values}));
+  }
+  res.cookie('pk_contact_sent','1',{httpOnly:true,sameSite:'lax',secure:req.secure,maxAge:120000,path:'/contact/thank-you'});
+  res.redirect(303,'/contact/thank-you');
 });
 app.get('/blogs', (_req, res) => res.send(blogsPage()));
 app.get('/blogs/:slug', (req, res) => res.status(POSTS.some(p => p.slug === req.params.slug) ? 200 : 404).send(blogArticlePage(req.params.slug)));
@@ -2546,7 +2564,7 @@ app.use(express.static(PUBLIC, { maxAge: '1h', extensions: ['html'], setHeaders(
 } }));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
-  res.status(404).set('X-Robots-Tag', 'noindex').send('<!doctype html><html lang="en"><title>Page not found — PrintKarr</title><main><h1>Page not found</h1><a href="/">Go to PrintKarr</a></main></html>');
+  res.status(404).set('X-Robots-Tag', 'noindex').send(notFoundPage());
 });
 
 // Production bootstrap: on a fresh volume (no users yet), create the owner

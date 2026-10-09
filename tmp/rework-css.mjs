@@ -1,0 +1,1 @@
+import fs from 'node:fs';const p='public/cinema.css',lines=fs.readFileSync(p,'utf8').split(/\r?\n/);fs.writeFileSync('tmp/cinema-product.css',[...lines.slice(39,43),lines[44],...lines.slice(51,57)].join('\n'));fs.writeFileSync(p,lines.slice(0,18).join('\n')+'\n'+lines[30]+'\n');

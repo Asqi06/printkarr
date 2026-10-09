@@ -1,0 +1,470 @@
+
+> printkarr@0.1.0 test
+> node --test lib/pricing-cod.test.js agent/cover.test.js agent/print-settings.test.js lib/machine.test.js lib/packs.test.js lib/referrals.test.js lib/campus.test.js lib/kiosk.test.js lib/collect.test.js lib/files.test.js lib/db.test.js lib/owner-test.test.js agent/instance-lock.test.js lib/reviews.test.js lib/notify.test.js lib/influencers.test.js
+
+TAP version 13
+# Subtest: branded cover preserves the supplied artwork, page bounds and QR resources
+ok 1 - branded cover preserves the supplied artwork, page bounds and QR resources
+  ---
+  duration_ms: 684.6984
+  type: 'test'
+  ...
+# Subtest: long, multiline and non-Latin metadata cannot prevent cover printing
+ok 2 - long, multiline and non-Latin metadata cannot prevent cover printing
+  ---
+  duration_ms: 339.6898
+  type: 'test'
+  ...
+# Subtest: only one agent can own the printer lock; releasing allows restart
+ok 3 - only one agent can own the printer lock; releasing allows restart
+  ---
+  duration_ms: 17.0826
+  type: 'test'
+  ...
+# Subtest: selected pages and copies reach SumatraPDF without affecting the cover
+ok 4 - selected pages and copies reach SumatraPDF without affecting the cover
+  ---
+  duration_ms: 3.8873
+  type: 'test'
+  ...
+# Subtest: duplicate/reversed ranges print each billed page once and reject invalid limits
+ok 5 - duplicate/reversed ranges print each billed page once and reject invalid limits
+  ---
+  duration_ms: 1.1409
+  type: 'test'
+  ...
+# Subtest: render preflight requires all pages and the charged document count
+ok 6 - render preflight requires all pages and the charged document count
+  ---
+  duration_ms: 3.7819
+  type: 'test'
+  ...
+# Subtest: 149 wallet offer grants three files only after payment, accepts four colours and cannot duplicate or steal a claim
+ok 7 - 149 wallet offer grants three files only after payment, accepts four colours and cannot duplicate or steal a claim
+  ---
+  duration_ms: 27.6073
+  type: 'test'
+  ...
+# Subtest: all five offers credit their exact balances; first offer cannot repeat
+ok 8 - all five offers credit their exact balances; first offer cannot repeat
+  ---
+  duration_ms: 3.6682
+  type: 'test'
+  ...
+# Subtest: gateway snapshots preserve bonuses, prevent payment reuse and first-offer replay
+ok 9 - gateway snapshots preserve bonuses, prevent payment reuse and first-offer replay
+  ---
+  duration_ms: 1.3139
+  type: 'test'
+  ...
+# Subtest: bonus grants expire; purchased balance and non-expiring grants survive
+ok 10 - bonus grants expire; purchased balance and non-expiring grants survive
+  ---
+  duration_ms: 63.7557
+  type: 'test'
+  ...
+# Subtest: refund restores the original grant expiry and cannot convert an expired bonus to purchased money
+ok 11 - refund restores the original grant expiry and cannot convert an expired bonus to purchased money
+  ---
+  duration_ms: 1.3585
+  type: 'test'
+  ...
+# Subtest: morning scheduling handles midnight, exact cutoff and India time
+ok 12 - morning scheduling handles midnight, exact cutoff and India time
+  ---
+  duration_ms: 4.3098
+  type: 'test'
+  ...
+# Subtest: first-wallet benefit is reserved once, cancelled orders release it, express stays paid
+ok 13 - first-wallet benefit is reserved once, cancelled orders release it, express stays paid
+  ---
+  duration_ms: 7.1616
+  type: 'test'
+  ...
+# Subtest: optional pass has its own balance and 90-day member benefits
+ok 14 - optional pass has its own balance and 90-day member benefits
+  ---
+  duration_ms: 0.9093
+  type: 'test'
+  ...
+# Subtest: late promises credit once, including restart catch-up; timely/unpaid/cancelled/late-paid orders earn nothing
+ok 15 - late promises credit once, including restart catch-up; timely/unpaid/cancelled/late-paid orders earn nothing
+  ---
+  duration_ms: 3.0247
+  type: 'test'
+  ...
+# Subtest: admin validation rejects invalid configuration and accepts changed amounts, disabled offers and no expiry
+ok 16 - admin validation rejects invalid configuration and accepts changed amounts, disabled offers and no expiry
+  ---
+  duration_ms: 10.3604
+  type: 'test'
+  ...
+# Subtest: campus delivery cannot be marked collected through a kiosk QR
+ok 17 - campus delivery cannot be marked collected through a kiosk QR
+  ---
+  duration_ms: 3.2823
+  type: 'test'
+  ...
+# Subtest: buying the first wallet or pass during checkout updates pending batch fees, preserving paid orders
+ok 18 - buying the first wallet or pass during checkout updates pending batch fees, preserving paid orders
+  ---
+  duration_ms: 1.3858
+  type: 'test'
+  ...
+# Subtest: mint reuses the live token per order
+ok 19 - mint reuses the live token per order
+  ---
+  duration_ms: 5.1127
+  type: 'test'
+  ...
+# Subtest: consume enforces single-use, readiness and ownership
+ok 20 - consume enforces single-use, readiness and ownership
+  ---
+  duration_ms: 1.2276
+  type: 'test'
+  ...
+# Subtest: expired and unknown tokens are rejected
+ok 21 - expired and unknown tokens are rejected
+  ---
+  duration_ms: 2.2633
+  type: 'test'
+  ...
+# Subtest: production refuses missing or corrupt data instead of resetting records
+ok 22 - production refuses missing or corrupt data instead of resetting records
+  ---
+  duration_ms: 217.182
+  type: 'test'
+  ...
+# Subtest: Render data path must be a real mount
+ok 23 - Render data path must be a real mount
+  ---
+  duration_ms: 0.5657
+  type: 'test'
+  ...
+# Subtest: pdf keeps its real page count
+ok 24 - pdf keeps its real page count
+  ---
+  duration_ms: 91.6312
+  type: 'test'
+  ...
+# Subtest: png and jpg count as one page
+ok 25 - png and jpg count as one page
+  ---
+  duration_ms: 2.9056
+  type: 'test'
+  ...
+# Subtest: renamed executables and office docs are rejected
+ok 26 - renamed executables and office docs are rejected
+  ---
+  duration_ms: 6.2281
+  type: 'test'
+  ...
+# Subtest: orderFile keeps legacy pdf default and sanitizes
+ok 27 - orderFile keeps legacy pdf default and sanitizes
+  ---
+  duration_ms: 0.8369
+  type: 'test'
+  ...
+# Subtest: mimeFor maps image extensions
+ok 28 - mimeFor maps image extensions
+  ---
+  duration_ms: 0.4537
+  type: 'test'
+  ...
+# Subtest: admin creates influencer or regular coupons, rejects referral collisions and invalid inputs
+ok 29 - admin creates influencer or regular coupons, rejects referral collisions and invalid inputs
+  ---
+  duration_ms: 9.6594
+  type: 'test'
+  ...
+# Subtest: generated friend codes avoid coupons, users and prior referrals on every candidate
+ok 30 - generated friend codes avoid coupons, users and prior referrals on every candidate
+  ---
+  duration_ms: 2.7257
+  type: 'test'
+  ...
+# Subtest: basket attribution comes from coupon validation, stays frozen and counts a mixed checkout once
+ok 31 - basket attribution comes from coupon validation, stays frozen and counts a mixed checkout once
+  ---
+  duration_ms: 90.2262
+  type: 'test'
+  ...
+# Subtest: multiple print coupons in one shared basket deduplicate customers/checkouts and refunds remove conversions
+ok 32 - multiple print coupons in one shared basket deduplicate customers/checkouts and refunds remove conversions
+  ---
+  duration_ms: 9.8122
+  type: 'test'
+  ...
+# Subtest: zero-discount print coupons cannot be stacked with a cart coupon
+ok 33 - zero-discount print coupons cannot be stacked with a cart coupon
+  ---
+  duration_ms: 1.8928
+  type: 'test'
+  ...
+# Subtest: returning customers, ordinary coupons, unpaid cancellations and demo payments have distinct counts
+ok 34 - returning customers, ordinary coupons, unpaid cancellations and demo payments have distinct counts
+  ---
+  duration_ms: 3.3889
+  type: 'test'
+  ...
+# Subtest: influencer discounts coexist with actual friend referral credit without creating influencer rewards
+ok 35 - influencer discounts coexist with actual friend referral credit without creating influencer rewards
+  ---
+  duration_ms: 9.1763
+  type: 'test'
+  ...
+# Subtest: admin report escapes names/handles and displays conversion metrics
+ok 36 - admin report escapes names/handles and displays conversion metrics
+  ---
+  duration_ms: 4.1309
+  type: 'test'
+  ...
+# Subtest: toggle reads the kiosk flag, missing flag means demo
+ok 37 - toggle reads the kiosk flag, missing flag means demo
+  ---
+  duration_ms: 6.2306
+  type: 'test'
+  ...
+# Subtest: live needs env or (toggle + gateway); toggle alone never pays fake-live
+ok 38 - live needs env or (toggle + gateway); toggle alone never pays fake-live
+  ---
+  duration_ms: 1.0748
+  type: 'test'
+  ...
+# Subtest: happy path walks the full golden loop
+ok 39 - happy path walks the full golden loop
+  ---
+  duration_ms: 9.7931
+  type: 'test'
+  ...
+# Subtest: illegal jumps throw (no spaghetti statuses)
+ok 40 - illegal jumps throw (no spaghetti statuses)
+  ---
+  duration_ms: 1.4522
+  type: 'test'
+  ...
+# Subtest: failure states and recovery match §38
+ok 41 - failure states and recovery match §38
+  ---
+  duration_ms: 2.1957
+  type: 'test'
+  ...
+# Subtest: terminals have no exits; unknown states rejected
+ok 42 - terminals have no exits; unknown states rejected
+  ---
+  duration_ms: 3.2104
+  type: 'test'
+  ...
+# Subtest: every state in STATES has a transition row
+ok 43 - every state in STATES has a transition row
+  ---
+  duration_ms: 0.8241
+  type: 'test'
+  ...
+# Subtest: print reports use the print event and omit cancelled orders
+ok 44 - print reports use the print event and omit cancelled orders
+  ---
+  duration_ms: 0.7129
+  type: 'test'
+  ...
+# Subtest: fulfilment requires paid, confirmed cash or the approved owner test method
+ok 45 - fulfilment requires paid, confirmed cash or the approved owner test method
+  ---
+  duration_ms: 0.6216
+  type: 'test'
+  ...
+# Subtest: reminders respect delay, one-week cooldown, active customers and opt-in email
+ok 46 - reminders respect delay, one-week cooldown, active customers and opt-in email
+  ---
+  duration_ms: 11.9266
+  type: 'test'
+  ...
+# Subtest: paid orders and shared baskets stop no-order reminders; unpaid baskets do not
+ok 47 - paid orders and shared baskets stop no-order reminders; unpaid baskets do not
+  ---
+  duration_ms: 3.0612
+  type: 'test'
+  ...
+# Subtest: all successful logins share the session hook; paid order alerts deduplicate; top-up replay emits nothing
+ok 48 - all successful logins share the session hook; paid order alerts deduplicate; top-up replay emits nothing
+  ---
+  duration_ms: 12.3192
+  type: 'test'
+  ...
+# Subtest: email queue persists before delivery, includes unsubscribe, survives concurrent edits, and never repeats sent mail
+ok 49 - email queue persists before delivery, includes unsubscribe, survives concurrent edits, and never repeats sent mail
+  ---
+  duration_ms: 6.7173
+  type: 'test'
+  ...
+# Subtest: pending emails recheck unsubscribe, payments, switches, and current offer terms
+ok 50 - pending emails recheck unsubscribe, payments, switches, and current offer terms
+  ---
+  duration_ms: 12.3717
+  type: 'test'
+  ...
+# Subtest: provider failures retry on schedule, unconfigured email stays queued, interrupted send is not duplicated
+ok 51 - provider failures retry on schedule, unconfigured email stays queued, interrupted send is not duplicated
+  ---
+  duration_ms: 8.4845
+  type: 'test'
+  ...
+# Subtest: HTTP inbox/read endpoints enforce recipient and role, preferences validate, unsubscribe GET has no side effects
+ok 52 - HTTP inbox/read endpoints enforce recipient and role, preferences validate, unsubscribe GET has no side effects
+  ---
+  duration_ms: 242.3695
+  type: 'test'
+  ...
+# Subtest: owner test prints are limited to pickup, five sheets and available credits
+ok 53 - owner test prints are limited to pickup, five sheets and available credits
+  ---
+  duration_ms: 2.6054
+  type: 'test'
+  ...
+# Subtest: packs match the college bundle spec
+ok 54 - packs match the college bundle spec
+  ---
+  duration_ms: 4.6807
+  type: 'test'
+  ...
+# Subtest: booking unlocks quota, installments clear due, usage tracks left/used
+ok 55 - booking unlocks quota, installments clear due, usage tracks left/used
+  ---
+  duration_ms: 4.8703
+  type: 'test'
+  ...
+# Subtest: quota stays locked before ₹199 and picks oldest usable sub
+ok 56 - quota stays locked before ₹199 and picks oldest usable sub
+  ---
+  duration_ms: 39.7938
+  type: 'test'
+  ...
+# Subtest: colour-heavy work uses included quota first, then B&W exchange without double spending
+ok 57 - colour-heavy work uses included quota first, then B&W exchange without double spending
+  ---
+  duration_ms: 2.3161
+  type: 'test'
+  ...
+# Subtest: L covers 60 colour and 400 B&W together, while unpaid orders reserve exchanged quota
+ok 58 - L covers 60 colour and 400 B&W together, while unpaid orders reserve exchanged quota
+  ---
+  duration_ms: 1.8882
+  type: 'test'
+  ...
+# Subtest: existing standard packs upgrade once without resetting usage, payments or file claims
+ok 59 - existing standard packs upgrade once without resetting usage, payments or file claims
+  ---
+  duration_ms: 0.8141
+  type: 'test'
+  ...
+# Subtest: progressive slabs, mixed quantities, floors and caps stay monotonic
+ok 60 - progressive slabs, mixed quantities, floors and caps stay monotonic
+  ---
+  duration_ms: 54.2678
+  type: 'test'
+  ...
+# Subtest: one basket fee, COD once, gateway race guard, cash collection and cancellation
+ok 61 - one basket fee, COD once, gateway race guard, cash collection and cancellation
+  ---
+  duration_ms: 121.7827
+  type: 'test'
+  ...
+# Subtest: HTTP cash consent, ownership, replay and exact collection are enforced
+ok 62 - HTTP cash consent, ownership, replay and exact collection are enforced
+  ---
+  duration_ms: 421.4967
+  type: 'test'
+  ...
+# Subtest: codes are unique, uppercase, and stable per user
+ok 63 - codes are unique, uppercase, and stable per user
+  ---
+  duration_ms: 6.4913
+  type: 'test'
+  ...
+# Subtest: link before first paid order, reject self/unknown/duplicate and paused referrals
+ok 64 - link before first paid order, reject self/unknown/duplicate and paused referrals
+  ---
+  duration_ms: 4.1714
+  type: 'test'
+  ...
+# Subtest: both rewards wait for a 99+ top-up and the first completed paid order, once
+ok 65 - both rewards wait for a 99+ top-up and the first completed paid order, once
+  ---
+  duration_ms: 3.0894
+  type: 'test'
+  ...
+# Subtest: 49 top-ups, free orders and second orders do not qualify; cancellation allows retry
+ok 66 - 49 top-ups, free orders and second orders do not qualify; cancellation allows retry
+  ---
+  duration_ms: 42.7006
+  type: 'test'
+  ...
+# Subtest: top-up after completion can finish a previously linked referral; refunds are not top-ups
+ok 67 - top-up after completion can finish a previously linked referral; refunds are not top-ups
+  ---
+  duration_ms: 3.2158
+  type: 'test'
+  ...
+# Subtest: 3 and 5 successful distinct friends earn 50 and 100 milestones once
+ok 68 - 3 and 5 successful distinct friends earn 50 and 100 milestones once
+  ---
+  duration_ms: 5.711
+  type: 'test'
+  ...
+# Subtest: configured amounts and cap apply; legacy cash is preserved
+ok 69 - configured amounts and cap apply; legacy cash is preserved
+  ---
+  duration_ms: 1.9175
+  type: 'test'
+  ...
+# Subtest: legacy pending referrals are still honored without awarding friend twice
+ok 70 - legacy pending referrals are still honored without awarding friend twice
+  ---
+  duration_ms: 0.7439
+  type: 'test'
+  ...
+# Subtest: UPI id validation accepts VPA and mobile, rejects junk
+ok 71 - UPI id validation accepts VPA and mobile, rejects junk
+  ---
+  duration_ms: 1.3316
+  type: 'test'
+  ...
+# Subtest: reviews validate, update one per customer, preserve words, and enforce deletion ownership
+ok 72 - reviews validate, update one per customer, preserve words, and enforce deletion ownership
+  ---
+  duration_ms: 9.0894
+  type: 'test'
+  ...
+# Subtest: public cards escape customer text, include low ratings, and show controls only to authorized viewers
+ok 73 - public cards escape customer text, include low ratings, and show controls only to authorized viewers
+  ---
+  duration_ms: 73.1113
+  type: 'test'
+  ...
+# Subtest: review routes reject cross-site writes and unauthorized deletions without saving
+ok 74 - review routes reject cross-site writes and unauthorized deletions without saving
+  ---
+  duration_ms: 8.4367
+  type: 'test'
+  ...
+# Subtest: both review form pages send an origin-only referrer for redirected submissions
+ok 75 - both review form pages send an origin-only referrer for redirected submissions
+  ---
+  duration_ms: 6.9442
+  type: 'test'
+  ...
+# Subtest: upload responds before deferred scripts, validates before auto-submit, blocks duplicates and restores on Back
+ok 76 - upload responds before deferred scripts, validates before auto-submit, blocks duplicates and restores on Back
+  ---
+  duration_ms: 6.7892
+  type: 'test'
+  ...
+1..76
+# tests 76
+# suites 0
+# pass 76
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4981.4252

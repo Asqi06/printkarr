@@ -1,0 +1,1 @@
+import fs from 'node:fs';const old=fs.readFileSync('public/cinema-scene.js','utf8');fs.writeFileSync('tmp/kiosk-loader.txt',old.slice(old.indexOf(' // ponytail: reader'),old.indexOf(' function resize()')));fs.writeFileSync('tmp/scene-original.txt',old);

@@ -1,0 +1,5 @@
+
+> printkarr@0.1.0 test:delivery
+> node scripts/delivery-service-check.mjs
+
+Delivery service checks passed: distance bands, school pricing, cutoffs, basket rules, capacity, payment replay, staff isolation, full partner → rider delivery, owned shop catalogues and selected-shop print checkout.

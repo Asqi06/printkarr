@@ -1,0 +1,5 @@
+
+> printkarr@0.1.0 test:print-safety
+> node scripts/print-safety-check.mjs
+
+PASS: file retention, cloud duplicate cleanup, abandoned uploads, render failure, sequential printing, false-success rejection, queue pause and mocked Windows printer monitoring.

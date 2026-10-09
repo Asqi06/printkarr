@@ -1,0 +1,5 @@
+
+> printkarr@0.1.0 test:studio
+> node scripts/studio-check.mjs
+
+Paper Studio passed: 4 viewport widths, 10 routes, live quote, real guest/account uploads, no 3D, image alt, contact spam/validation/rate limit/success, and no-JS fallback.

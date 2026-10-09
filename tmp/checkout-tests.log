@@ -1,0 +1,5 @@
+
+> printkarr@0.1.0 test:checkout
+> node scripts/checkout-check.mjs
+
+Checkout checks passed: route limits/cutoffs, preserved settings, wallet ownership, signed top-up return, file gifts and one coupon use per customer across all payment routes.

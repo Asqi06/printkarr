@@ -1,0 +1,15 @@
+Re-extracting code files in . (no LLM needed)...
+[graphify watch] 72 file(s) not classified (no supported extension or shebang), skipped: .dockerignore, .env.example, .gitignore, .gitkeep, .graphify_version, .node_modules.lock (+66 more)
+  AST extraction: 100/295 uncached files (33%) [8 workers]
+  AST extraction: 200/295 uncached files (67%) [8 workers]
+  AST extraction: 295/295 uncached files (100%) [8 workers]
+  warning: 1 .sql file(s) contributed nothing to the graph because a dependency is missing: tree_sitter_sql not installed. Install it with: pip install "graphifyy[sql]" (#1745)
+  warning: 1 file(s) had syntax errors and may be partially extracted: Yxx1UbwMGrpapxo2-grok-workspace/src/site.tsx (first error at line 234, 34 symbol(s) extracted)
+[graphify watch] community set changed since labeling (339 saved labels, 356 communities now; renamed 135 community(ies) by their hub). Run `graphify label` to refresh names with the LLM.
+[graphify] backed up curated graph (5 files) -> 2026-10-09/
+Graph has 9996 nodes (above 5000 limit). Building aggregated community view...
+graph.html written (aggregated: 356 community nodes, 1060 cross-community edges)
+Tip: run with --obsidian for full node-level detail.
+[graphify watch] Rebuilt: 9996 nodes, 25362 edges, 356 communities
+[graphify watch] graph.json, graph.html and GRAPH_REPORT.md updated in graphify-out
+Code graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.

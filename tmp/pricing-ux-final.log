@@ -1,0 +1,9 @@
+
+> printkarr@0.1.0 test:ux
+> node scripts/mixed-print-check.mjs && node scripts/split-print-check.mjs && node scripts/address-ux-check.mjs
+
+Mixed/UX checks passed: canonical assignments, subset/copies/range errors, configured rates, pack buckets, first offers, saved delivery, guest campus/OTP ownership, receipt/admin instructions, wallet replay and agent exclusion.
+Colour pack checks passed: 60-side upload, exchanged quota, browser estimate, payment, refund and replay.
+Split printing passed: preserved pages/rotation, disjoint subsets, pricing/copies, private PDF previews, ownership, old-agent compatibility and both-set completion guard.
+Address UX passed: locality fee bands, optional GPS precedence, saved information, default retention, no map dependency, coverage validation and customer isolation.
+Location fallback passed: denial, accuracy validation, city changes and stale device callbacks.

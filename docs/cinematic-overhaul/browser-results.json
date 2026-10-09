@@ -1,0 +1,36 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "home": true,
+      "customerRoutes": true,
+      "pricingAndKeyboard": true
+    },
+    {
+      "width": 768,
+      "home": true,
+      "customerRoutes": true,
+      "pricingAndKeyboard": true
+    },
+    {
+      "width": 390,
+      "home": true,
+      "customerRoutes": true,
+      "pricingAndKeyboard": true
+    },
+    {
+      "width": 320,
+      "home": true,
+      "customerRoutes": true,
+      "pricingAndKeyboard": true
+    }
+  ],
+  "reducedMotion": true,
+  "webglFailure": true,
+  "nativeHomepageUpload": true,
+  "kioskDescentLandingOrbit": true,
+  "lowMemory": true,
+  "dynamicResizeAndMotion": true,
+  "slowModelFallback": true,
+  "errors": []
+}

@@ -1,0 +1,121 @@
+
+> printkarr@0.1.0 test:seo
+> node scripts/seo-check.mjs
+
+Navigation and sign-in checked: one hero action, four mobile destinations including Stationery and safe return to Wallet / My Account.
+OAuth checked: Google customer access, retained wallet, staff credential separation and invalid-state rejection.
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /B&amp;W ₹7 per printed side/. Input:
+
+'<!DOCTYPE html>\n' +
+  '<html lang="en">\n' +
+  '<head>\n' +
+  '<meta charset="UTF-8">\n' +
+  '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
+  '<title>Local Prints &amp; Stationery Delivery in Vapi — PrintKarr</title>\n' +
+  '<link rel="icon" href="/favicon.ico?v=20261009-cinematic-paper">\n' +
+  '<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20261009-cinematic-paper">\n' +
+  '<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=20261009-cinematic-paper">\n' +
+  '<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261009-cinematic-paper">\n' +
+  '<link rel="manifest" href="/site.webmanifest?v=20261009-cinematic-paper">\n' +
+  '<meta name="description" content="Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying.">\n' +
+  '<link rel="canonical" href="https://printkarr.in/">\n' +
+  '<meta name="robots" content="index,follow,max-image-preview:large">\n' +
+  '<meta property="og:locale" content="en_IN"><meta property="og:site_name" content="PrintKarr">\n' +
+  '<meta property="og:type" content="website"><meta property="og:url" content="https://printkarr.in/">\n' +
+  '<meta property="og:title" content="Local Prints &amp; Stationery Delivery in Vapi"><meta property="og:description" content="Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying.">\n' +
+  '<meta property="og:image" content="https://printkarr.in/images/printkarr-social.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="PrintKarr — online document printing in Vapi and Daman">\n' +
+  '<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Local Prints &amp; Stationery Delivery in Vapi"><meta name="twitter:description" content="Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying."><meta name="twitter:image" content="https://printkarr.in/images/printkarr-social.png"><meta name="twitter:image:alt" content="PrintKarr — online document printing in Vapi and Daman">\n' +
+  '<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://printkarr.in/#organization","name":"PrintKarr","legalName":"PrintKarr Technologies Private Limited","url":"https://printkarr.in/","logo":"https://printkarr.in/wordmark.svg","description":"Online A4 document and college assignment printing based in Vapi, with local delivery in Vapi and Daman. School and college delivery in supported local areas is ₹10 scheduled or ₹25 express.","telephone":"+919016703180","email":"team@printkarr.in","address":{"@type":"PostalAddress","addressLocality":"Vapi","addressRegion":"Gujarat","addressCountry":"IN"},"areaServed":["Vapi","Daman"],"contactPoint":{"@type":"ContactPoint","telephone":"+919016703180","email":"team@printkarr.in","contactType":"customer service","areaServed":"IN"}},{"@type":"WebSite","@id":"https://printkarr.in/#website","url":"https://printkarr.in/","name":"PrintKarr","inLanguage":"en-IN","publisher":{"@id":"https://printkarr.in/#organization"}},{"@type":"WebPage","@id":"https://printkarr.in/#page","url":"https://printkarr.in/","headline":"Local Prints & Stationery Delivery in Vapi","name":"Local Prints & Stationery Delivery in Vapi","description":"Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying.","inLanguage":"en-IN","isPartOf":{"@id":"https://printkarr.in/#website"},"image":"https://printkarr.in/images/printkarr-social.png"},{"@type":"Service","@id":"https://printkarr.in/#printing-service","name":"Document printing and local delivery","serviceType":"PDF, black-and-white and colour document printing","provider":{"@id":"https://printkarr.in/#organization"},"areaServed":["Vapi","Daman"],"description":"Online orders can be placed at any time. Delivery availability, fees and slots are confirmed in checkout. Schools and colleges in supported local areas use ₹10 scheduled or ₹25 express delivery. Vapi kiosks are planned.","url":"https://printkarr.in/"}]}</script>\n' +
+  '<meta name="theme-color" content="#2448EF">\n' +
+  '<link rel="preload" href="/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin>\n' +
+  '<link rel="stylesheet" href="/design.css?v=20261009-cinematic-paper">\n' +
+  '<link rel="stylesheet" href="/customer.css?v=20261009-cinematic-paper">\n' +
+  '<link rel="stylesheet" href="/qk-landing.css?v=20261009-cinematic-paper">\n' +
+  '<script src="/vendor/gsap-3.13.0.min.js" defer></script><script type="module" src="/cinema.js?v=20261009-cinematic-paper"></script>\n' +
+  '<link rel="stylesheet" href="/site-overhaul.css?v=20261009-cinematic-paper">\n' +
+  '<link rel="stylesheet" href="/cinema.css?v=20261009-cinematic-paper">\n' +
+  '</head>\n' +
+  '<body class="public-site"><div class="pk-page">\n' +
+  '<header class="site-header"><div class="site-header-inner">\n' +
+  '    <a class="pk-logo" href="/" aria-label="PrintKarr home"><span class="w">Print</span><span class="b">Karr</span></a>\n' +
+  '    <nav class="site-links" aria-label="Primary"><a href="/order" >Print</a><a href="/shops" >Nearby Shops</a><a href="/stationery" >Stationery</a><a href="/#how-it-works" >How It Works</a><a href="/#kiosk" >Kiosk</a></nav>\n' +
+  '    <nav class="header-actions" aria-label="Your account"><a href="/cart" class="account-link">Cart</a><a href="/customer/wallet" class="header-wallet" aria-label="Wallet &amp; top-up"><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#wallet"></use></svg><span>Wallet</span></a><a href="/customer/profile" class="account-link">My Account</a><a href="/order" class="btn loud">Print now <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-up-right"></use></svg></a></nav>\n' +
+  '    <details class="mobile-menu"><summary aria-label="Open navigation">Menu <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-down"></use></svg></summary><nav aria-label="Mobile navigation"><a href="/order" >Print now</a><a href="/cart" >Cart</a><a href="/customer/wallet" >Wallet / Top-up</a><a href="/customer/profile" >My Account</a><a href="/customer/orders" >My Orders</a><a href="/order" >Print</a><a href="/shops" >Nearby Shops</a><a href="/stationery" >Stationery</a><a href="/#how-it-works" >How It Works</a><a href="/#kiosk" >Kiosk</a><a href="/printing-prices" >Pricing</a><a href="/customer/packs" >Semester packs</a><a href="/customer/referrals" >Refer & Earn</a><a href="/about" >About</a><a href="/contact" >Contact</a><a href="/blogs" >Journal</a></nav></details>\n' +
+  '  </div></header><nav class="customer-mobile-nav" aria-label="Customer pages"><a href="/order" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#printer"></use></svg><span>Print</span></a><a href="/stationery" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#stack"></use></svg><span>Stationery</span></a><a href="/customer/orders" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#receipt"></use></svg><span>Orders</span></a><a href="/customer/profile" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#user-circle"></use></svg><span>My Account</span></a></nav>\n' +
+  `<a href="#main" style="position:absolute;left:-9999px" onfocus="this.style.left='16px';this.style.top='16px';this.style.zIndex=99;this.style.background='var(--navy)';this.style.color='#fff';this.style.padding='8px 16px';this.style.borderRadius='99px'" onblur="this.style.left='-9999px'">Skip to content</a>\n` +
+  '<main id="main">\n' +
+  '  <div class="cinema-home">\n' +
+  '    <section class="arrival cinema-container story-chapter" data-chapter="0" aria-labelledby="home-title">\n' +
+  '      <div class="arrival-copy"><p class="cinema-eyebrow"><span class="blue-mark"></span> PRINTKARR / BEYOND PAPER</p>\n' +
+  '        <h1 id="home-title">Your notes.<br>Your essentials.<br><span>At your door.</span></h1>\n' +
+  '        <p class="arrival-description">Upload your files, choose your prints,<br class="desktop-break"> and leave the trip to us.</p>\n' +
+  '        <div class="hero-actions"><a class="btn loud big cinema-magnet" href="/order">Upload &amp; Print <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-up-right"></use></svg></a><a class="cinema-text-link" href="#how-it-works">Explore PrintKarr <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-down"></use></svg></a></div>\n' +
+  '        <p class="hero-small">PDF, JPG &amp; PNG · No sign-in needed to start.<br>Full price before payment.</p>\n' +
+  '        <a class="arrival-shop-link" href="/shops">Find nearby shops <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-up-right"></use></svg></a>\n' +
+  '      </div>\n' +
+  '      <div class="scene-slot arrival-art" data-scene="0"><div class="paper-fallback" aria-hidden="true"><div class="fallback-sheet back-sheet"></div><div class="fallback-sheet"><span>PRINTKARR / A4</span><b>Ideas,<br>made<br><em>real.</em></b><div class="paper-rule"></div><small>FROM PIXELS TO PAPER.</small><i></i></div></div><div class="scene-host" aria-hidden="true"></div><p class="scene-caption"><span>01 / A DIGITAL BEGINNING</span><span class="scene-hint">A little movement. A new perspective.</span></p></div>\n' +
+  '      <div class="arrival-bottom"><a href="#how-it-works"><svg class="ui-icon" width="20" height="20" aria-hidden="true"><us'... 22442 more characters
+
+    at file:///E:/prntkr/scripts/design-check.mjs:218:8
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '<!DOCTYPE html>\n' +
+    '<html lang="en">\n' +
+    '<head>\n' +
+    '<meta charset="UTF-8">\n' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
+    '<title>Local Prints &amp; Stationery Delivery in Vapi — PrintKarr</title>\n' +
+    '<link rel="icon" href="/favicon.ico?v=20261009-cinematic-paper">\n' +
+    '<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20261009-cinematic-paper">\n' +
+    '<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=20261009-cinematic-paper">\n' +
+    '<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261009-cinematic-paper">\n' +
+    '<link rel="manifest" href="/site.webmanifest?v=20261009-cinematic-paper">\n' +
+    '<meta name="description" content="Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying.">\n' +
+    '<link rel="canonical" href="https://printkarr.in/">\n' +
+    '<meta name="robots" content="index,follow,max-image-preview:large">\n' +
+    '<meta property="og:locale" content="en_IN"><meta property="og:site_name" content="PrintKarr">\n' +
+    '<meta property="og:type" content="website"><meta property="og:url" content="https://printkarr.in/">\n' +
+    '<meta property="og:title" content="Local Prints &amp; Stationery Delivery in Vapi"><meta property="og:description" content="Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying.">\n' +
+    '<meta property="og:image" content="https://printkarr.in/images/printkarr-social.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="PrintKarr — online document printing in Vapi and Daman">\n' +
+    '<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Local Prints &amp; Stationery Delivery in Vapi"><meta name="twitter:description" content="Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying."><meta name="twitter:image" content="https://printkarr.in/images/printkarr-social.png"><meta name="twitter:image:alt" content="PrintKarr — online document printing in Vapi and Daman">\n' +
+    '<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://printkarr.in/#organization","name":"PrintKarr","legalName":"PrintKarr Technologies Private Limited","url":"https://printkarr.in/","logo":"https://printkarr.in/wordmark.svg","description":"Online A4 document and college assignment printing based in Vapi, with local delivery in Vapi and Daman. School and college delivery in supported local areas is ₹10 scheduled or ₹25 express.","telephone":"+919016703180","email":"team@printkarr.in","address":{"@type":"PostalAddress","addressLocality":"Vapi","addressRegion":"Gujarat","addressCountry":"IN"},"areaServed":["Vapi","Daman"],"contactPoint":{"@type":"ContactPoint","telephone":"+919016703180","email":"team@printkarr.in","contactType":"customer service","areaServed":"IN"}},{"@type":"WebSite","@id":"https://printkarr.in/#website","url":"https://printkarr.in/","name":"PrintKarr","inLanguage":"en-IN","publisher":{"@id":"https://printkarr.in/#organization"}},{"@type":"WebPage","@id":"https://printkarr.in/#page","url":"https://printkarr.in/","headline":"Local Prints & Stationery Delivery in Vapi","name":"Local Prints & Stationery Delivery in Vapi","description":"Upload PDFs or photos for A4 printouts, college assignments and documents. Choose Vapi, Daman or school / college delivery in our local coverage; review the price before paying.","inLanguage":"en-IN","isPartOf":{"@id":"https://printkarr.in/#website"},"image":"https://printkarr.in/images/printkarr-social.png"},{"@type":"Service","@id":"https://printkarr.in/#printing-service","name":"Document printing and local delivery","serviceType":"PDF, black-and-white and colour document printing","provider":{"@id":"https://printkarr.in/#organization"},"areaServed":["Vapi","Daman"],"description":"Online orders can be placed at any time. Delivery availability, fees and slots are confirmed in checkout. Schools and colleges in supported local areas use ₹10 scheduled or ₹25 express delivery. Vapi kiosks are planned.","url":"https://printkarr.in/"}]}</script>\n' +
+    '<meta name="theme-color" content="#2448EF">\n' +
+    '<link rel="preload" href="/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin>\n' +
+    '<link rel="stylesheet" href="/design.css?v=20261009-cinematic-paper">\n' +
+    '<link rel="stylesheet" href="/customer.css?v=20261009-cinematic-paper">\n' +
+    '<link rel="stylesheet" href="/qk-landing.css?v=20261009-cinematic-paper">\n' +
+    '<script src="/vendor/gsap-3.13.0.min.js" defer></script><script type="module" src="/cinema.js?v=20261009-cinematic-paper"></script>\n' +
+    '<link rel="stylesheet" href="/site-overhaul.css?v=20261009-cinematic-paper">\n' +
+    '<link rel="stylesheet" href="/cinema.css?v=20261009-cinematic-paper">\n' +
+    '</head>\n' +
+    '<body class="public-site"><div class="pk-page">\n' +
+    '<header class="site-header"><div class="site-header-inner">\n' +
+    '    <a class="pk-logo" href="/" aria-label="PrintKarr home"><span class="w">Print</span><span class="b">Karr</span></a>\n' +
+    '    <nav class="site-links" aria-label="Primary"><a href="/order" >Print</a><a href="/shops" >Nearby Shops</a><a href="/stationery" >Stationery</a><a href="/#how-it-works" >How It Works</a><a href="/#kiosk" >Kiosk</a></nav>\n' +
+    '    <nav class="header-actions" aria-label="Your account"><a href="/cart" class="account-link">Cart</a><a href="/customer/wallet" class="header-wallet" aria-label="Wallet &amp; top-up"><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#wallet"></use></svg><span>Wallet</span></a><a href="/customer/profile" class="account-link">My Account</a><a href="/order" class="btn loud">Print now <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-up-right"></use></svg></a></nav>\n' +
+    '    <details class="mobile-menu"><summary aria-label="Open navigation">Menu <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-down"></use></svg></summary><nav aria-label="Mobile navigation"><a href="/order" >Print now</a><a href="/cart" >Cart</a><a href="/customer/wallet" >Wallet / Top-up</a><a href="/customer/profile" >My Account</a><a href="/customer/orders" >My Orders</a><a href="/order" >Print</a><a href="/shops" >Nearby Shops</a><a href="/stationery" >Stationery</a><a href="/#how-it-works" >How It Works</a><a href="/#kiosk" >Kiosk</a><a href="/printing-prices" >Pricing</a><a href="/customer/packs" >Semester packs</a><a href="/customer/referrals" >Refer & Earn</a><a href="/about" >About</a><a href="/contact" >Contact</a><a href="/blogs" >Journal</a></nav></details>\n' +
+    '  </div></header><nav class="customer-mobile-nav" aria-label="Customer pages"><a href="/order" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#printer"></use></svg><span>Print</span></a><a href="/stationery" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#stack"></use></svg><span>Stationery</span></a><a href="/customer/orders" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#receipt"></use></svg><span>Orders</span></a><a href="/customer/profile" ><svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#user-circle"></use></svg><span>My Account</span></a></nav>\n' +
+    `<a href="#main" style="position:absolute;left:-9999px" onfocus="this.style.left='16px';this.style.top='16px';this.style.zIndex=99;this.style.background='var(--navy)';this.style.color='#fff';this.style.padding='8px 16px';this.style.borderRadius='99px'" onblur="this.style.left='-9999px'">Skip to content</a>\n` +
+    '<main id="main">\n' +
+    '  <div class="cinema-home">\n' +
+    '    <section class="arrival cinema-container story-chapter" data-chapter="0" aria-labelledby="home-title">\n' +
+    '      <div class="arrival-copy"><p class="cinema-eyebrow"><span class="blue-mark"></span> PRINTKARR / BEYOND PAPER</p>\n' +
+    '        <h1 id="home-title">Your notes.<br>Your essentials.<br><span>At your door.</span></h1>\n' +
+    '        <p class="arrival-description">Upload your files, choose your prints,<br class="desktop-break"> and leave the trip to us.</p>\n' +
+    '        <div class="hero-actions"><a class="btn loud big cinema-magnet" href="/order">Upload &amp; Print <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-up-right"></use></svg></a><a class="cinema-text-link" href="#how-it-works">Explore PrintKarr <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-down"></use></svg></a></div>\n' +
+    '        <p class="hero-small">PDF, JPG &amp; PNG · No sign-in needed to start.<br>Full price before payment.</p>\n' +
+    '        <a class="arrival-shop-link" href="/shops">Find nearby shops <svg class="ui-icon" width="20" height="20" aria-hidden="true"><use href="/icons.svg?v=20261009-cinematic-paper#arrow-up-right"></use></svg></a>\n' +
+    '      </div>\n' +
+    '      <div class="scene-slot arrival-art" data-scene="0"><div class="paper-fallback" aria-hidden="true"><div class="fallback-sheet back-sheet"></div><div class="fallback-sheet"><span>PRINTKARR / A4</span><b>Ideas,<br>made<br><em>real.</em></b><div class="paper-rule"></div><small>FROM PIXELS TO PAPER.</small><i></i></div></div><div class="scene-host" aria-hidden="true"></div><p class="scene-caption"><span>01 / A DIGITAL BEGINNING</span><span class="scene-hint">A little movement. A new perspective.</span></p></div>\n' +
+    '      <div class="arrival-bottom"><a href="#how-it-works"><svg class="ui-icon" width="20" height="20" aria-hidden="true"><us'... 22442 more characters,
+  expected: /B&amp;W ₹7 per printed side/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v22.20.0

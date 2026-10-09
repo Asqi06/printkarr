@@ -1,0 +1,2 @@
+Direct checkout routes passed: institution lookup, privacy, locality coverage, saved-address reuse, guest without address/PIN, explicit COD consent, exact total and replay.
+Direct checkout browser passed: upload → settings/delivery/payment → confirmed receipt, mobile/desktop COD and wallet, route switching and no hidden required fields.

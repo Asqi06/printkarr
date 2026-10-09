@@ -1,0 +1,3 @@
+import {chromium} from 'file:///C:/Users/WELCOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+import {createOrderPreview} from '../scripts/order-preview.mjs';
+const p=createOrderPreview(),server=p.app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const b=await chromium.launch({channel:'msedge',headless:true});try{for(const width of [1440,390]){const page=await b.newPage({viewport:{width,height:900}});await page.goto('http://127.0.0.1:'+server.address().port);await page.screenshot({path:'docs/cinematic-overhaul/before-'+width+'.jpg'});await page.close();}}finally{await b.close();await new Promise(r=>server.close(r));}

@@ -1,0 +1,12 @@
+
+> printkarr@0.1.0 test:design
+> node scripts/design-check.mjs
+
+Navigation and sign-in checked: one hero action, four mobile destinations including Stationery and safe return to Wallet / My Account.
+OAuth checked: Google customer access, retained wallet, staff credential separation and invalid-state rejection.
+73 page renders passed: landmarks, headings, theme and inline scripts.
+Interaction checks passed: demo replay guard, reduced motion and live paper settings.
+Shared styles checked: balanced rules and media queries.
+Kiosk checked: development status, delivery alternatives and no 3D renderer.
+Wallet choice checked: configured bonus, selection state and custom top-up.
+Motion checked: reduced-motion, changing preference, and missing-library fallback.

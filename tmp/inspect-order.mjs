@@ -1,0 +1,7 @@
+import 'dotenv/config';
+import {MongoClient} from 'mongodb';
+import fs from 'node:fs';
+const keys=['id','status','pages','filePages','copies','printType','splitMixed','bwPages','colorPages','bwRange','colorRange','pageRange','sides','paymentStatus','paymentMethod','purchaseId','fulfillmentId','printAwaitingVerification','printSpoolReport','printError','history'];
+const show=(tag,db)=>{const o=db.orders?.find(o=>o.id==='PK-1035');console.log(tag,JSON.stringify(o?Object.fromEntries(keys.filter(k=>o[k]!==undefined).map(k=>[k,o[k]])):{found:false},null,2));if(o?.purchaseId){const p=db.purchases?.find(p=>p.id===o.purchaseId);console.log('purchase',JSON.stringify(p&&Object.fromEntries(['id','status','paymentStatus','paymentMethod','gatewayOrderId','gatewayCreating','total','history'].map(k=>[k,p[k]])),null,2));}console.log('queue',JSON.stringify(db.orders?.filter(o=>['PRINT_QUEUE','PRINTING','PRINT_FAILED'].includes(o.status)).map(o=>({id:o.id,status:o.status,printError:o.printError,history:o.history?.slice(-2)}))));};
+show('local snapshot',JSON.parse(fs.readFileSync('data/db.json','utf8')));
+if(process.env.MONGODB_URI){const client=new MongoClient(process.env.MONGODB_URI,{serverSelectionTimeoutMS:10000});try{await client.connect();const s=await client.db(process.env.MONGODB_DB||'printkarr').collection('state').findOne({_id:'main'});show('Atlas live',s.data);}finally{await client.close();}}

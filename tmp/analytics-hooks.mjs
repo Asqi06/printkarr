@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8').replaceAll('\r\n','\n');
+let s=read('lib/views_store.js');
+s=s.replace("  const admin = user.role === 'admin', prefix = admin ? '/admin' : '/customer', pending = p.status === 'CREATED';",`  const admin = user.role === 'admin', prefix = admin ? '/admin' : '/customer', pending = p.status === 'CREATED';
+  const conversion = !admin && !p.preview && p.paymentStatus === 'paid' && !['CANCELLED','REFUNDED','CREATED'].includes(p.status) ? '<script type="application/json" data-analytics-purchase>'+JSON.stringify({transaction_id:p.id,value:p.total,currency:'INR',items:[{item_id:'printkarr_order',item_name:'Prints and stationery',price:p.total,quantity:1}]}).replace(/</g,'\\\\u003c')+'</script>' : '';`);
+s=s.replace('body:`<h1>${esc(heading)}</h1>', 'body:`${conversion}<h1>${esc(heading)}</h1>');
+s=s.replace("  return layout({ title: 'Purchase', user, active: `${prefix}/purchases`, body,", "  return layout({ title: 'Purchase', user, active: `${prefix}/purchases`, body: conversion + body,");
+fs.writeFileSync('lib/views_store.js',s);
+let seo=read('lib/seo.js').replace('select local delivery to your school, home or office.','select delivery to your school, home or office.');
+seo=seo.replace('whenever you need help.','when you need help.');fs.writeFileSync('lib/seo.js',seo);
+fs.appendFileSync('.env.example','\n# Optional GA4: leave blank to keep analytics disabled. Consent is required before loading.\nGA4_MEASUREMENT_ID=\n');

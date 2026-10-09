@@ -1,0 +1,4 @@
+import fs from 'node:fs';
+let p='lib/views.js',s=fs.readFileSync(p,'utf8');s=s.replaceAll("notifications':'bell'","notifications':'clock'");fs.writeFileSync(p,s);
+p='public/studio.css';s=fs.readFileSync(p,'utf8');s=s.replace('.app-view .sidebar-print{','.app-view .app-sidebar .sidebar-print.btn{');s+='\n.public-site .service-guide>p.eyebrow{font-size:10px!important;line-height:1.5;letter-spacing:.12em;color:#627851}\n';fs.writeFileSync(p,s);
+p='docs/paper-studio/README.md';s=fs.readFileSync(p,'utf8');s=s.replace('## Preserved features',fs.readFileSync('tmp/paper-coverage-doc.txt','utf8').trim());s=s.replace('- `npm run test:design`:','- `npm run test:pages`: 99 screens/states at 1440 and 390 px; workspace menus and dense pages additionally at 320, 768 and 1024 px. No document overflow or page script errors.\n- `npm run test:design`:');fs.writeFileSync(p,s);

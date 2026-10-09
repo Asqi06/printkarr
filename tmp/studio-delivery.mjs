@@ -1,0 +1,7 @@
+import fs from 'node:fs';
+let s=fs.readFileSync('lib/views_public.js','utf8');
+s=s.replace('class="studio-path stationery-path" href','class="studio-path stationery-path" id="stationery" href');
+s=s.replace('class="studio-path shops-path" href','class="studio-path shops-path" id="partners" href');
+s=s.replace('    <section class="studio-wrap studio-extras">',`    <section class="studio-wrap studio-delivery" id="delivery"><div><p class="studio-kicker">THE LAST LITTLE STEP</p><h2>From our desk.<br>To your doorstep.</h2><a class="studio-link" href="/how-it-works">See delivery details →</a></div><div><span class="studio-label">SCHOOL &amp; COLLEGE</span><h3>₹0–₹10 <small>scheduled</small></h3><p>Starts at ₹10, drops ₹1 per 30 printed sides. Free at 300 sides. Express delivery is ₹25.</p></div><div><span class="studio-label">HOME &amp; OFFICE IN VAPI</span><h3>₹10–₹25 <small>scheduled</small></h3><p>Priced by estimated distance. Eligible address baskets get free scheduled delivery at ₹149 after discounts. Express is ₹15–₹50.</p></div><p class="studio-fine">Coverage, delivery slots and the final fee are checked in your order. Daman express is ₹30. Printing and any extras are separate.</p></section>
+    <section class="studio-wrap studio-extras">`);
+s=s.replace('fits your files, timing','fits your files, timing').replace('which option suits your files, timing and printing needs.','which option fits your files, timing and printing needs.');fs.writeFileSync('lib/views_public.js',s);

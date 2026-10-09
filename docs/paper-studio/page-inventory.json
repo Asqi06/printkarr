@@ -1,0 +1,953 @@
+[
+  {
+    "route": "/",
+    "title": "Online Printing &amp; Doorstep Delivery — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/order/upload"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/shops",
+    "title": "Nearby Print &amp; Stationery Shops — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/kiosks",
+    "title": "PrintKarr Kiosks · In development — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/printing-in-daman",
+    "title": "Printing in Daman — PDF &amp; Document Delivery — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/printing-prices",
+    "title": "Document Printing Prices in Vapi &amp; Daman — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/order",
+    "title": "Print something — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/order/upload"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/order/options",
+    "title": "Your print — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/order/options"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/order/phone",
+    "title": "Confirm &amp; pay — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/order/otp-request"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/order/college",
+    "title": "Confirm &amp; pay — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/order/otp-request"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/order/local",
+    "title": "Confirm &amp; pay — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/order/otp-request"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/order/verify",
+    "title": "Confirm &amp; pay — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/order/otp-verify",
+      "/order/otp-request"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/printing-in-vapi",
+    "title": "A4 &amp; College Assignment Printing in Vapi — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/about",
+    "title": "About PrintKarr — Online Printing from Vapi — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/how-it-works",
+    "title": "How Online Printing Works in Vapi — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/franchise",
+    "title": "Future Kiosk Partnerships &amp; Updates — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/xerox",
+    "title": "Print Shop Partnerships with PrintKarr — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/contact",
+    "title": "Contact PrintKarr in Vapi — Call or WhatsApp — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/contact"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/blogs",
+    "title": "Printing &amp; Delivery Guides — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/terms",
+    "title": "Terms &amp; Conditions — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/privacy",
+    "title": "Privacy Policy — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/blogs/prepare-documents-for-printing-vapi",
+    "title": "How to prepare a PDF for printing in Vapi — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/blogs/admit-card-printing-checklist",
+    "title": "Admit card printing: a checklist before exam day — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/blogs/running-a-printkarr-kiosk",
+    "title": "PrintKarr kiosk planning: costs and responsibilities — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/blogs/replacing-xerox-queues",
+    "title": "Online printing or a Xerox shop: how to choose — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/blogs/colleges-24-7-print",
+    "title": "Campus printing: delivery slots and kiosk planning — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/login",
+    "title": "Sign in — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/login/code",
+    "title": "Enter code — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/login/code-verify"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/login",
+    "title": "Shop admin login — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/admin/login"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer",
+    "title": "Home — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/active",
+    "title": "Home — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/orders",
+    "title": "Orders — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/orders/preview",
+    "title": "Order preview — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/orders/preview/cancel"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/orders/preview/scan",
+    "title": "Scan pickup QR — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/orders/new",
+    "title": "Print something — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/customer/orders/new/upload"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/options",
+    "title": "Your print — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/customer/orders/new/confirm"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/returning",
+    "title": "Home — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/checkout-offer",
+    "title": "Payment — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/orders/preview/pay"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/orders/preview/pay",
+    "title": "Payment — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/orders/preview/pay"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/wallet",
+    "title": "Wallet — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/wallet/add"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/wallet-files",
+    "title": "Wallet — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/wallet/add",
+      "/customer/wallet/files/paid-files/claim"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/customer-files",
+    "title": "Ani — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/customers/preview/files/paid-files/fulfil"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/referrals",
+    "title": "Refer &amp; Earn — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/packs",
+    "title": "Semester packs — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/packs/S/subscribe",
+      "/customer/packs/M/subscribe",
+      "/customer/packs/L/subscribe"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/review",
+    "title": "Confirm &amp; pay — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/customer/orders/new/summary",
+      "/customer/orders/new/place"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/wallet-live",
+    "title": "Wallet — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/profile",
+    "title": "My Account — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/profile",
+      "/customer/addresses/add",
+      "/customer/review"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/orders/preview",
+    "title": "Order preview — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/orders/preview/transition"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/customers/preview",
+    "title": "Ani — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/packs",
+    "title": "Semester packs — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/referrals",
+    "title": "Referrals — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/referrals/config"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/classroom-qr",
+    "title": "Classroom QR — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin",
+    "title": "Control center — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/orders",
+    "title": "Order queue — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/orders"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/print-queue",
+    "title": "Print queue — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/customers",
+    "title": "Customers — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/pricing",
+    "title": "Pricing — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/pricing"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/coupons",
+    "title": "Coupons — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/coupons"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/settings",
+    "title": "Settings — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/settings",
+      "/admin/settings/campaign",
+      "/admin/settings/campaign"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/analytics",
+    "title": "Analytics — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/notifications",
+    "title": "Notifications — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/notifications/preferences"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/notifications",
+    "title": "Notifications — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/notifications/settings"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/partners",
+    "title": "Partner shops — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/partners",
+      "/admin/delivery/staff"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/delivery",
+    "title": "Delivery batches — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/partner",
+    "title": "Shop orders — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/rider",
+    "title": "Delivery trips — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/partner/catalogue",
+    "title": "Stationery catalogue — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/partner/catalogue"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/catalogue",
+    "title": "Stationery catalogue — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/catalogue"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/purchases",
+    "title": "Purchases — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/purchases",
+    "title": "Purchases — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/stationery",
+    "title": "Stationery — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/cart",
+    "title": "Your cart — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/notifications/unsubscribe/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "title": "Email preferences — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/notifications/unsubscribed",
+    "title": "Email preferences saved — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/partner/login",
+    "title": "Shop partner login — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/partner/login"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/rider/login",
+    "title": "Delivery rider login — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/rider/login"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/404",
+    "title": "Page not found — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/contact/thank-you",
+    "title": "Enquiry received — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/contact/error",
+    "title": "Contact PrintKarr in Vapi — Call or WhatsApp — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/contact"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/blogs/missing-story",
+    "title": "Not found — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/stationery/catalogue-preview",
+    "title": "Stationery — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/cart/error",
+    "title": "Please check your cart — PrintKarr",
+    "workspace": false,
+    "forms": [],
+    "theme": true
+  },
+  {
+    "route": "/admin/catalogue/edit",
+    "title": "Stationery catalogue — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/catalogue"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/partner/catalogue/edit",
+    "title": "Stationery catalogue — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/partner/catalogue"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/customers/populated",
+    "title": "Customers — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/print-queue/populated",
+    "title": "Print queue — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/purchases/created",
+    "title": "Purchase — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/purchases/PK-DESIGN-RECEIPT/wallet",
+      "/customer/purchases/PK-DESIGN-RECEIPT/cod",
+      "/customer/purchases/PK-DESIGN-RECEIPT/cancel"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/purchases/paid",
+    "title": "Purchase — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/customer/purchases/PK-DESIGN-RECEIPT/cancel"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/purchases/refunded",
+    "title": "Purchase — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/purchases/created",
+    "title": "Purchase — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/purchases/PK-DESIGN-RECEIPT/status"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/purchases/paid",
+    "title": "Purchase — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/purchases/PK-DESIGN-RECEIPT/status",
+      "/admin/purchases/PK-DESIGN-RECEIPT/status"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/purchases/refunded",
+    "title": "Purchase — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/checkout/created",
+    "title": "Confirm &amp; pay. — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/customer/purchases/PK-DESIGN-RECEIPT/wallet",
+      "/customer/purchases/PK-DESIGN-RECEIPT/cod",
+      "/customer/purchases/PK-DESIGN-RECEIPT/cancel"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/checkout/paid",
+    "title": "Cash order confirmed. — PrintKarr",
+    "workspace": false,
+    "forms": [
+      "/customer/purchases/PK-DESIGN-RECEIPT/cancel"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/delivery/populated",
+    "title": "Delivery batches — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/delivery/PK-SAMPLE-1/assign",
+      "/admin/delivery/PK-SAMPLE-1/rider",
+      "/admin/delivery/PK-SAMPLE-2/rider"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/partners/populated",
+    "title": "Partner shops — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/admin/partners",
+      "/admin/delivery/staff"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/partner/populated",
+    "title": "Shop orders — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/partner/purchases/PK-SAMPLE-1/accept",
+      "/partner/purchases/PK-SAMPLE-1/reject",
+      "/partner/purchases/PK-SAMPLE-2/ready",
+      "/partner/purchases/PK-SAMPLE-2/problem",
+      "/partner/purchases/PK-SAMPLE-2/handover"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/rider/populated",
+    "title": "Delivery trips — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout",
+      "/rider/purchases/PK-SAMPLE-1/status",
+      "/rider/purchases/PK-SAMPLE-2/status",
+      "/rider/purchases/PK-SAMPLE-3/status"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/admin/purchases/populated",
+    "title": "Purchases — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  },
+  {
+    "route": "/customer/purchases/populated",
+    "title": "Purchases — PrintKarr",
+    "workspace": true,
+    "forms": [
+      "/logout",
+      "/logout"
+    ],
+    "theme": true
+  }
+]

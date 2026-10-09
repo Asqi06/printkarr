@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+let v=fs.readFileSync('lib/views.js','utf8');v=v.replace('href="/kiosks">Kiosks · In development</a></li>','href="/kiosks">Kiosks · In development</a></li><li><a href="/franchise">Future kiosk partnerships</a></li>');fs.writeFileSync('lib/views.js',v);
+let s=fs.readFileSync('scripts/seo-check.mjs','utf8');
+s=s.replace('    const json = html.match',`    const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1]?.replaceAll('&amp;','&');
+    assert.ok(description?.length >= 150 && description.length <= 160, path+' description is 150–160 characters: '+description?.length);
+    for(const img of html.matchAll(/<img\\b[^>]*>/g)) assert.match(img[0], /alt="[^"]*"/, path+' image alt text');
+    const json = html.match`);
+s=s.replace("  assert.equal([...sitemap.matchAll",`  const titles = [...Object.keys(PAGES),...POSTS.map(p=>'/blogs/'+p.slug)].map(path=>pages.get(path).match(/<title>([^<]*)<\\/title>/)[1]);
+  assert.equal(new Set(titles).size,titles.length,'Public page titles are unique');
+  assert.equal([...sitemap.matchAll`);
+fs.writeFileSync('scripts/seo-check.mjs',s);

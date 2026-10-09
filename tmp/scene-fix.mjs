@@ -1,0 +1,1 @@
+import fs from 'node:fs';const p='public/cinema-scene.js';let s=fs.readFileSync(p,'utf8');s=s.replace('holder.scale.setScalar(4.3/size.y);','holder.scale.setScalar(4.3/size.y);holder.userData.sourceHeight=size.y;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});');fs.writeFileSync(p,s);

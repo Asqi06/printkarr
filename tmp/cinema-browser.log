@@ -1,0 +1,57 @@
+Hero 1440 {
+  display: 'block',
+  height: 650,
+  canvas: {
+    x: 771.734375,
+    y: 164,
+    width: 612.265625,
+    height: 650,
+    top: 164,
+    right: 1384,
+    bottom: 814,
+    left: 771.734375
+  }
+}
+Hero 768 {
+  display: 'block',
+  height: 520,
+  canvas: {
+    x: 418.0625,
+    y: 223,
+    width: 317.9375,
+    height: 520,
+    top: 223,
+    right: 736,
+    bottom: 743,
+    left: 418.0625
+  }
+}
+Hero 390 {
+  display: 'block',
+  height: 310,
+  canvas: {
+    x: 20,
+    y: 466.4375,
+    width: 350,
+    height: 310,
+    top: 466.4375,
+    right: 370,
+    bottom: 776.4375,
+    left: 20
+  }
+}
+Hero 320 {
+  display: 'block',
+  height: 310,
+  canvas: {
+    x: 20,
+    y: 447.359375,
+    width: 280,
+    height: 310,
+    top: 447.359375,
+    right: 300,
+    bottom: 757.359375,
+    left: 20
+  }
+}
+Cinematic browser checks passed.
