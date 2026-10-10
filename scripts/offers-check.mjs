@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {printPricing, offerActive, validatePrintOffer, validateOfferDates} from '../public/print-pricing.js';
-import {campaignConfig, validateCampaign, topupTerms, applyTopup, eligibleWalletOffers, adminWalletCredit, walletOf, debitWallet} from '../lib/campus.js';
+import {campaignConfig, validateCampaign, topupTerms, applyTopup, eligibleWalletOffers, adminWalletCredit, walletOf, debitWallet, hasTopup} from '../lib/campus.js';
 import {blankDb} from '../lib/db.js';
 import {cartItems} from '../lib/store.js';
 import {createOrderPreview} from './order-preview.mjs';
@@ -20,6 +20,7 @@ assert.throws(()=>validatePrintOffer({...pricing.printOffers[0],sides:0}));
 const db=blankDb();db.users=[{id:'C',role:'customer'},{id:'A',role:'admin'}];const cfg=campaignConfig(db),trial=cfg.wallets.find(o=>o.amount===99);
 Object.assign(trial,{bonus:26,validityDays:0});validateCampaign(cfg);
 cfg.wallets.push({...trial,id:'better',bonus:50});assert.equal(topupTerms(db,'C',99).bonus,50);cfg.wallets.pop();
+const unpurchased=blankDb();unpurchased.users=db.users;adminWalletCredit(unpurchased,'C',25,'Top-up correction','A','only-credit');assert.equal(hasTopup(unpurchased,'C'),false);
 const snapshot=topupTerms(db,'C',99,trial.id);trial.bonus=999;trial.enabled=false;
 applyTopup(db,'C',snapshot,'Purchased','pay-fixture');
 assert.equal(walletOf(db,'C').balance,125);
