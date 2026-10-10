@@ -1,4 +1,4 @@
-import { printPricing, processingFee, collegeDeliveryFee, COD_FEE } from './print-pricing.js?v=20261010-checkout-refresh';
+import { printPricing, processingFee, collegeDeliveryFee, COD_FEE } from './print-pricing.js?v=20261010-fresh-cart';
 import { printPlan, packCovers, pageRange, compactRange } from './print-plan.js?v=20261007-split-print';
 
 function initPrintOptions() {
