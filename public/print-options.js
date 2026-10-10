@@ -1,4 +1,4 @@
-import { printPricing, processingFee, collegeDeliveryFee, COD_FEE } from './print-pricing.js?v=20261008-cash-bulk';
+import { printPricing, processingFee, collegeDeliveryFee, COD_FEE } from './print-pricing.js?v=20261010-offers';
 import { kmBetween, distanceFee } from './localities.js?v=20261007-split-print';
 import { printPlan, packCovers, pageRange, compactRange } from './print-plan.js?v=20261007-split-print';
 
@@ -28,7 +28,19 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
     const hint = form.querySelector('#range-err');
     try {
       const plan = printPlan(input, pages), printedSides=plan.effPages*plan.copies+Number(cfg.otherPrintedSides || 0);
-      const printing=printPricing({bw:plan.bwPages*plan.copies,color:plan.colorPages*plan.copies},{bw:cfg.bw,color:cfg.color},false,printedSides).subtotal, processFee=processingFee(printedSides);
+      let printing=printPricing({bw:plan.bwPages*plan.copies,color:plan.colorPages*plan.copies},{bw:cfg.bw,color:cfg.color,printOffers:cfg.printOffers},false,printedSides,{bw:plan.bwPages*plan.copies+Number(cfg.otherPrintCounts?.bw || 0),color:plan.colorPages*plan.copies+Number(cfg.otherPrintCounts?.color || 0)}).subtotal;
+      const processFee=processingFee(printedSides), basketCounts={bw:plan.bwPages*plan.copies+Number(cfg.otherPrintCounts?.bw || 0),color:plan.colorPages*plan.copies+Number(cfg.otherPrintCounts?.color || 0)};
+      let otherSubtotal=Number(cfg.otherSubtotal || 0);
+      if (cfg.otherPrints?.length) {
+        let cumulative={bw:0,color:0}, previous=0; otherSubtotal=Number(cfg.otherItemsSubtotal || 0);
+        for (const p of cfg.otherPrints) {
+          cumulative={bw:cumulative.bw+p.counts.bw,color:cumulative.color+p.counts.color};
+          const running=printPricing(cumulative,cfg,false,printedSides,basketCounts).subtotal, sub=Math.round((running-previous)*100)/100;previous=running;
+          otherSubtotal+=p.pack ? 0 : Math.max(0,sub-p.firstPrintDiscount-p.couponDiscount);
+        }
+        printing=Math.round((printPricing(basketCounts,cfg,false,printedSides,basketCounts).subtotal-previous)*100)/100;
+        otherSubtotal=Math.round(otherSubtotal*100)/100;
+      }
       form.querySelector('[data-processing-cost]').textContent='₹'+processFee;
       hint.hidden = true;
       form.querySelector('[data-bw-pages]').textContent = `${plan.bwPages} pages · ${plan.bwRange || 'none'}`;
@@ -49,16 +61,16 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       const pack = (cfg.packs || []).some(p => packCovers(p, {bw:plan.bwPages * plan.copies,color:plan.colorPages * plan.copies}));
       const discount = pack ? printing : Math.min(printing, Math.min(Number(cfg.firstPrintPages || 0),plan.bwPages*plan.copies)*cfg.bw);
       const net = Math.round((printing-discount)*100)/100;
-      const variable = zone === 'vapi' && !slot.startsWith('school'), free = scheduled && net + Number(cfg.otherSubtotal || 0) >= 149;
+      const variable = zone === 'vapi' && !slot.startsWith('school'), free = scheduled && net + otherSubtotal >= 149;
       const fee = free ? 0 : slot.startsWith('school') && slot !== 'school-express' ? Math.min(cfg.campusFee ?? 10,delivery) : delivery;
-      let total = Math.round((net + Number(cfg.otherSubtotal || 0) + processFee + Number(fee || 0) + late + surge)*100)/100;
+      let total = Math.round((net + otherSubtotal + processFee + Number(fee || 0) + late + surge)*100)/100;
       if(form.dataset.reviewedTotal)total=Number(form.dataset.reviewedTotal);
       if(form.elements.expectedTotal)form.elements.expectedTotal.value=total;
       const cash=get('paymentMethod')==='cod', due=total+(cash ? COD_FEE : 0);
       const wallet=form.querySelector('[name="paymentMethod"][value="wallet"]');
       if(wallet)wallet.disabled=Number(cfg.balance || 0)<total;
       if(wallet?.checked && wallet.disabled){const available=form.querySelector('[name="paymentMethod"][value="online"]') || form.querySelector('[name="paymentMethod"][value="cod"]');available.checked=true;update();return;}
-      for(const [selector,cost] of [['[data-other-cost]',Number(cfg.otherSubtotal || 0)],['[data-night-cost]',late],['[data-demand-cost]',surge]]){const line=form.querySelector(selector);if(line){line.textContent='₹'+cost.toLocaleString('en-IN');line.closest('div').hidden=!cost;}}
+      for(const [selector,cost] of [['[data-other-cost]',otherSubtotal],['[data-night-cost]',late],['[data-demand-cost]',surge]]){const line=form.querySelector(selector);if(line){line.textContent='₹'+cost.toLocaleString('en-IN');line.closest('div').hidden=!cost;}}
       const final=form.querySelector('[data-final-review]');if(final){final.querySelector('[data-final-cod]').hidden=!cash;final.querySelector('.total span:last-child').textContent='₹'+due.toLocaleString('en-IN');}
       const feeLine=form.querySelector('[data-cod-cost]');if(feeLine){feeLine.closest('div').hidden=!cash;feeLine.textContent='₹'+COD_FEE;}
       const consent=form.querySelector('[data-cash-consent]');if(consent){consent.hidden=!cash;consent.querySelector('input').disabled=!cash;consent.querySelector('input').required=cash;consent.querySelector('[data-cash-due]').textContent='₹'+due.toLocaleString('en-IN');}

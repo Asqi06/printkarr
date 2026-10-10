@@ -1,3 +1,4 @@
+import { validatePrintOffer } from './public/print-pricing.js';
 import { printPlan, printSides, printDescription } from './public/print-plan.js';
 import 'dotenv/config';
 import crypto from 'node:crypto';
@@ -42,7 +43,7 @@ import {
   qualifyForTopup, validUpiId
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, usableOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
-import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, debitWallet, refundWallet, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, deliveryPlan, deliveryChoice, validateDestination, institutionAddress, batchPrice, settleWallets } from './lib/campus.js';
+import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, adminWalletCredit, debitWallet, refundWallet, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, deliveryPlan, deliveryChoice, validateDestination, institutionAddress, batchPrice, settleWallets } from './lib/campus.js';
 import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.js';
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
@@ -51,7 +52,7 @@ import { POSTS, vapiPage, damanPage, printPricesPage, landing, nearbyShopsPage, 
 import { discoveryRoutes, SITE } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { buildOrderCover } from './agent/cover.js';
-import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
+import { adminDashboard, orderQueue, adminOrderDetail, printQueuePage, customersPage, customerDetailAdmin, pricingPage, offersPage, couponsPage, analyticsPage, settingsPage, classroomQr } from './lib/views_admin.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -654,7 +655,7 @@ app.get('/admin/customers/:id', requireRole('admin'), (req, res) => {
   if (!c) return res.status(404).send(oops(req.user, '/admin/customers', 'Customer <em>unknown.</em>'));
   const orders = db.orders.filter((o) => o.customerId === c.id).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const wallet = walletOf(db, c.id);
-  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id), db.walletTx.filter((t) => t.customerId === c.id && t.freeFiles)));
+  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id), db.walletTx.filter((t) => t.customerId === c.id && t.freeFiles), db.walletTx.filter(t=>t.customerId===c.id)));
 });
 
 app.post('/admin/customers/:id/files/:txId/fulfil', requireRole('admin'), siteOrigin, (req, res) => {
@@ -663,6 +664,49 @@ app.post('/admin/customers/:id/files/:txId/fulfil', requireRole('admin'), siteOr
   catch (error) { return res.status(400).send(oops(req.user, '/admin/customers', esc(error.message))); }
   saveDb(db);
   res.redirect(`/admin/customers/${encodeURIComponent(req.params.id)}`);
+});
+
+app.post('/admin/customers/:id/wallet-credit', requireRole('admin'), siteOrigin, (req, res) => {
+  const db = loadDb();
+  try { adminWalletCredit(db, req.params.id, Number(req.body.amount), req.body.reason, req.user.id, req.body.requestId); }
+  catch (error) { return res.status(400).send(oops(req.user, '/admin/customers', esc(error.message))); }
+  saveDb(db);
+  res.redirect('/admin/customers/' + encodeURIComponent(req.params.id));
+});
+
+app.get('/admin/offers', requireRole('admin'), (req, res) => {
+  const db = loadDb();
+  res.send(offersPage(req.user, db.pricing, campaignConfig(db)));
+});
+
+app.post('/admin/offers/wallet', requireRole('admin'), siteOrigin, (req, res) => {
+  const db = loadDb(), cfg = structuredClone(campaignConfig(db));
+  try {
+    const existing = req.body.id ? cfg.wallets.find(o=>o.id===req.body.id) : null;
+    if (req.body.id && !existing) throw new Error('Offer changed. Refresh and try again.');
+    const credit = Number(req.body.credit);
+    if (!Number.isFinite(credit) || credit < Number(req.body.amount) || credit > 20000 || Math.abs(credit*100-Math.round(credit*100)) > 1e-6) throw new Error('Total wallet credit must cover the payment and have up to two decimals.');
+    const offer = {...existing, id: existing?.id || crypto.randomUUID().slice(0, 12), name: String(req.body.name || '').trim(), amount: Number(req.body.amount), bonus: Math.round((Number(req.body.credit) - Number(req.body.amount))*100)/100, enabled: req.body.enabled === '1', firstOnly: req.body.firstOnly === '1', startsOn: String(req.body.startsOn || ''), endsOn: String(req.body.endsOn || ''), validityDays: Number(req.body.validityDays)};
+    if (existing) cfg.wallets[cfg.wallets.indexOf(existing)] = offer; else cfg.wallets.push(offer);
+    validateCampaign(cfg);
+    db.settings.campaign = cfg;
+  } catch (error) { return res.status(400).send(oops(req.user, '/admin/offers', esc(error.message))); }
+  saveDb(db);
+  res.redirect('/admin/offers');
+});
+
+app.post('/admin/offers/print', requireRole('admin'), siteOrigin, (req, res) => {
+  const db = loadDb(), offers = structuredClone(db.pricing.printOffers || []);
+  try {
+    const existing = req.body.id ? offers.find(o=>o.id===req.body.id) : null;
+    if (req.body.id && !existing) throw new Error('Offer changed. Refresh and try again.');
+    const offer = validatePrintOffer({id:existing?.id || crypto.randomUUID().slice(0,12), name:String(req.body.name || '').trim(), enabled:req.body.enabled==='1', type:req.body.type, sides:Number(req.body.sides), price:Number(req.body.price), repeat:req.body.repeat==='1', startsOn:String(req.body.startsOn || ''), endsOn:String(req.body.endsOn || '')});
+    if (existing) offers[offers.indexOf(existing)] = offer; else offers.push(offer);
+    if (offers.length > 30) throw new Error('Use up to 30 print offers. Edit an existing offer.');
+    db.pricing.printOffers = offers;
+  } catch (error) { return res.status(400).send(oops(req.user, '/admin/offers', esc(error.message))); }
+  saveDb(db);
+  res.redirect('/admin/offers');
 });
 
 app.get('/admin/pricing', requireRole('admin'), (req, res) => {
@@ -981,9 +1025,9 @@ function printQuoteExtras(db, user, req) {
     return leftOf(reserved);
   });
   const cart=(db.carts || []).find(c=>c.customerId===user.id);
-  let otherSubtotal=0,otherPrintedSides=0;try{if(cart && !cart.purchaseId){const contents=cartItems(db,cart,user.id);otherSubtotal=contents.subtotal;otherPrintedSides=contents.prints.reduce((n,o)=>{const s=printSides(o);return n+s.bw+s.color;},0);}}catch{}
+  let otherSubtotal=0,otherPrintedSides=0,otherPrintCounts={bw:0,color:0},otherPrints=[],otherItemsSubtotal=0;try{if(cart && !cart.purchaseId){const contents=cartItems(db,cart,user.id);otherSubtotal=contents.subtotal;otherItemsSubtotal=contents.items.reduce((n,i)=>n+i.total,0);otherPrints=contents.prints.map(o=>({counts:printSides(o),pack:!!o.packSubId,firstPrintDiscount:o.firstPrintDiscount || 0,couponDiscount:o.couponDiscount || 0}));otherPrintCounts=contents.prints.reduce((n,o)=>{const s=printSides(o);return {bw:n.bw+s.bw,color:n.color+s.color};},{bw:0,color:0});otherPrintedSides=otherPrintCounts.bw+otherPrintCounts.color;}}catch{}
   let campusFee=10,campusSlot='';try{const plan=deliveryPlan(db,'school');campusSlot=plan.slot;campusFee=batchPrice(db,user.id,plan,0,10).fee;}catch{}
-  return {...extra,balance:walletOf(db,user.id).balance,gateway:gatewayOn(),firstPrintPages:first.print,packs,otherSubtotal,otherPrintedSides,campusFee,campusSlot};
+  return {...extra,balance:walletOf(db,user.id).balance,gateway:gatewayOn(),firstPrintPages:first.print,packs,otherSubtotal,otherPrintedSides,otherPrintCounts,otherPrints,otherItemsSubtotal,campusFee,campusSlot};
 }
 
 function purchaseForDraft(db, customerId, draftId) {
