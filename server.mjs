@@ -1021,18 +1021,19 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   if (!req.file) return res.status(400).send(oops(req.user, '/customer/orders/new', 'No file <em>arrived.</em>'));
   if (req.file.size > maxUploadBytes()) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send(oops(req.user, '/customer/orders/new', 'File too <em>heavy.</em>'));
+    return res.status(400).send(oops(req.user, '/customer/orders/new', `Choose a file no larger than ${maxUploadBytes() / 1024 / 1024} MB.`));
   }
   let file = null;
   try {
     file = await analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
   } catch (e) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send(oops(req.user, '/customer/orders/new', 'That file <em>won\'t print.</em>'));
+    return res.status(400).send(oops(req.user, '/customer/orders/new', esc(e.message)));
   }
-  if (file.pages > 1000) {
+  const maxPages = Math.min(1000, loadDb().settings.order.maxPages || 1000);
+  if (file.pages > maxPages) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send(oops(req.user, '/customer/orders/new', 'Over 1000 pages — <em>split it.</em>'));
+    return res.status(400).send(oops(req.user, '/customer/orders/new', `Over ${maxPages} pages — <em>split it.</em>`));
   }
   const db = loadDb();
   db.drafts ||= [];
@@ -1041,7 +1042,7 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/shops','This shop is unavailable.'));}
   const draft = {
     preferredShopId: chosenShop?.id || null,
-    id: 'D' + Date.now().toString(36), customerId: req.user.id,
+    id: 'D' + crypto.randomUUID(), customerId: req.user.id,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
     pages: file.pages, fileType: file.fileType, fileExt: file.ext,
     createdAt: new Date().toISOString()
@@ -1882,23 +1883,23 @@ app.get('/order', (req, res) => {
   res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
-app.post('/order/upload', upload.single('doc'), async (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
+app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(307, '/customer/orders/new/upload') : next(), upload.single('doc'), async (req, res) => {
   if (!req.file) return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'No file arrived — try again.', maxMb: loadDb().settings.order.maxFileMb }));
   if (req.file.size > maxUploadBytes()) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'File too heavy for the pilot (see limit on this page).', maxMb: loadDb().settings.order.maxFileMb }));
+    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: `Choose a file no larger than ${maxUploadBytes() / 1024 / 1024} MB.`, maxMb: loadDb().settings.order.maxFileMb }));
   }
   let file = null;
   try {
     file = await analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
-  } catch {
+  } catch (error) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That file won\'t print — PDF, PNG or JPG only.', maxMb: loadDb().settings.order.maxFileMb }));
+    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: error.message, maxMb: loadDb().settings.order.maxFileMb }));
   }
-  if (file.pages > 1000) {
+  const maxPages = Math.min(1000, loadDb().settings.order.maxPages || 1000);
+  if (file.pages > maxPages) {
     try { fs.unlinkSync(req.file.path); } catch {}
-    return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'Over 1000 pages — split it.', maxMb: loadDb().settings.order.maxFileMb }));
+    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: `Over ${maxPages} pages — split it.`, maxMb: loadDb().settings.order.maxFileMb }));
   }
   const db = loadDb();
   db.drafts ||= [];
@@ -1907,7 +1908,7 @@ app.post('/order/upload', upload.single('doc'), async (req, res) => {
   if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/shops','This shop is unavailable.'));}
   const draft = {
     preferredShopId: chosenShop?.id || null,
-    id: 'D' + Date.now().toString(36), guest: t, customerId: null,
+    id: 'D' + crypto.randomUUID(), guest: t, customerId: null,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
     pages: file.pages, fileType: file.fileType, fileExt: file.ext,
     createdAt: new Date().toISOString()
@@ -2074,16 +2075,17 @@ installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, 
 installPartnerRoutes(app, { loadDb, saveDb, requireRole, siteOrigin, uploadsDir: path.join(ROOT,'data','uploads'), notifyState, qualifyForOrder });
 installNotificationRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin });
 
-app.use((err, req, res, _next) => {
-  if (!err || !/multer|PDF, PNG or JPG|Only PDF|File too large/i.test(err.message)) throw err;
+app.use((err, req, res, next) => {
+  if (!(err instanceof multer.MulterError) && !/PDF, PNG or JPG|Only PDF/i.test(err?.message || '')) return next(err);
+  const message = err.code === 'LIMIT_FILE_SIZE' ? `Choose a file no larger than ${Math.min(200, maxUploadBytes() / 1024 / 1024)} MB.` : err instanceof multer.MulterError ? 'Choose one PDF, PNG or JPG in the document field and try again.' : err.message;
   const user = currentUser(req);
   if (!user) {
     // Guest funnel: show the public order page error, not a login redirect
     const isGuestOrder = req.path === '/order/upload';
-    if (isGuestOrder) return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'That file won\'t print — PDF, PNG or JPG only, check size.', maxMb: loadDb().settings.order.maxFileMb }));
+    if (isGuestOrder) return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: message, maxMb: loadDb().settings.order.maxFileMb }));
     return res.redirect('/login');
   }
-  res.status(400).send(oops(user, '/customer/orders/new', 'That file <em>won\'t print.</em>'));
+  res.status(400).send(oops(user, '/customer/orders/new', esc(message)));
 });
 
 // ---- API ----

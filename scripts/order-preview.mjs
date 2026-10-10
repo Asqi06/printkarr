@@ -46,11 +46,11 @@ export function createOrderPreview(seed = previewDb()) {
       installPartnerRoutes(app, {loadDb, saveDb, requireRole, siteOrigin:(_req,_res,next)=>next(), uploadsDir, notifyState(){}, qualifyForOrder(){}});
       app.get('/shops',(_req,res)=>res.send(publicViews.nearbyShopsPage(loadDb().partners || [])));
       app.get('/kiosks',(_req,res)=>res.send(publicViews.kioskStatusPage()));
-      const upload = multer({dest:uploadsDir,limits:{fileSize:20*1024*1024}});
+      const upload = runInNewContext(source.slice(source.indexOf('const upload = multer('),source.indexOf('function countPdfPages(')).replace("dest: 'data/uploads/'", 'dest: uploadsDir')+'\nupload;', {multer,uploadsDir});
       const disk = { ...fs, promises: { ...fs.promises, readFile: name => fs.promises.readFile(path.join(uploadsDir,path.basename(name))) }, readFileSync: name => fs.readFileSync(path.join(uploadsDir,path.basename(name))), renameSync:(from,to)=>fs.renameSync(path.join(uploadsDir,path.basename(from)),path.join(uploadsDir,path.basename(to))) };
-      const scope = { ...print, ...pricing, ...printPricingPolicy, LOCALITIES, distanceFee, ...campaign, ...packs, ...referrals, ...files, ...account, ...publicViews, ...packViews, ...referralViews, app, loadDb, saveDb, currentUser, requireRole, upload, fs:disk, crypto, path, Buffer, URL, URLSearchParams, COOKIE,
+      const scope = { ...print, ...pricing, ...printPricingPolicy, LOCALITIES, distanceFee, ...campaign, ...packs, ...referrals, ...files, ...account, ...publicViews, ...packViews, ...referralViews, app, loadDb, saveDb, currentUser, requireRole, upload, multer, Date, fs:disk, crypto, path, Buffer, URL, URLSearchParams, COOKIE,
         ROOT:path.resolve(uploadsDir,'../..'), baseUrl:req=>req.protocol+'://'+req.get('host'), rateLimit, parseCookies, normEmail, normPhone, esc, firstOffers, fulfillmentFor, addPrint, cartFor, cartItems, cartQuote, printNet, createPurchase:(db,cart,id,selection,validate)=>createPurchase(db,cart,id,selection,validate,true), gatewayOn:()=>false, checkPackQuota, canUseOwnerTestPrint, transition, canTransition, canFulfil, buildOrderCover, agentSeenAt:Date.now(),refundPaidOrder(){},finishPrintAtKiosk(db,o,by){o.printAwaitingVerification=false;transition(o,'PRINTED',{by});transition(o,'READY_FOR_PICKUP',{by});saveDb(db);},
-        offerDevice(){}, maxUploadBytes:()=>20*1024*1024, otpLimiter:(_req,_res,next)=>next(),
+        offerDevice(){}, otpLimiter:(_req,_res,next)=>next(),
         requestEmailOtp:async()=>({ok:true,mailed:false,demo:'000000',error:'LOCAL PREVIEW: no email is sent. Use the demo code.'}), verifyEmailOtp:(_email,code)=>({ok:code==='000000',error:'Use local demo code 000000.'}), createSession:id=>id,
         referralCodeFor:referrals.codeFor, validateCoupon:couponPolicy.validateCoupon, notifyState(){}, waForwardUrl:()=>null,
         ordersList, saveReview, siteOrigin:(_req,_res,next)=>next(), livePayFor:()=>false, referralConfig:referrals.getConfig, ACTIVE:o=>!['DELIVERED','REFUNDED','CANCELLED'].includes(o.status), safeOrderId:id=>/^PK-[A-Z0-9-]+$/.test(id||'')?id:null,
@@ -58,7 +58,7 @@ export function createOrderPreview(seed = previewDb()) {
       };
       const pricingSource = fs.readFileSync(new URL('../lib/pricing.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ','');
       scope.quote = runInNewContext(pricingSource+'\nquote;', scope);
-      for (const name of ['nextOrderId','zoneOf','guestToken','guestDraft','printQuoteExtras','purchaseForDraft','custOrders','referralStats']) runInNewContext(source.match(new RegExp('function '+name+'\\([^]*?\\n\\}'))[0],scope);
+      for (const name of ['maxUploadBytes','nextOrderId','zoneOf','guestToken','guestDraft','printQuoteExtras','purchaseForDraft','custOrders','referralStats']) runInNewContext(source.match(new RegExp('function '+name+'\\([^]*?\\n\\}'))[0],scope);
       for (const [method, route] of [['get','/order'],['post','/order/upload'],['post','/order/options'],['get','/order/phone'],['post','/order/otp-request'],['post','/order/otp-verify'],['get','/customer/orders/new'],['post','/customer/orders/new/upload'],['post','/customer/orders/new/confirm'],['get','/customer/orders/new/summary'],['post','/customer/orders/new/place'],['get','/customer/orders/:id'],['get','/customer/orders'],['get','/customer/wallet'],['post','/customer/wallet/add'],['post','/customer/wallet/files/:txId/claim'],['get','/customer/profile'],['post','/customer/profile'],['post','/customer/addresses/add'],['post','/customer/addresses/default'],['post','/customer/review'],['get','/customer/packs'],['post','/customer/packs/:id/subscribe'],['post','/customer/packs/:subId/pay'],['post','/customer/packs/:subId/files/claim'],['get','/customer/referrals']]) runInNewContext(body(method,route),scope);
       scope.siteOrigin = runInNewContext(source.match(/function siteOrigin\(req, res, next\) \{[^]*?\n\}/)[0]+'\nsiteOrigin;', {SITE:'https://printkarr.in',URL});
       runInNewContext(source.slice(source.indexOf('const contactLimiter ='),source.indexOf("app.get('/blogs',")),scope);
@@ -90,6 +90,7 @@ export function createOrderPreview(seed = previewDb()) {
       runInNewContext(body('get','/api/agent/:id/progress'),scope);
       runInNewContext(body('post','/api/agent/:id/progress'),scope);
       runInNewContext(body('post','/api/agent/:id/failed'),scope);
+      runInNewContext(source.slice(source.indexOf('app.use((err, req, res,'),source.indexOf('// ---- API ----')),scope);
       const agentSource = source.slice(source.indexOf('const agentJob ='),source.indexOf("app.get('/api/agent/file/:id'"));
       runInNewContext(agentSource,scope);
       runInNewContext(source.slice(source.indexOf('function agentStep('),source.indexOf("app.post('/api/agent/:id/done'")),scope);
