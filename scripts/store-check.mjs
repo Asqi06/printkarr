@@ -18,13 +18,13 @@ for (const type of ['stationery', 'prints', 'mixed']) for (const amount of [148.
   if (type !== 'prints') setQuantity(db, cart, 'demo-file', 'green', 1);
   if (type !== 'stationery') { print(db, 'PK-1', type === 'mixed' ? 50 : amount); addPrint(db, customer, 'PK-1'); }
   const q = cartQuote(db, cart, customer, selection, validate);
-  assert.equal(q.net, amount); assert.equal(q.deliveryFee, 15, `${type} express ${amount}`);
-  const scheduled=cartQuote(db,cart,customer,{...selection,deliverySlot:'local-vapi-afternoon'},validate);assert.equal(scheduled.deliveryFee,amount<149?10:0,`${type} scheduled ${amount}`); assert.equal(q.total, amount + q.deliveryFee + q.processingFee);
+  assert.equal(q.net, amount); assert.equal(q.deliveryFee, 0, `${type} express ${amount}`);
+  const scheduled=cartQuote(db,cart,customer,{...selection,deliverySlot:'local-vapi-afternoon'},validate);assert.equal(scheduled.deliveryFee,0,`${type} scheduled ${amount}`); assert.equal(q.total, amount + q.deliveryFee + q.processingFee);
 }
 {
   const db = previewDb(true), cart = cartFor(db, customer);
   db.products[0].price = 149; setQuantity(db, cart, 'demo-file', 'orange', 1);
-  assert.equal(cartQuote(db, cart, customer, { ...selection, coupon: 'DESK10' }, validate).deliveryFee, 15, 'Discounts reduce qualifying item value');
+  assert.equal(cartQuote(db, cart, customer, { ...selection, coupon: 'DESK10' }, validate).deliveryFee, 0, 'Address delivery has no charge regardless of discounts');
   db.addresses[0].lat = 20.54; db.addresses[0].lng = 73.09;
   assert.throws(() => cartQuote(db, cart, customer, selection, validate), /outside/);
   assert.throws(() => cartQuote(db, cart, customer, { ...selection, deliverySlot: 'pickup' }, validate), /development/);
@@ -90,7 +90,7 @@ console.log('Cart checks passed: all basket types below/at/above ₹149, discoun
 
 {
   const db=previewDb(true),p={id:'SHOP-PENDING',customerId:customer,status:'CREATED',paymentStatus:'pending',deliveryMode:'batch',deliveryFee:15,total:115,net:100,subtotal:100,printIds:[],history:[]};db.purchases.push(p);
-  applyTopup(db,customer,topupTerms(db,customer,10),'Added');assert.equal(p.deliveryFee,15,'A top-up does not restore the old ₹99 cart threshold');
+  applyTopup(db,customer,topupTerms(db,customer,10),'Added');assert.equal(p.deliveryFee,0,'No extra charge for address delivery');
   const firstDb=previewDb(true),firstPurchase={...p,history:[]};firstDb.purchases.push(firstPurchase);
   applyTopup(firstDb,customer,topupTerms(firstDb,customer,49,'first'),'Added');assert.equal(firstPurchase.deliveryFee,0,'New first-wallet benefit reaches an unbound pending basket');assert.equal(firstPurchase.total,100);
   const at=Date.parse('2026-10-01T00:30:00+05:30'),plan=deliveryPlan(db,'morning','lit',at);
@@ -100,9 +100,9 @@ console.log('Cart checks passed: all basket types below/at/above ₹149, discoun
 
 let captures=0,paid=false;
 const fixture = createStorePreview(previewDb(true), { preview: false, gateway: {id:'fake-key',secret:'fake-secret'}, fetchGateway:async(url,options)=>{
-  if(url.endsWith('/orders'))return {ok:true,json:async()=>({id:'order-bound',amount:3900,currency:'INR'})};
-  if(url.endsWith('/capture')){assert.deepEqual(JSON.parse(options.body),{amount:3900,currency:'INR'});captures++;paid=true;}
-  return {ok:true,json:async()=>({order_id:'order-bound',amount:3900,currency:'INR',status:paid?'captured':'authorized'})};
+  if(url.endsWith('/orders'))return {ok:true,json:async()=>({id:'order-bound',amount:2400,currency:'INR'})};
+  if(url.endsWith('/capture')){assert.deepEqual(JSON.parse(options.body),{amount:2400,currency:'INR'});captures++;paid=true;}
+  return {ok:true,json:async()=>({order_id:'order-bound',amount:2400,currency:'INR',status:paid?'captured':'authorized'})};
 } });
 const server = await new Promise(resolve=>{const s=fixture.app.listen(0,'127.0.0.1',()=>resolve(s));});
 const base = `http://127.0.0.1:${server.address().port}`;
@@ -116,11 +116,11 @@ try {
   assert.equal((await request('/admin/catalogue')).status,403);
   assert.equal((await request('/cart/items',{productId:'demo-file',color:'green',quantity:1,add:1},{Origin:'https://evil.example'})).status,403);
   assert.equal((await request('/cart/items',{productId:'demo-file',color:'green',quantity:1,add:1})).status,302);
-  const quote = await request('/cart/quote',selection); assert.match(await quote.text(),/₹40/);
+  const quote = await request('/cart/quote',selection); assert.match(await quote.text(),/₹25/);
   const created=await request('/cart/checkout',{...selection,coupon:'DESK10',total:1,deliveryFee:0});const path=created.headers.get('location');assert.ok(path?.startsWith('/customer/purchases/'));
-  assert.equal(fixture.snapshot().purchases[0].total,30,'Client total and delivery overrides ignored');
-  assert.equal((await request(path+'/wallet',{})).status,302);assert.equal(fixture.snapshot().wallets[0].balance,970);
-  await request(path+'/wallet',{});assert.equal(fixture.snapshot().wallets[0].balance,970);
+  assert.equal(fixture.snapshot().purchases[0].total,15,'Client total and delivery overrides ignored');
+  assert.equal((await request(path+'/wallet',{})).status,302);assert.equal(fixture.snapshot().wallets[0].balance,985);
+  await request(path+'/wallet',{});assert.equal(fixture.snapshot().wallets[0].balance,985);
   await request('/cart/items',{productId:'demo-pencil',quantity:1,add:1});
   const next=await request('/cart/checkout',selection);const online=next.headers.get('location');
   assert.equal((await request(online+'/gateway',{})).status,200);

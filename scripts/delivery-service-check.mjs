@@ -13,33 +13,33 @@ import { couponPolicy } from './store-preview.mjs';
 const db=previewDb({real:true}), user=db.users[0], point=HUBS.vapi, at=Date.parse('2026-10-06T10:00:00+05:30');
 for(const [km,fee,batch] of [[0,15,10],[1.9,15,10],[2.1,25,15],[4.1,35,20],[6.1,45,25],[8.1,50,25]]) {
   const pin={lat:point.lat-km/1.25/111.195,lng:point.lng};
-  assert.equal(deliveryFeeFor(db.pricing,'vapi',pin).fee,fee);
-  assert.equal(deliveryFeeFor(db.pricing,'vapi',pin,deliveryPlan(db,'local-vapi-afternoon',null,at)).fee,batch);
+  assert.equal(deliveryFeeFor(db.pricing,'vapi',pin).fee,0);
+  assert.equal(deliveryFeeFor(db.pricing,'vapi',pin,deliveryPlan(db,'local-vapi-afternoon',null,at)).fee,0);
 }
 assert.throws(()=>deliveryFeeFor(db.pricing,'vapi',null));
 assert.throws(()=>deliveryFeeFor(db.pricing,'vapi',{lat:20.1,lng:73.1}),/Outside|outside/);
-assert.equal(deliveryFeeFor(db.pricing,'daman',HUBS.daman).fee,20);
+assert.equal(deliveryFeeFor(db.pricing,'daman',HUBS.daman).fee,0);
 assert.throws(()=>deliveryPlan(db,'pickup'),/development/);
 assert.throws(()=>validateDestination(deliveryPlan(db,'school'),''),/name/);
 for(const name of ['LIT Sarigam','Example Public School','Vapi Arts College']) {
   const plan=validateDestination(deliveryPlan(db,'school',null,at),name);
-  assert.equal(deliveryFeeFor(db.pricing,'vapi',point,plan).fee,10);
-  assert.equal(deliveryFeeFor(db.pricing,'vapi',point,validateDestination(deliveryPlan(db,'school-express'),name)).fee,25);
+  assert.equal(deliveryFeeFor(db.pricing,'vapi',point,plan).fee,5);
+  assert.equal(deliveryFeeFor(db.pricing,'vapi',point,validateDestination(deliveryPlan(db,'school-express'),name)).fee,5);
 }
 assert.equal(deliveryPlan(db,'school',null,at).slotId,'school-afternoon');
 assert.equal(deliveryPlan(db,'school',null,Date.parse('2026-10-06T11:00:00+05:30')).slotId,'school-morning','Cutoff rolls to next available window');
 const hash=hashPassword('local-test-password');assert.ok(passwordMatches('local-test-password',hash));assert.ok(!passwordMatches('wrong-password',hash));
 const validate=couponPolicy.validateCoupon;
 const cart=cartFor(db,user.id);db.orders.push({id:'test-print',customerId:user.id,status:'CREATED',paymentStatus:'pending',document:'Notes.pdf',pages:100,bwPages:100,colorPages:0,copies:1,printType:'bw',sides:'single',binding:'none',subtotal:200,addressId:'preview-address'});cart.printIds=['test-print'];
-assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'express'},validate).deliveryFee,15,'Large basket does not waive express');
-assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'school',institutionName:'Example School'},validate).deliveryFee,7,'100-side school order gets reduced delivery');
+assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'express'},validate).deliveryFee,0,'No extra address delivery charge');
+assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'school',institutionName:'Example School'},validate).deliveryFee,5,'School delivery is flat at every quantity');
 assert.equal(cartQuote(db,cart,user.id,{addressId:'preview-address',deliverySlot:'local-vapi-afternoon'},validate).deliveryFee,0,'Scheduled address basket offer retained');
 {
   const newDb=previewDb(true);newDb.addresses=[];newDb.users[0].phone='';
   const newCart=cartFor(newDb,user.id);setQuantity(newDb,newCart,newDb.products[0].id,'green',1);
   const selection={addressId:'__new',deliverySlot:'school',institutionName:'Example College',nn_address:'Example College, Chala',nn_area:'Vapi',nn_pin:'396191',nn_phone:'9825011111',deliveryLat:point.lat,deliveryLng:point.lng};
   assert.throws(()=>cartQuote(newDb,newCart,user.id,{...selection,nn_pin:'bad'},validate),/PIN/);
-  const purchased=createPurchase(newDb,newCart,user.id,selection,validate,true);assert.equal(purchased.deliveryFee,10);assert.equal(newDb.addresses.length,1);assert.equal(newDb.addresses[0].institutionName,'Example College');
+  const purchased=createPurchase(newDb,newCart,user.id,selection,validate,true);assert.equal(purchased.deliveryFee,5);assert.equal(newDb.addresses.length,1);assert.equal(newDb.addresses[0].institutionName,'Example College');
   confirmPurchase(newDb,purchased,'wallet',null,validate);assert.equal(purchased.status,'PAID','Stationery-only customer can add address and pay in checkout');
 }
 db.partners=[{id:'shop-one',staffId:'staff-one',name:'Example print shop',address:'Sample pickup',...point,zone:'vapi',active:true,color:true,binding:true,stationery:true,batch:true,radiusKm:10,batchCapacity:1,bwRate:1,colorRate:3}];
@@ -98,7 +98,7 @@ try {
   assert.ok(draft);assert.equal(preview.snapshot().drafts.at(-1).preferredShopId,'shop-other');
   const confirm=await request('/customer/orders/new/confirm',user.id,{draft,nn_phone:user.phone,deliverySlot:'school',institutionName:'Another College',addressId:'preview-address',copies:1,sides:'single',printType:'bw',deliveryLat:point.lat,deliveryLng:point.lng});
   assert.equal(confirm.status,302,await confirm.text());assert.equal(preview.snapshot().drafts.at(-1).selections.fulfillmentId,'shop-other','Chosen shop survives upload and location selection');
-  const summary=await request(confirm.headers.get('location'),user.id);assert.equal(summary.status,200);const summaryHtml=await summary.text();assert.match(summaryHtml,/₹10/);assert.match(summaryHtml,/Other print shop/);
+  const summary=await request(confirm.headers.get('location'),user.id);assert.equal(summary.status,200);const summaryHtml=await summary.text();assert.match(summaryHtml,/₹5/);assert.match(summaryHtml,/Other print shop/);
   const newAddressConfirm=await request('/customer/orders/new/confirm',user.id,{draft,nn_phone:user.phone,deliverySlot:'school',institutionName:'New College',addressId:'__new',nn_address:'New College, Chala',nn_area:'Vapi',nn_pin:'396191',copies:1,sides:'single',printType:'bw',deliveryLat:point.lat,deliveryLng:point.lng});
   assert.equal(newAddressConfirm.status,302,await newAddressConfirm.text());
   const savedSchool=preview.snapshot().addresses.at(-1);assert.equal(savedSchool.lat,point.lat);assert.equal(savedSchool.institutionName,'New College');
@@ -107,7 +107,7 @@ try {
   assert.equal(expressConfirm.status,302);assert.equal(preview.snapshot().drafts.at(-1).selections.preferredShopId,'shop-other','Express retains the selected shop');
   assert.match(await (await request(expressConfirm.headers.get('location'),user.id)).text(),/Other print shop/);
   assert.equal((await request('/customer/orders/new/confirm',user.id,{draft,deliverySlot:'college'})).status,400,'Old first-free LIT route cannot be selected for new orders');
-  assert.match(await (await fetch(base+'/')).text(),/Your file\.|School \/ College|₹15–₹50/);
+  assert.match(await (await fetch(base+'/')).text(),/Your file\.|School \/ College|₹5/);
   assert.match(await (await fetch(base+'/kiosks')).text(),/IN DEVELOPMENT/);
   console.log('Delivery service checks passed: distance bands, school pricing, cutoffs, basket rules, capacity, payment replay, staff isolation, full partner → rider delivery, owned shop catalogues and selected-shop print checkout.');
 } finally { await new Promise(resolve=>server.close(resolve)); }

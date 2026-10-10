@@ -19,7 +19,7 @@ assert.throws(()=>institutionAddress(seed,{institutionLocation:'address:school-s
 assert.throws(()=>institutionAddress(seed,{institutionLocation:'address:school-saved'}));
 const far={...institutionAddress(seed,{institutionLocation:'campus:lit'},user.id),lat:0,lng:0};assert.throws(()=>deliveryFeeFor(seed.pricing,far.area,far,deliveryPlan(seed,'school')));
 const cart=cartFor(seed,user.id);setQuantity(seed,cart,seed.products[0].id,'green',1);
-const q=cartQuote(seed,cart,user.id,{...school,deliverySlot:'school'},couponPolicy.validateCoupon);assert.equal(q.address.pin,'');assert.equal(q.deliveryFee,10);
+const q=cartQuote(seed,cart,user.id,{...school,deliverySlot:'school'},couponPolicy.validateCoupon);assert.equal(q.address.pin,'');assert.equal(q.deliveryFee,5);
 seed.carts=[];
 const preview=createOrderPreview(seed),server=preview.app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const base='http://127.0.0.1:'+server.address().port;
 const request=(url,body,cookie='',json=false)=>fetch(base+url,{redirect:'manual',method:body?'POST':'GET',headers:{cookie,'Content-Type':'application/x-www-form-urlencoded',...(body?{Origin:base}:{}),...(json?{Accept:'application/json'}:{})},body:body?new URLSearchParams(body):undefined});
@@ -37,7 +37,7 @@ try {
   assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{confirmCash:'1',expectedTotal:purchase.total+1})).status,400,'The amount shown must match');
   assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{confirmCash:'1',expectedTotal:purchase.total})).status,302);
   assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{confirmCash:'1',expectedTotal:purchase.total})).status,302);
-  db=preview.snapshot();assert.equal(db.purchases[0].total,purchase.total+10);assert.equal(db.orders[0].paymentStatus,'cod_pending');assert.equal(db.orders[0].status,'PRINT_QUEUE');assert.equal(db.wallets[0].balance,1000);
+  db=preview.snapshot();assert.equal(db.purchases[0].total,purchase.total);assert.equal(db.orders[0].paymentStatus,'cod_pending');assert.equal(db.orders[0].status,'PRINT_QUEUE');assert.equal(db.wallets[0].balance,1000);
   preview.reset();
   const native=await upload();assert.equal((await request('/customer/orders/new/confirm',{draft:native.draft,printType:'bw',copies:1,sides:'single',deliverySlot:'school',institutionLocation:'campus:lit'})).status,302);
   const summary=await(await request('/customer/orders/new/summary?draft='+native.draft)).text(), exact=Number(summary.match(/name="expectedTotal" value="([^"]+)"/)[1]);
@@ -66,7 +66,7 @@ try {
         await page.screenshot({path:'tmp/direct-checkout/settings-'+width+'.png',fullPage:true});
         await page.click('[name=confirmCash]');await page.click('.order-continue button');await page.waitForFunction(()=>location.pathname.includes('/customer/purchases/') || !document.querySelector('[data-payment-error]').hidden);
         if(!page.url().includes('/customer/purchases/'))throw new Error(await page.$eval('[data-payment-error]',e=>e.textContent));
-        assert.equal(await page.locator('h1').textContent(),'Cash order confirmed.');assert.equal(await page.locator('.customer-mobile-nav').count(),0);const order=preview.snapshot().orders[0];assert.equal(order.paymentStatus,'cod_pending');assert.equal(order.bwPages,6);assert.equal(order.colorPages,2);assert.equal(preview.snapshot().purchases[0].codFee,10);
+        assert.equal(await page.locator('h1').textContent(),'Cash order confirmed.');assert.equal(await page.locator('.customer-mobile-nav').count(),0);const order=preview.snapshot().orders[0];assert.equal(order.paymentStatus,'cod_pending');assert.equal(order.bwPages,6);assert.equal(order.colorPages,2);assert.equal(preview.snapshot().purchases[0].codFee,0);
         await page.screenshot({path:'tmp/direct-checkout/receipt-'+width+'.png',fullPage:true});await page.close();
       }
       preview.reset();const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:390,height:900});await page.goto(base+'/customer/orders/new');await page.locator('[name=doc]').setInputFiles(fixture);await page.waitForFunction(()=>document.querySelector('[name=expectedTotal]')?.value);

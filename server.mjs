@@ -724,16 +724,6 @@ app.post('/admin/pricing', requireRole('admin'), (req, res) => {
   p.color = num(req.body.color, p.color);
   p.studentBw = num(req.body.studentBw, p.studentBw);
   p.studentColor = num(req.body.studentColor, p.studentColor);
-  for (const z of ['sarigam', 'bhilad', 'vapi', 'daman']) {
-    p.delivery[z] = num(req.body['dz_' + z], p.delivery[z]);
-  }
-  const validTime = (v, fb) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v || '')) ? String(v) : fb;
-  p.surcharges.lateNight.start = validTime(req.body.nightStart, p.surcharges.lateNight.start);
-  p.surcharges.lateNight.end = validTime(req.body.nightEnd, p.surcharges.lateNight.end);
-  p.surcharges.lateNight.fee = num(req.body.nightFee, p.surcharges.lateNight.fee);
-  const surgeJobs = Number(req.body.surgeJobs);
-  if (Number.isSafeInteger(surgeJobs) && surgeJobs >= 0 && surgeJobs <= 10000) p.surcharges.surge.activeJobs = surgeJobs;
-  p.surcharges.surge.fee = num(req.body.surgeFee, p.surcharges.surge.fee);
   saveDb(db);
   res.redirect('/admin/pricing');
 });
@@ -839,11 +829,11 @@ app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
         for (const key of ['amount', 'bonus', 'memberDays', 'freeFiles']) o[key] = Number(req.body[`wallet-${o.id}-${key}`] || 0);
         for (const key of ['enabled', 'firstOnly', 'freeFirstBatch', 'freeBatch']) o[key] = req.body[`wallet-${o.id}-${key}`] === '1';
       }
-      for (const key of ['enabled', 'freeEnabled', 'guaranteeEnabled']) cfg.delivery[key] = req.body[`delivery-${key}`] === '1';
-      for (const key of ['freeMinOrder', 'lateCredit']) cfg.delivery[key] = Number(req.body[`delivery-${key}`]);
+      for (const key of ['enabled', 'guaranteeEnabled']) cfg.delivery[key] = req.body[`delivery-${key}`] === '1';
+      for (const key of ['lateCredit']) cfg.delivery[key] = Number(req.body[`delivery-${key}`]);
       cfg.delivery.cutoff = req.body['delivery-cutoff'];
       cfg.delivery.pickup = { enabled: req.body['pickup-enabled'] === '1', address: String(req.body['pickup-address'] || '').trim() };
-      for (const zone of ['vapi', 'daman']) cfg.delivery.local[zone] = { enabled: req.body[`local-${zone}-enabled`] === '1', fee: Number(req.body[`local-${zone}-fee`]), radiusKm: Number(req.body[`local-${zone}-radiusKm`]) };
+      for (const zone of ['vapi', 'daman']) cfg.delivery.local[zone] = { enabled: req.body[`local-${zone}-enabled`] === '1', fee: 0, radiusKm: Number(req.body[`local-${zone}-radiusKm`]) };
       for (const o of cfg.delivery.slots) {
         for (const key of ['name', 'start', 'end', 'cutoff']) o[key] = req.body[`slot-${o.id}-${key}`];
         for (const key of ['enabled', 'guaranteed']) o[key] = req.body[`slot-${o.id}-${key}`] === '1';
@@ -954,7 +944,7 @@ function oops(user, active, msg) {
   return layout({
     title: 'Hmm', user, active,
     body: `<p class="eyebrow rv">Couldn't do that</p>
-      <h1 class="display rv" style="font-size:clamp(2rem,6vw,3.4rem)">${msg}</h1>
+      <h1 role="alert" class="display rv" style="font-size:clamp(2rem,6vw,3.4rem)">${msg}</h1>
       <a class="btn solid rv" style="margin-top:18px" href="${active}"><span>← Back</span></a>`
   });
 }
@@ -1026,7 +1016,7 @@ function printQuoteExtras(db, user, req) {
   });
   const cart=(db.carts || []).find(c=>c.customerId===user.id);
   let otherSubtotal=0,otherPrintedSides=0,otherPrintCounts={bw:0,color:0},otherPrints=[],otherItemsSubtotal=0;try{if(cart && !cart.purchaseId){const contents=cartItems(db,cart,user.id);otherSubtotal=contents.subtotal;otherItemsSubtotal=contents.items.reduce((n,i)=>n+i.total,0);otherPrints=contents.prints.map(o=>({counts:printSides(o),pack:!!o.packSubId,firstPrintDiscount:o.firstPrintDiscount || 0,couponDiscount:o.couponDiscount || 0}));otherPrintCounts=contents.prints.reduce((n,o)=>{const s=printSides(o);return {bw:n.bw+s.bw,color:n.color+s.color};},{bw:0,color:0});otherPrintedSides=otherPrintCounts.bw+otherPrintCounts.color;}}catch{}
-  let campusFee=10,campusSlot='';try{const plan=deliveryPlan(db,'school');campusSlot=plan.slot;campusFee=batchPrice(db,user.id,plan,0,10).fee;}catch{}
+  let campusFee=5,campusSlot='';try{const plan=deliveryPlan(db,'school');campusSlot=plan.slot;campusFee=batchPrice(db,user.id,plan,0,5).fee;}catch{}
   return {...extra,balance:walletOf(db,user.id).balance,gateway:gatewayOn(),firstPrintPages:first.print,packs,otherSubtotal,otherPrintedSides,otherPrintCounts,otherPrints,otherItemsSubtotal,campusFee,campusSlot};
 }
 
@@ -1100,7 +1090,7 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
 app.post('/customer/orders/new/confirm', requireRole('customer'), async (req, res) => {
   let db = loadDb();
   let d = (db.drafts || []).find((x) => x.id === req.body.draft && x.customerId === req.user.id);
-  if (!d) return res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));
+  if (!d) {const p=purchaseForDraft(db,req.user.id,req.body.draft);return p ? res.redirect('/customer/purchases/'+p.id) : res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));}
   d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes','deliverySlot','institutionName','institutionLocation','schoolMeeting','schoolPhone','addressId','nn_phone','nn_address','nn_area','nn_pin','nn_landmark','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
   const fail = (message) => { saveDb(db); return res.status(400).send(optionsStep(req.user, d, db.addresses.filter(a => a.customerId === req.user.id), campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req), message)); };
   let print;

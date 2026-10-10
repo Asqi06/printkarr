@@ -1,6 +1,6 @@
 // Shared browser/server pricing. Quantities count printed sides, including copies.
-export const PROCESSING_CAP = 10;
-export const COD_FEE = 10;
+export const PROCESSING_CAP = 0;
+export const COD_FEE = 0;
 export const BULK_TIERS = [
   { through: 50, bw: 0, color: 0 },
   { through: 150, bw: 1/3, color: 0.25 },
@@ -10,11 +10,11 @@ export const BULK_TIERS = [
 const money = n => Math.round(n * 100) / 100;
 export function processingFee(sides) {
   if (!Number.isSafeInteger(sides) || sides < 0) throw new Error('Invalid printed-side quantity.');
-  return !sides ? 0 : sides <= 10 ? 2 : sides <= 30 ? 4 : sides <= 75 ? 6 : sides <= 150 ? 8 : PROCESSING_CAP;
+  return 0;
 }
 export function collegeDeliveryFee(sides) {
   if (!Number.isSafeInteger(sides) || sides < 0) throw new Error('Invalid printed-side quantity.');
-  return Math.max(0, 10 - Math.floor(sides / 30));
+  return 5;
 }
 export function offerActive(offer, now = Date.now()) {
   const day = new Date(now + 330 * 60e3).toISOString().slice(0, 10);

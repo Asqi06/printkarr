@@ -46,7 +46,7 @@ try {
    assert.equal(p.snapshot().drafts.length,0);
   } finally {await new Promise(r=>s.close(r));rmSync(p.uploadsDir,{recursive:true,force:true});}
  });
- await check('20 simultaneous wallet retries debit once; COD retries charge one fee',async()=>{
+ await check('20 simultaneous wallet retries debit once; COD retries never add a fee',async()=>{
   for(const method of ['wallet','cod']){
    preview.reset();const upload=await post('/customer/orders/new/upload',form());const draft=new URL(upload.headers.get('location'),base).searchParams.get('draft');
    assert.equal((await post('/customer/orders/new/confirm',new URLSearchParams({draft,printType:'bw',copies:'1',sides:'single',deliverySlot:'school',institutionLocation:'campus:lit'}))).status,302);
@@ -54,7 +54,8 @@ try {
    const retries=await Promise.all(Array.from({length:20},()=>post('/customer/purchases/'+purchase.id+'/'+method,new URLSearchParams({confirmCash:'1',expectedTotal:purchase.total}))));
    retries.forEach(r=>assert.equal(r.status,302));const db=preview.snapshot();
    assert.equal(db.wallets[0].balance,method==='wallet'?1000-purchase.total:1000);
-   assert.equal(db.purchases[0].total,purchase.total+(method==='cod'?10:0));assert.equal(db.orders.length,1);assert.equal(db.orders[0].status,'PRINT_QUEUE');
+   assert.equal(db.purchases[0].processingFee,0);assert.equal(db.purchases[0].lateNightFee,0);assert.equal(db.purchases[0].surgeFee,0);assert.equal(db.purchases[0].deliveryFee,5);
+   assert.equal(db.purchases[0].total,purchase.total);assert.equal(db.orders.length,1);assert.equal(db.orders[0].status,'PRINT_QUEUE');
    assert.equal(db.walletTx.filter(t=>t.kind==='debit').length,method==='wallet'?1:0);
   }
  });
@@ -102,11 +103,33 @@ try{
  await page.click('.order-continue button');await page.locator('[data-payment-error]').waitFor({state:'visible'});
  await page.waitForFunction(()=>Boolean(document.querySelector('[data-print-payment]')?.dataset.purchaseId));
  assert.match(await page.locator('[data-payment-error]').textContent(),/Insufficient wallet/);assert.equal(preview.snapshot().wallets[0].balance,1);
+ const pending=preview.snapshot().purchases[0];
+ const resume=await browser.newPage({viewport:{width:390,height:900}});resume.on('pageerror',e=>errors.push(e.message));
+ await resume.goto(url+'/customer/orders/new?fresh=1');await resume.locator('[name=doc]').setInputFiles(fixture);await resume.waitForFunction(()=>document.querySelector('[name=expectedTotal]')?.value);
+ const nextDraft=await resume.locator('[name=draft]').inputValue();
+ if(await resume.locator('[name=confirmCash]').isVisible())await resume.locator('[name=confirmCash]').check();
+ await resume.locator('.order-continue button').click();await resume.waitForURL('**/customer/purchases/'+pending.id);
+ assert.equal(preview.snapshot().purchases.length,1);assert.ok(preview.snapshot().drafts.some(d=>d.id===nextDraft && d.selections),'New document and settings remain saved');
+ await resume.close();
+ // A second tab retrying the consumed draft resumes the same purchase too.
+ const old=await browser.newPage();await old.goto(url+'/customer/orders/new?fresh=1');
+ await old.request.post(url+'/customer/orders/new/confirm',{form:{draft:preview.snapshot().orders[0].draftId}}).then(r=>assert.match(r.url(),/customer\/purchases/));await old.close();
+ console.log('Saved checkout recovery passed: pending purchase opens, new draft stays saved, consumed-draft replay resumes without duplicates.');
  await page.click('.order-continue button');await page.waitForURL(/customer\/purchases/);
 await page.locator('[name=confirmCash]').check();
  await page.locator('form[action$="/cod"] button').click();await page.waitForFunction(()=>document.querySelector('h1')?.textContent==='Cash order confirmed.');
  assert.equal(preview.snapshot().purchases[0].paymentStatus,'cod_pending');assert.equal(preview.snapshot().wallets[0].balance,1);
  assert.deepEqual(errors,[]);console.log('Recovery browser passed: interrupted request retains draft, insufficient wallet retains balance, saved checkout completes by COD.');
+ preview.reset();const cashReview=await browser.newPage({viewport:{width:390,height:900}});cashReview.on('pageerror',e=>errors.push(e.message));
+ await cashReview.goto(url+'/customer/orders/new');await cashReview.locator('[name=doc]').setInputFiles(fixture);await cashReview.waitForFunction(()=>document.querySelector('[name=expectedTotal]')?.value);
+ await cashReview.locator('[name=copies]').fill('6');await cashReview.locator('[name=paymentMethod][value=cod]').check();await cashReview.locator('[name=confirmCash]').check();
+ await cashReview.locator('summary').filter({hasText:'Coupon / referral'}).click();await cashReview.locator('[name=coupon]').fill('DESK10');await cashReview.locator('[name=confirmCash]').check();await cashReview.locator('.order-continue button').click();await cashReview.locator('[data-final-review]').waitFor({state:'visible'});
+ const exact=await cashReview.locator('form').filter({has:cashReview.locator('[name=expectedTotal]')}).getAttribute('data-reviewed-total');
+ assert.equal(await cashReview.locator('[data-cash-due]').textContent(),'₹'+Number(exact).toLocaleString('en-IN'));
+ assert.equal(await cashReview.locator('[data-final-cod]').count(),0);
+ await cashReview.locator('[name=confirmCash]').check();await cashReview.locator('.order-continue button').click();await cashReview.waitForURL(/customer\/purchases/);
+ assert.equal(preview.snapshot().purchases[0].total,Number(exact));assert.equal(preview.snapshot().purchases[0].codFee,0);await cashReview.close();
+ console.log('Inline coupon cash review passed: shown, consented and charged totals have no COD increment.');
  // Javascript-disabled native flow uses the same confirmation and receipt routes.
  preview.reset();const native=await browser.newPage({javaScriptEnabled:false});await native.goto(url+'/customer/orders/new');
  await native.locator('[name=doc]').setInputFiles(fixture);await native.locator('[data-order-upload] button[type=submit]').click();await native.waitForURL(/draft=/);
