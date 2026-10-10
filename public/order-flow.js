@@ -2,6 +2,8 @@
 async function showOrderScreen(response) {
   const html = await response.text(), doc = new DOMParser().parseFromString(html, 'text/html');
   if (!doc.querySelector('.order-focus #main')) { if(!response.ok)throw new Error(doc.querySelector('[role=alert]')?.textContent || 'This file could not be processed. Choose a PDF, PNG or JPG and retry.');location.assign(response.url);return; }
+  const module=doc.head.querySelector('script[type="module"][src]');
+  if(module && ![...document.head.querySelectorAll('script[type="module"][src]')].some(s=>s.getAttribute('src')===module.getAttribute('src'))){location.assign(response.url);return;}
   const main = document.getElementById('main'); main.replaceChildren(...doc.getElementById('main').childNodes);
   document.title = doc.title;
   history.replaceState(null, '', response.url);
@@ -9,7 +11,7 @@ async function showOrderScreen(response) {
   for (const script of main.querySelectorAll('script')) {
     const replacement = document.createElement('script'); for(const attr of script.attributes) replacement.setAttribute(attr.name,attr.value); replacement.textContent=script.textContent; script.replaceWith(replacement);
   }
-  for(const script of doc.head.querySelectorAll('script[src]')) if (!document.querySelector(`script[src="${script.getAttribute('src')}"]`)) { const added=document.createElement('script'); added.src=script.getAttribute('src'); document.head.append(added); }
+  for(const script of doc.head.querySelectorAll('script[src]')) if (!document.querySelector(`script[src="${script.getAttribute('src')}"]`)) { const added=document.createElement('script'); for(const attr of script.attributes)added.setAttribute(attr.name,attr.value); document.head.append(added); }
   document.dispatchEvent(new Event('print-screen'));
   window.scrollTo(0,0); const heading=main.querySelector('h1'); if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}
 }
