@@ -1,3 +1,5 @@
+import {asyncHandler} from '../lib/security.js';
+import crypto from 'node:crypto';
 // Read-only design regression check. --serve exposes fixture pages on localhost:3100.
 // No production database, emails, payments or print jobs are touched.
 import assert from 'node:assert/strict';
@@ -161,7 +163,7 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
 {
   const routes = new Map(), scope = {
     app: { get: (route, handler) => routes.set('GET ' + route, handler), post: (route, ...handlers) => routes.set('POST ' + route, handlers.at(-1)) },
-    COOKIE: 'pk_demo', HOME: { customer: '/customer', admin: '/admin' }, process: { env: {} },
+    asyncHandler, COOKIE: 'pk_demo', HOME: { customer: '/customer', admin: '/admin' }, process: { env: {} },
     parseCookies, customerDestination, getSessionUser: () => null, verifyCredentials: () => user,
     createSession: () => 'fake-session', loginLimiter() {}, loginView: error => error || 'login',
     loginOtpPage: () => 'code', demoLoginOn: () => false, normEmail: email => email,
@@ -197,7 +199,7 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
     let callback, sessions=0, saves=0;
     const db={users:scenario==='new-customer'||scenario==='owner-email'?[]:[scenario==='staff'?staff:user],wallets:[{customerId:user.id,balance:150}]};
     const scope={
-      app:{get(route,fn){callback=fn;}}, GOOGLE:{id:'test',secret:'test'}, process:{env:{ADMIN_EMAIL:scenario==='owner-email'?user.email:''}},
+      asyncHandler,crypto,AbortSignal,app:{get(route,fn){callback=fn;}}, GOOGLE:{id:'test',secret:'test'}, process:{env:{ADMIN_EMAIL:scenario==='owner-email'?user.email:''}},
       oauthStates:new Map(scenario==='replayed-state'?[]:[['nonce',Date.now()+60000]]), parseCookies, URLSearchParams,
       googleRedirectUri:()=> 'https://printkarr.in/auth/google/callback', loadDb:()=>db, saveDb(){saves++;}, referralCodeFor(){},
       createSession(){sessions++;return 'session';}, sessionCookie:()=>['session=test'], customerReturnTo:()=>'/customer/wallet', HOME:{customer:'/customer',admin:'/admin'}, loginView:error=>error,
@@ -290,7 +292,7 @@ for (const playbackFails of [false, true]) {
   const video = { style:{}, readyState:4, HAVE_ENOUGH_DATA:4, videoWidth:1, videoHeight:1, play: () => playbackFails ? Promise.reject(new Error('play blocked')) : Promise.resolve() };
   const win = { location:{href:''}, addEventListener() {} };
   const token = 'a'.repeat(32);
-  const script = pages.get('/customer/orders/preview/scan').match(/<script>\s*(\(function\(\)\{[\s\S]*?)<\/script>/)[1];
+  const script = pages.get('/customer/orders/preview/scan').match(/<script[^>]*>\s*(\(function\(\)\{[\s\S]*?)<\/script>/)[1];
   runInNewContext(script, {
     document: { getElementById: id => ({'scan-start':button,'scan-video':video,'scan-status':status}[id]), createElement: () => ({getContext: () => ({drawImage() {}, getImageData: () => ({data:[]})})}) },
     navigator: { mediaDevices:{getUserMedia: () => Promise.resolve({getTracks: () => [{stop() { stopped++; }}]})} },
@@ -324,7 +326,7 @@ console.log('Kiosk checked: development status, delivery alternatives and no 3D 
 // Wallet choice updates the existing top-up fields, selected state, and configured reward.
 {
   const html = pages.get('/customer/wallet');
-  const source = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).find(s=>s.includes('var offers ='));
+  const source = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).find(s=>s.includes('var offers ='));
   const fields = {amount:{value:49,addEventListener(type,fn){this.input=fn;},focus(){}}, topNudge:{}, offerId:{value:'first'}};
   const buttons = campaign.wallets.filter(o=>o.enabled).map(o=>({dataset:{offer:o.id,amount:o.amount},addEventListener(type,fn){this.click=fn;},setAttribute(name,value){this[name]=value;},closest(){return {classList:{toggle(){}}};}}));
   runInNewContext(source, {document:{getElementById:id=>fields[id],querySelectorAll:()=>buttons}});

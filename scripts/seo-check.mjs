@@ -9,9 +9,11 @@ import { get as httpGet } from 'node:http';
 import {runInNewContext} from 'node:vm';
 
 const serverSource=readFileSync(new URL('../server.mjs',import.meta.url),'utf8').replaceAll('\r\n','\n');
-const origin=runInNewContext(serverSource.match(/function baseUrl\(req\) \{[^]*?\n\}/)[0]+'\n'+serverSource.match(/function googleRedirectUri\(req\) \{[^]*?\n\}/)[0]+'\n({baseUrl,googleRedirectUri});',{SITE,URL});
+const originEnv={NODE_ENV:'development'};
+const origin=runInNewContext(serverSource.match(/function baseUrl\(req\) \{[^]*?\n\}/)[0]+'\n'+serverSource.match(/function googleRedirectUri\(req\) \{[^]*?\n\}/)[0]+'\n({baseUrl,googleRedirectUri});',{SITE,URL,process:{env:originEnv}});
 for(const hostname of ['printkarr.onrender.com','printkarr.in','www.printkarr.in']){const req={hostname,protocol:'https',get:()=> 'printkarr.onrender.com'};assert.equal(origin.baseUrl(req),SITE);assert.equal(origin.googleRedirectUri(req),SITE+'/auth/google/callback');}
 assert.equal(origin.baseUrl({hostname:'localhost',protocol:'http',get:()=> 'localhost:3000'}),'http://localhost:3000');
+originEnv.NODE_ENV='production';assert.equal(origin.baseUrl({hostname:'forged.example',protocol:'https',get:()=> 'forged.example'}),SITE,'Production redirects ignore untrusted Host');
 const app = express();
 discoveryRoutes(app, POSTS);
 const server = app.listen(0, '127.0.0.1');

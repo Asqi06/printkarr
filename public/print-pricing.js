@@ -1,6 +1,5 @@
 // Shared browser/server pricing. Quantities count printed sides, including copies.
 export const PROCESSING_CAP = 0;
-export const COD_FEE = 0;
 export const BULK_TIERS = [
   { through: 50, bw: 0, color: 0 },
   { through: 150, bw: 1/3, color: 0.25 },

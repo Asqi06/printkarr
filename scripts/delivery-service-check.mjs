@@ -69,7 +69,7 @@ assert.throws(()=>fulfillmentFor(db,point,{...p,zone:'vapi'}),/full/);
 db.partners.push({...db.partners[0],id:'shop-other',staffId:'staff-other',name:'Other print shop',lat:point.lat+.005,batchCapacity:30});
 db.products[0].shopId='shop-one'; db.products[1].shopId='shop-other';
 const preview=createOrderPreview(db), server=preview.app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));const base='http://127.0.0.1:'+server.address().port;
-async function request(url,id,body) {return fetch(base+url,{method:body?'POST':'GET',headers:{cookie:'pk_demo='+id,'Content-Type':'application/x-www-form-urlencoded'},body:body?new URLSearchParams(body):undefined,redirect:'manual'});}
+async function request(url,id,body) {return fetch(base+url,{method:body?'POST':'GET',headers:{cookie:'pk_demo='+id,'Content-Type':'application/x-www-form-urlencoded',Origin:base},body:body?new URLSearchParams(body):undefined,redirect:'manual'});}
 try {
   assert.equal((await request('/partner','preview-customer')).status,403);
   assert.equal((await request('/partner/files/test-print','staff-other')).status,404);
@@ -89,10 +89,10 @@ try {
   const ownCatalogue=await(await request('/partner/catalogue','staff-one')).text();assert.match(ownCatalogue,/Cardboard file/);assert.doesNotMatch(ownCatalogue,/Everyday notebook/);
   assert.equal((await request('/partner/catalogue?edit='+db.products[1].id,'staff-one')).status,404);
   const productForm=new FormData();for(const [key,value] of Object.entries({name:'Partner pen',category:'Writing',price:'12',stock:'3',active:'on',shopId:'shop-other'}))productForm.set(key,value);
-  assert.equal((await fetch(base+'/partner/catalogue',{method:'POST',headers:{cookie:'pk_demo=staff-one'},body:productForm,redirect:'manual'})).status,302);
+  assert.equal((await fetch(base+'/partner/catalogue',{method:'POST',headers:{cookie:'pk_demo=staff-one',Origin:base},body:productForm,redirect:'manual'})).status,302);
   assert.equal(preview.snapshot().products.at(-1).shopId,'shop-one','Partner cannot forge another shop’s stock');
   productForm.set('id',db.products[1].id);
-  assert.equal((await fetch(base+'/partner/catalogue',{method:'POST',headers:{cookie:'pk_demo=staff-one'},body:productForm,redirect:'manual'})).status,400);
+  assert.equal((await fetch(base+'/partner/catalogue',{method:'POST',headers:{cookie:'pk_demo=staff-one',Origin:base},body:productForm,redirect:'manual'})).status,400);
   const pdf=buildCoverPdf('Sample document',[['Name','Test only']]), upload=new FormData();upload.set('shopId','shop-other');upload.set('doc',new Blob([pdf],{type:'application/pdf'}),'Sample.pdf');
   const uploaded=await fetch(base+'/customer/orders/new/upload',{method:'POST',headers:{cookie:'pk_demo='+user.id},body:upload,redirect:'manual'});const draft=new URL(base+uploaded.headers.get('location')).searchParams.get('draft');
   assert.ok(draft);assert.equal(preview.snapshot().drafts.at(-1).preferredShopId,'shop-other');

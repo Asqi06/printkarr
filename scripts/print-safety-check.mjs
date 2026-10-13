@@ -24,7 +24,7 @@ try {
   for(const name of ['PK-NEW.pdf','PK-FAIL.pdf','PK-ACTIVE.pdf','PK-BAD.pdf','b'.repeat(32),'unknown.txt']) assert.ok(fs.existsSync(path.join(uploads,name)),name);
   assert.equal(loadDb(dbFile).drafts.length,1);assert.ok(loadDb(dbFile).orders[0].fileDeletedAt);assert.equal(janitor(root,15,dbFile),0);
   const atlasSource=fs.readFileSync(new URL('../lib/atlas.js',import.meta.url),'utf8');
-  const syncBody=atlasSource.slice(atlasSource.indexOf('async function syncFiles()'),atlasSource.indexOf('export async function flushAtlas()'));
+  const syncBody=atlasSource.slice(atlasSource.indexOf('async function syncFiles('),atlasSource.indexOf('export async function flushAtlas('));
   const cloud=[{_id:'02',filename:'PK-ACTIVE.pdf'},{_id:'01',filename:'PK-ACTIVE.pdf'},{_id:'04',filename:'PK-OLD.pdf'},{_id:'03',filename:'PK-OLD.pdf'},{_id:'05',filename:'PK-ACTIVE.pdf'},{_id:'06',filename:'NEW-OTHER-INSTANCE.pdf'}],deleted=[];
   const activeStat=fs.statSync(path.join(uploads,'PK-ACTIVE.pdf'));
   const sync=runInNewContext(syncBody+'\n syncFiles;',{fs:{...fs,readdirSync:()=>['PK-ACTIVE.pdf']},path,uploadsDir:uploads,remoteFiles:new Map([['PK-ACTIVE.pdf',{id:'02',size:activeStat.size,mtimeMs:Math.round(activeStat.mtimeMs)}],['PK-OLD.pdf',{id:'04'}]]),files:{find:()=>({toArray:async()=>cloud})},bucket:{delete:async id=>deleted.push(id)}});
@@ -66,10 +66,15 @@ try {
   if (process.platform === 'win32') {
     const monitor=path.resolve('agent/print-monitored.ps1'), mock=path.join(root,'monitor-mock.ps1');
     fs.writeFileSync(mock,`param([string]$Mode,[string]$Monitor)
-$script:started=$false; $script:poll=0; $script:clock=0; $script:removed=@()
+$script:started=$false; $script:poll=0; $script:clock=0; $script:removed=@(); $script:queuePoll=0
 function Get-Printer { param($Name) @{PrinterStatus= $(if($Mode -eq 'offline'){128}else{0})} }
 function Get-PrintJob { param($PrinterName,$ErrorAction)
-  if ($Mode -eq 'busy') { return [pscustomobject]@{ID=99;DocumentName='foreign.pdf';JobStatus=16} }
+  if (!$script:started) {
+    $script:queuePoll++
+    if ($Mode -in @('busy','busy-same','cancel-wait') -or ($Mode -eq 'busy-clears' -and $script:queuePoll -le 2)) {
+      return [pscustomobject]@{ID=99;DocumentName=$(if($Mode -eq 'busy-same'){'sample.pdf'}else{'foreign.pdf'});JobStatus=16}
+    }
+  }
   if (!$script:started) { return }
   $script:poll++
   if($Mode -eq 'unobserved'){return}
@@ -77,6 +82,8 @@ function Get-PrintJob { param($PrinterName,$ErrorAction)
   if ($script:poll -eq 1 -or $Mode -eq 'fault') { return [pscustomobject]@{ID=7;DocumentName='sample.pdf';JobStatus=$(if($Mode -eq 'fault'){2}else{16})} }
 }
 function Start-Process { param($FilePath,$ArgumentList,$WindowStyle,[switch]$PassThru)
+  if($Mode -in @('busy','busy-same','cancel-wait')){throw 'Unexpected print submission'}
+  if($Mode -eq 'busy-clears' -and $script:queuePoll -le 2){throw 'Submitted before queue drained'}
   $script:started=$true
   $p=[pscustomobject]@{HasExited=$true;ExitCode=$(if($Mode -eq 'exit') {5}else{0});Id=123}
   $p | Add-Member -MemberType ScriptMethod -Name Refresh -Value {}
@@ -86,13 +93,15 @@ function Start-Process { param($FilePath,$ArgumentList,$WindowStyle,[switch]$Pas
 function Stop-Process {param($Id,$ErrorAction)}
 function Remove-PrintJob {param($PrinterName,$ID,$ErrorAction) $script:removed+= $ID; Write-Output "CANCEL:$ID"}
 function Start-Sleep {param($Milliseconds)}
+function Test-Path {param($LiteralPath) $Mode -eq 'cancel-wait' -and $script:clock -ge 2}
 function Get-Date { $script:clock++; [datetime]'2026-10-02' | ForEach-Object {$_.AddSeconds($script:clock)} }
-& $Monitor -Printer Fake -Sumatra mock.exe -File sample.pdf -Settings simplex -AppData fixture
+& $Monitor -Printer Fake -Sumatra mock.exe -File sample.pdf -Settings simplex -AppData fixture -TimeoutSeconds 12 -CancellationFile fixture-stop
 exit $LASTEXITCODE
 `);
     const check=mode=>{try {return {code:0,out:execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',mock,'-Mode',mode,'-Monitor',monitor],{encoding:'utf8',windowsHide:true,timeout:15000,stdio:['ignore','pipe','pipe']})};}catch(e){return {code:e.status,out:String(e.stdout),err:String(e.stderr)};}};
     const success=check('ok');assert.equal(success.code,0);assert.match(success.out,/"queueDrained":true/);assert.match(success.out,/"observedJobs":1/);
-    for(const mode of ['busy','offline']){const stopped=check(mode);assert.equal(stopped.code,1);assert.doesNotMatch(stopped.out,/CANCEL:/);assert.doesNotMatch(stopped.out,/queueDrained/);}
+    const waited=check('busy-clears');assert.equal(waited.code,0);assert.match(waited.out,/"queueDrained":true/);
+    for(const mode of ['busy','busy-same','cancel-wait','offline']){const stopped=check(mode);assert.equal(stopped.code,1);assert.doesNotMatch(stopped.out,/CANCEL:/);assert.doesNotMatch(stopped.out,/queueDrained/);assert.match(stopped.err,mode.startsWith('busy') ? /queue stayed busy until timeout/ : mode==='cancel-wait' ? /stopped from admin before submission/ : /requires attention/);}
     const retained=check('retained');assert.equal(retained.code,0);assert.match(retained.out,/observedJobs/);
     const unseen=check('unobserved');assert.equal(unseen.code,1);assert.doesNotMatch(unseen.out,/queueDrained/);
     const fault=check('fault');assert.equal(fault.code,1);assert.match(fault.out,/CANCEL:7/);assert.doesNotMatch(fault.out,/CANCEL:99/);

@@ -22,10 +22,16 @@ try {
     if($CancellationFile -and (Test-Path -LiteralPath $CancellationFile)){throw 'Print stopped from admin.'}
     Check-Printer
     $pending={ ([int]$_.JobStatus -band 0x1080) -eq 0 -and (([int]$_.JobStatus -band 0x2000) -eq 0 -or ([int]$_.JobStatus -band 0x4018) -ne 0) }
-    if (@(Get-PrintJob -PrinterName $Printer | Where-Object $pending).Count) { throw 'Printer queue is busy; clear or finish existing work before retrying.' }
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while (@(Get-PrintJob -PrinterName $Printer | Where-Object $pending).Count) {
+        if($CancellationFile -and (Test-Path -LiteralPath $CancellationFile)){throw 'Print stopped from admin before submission.'}
+        Check-Printer
+        if ((Get-Date) -gt $deadline) { throw 'Printer queue stayed busy until timeout; finish existing work before retrying. No new print was submitted.' }
+        Start-Sleep -Milliseconds 250
+    }
+    if($CancellationFile -and (Test-Path -LiteralPath $CancellationFile)){throw 'Print stopped from admin before submission.'}
     $arguments = '-appdata "{0}" -print-to "{1}" -print-settings "{2}" -silent "{3}"' -f $AppData, $Printer, $Settings, $File
     $process = Start-Process -FilePath $Sumatra -ArgumentList $arguments -WindowStyle Hidden -PassThru
-    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     $emptySince = $null
     do {
         if($CancellationFile -and (Test-Path -LiteralPath $CancellationFile)){throw 'Print stopped from admin; inspect partial output before retrying.'}
@@ -54,7 +60,9 @@ try {
 } catch {
     if ($process -and !$process.HasExited) { Stop-Process -Id $process.Id -ErrorAction SilentlyContinue }
     # Cancel only this invocation's remaining jobs; never reset the shared spooler.
-    Get-PrintJob -PrinterName $Printer -ErrorAction SilentlyContinue | Where-Object { $_.DocumentName -eq $File -or $_.DocumentName -eq (Split-Path $File -Leaf) } | ForEach-Object { $owned[$_.ID] = $true }
+    if ($process) {
+        Get-PrintJob -PrinterName $Printer -ErrorAction SilentlyContinue | Where-Object { $_.DocumentName -eq $File -or $_.DocumentName -eq (Split-Path $File -Leaf) } | ForEach-Object { $owned[$_.ID] = $true }
+    }
     foreach ($jobId in $owned.Keys) { Remove-PrintJob -PrinterName $Printer -ID $jobId -ErrorAction SilentlyContinue }
     Write-Error $_ -ErrorAction Continue
     exit 1

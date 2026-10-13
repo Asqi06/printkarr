@@ -1,4 +1,4 @@
-import { printPricing, processingFee, collegeDeliveryFee, COD_FEE } from './print-pricing.js?v=20261010-fresh-cart';
+import { printPricing, processingFee, collegeDeliveryFee } from './print-pricing.js?v=20261010-mixed-calculator';
 import { printPlan, packCovers, pageRange, compactRange } from './print-plan.js?v=20261007-split-print';
 
 function initPrintOptions() {
@@ -58,17 +58,18 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       let total = Math.round((net + otherSubtotal + processFee + Number(fee || 0) + late + surge)*100)/100;
       if(form.dataset.reviewedTotal)total=Number(form.dataset.reviewedTotal);
       if(form.elements.expectedTotal)form.elements.expectedTotal.value=total;
-      const cash=get('paymentMethod')==='cod', due=total+(cash ? COD_FEE : 0);
+      const due=total;
       const wallet=form.querySelector('[name="paymentMethod"][value="wallet"]');
       if(wallet)wallet.disabled=Number(cfg.balance || 0)<total;
-      if(wallet?.checked && wallet.disabled){const available=form.querySelector('[name="paymentMethod"][value="online"]') || form.querySelector('[name="paymentMethod"][value="cod"]');available.checked=true;update();return;}
+      if(wallet?.checked && wallet.disabled){const available=form.querySelector('[name="paymentMethod"][value="online"]');if(available){available.checked=true;update();return;}}
       for(const [selector,cost] of [['[data-other-cost]',otherSubtotal],['[data-night-cost]',late],['[data-demand-cost]',surge]]){const line=form.querySelector(selector);if(line){line.textContent='₹'+cost.toLocaleString('en-IN');line.closest('div').hidden=!cost;}}
-      const final=form.querySelector('[data-final-review]');if(final){final.querySelector('[data-final-cod]')?.remove();final.querySelector('.total span:last-child').textContent='₹'+due.toLocaleString('en-IN');}
-      const feeLine=form.querySelector('[data-cod-cost]');if(feeLine){feeLine.closest('div').hidden=!cash || !COD_FEE;feeLine.textContent='₹'+COD_FEE;}
-      const consent=form.querySelector('[data-cash-consent]');if(consent){consent.hidden=!cash;consent.querySelector('input').disabled=!cash;consent.querySelector('input').required=cash;consent.querySelector('[data-cash-due]').textContent='₹'+due.toLocaleString('en-IN');}
-      quote.querySelector('span').textContent = form.dataset.reviewedTotal ? cash ? 'Cash total · final' : 'Final total' : cfg.guest || cfg.otherPrintedSides ? 'Estimate · checked before payment' : cash ? 'Cash total' : 'Total';
+      const final=form.querySelector('[data-final-review]');if(final){final.querySelector('.total span:last-child').textContent='₹'+due.toLocaleString('en-IN');}
+      quote.querySelector('span').textContent = form.dataset.reviewedTotal ? 'Final total' : cfg.guest || cfg.otherPrintedSides ? 'Estimate · checked before payment' : 'Total';
       quote.querySelector('b').textContent = '₹'+due.toLocaleString('en-IN');
-      quote.querySelector('button').textContent = (cfg.guest ? 'Continue' : cash ? 'Confirm cash order' : get('paymentMethod')==='wallet' ? 'Pay with wallet' : 'Pay online')+' →';
+      quote.querySelector('button').textContent = (cfg.guest ? 'Continue' : get('paymentMethod')==='wallet' ? 'Pay with wallet' : 'Pay online')+' →';
+      const payable=cfg.guest || form.querySelector('[name="paymentMethod"]:checked:not(:disabled)');
+      quote.querySelector('button').disabled=!payable;
+      if (!payable) { hint.textContent='Your wallet needs funds and online payment is unavailable. Try again later or contact support.';hint.hidden=false; }
       form.querySelector('[data-print-cost]').textContent = '₹'+net.toLocaleString('en-IN')+(pack ? ' · pack' : discount ? ' · offer applied' : '');
       form.querySelector('[data-delivery-cost]').textContent = fee === 0 ? 'FREE' : '₹'+fee;
     } catch (error) {
@@ -92,7 +93,7 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
     const page=Number(button.dataset.colourPage); picked.has(page) ? picked.delete(page) : picked.add(page);
     form.elements.mixedRange.value=compactRange([...picked].sort((a,b)=>a-b)); form.dispatchEvent(new Event('input',{bubbles:true}));
   });
-  const clearReview=event=>{if(['paymentMethod','confirmCash'].includes(event.target.name))return;delete form.dataset.reviewedTotal;form.querySelector('[data-final-review]')?.remove();form.querySelector('[data-print-breakdown]').hidden=false;if(form.querySelector('[data-cash-consent] input'))form.querySelector('[data-cash-consent] input').checked=false;};
+  const clearReview=event=>{if(['paymentMethod'].includes(event.target.name))return;delete form.dataset.reviewedTotal;form.querySelector('[data-final-review]')?.remove();form.querySelector('[data-print-breakdown]').hidden=false;};
   form.addEventListener('input',clearReview,true);form.addEventListener('change',clearReview,true);
   form.addEventListener('input', update); form.addEventListener('change', update);
   form.addEventListener('invalid', event => { const details = event.target.closest('details'); if (details) details.open = true; }, true);

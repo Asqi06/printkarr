@@ -16,5 +16,9 @@ favicon/
 /*.mtl
 /*.fbx
 .git/
+.pitch-build/
+output/
+tmp*/
+tmp-*
 *.md
 !README.md

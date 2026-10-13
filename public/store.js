@@ -1,5 +1,4 @@
 (() => {
-  if(location.hash==='#cash-choice')document.getElementById('cash-choice')?.setAttribute('open','');
   const cards = [...document.querySelectorAll('[data-product]')];
   let category = 'all';
   const search = document.querySelector('[data-product-search]');
@@ -36,7 +35,7 @@
     for(const form of document.querySelectorAll('[data-print-payment]')) {
       if(form.dataset.paymentReady)continue;form.dataset.paymentReady='1';
       const total=form.querySelector('[data-payment-total]');
-      const update=()=>{const cash=form.elements.paymentMethod.value==='cod',consent=form.querySelector('[data-cash-consent]');if(consent){consent.hidden=!cash;consent.querySelector('input').disabled=!cash;consent.querySelector('input').required=cash;}if(!total)return;const due=Number(cash ? total.dataset.cashTotal : total.dataset.onlineTotal);total.firstChild.nodeValue='\u20b9'+due.toLocaleString('en-IN');total.querySelector('small').textContent=cash ? 'Cash total' : 'Online / wallet total';if(consent)consent.querySelector('[data-cash-due]').textContent='\u20b9'+due.toLocaleString('en-IN');form.querySelector('.order-continue button').textContent=cash ? 'Confirm cash order →' : 'Pay & place order →';};
+      const update=()=>{if(!total)return;const due=Number(total.dataset.onlineTotal);total.firstChild.nodeValue='₹'+due.toLocaleString('en-IN');total.querySelector('small').textContent='Wallet / Razorpay total';form.querySelector('.order-continue button').textContent='Pay & place order →';};
       form.addEventListener('change',update);update();
     }
   }
@@ -46,7 +45,7 @@
     const button=form ? form.querySelector('.order-continue [type=submit]') : event.target.closest('[data-store-gateway]');
     if(!button || form && event.type!=='submit')return;
     event.preventDefault();let id=button.dataset.storeGateway;const message=form?.querySelector('[data-payment-error]') || document.querySelector('[data-payment-error]');
-    if(button.disabled)return;button.disabled=true;message.hidden=true;
+    if(button.disabled)return;const label=button.textContent;const reset=()=>{button.disabled=false;button.textContent=label;form?.removeAttribute('aria-busy');};button.disabled=true;button.textContent='Preparing payment…';form?.setAttribute('aria-busy','true');message.hidden=true;
     try {
       if(form){
         if(form.dataset.purchaseId){location.assign(`/customer/purchases/${encodeURIComponent(form.dataset.purchaseId)}`);return;}
@@ -69,10 +68,9 @@
               form.querySelector('[data-print-breakdown]').before(review);
               form.querySelector('[data-print-quote] b').textContent='\u20b9'+exact.toLocaleString('en-IN');
               form.querySelector('[data-print-quote] span').textContent='Final total';
-              const cashDue=form.querySelector('[data-cash-due]');if(cashDue)cashDue.textContent='\u20b9'+exact.toLocaleString('en-IN');
-              form.querySelector('[data-cash-consent] input').checked=false;form.querySelector('[name="paymentMethod"]:checked').dispatchEvent(new Event('change',{bubbles:true}));
+              form.querySelector('[name="paymentMethod"]:checked').dispatchEvent(new Event('change',{bubbles:true}));
               message.textContent='Your final price is shown below. Review the breakdown, then confirm to place your order.';message.hidden=false;
-              review.scrollIntoView({behavior:'auto',block:'center'});button.disabled=false;return;
+              review.scrollIntoView({behavior:'auto',block:'center'});reset();return;
             }
           }
           data.set('expectedTotal',exact);action=confirmed.getAttribute('action');
@@ -81,16 +79,11 @@
         if(response.ok && event.submitter?.value==='add'){location.assign('/customer/orders/new?fresh=1');return;}
         const json=response.headers.get('content-type')?.includes('application/json');
         const result=json?await response.json():{error:new DOMParser().parseFromString(await response.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Could not prepare your order. Please retry.'};
+        if(response.status===401 && result.login){location.assign(result.login);return;}
         if(!response.ok || !result.id)throw new Error(result.error || 'Could not prepare your order.');
         id=result.id;form.dataset.purchaseId=id;
         if(result.paid || Number(data.get('expectedTotal'))!==result.total){location.assign(`/customer/purchases/${encodeURIComponent(id)}`);return;}
         if(event.submitter?.value==='wallet'){location.assign(`/customer/wallet?purchase=${encodeURIComponent(id)}`);return;}
-        if(form.elements.paymentMethod.value==='cod'){
-          if(data.get('confirmCash')!=='1'){location.assign(`/customer/purchases/${encodeURIComponent(id)}#cash-choice`);return;}
-          const confirmed=await fetch(`/customer/purchases/${encodeURIComponent(id)}/cod`,{method:'POST',body:new URLSearchParams({confirmCash:'1',expectedTotal:result.total})});
-          if(!confirmed.ok)throw new Error(new DOMParser().parseFromString(await confirmed.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Cash confirmation failed. Your checkout is saved; please retry.');
-          location.assign(confirmed.url);return;
-        }
         if(form.elements.paymentMethod.value==='wallet'){
           const paid=await fetch(`/customer/purchases/${encodeURIComponent(id)}/wallet`,{method:'POST'});
           if(!paid.ok)throw new Error(new DOMParser().parseFromString(await paid.text(),'text/html').querySelector('[role=alert]')?.textContent || 'Payment could not be completed. Please retry.');
@@ -98,16 +91,17 @@
         }
       }
       const response=await fetch(`/customer/purchases/${encodeURIComponent(id)}/gateway`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-      const result=await response.json();if(!response.ok)throw new Error(result.error || 'Could not open payment.');
+      if(response.redirected && new URL(response.url).pathname==='/login'){location.assign(response.url);return;}
+      const result=await response.json();if(response.status===401 && result.login){location.assign(result.login);return;}if(!response.ok)throw new Error(result.error || 'Could not open payment.');
       if(!window.Razorpay)throw new Error('Payment provider is still loading. Please retry.');
-      const checkout=new window.Razorpay({key:result.keyId,order_id:result.id,amount:result.amount,currency:'INR',name:'PrintKarr',description:'Prints & stationery',modal:{ondismiss:()=>{button.disabled=false;}},handler(proof){
+      const checkout=new window.Razorpay({key:result.keyId,order_id:result.id,amount:result.amount,currency:'INR',name:'PrintKarr',description:'Prints & stationery',modal:{ondismiss:()=>{reset();}},handler(proof){
         const proofForm=document.createElement('form');proofForm.method='POST';proofForm.action=`/customer/purchases/${encodeURIComponent(id)}/verify`;
         Object.entries(proof).forEach(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;proofForm.append(input);});
         document.body.append(proofForm);proofForm.submit();
       }});
-      checkout.on?.('payment.failed',event=>{message.textContent=event.error?.description || 'Payment failed. Your checkout is saved; retry online payment. Contact support if money was deducted.';message.hidden=false;button.disabled=false;});
+      checkout.on?.('payment.failed',event=>{message.textContent=event.error?.description || 'Payment failed. Your checkout is saved; retry online payment. Contact support if money was deducted.';message.hidden=false;reset();});
       checkout.open();
-    }catch(error){message.textContent=error.message;message.hidden=false;button.disabled=false;}
+    }catch(error){message.textContent=error.message;message.hidden=false;reset();}
   }
   document.addEventListener('click',event=>{if(event.target.closest('[data-store-gateway]'))pay(event);});
   document.addEventListener('submit',event=>{if(event.target.matches('[data-print-payment]'))pay(event);});

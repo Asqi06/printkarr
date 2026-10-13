@@ -9,8 +9,8 @@ marked **Always Free** before creating them. A running VM still needs backups.
 
 1. **Do not redeploy or restart the current Render service yet.** Render Free
    has no persistent disk or Shell/SSH access. A redeploy can erase records
-   that exist only in its current instance. Record the current `/api/ready`
-   user/order counts and check recent prices and coupons in Admin. Find the
+   that exist only in its current instance. Record the current `/api/ready/details`
+   user/order counts after signing in as admin and check recent prices and coupons in Admin. Find the
    newest complete backup of `data/db.json` **and** `data/uploads/`. The
    database alone cannot recover uploaded print files.
 2. Create an Always Free VM with enough boot storage, a reserved public IP,
@@ -29,6 +29,8 @@ marked **Always Free** before creating them. A running VM still needs backups.
    counts or recent orders, pause the migration until those missing records
    can be recovered. This repository has no full data export endpoint on
    Render Free.
+   The app container runs as UID 1000 (`node`). Before starting it on the VM, give that UID write access to the restored `data/` directory: `sudo chown -R 1000:1000 data`. Keep the separate backup untouched.
+
 5. From the checkout, run
    `docker compose --env-file .env -f deploy/compose.yaml up -d --build`
    and then `docker compose --env-file .env -f deploy/compose.yaml logs --tail=100 app`.

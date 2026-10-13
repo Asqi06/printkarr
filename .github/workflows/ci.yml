@@ -1,0 +1,48 @@
+name: Checks and optional deploy
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-fund
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm test
+      - run: npm run test:checkout
+      - run: npm run test:store
+      - run: npm run test:delivery
+      - run: npm run test:ux
+      - run: npm run test:security
+      - run: npm run test:atlas-safety
+      - run: npm run test:print-safety
+  deploy:
+    needs: checks
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Deploy only when a Render hook is configured
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            curl --fail --silent --show-error --retry 2 --max-time 30 --output /dev/null "$RENDER_DEPLOY_HOOK"
+          else
+            echo 'No deploy hook configured. Checks passed; no live deployment requested.'
+          fi

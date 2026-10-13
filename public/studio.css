@@ -111,3 +111,5 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}body,.pk-page{background:va
 .app-view .wallet-balance .muted,.app-view .card.ink .muted{color:#dde5ff!important}
 
 .public-site .service-guide>p.eyebrow{font-size:10px!important;line-height:1.5;letter-spacing:.12em;color:#627851}
+
+.quote-breakdown{display:grid;gap:10px;margin-top:18px;font-size:12px}.quote-breakdown[hidden]{display:none}.quote-breakdown>div{display:flex;justify-content:space-between;gap:12px}.quote-breakdown b,.quote-breakdown s{white-space:nowrap}.quote-breakdown [data-quote-savings]{color:var(--primary)}

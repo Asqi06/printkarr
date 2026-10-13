@@ -32,24 +32,24 @@ try {
   const count=db.addresses.length;assert.equal((await request('/customer/orders/new/confirm',input)).status,302);assert.equal(preview.snapshot().addresses.length,count,'Retrying does not duplicate saved institution addresses');
   assert.equal((await request('/customer/orders/new/confirm',{...input,institutionLocation:'address:school-saved',schoolPhone:'invalid'})).status,400);
   assert.equal((await request('/customer/orders/new/confirm',input)).status,302);
-  const placed=await request('/customer/orders/new/place',{draft,checkout:'1',paymentMethod:'cod'},'',true);assert.equal(placed.status,200);const purchase=await placed.json();
-  assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{expectedTotal:purchase.total})).status,400,'Cash consent is mandatory');
-  assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{confirmCash:'1',expectedTotal:purchase.total+1})).status,400,'The amount shown must match');
-  assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{confirmCash:'1',expectedTotal:purchase.total})).status,302);
-  assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{confirmCash:'1',expectedTotal:purchase.total})).status,302);
-  db=preview.snapshot();assert.equal(db.purchases[0].total,purchase.total);assert.equal(db.orders[0].paymentStatus,'cod_pending');assert.equal(db.orders[0].status,'PRINT_QUEUE');assert.equal(db.wallets[0].balance,1000);
+  const denied=await request('/customer/orders/new/place',{draft,checkout:'1',paymentMethod:'cod'},'',true);assert.equal(denied.status,400);assert.equal(preview.snapshot().orders.length,0);
+  const placed=await request('/customer/orders/new/place',{draft,checkout:'1',paymentMethod:'wallet'},'',true);assert.equal(placed.status,200);const purchase=await placed.json();assert.ok(purchase.id, JSON.stringify({purchase,purchases:preview.snapshot().purchases.map(p=>({id:p.id,customerId:p.customerId}))}));
+  assert.equal((await request('/customer/purchases/'+purchase.id+'/cod',{confirmCash:'1'})).status,410);
+  assert.equal((await request('/customer/purchases/'+purchase.id+'/wallet',{})).status,302,JSON.stringify({purchase,purchases:preview.snapshot().purchases.map(p=>({id:p.id,customerId:p.customerId})),users:preview.snapshot().users.map(u=>({id:u.id,role:u.role}))}));
+  assert.equal((await request('/customer/purchases/'+purchase.id+'/wallet',{})).status,302);
+  db=preview.snapshot();assert.equal(db.purchases[0].total,purchase.total);assert.equal(db.orders[0].paymentStatus,'paid');assert.equal(db.orders[0].status,'PRINT_QUEUE');assert.equal(db.wallets[0].balance,1000-purchase.total);
   preview.reset();
   const native=await upload();assert.equal((await request('/customer/orders/new/confirm',{draft:native.draft,printType:'bw',copies:1,sides:'single',deliverySlot:'school',institutionLocation:'campus:lit'})).status,302);
   const summary=await(await request('/customer/orders/new/summary?draft='+native.draft)).text(), exact=Number(summary.match(/name="expectedTotal" value="([^"]+)"/)[1]);
-  const nativeInput={draft:native.draft,checkout:'1',paymentMethod:'cod',confirmCash:'1',expectedTotal:exact};const nativePlaced=await request('/customer/orders/new/place',nativeInput);assert.equal(nativePlaced.status,307);
-  assert.equal((await request(nativePlaced.headers.get('location'),nativeInput)).status,302);assert.equal(preview.snapshot().orders[0].paymentStatus,'cod_pending','Native form completes COD directly after explicit consent');
+  const nativeInput={draft:native.draft,checkout:'1',paymentMethod:'wallet',expectedTotal:exact};const nativePlaced=await request('/customer/orders/new/place',nativeInput);assert.equal(nativePlaced.status,302);
+  const nativeId=preview.snapshot().purchases[0].id;assert.equal((await request('/customer/purchases/'+nativeId+'/wallet',{})).status,302);assert.equal(preview.snapshot().orders[0].paymentStatus,'paid');
   preview.reset();
   const guest=await upload('preview_role=guest');assert.equal((await request('/order/options',{draft:guest.draft,...school,deliverySlot:'school',printType:'bw',copies:1,sides:'single'},guest.cookie)).status,302);
   const contact=await(await request('/order/phone?draft='+guest.draft,null,guest.cookie)).text();assert.doesNotMatch(contact,/name="(?:address|pin|localityId)"/);
   const otp=await request('/order/otp-request',{draft:guest.draft,name:'Sample student',email:'student@example.test',phone:'9825011111'},guest.cookie);assert.match(await otp.text(),/000000/);
   assert.equal((await request('/order/otp-verify',{draft:guest.draft,code:'000000'},guest.cookie)).status,302);
   assert.equal(preview.snapshot().addresses.at(-1).pin,'');
-  console.log('Direct checkout routes passed: institution lookup, privacy, locality coverage, saved-address reuse, guest without address/PIN, explicit COD consent, exact total and replay.');
+  console.log('Direct checkout routes passed: institution lookup, privacy, locality coverage, saved-address reuse, guest without address/PIN, COD rejection, exact total and wallet replay.');
   if(process.argv.includes('--browser')) {
     const {chromium}=await import(process.env.PRINTKARR_BROWSER_MODULE || 'playwright');const browser=await chromium.launch({channel:'msedge',headless:true});
     const fixture=path.join(preview.uploadsDir,'browser-source.pdf');writeFileSync(fixture,bytes);mkdirSync('tmp/direct-checkout',{recursive:true});const errors=[];
@@ -61,12 +61,12 @@ try {
         await page.selectOption('[name=institutionLocation]','campus:lit');assert.equal(await page.$eval('[data-address-fields]',e=>e.hidden),true);assert.equal(await page.$eval('[name=nn_pin]',e=>e.willValidate),false);assert.equal(await page.$eval('[name=institutionName]',e=>e.disabled),true);
         await page.click('[name=deliverySlot][value=express]');assert.equal(await page.$eval('[name=institutionLocation]',e=>e.willValidate),false);assert.equal(await page.$eval('[data-address-fields]',e=>e.hidden),false);
         await page.click('[name=deliverySlot][value=school]');await page.selectOption('[name=institutionLocation]','locality:vapi-chala');await page.$eval('[name=institutionName]',e=>{e.value='Sample Public School';e.dispatchEvent(new Event('input',{bubbles:true}));});
-        await page.click('[name=paymentMethod][value=cod]');assert.equal(await page.$eval('[data-cash-consent]',e=>e.hidden),false);assert.equal(await page.$eval('[name=confirmCash]',e=>e.required),true);
+        assert.equal(await page.locator('[name=paymentMethod][value=cod]').count(),0);await page.click('[name=paymentMethod][value=wallet]');
         assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'No horizontal overflow at '+width);
         await page.screenshot({path:'tmp/direct-checkout/settings-'+width+'.png',fullPage:true});
-        await page.click('[name=confirmCash]');await page.click('.order-continue button');await page.waitForFunction(()=>location.pathname.includes('/customer/purchases/') || !document.querySelector('[data-payment-error]').hidden);
+        await page.click('.order-continue button');await page.waitForFunction(()=>location.pathname.includes('/customer/purchases/') || !document.querySelector('[data-payment-error]').hidden);
         if(!page.url().includes('/customer/purchases/'))throw new Error(await page.$eval('[data-payment-error]',e=>e.textContent));
-        assert.equal(await page.locator('h1').textContent(),'Cash order confirmed.');assert.equal(await page.locator('.customer-mobile-nav').count(),0);const order=preview.snapshot().orders[0];assert.equal(order.paymentStatus,'cod_pending');assert.equal(order.bwPages,6);assert.equal(order.colorPages,2);assert.equal(preview.snapshot().purchases[0].codFee,0);
+        assert.match(await page.locator('h1').textContent(),/coming together/);assert.equal(await page.locator('.customer-mobile-nav').count(),0);const order=preview.snapshot().orders[0];assert.equal(order.paymentStatus,'paid');assert.equal(order.bwPages,6);assert.equal(order.colorPages,2);assert.equal(preview.snapshot().purchases[0].codFee,0);
         await page.screenshot({path:'tmp/direct-checkout/receipt-'+width+'.png',fullPage:true});await page.close();
       }
       preview.reset();const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:390,height:900});await page.goto(base+'/customer/orders/new');await page.locator('[name=doc]').setInputFiles(fixture);await page.waitForFunction(()=>document.querySelector('[name=expectedTotal]')?.value);
@@ -77,7 +77,7 @@ try {
       await reviewPage.click('#cPlus');assert.equal(await reviewPage.locator('[data-final-review]').count(),0,'Changing print quantity invalidates the reviewed price');
       await reviewPage.click('.order-continue button');await reviewPage.locator('[data-final-review]').waitFor({state:'visible'});await reviewPage.click('.order-continue button');await reviewPage.waitForURL(/customer\/purchases/);
       assert.equal(preview.snapshot().orders[0].paymentStatus,'paid');assert.equal(preview.snapshot().orders[0].copies,2);assert.equal(preview.snapshot().orders[0].couponDiscount,10);await reviewPage.close();
-      assert.deepEqual(errors,[]);console.log('Direct checkout browser passed: upload → settings/delivery/payment → confirmed receipt, mobile/desktop COD and wallet, route switching and no hidden required fields.');
+      assert.deepEqual(errors,[]);console.log('Direct checkout browser passed: upload → settings/delivery/payment → confirmed receipt, mobile/desktop wallet, route switching and no hidden required fields.');
     } finally {await browser.close();}
   }
 } finally {await new Promise(r=>server.close(r));}

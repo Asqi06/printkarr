@@ -7,6 +7,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import { rateLimit } from 'express-rate-limit';
+import { sameOrigin, redisRateStore, asyncHandler, scriptContext } from './lib/security.js';
+import { capturedPayment, validSignature, assertUnusedPayment } from './lib/payments.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
@@ -22,12 +24,12 @@ import { requestOtp, verifyOtp, normPhone, requestEmailOtp, verifyEmailOtp, norm
 import { janitor } from './lib/janitor.js';
 import {
   COOKIE, verifyCredentials, createSession, getSessionUser,
-  destroySession, parseCookies, demoLoginOn, customerDestination
+  destroySession, parseCookies, demoLoginOn, customerDestination, hashPassword, passwordMatches
 } from './lib/auth.js';
 import { layout, esc, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor, splitMixedPdf } from './lib/files.js';
 import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
-import { addPrint, cartFor, cartItems, cartQuote, createPurchase, printNet, checkPackQuota } from './lib/store.js';
+import { addPrint, cartFor, cartItems, cartQuote, createPurchase, confirmPurchase, printNet, checkPackQuota } from './lib/store.js';
 import { installStoreRoutes } from './lib/store_routes.js';
 import { fulfillmentFor } from './lib/partners.js';
 import { installPartnerRoutes } from './lib/partner_routes.js';
@@ -80,7 +82,7 @@ const RAZORPAY = {
 };
 
 // Live mode: production + real gateway keys. Only real money moves —
-// Razorpay and cash on delivery. Simulated UPI/wallet top-ups are refused.
+// Razorpay and funded wallets. Simulated UPI/wallet top-ups are refused.
 const LIVE_PAY = process.env.NODE_ENV === 'production' && !!(RAZORPAY.id && RAZORPAY.secret);
 const gatewayOn = () => !!(RAZORPAY.id && RAZORPAY.secret);
 // Runtime kiosk switch (admin toggle): live when the env forces it, or the
@@ -148,6 +150,7 @@ function shareTokenFor(db, orderId) {
 }
 
 function baseUrl(req) {
+  if (process.env.NODE_ENV === 'production') return SITE;
   const hostname=new URL(SITE).hostname;
   return [hostname,'www.'+hostname,'printkarr.onrender.com'].includes(req.hostname) ? SITE : `${req.protocol}://${req.get('host')}`;
 }
@@ -176,8 +179,16 @@ function waForwardUrl(db, req, order) {
 
 const app = express();
 app.disable('x-powered-by');
-app.set('trust proxy', 1); // correct req.protocol/secure cookies behind Render/Railway/nginx
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1)); // Set to 0 for direct hosting; match the actual proxy chain.
+app.use(scriptContext);
+app.use(helmet({ contentSecurityPolicy: { directives: {
+  scriptSrc: ["'self'", (_req,res) => `'nonce-${res.locals.scriptNonce}'`, 'https://checkout.razorpay.com', 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', 'https://www.googletagmanager.com'],
+  scriptSrcAttr: ["'none'"], objectSrc: ["'none'"], baseUri: ["'self'"], frameAncestors: ["'none'"],
+  frameSrc: ["'self'", 'https://*.razorpay.com'],
+  connectSrc: ["'self'", 'https://*.razorpay.com', 'https://*.google-analytics.com', 'https://*.google.com'],
+  imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+  upgradeInsecureRequests: process.env.NODE_ENV === 'production' && SITE.startsWith('https:') ? [] : null
+} }, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
 app.use(compression());
 discoveryRoutes(app, POSTS);
 app.use(['/admin', '/customer', '/partner', '/rider', '/cart', '/order', '/login', '/logout', '/auth', '/api', '/share', '/c', '/qr.png'], (_req, res, next) => {
@@ -189,13 +200,21 @@ app.get('/kiosks', (_req,res) => res.send(kioskStatusPage()));
 app.get(['/admin/qr','/qr.png','/c/:token','/customer/orders/:id/scan'], (_req,res) => res.redirect('/kiosks'));
 app.post('/c/:token/collect', (_req,res) => res.status(409).send('Kiosks are in development. Contact support for an existing order.'));
 app.get('/index.html', (_req, res) => res.redirect(301, '/'));
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'tiny'));
+morgan.token('safe-url', req => req.path.replace(/^(\/(?:share|c)\/)[^/]+/, '$1[redacted]'));
+app.use(morgan(':remote-addr :method :safe-url :status :response-time ms'));
 
 // Brute-force guard on the front door; generous API ceiling for normal use.
-const loginLimiter = rateLimit({ windowMs: 60_000, max: 20, standardHeaders: 'draft-7', legacyHeaders: false });
-const otpLimiter = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: 'draft-7', legacyHeaders: false });
-const apiLimiter = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: 'draft-7', legacyHeaders: false });
+const loginLimiter = rateLimit({ store: redisRateStore('pk:login'), windowMs: 60_000, max: 120, standardHeaders: 'draft-7', legacyHeaders: false });
+const staffLimiter = rateLimit({ store: redisRateStore('pk:staff'), windowMs: 60_000, max: 10, standardHeaders: 'draft-7', legacyHeaders: false });
+const staffAccountLimiter = rateLimit({ store: redisRateStore('pk:staff-account'), keyGenerator: req => normEmail(req.body.email) || req.ip, windowMs:60_000, max:10, standardHeaders:'draft-7', legacyHeaders:false });
+const otpLimiter = rateLimit({ store: redisRateStore('pk:otp'), windowMs: 60_000, max: 120, standardHeaders: 'draft-7', legacyHeaders: false });
+const apiLimiter = rateLimit({ store: redisRateStore('pk:api'), windowMs: 60_000, max: 300, standardHeaders: 'draft-7', legacyHeaders: false });
 app.use('/api/', apiLimiter);
+app.use('/api/payments/webhook', express.raw({ type: 'application/json', limit: '64kb' }));
+app.use((req,res,next) => {
+  if (['GET','HEAD','OPTIONS'].includes(req.method) || req.path.startsWith('/api/agent/') || req.path === '/api/payments/webhook') return next();
+  siteOrigin(req,res,next);
+});
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
@@ -222,7 +241,7 @@ app.use((req, res, next) => {
     res.status(503).send('Storage temporarily unavailable. Please retry.');
   });
 });
-app.use(['/admin', '/customer', '/order'], (_req, res, next) => {
+app.use(['/admin', '/customer', '/partner', '/rider', '/order', '/cart', '/login', '/auth', '/api', '/share'], (_req, res, next) => {
   res.set('Cache-Control', 'private, no-store');
   next();
 });
@@ -234,7 +253,8 @@ app.get(['/*.md', '/server.mjs', '/package.json', '/package-lock.json'], (_req, 
 app.get(['/data/*', '/lib/*'], (_req, res) => res.status(404).send('Not found'));
 
 function currentUser(req) {
-  return getSessionUser(parseCookies(req.headers.cookie)[COOKIE]);
+  if (!Object.hasOwn(req, 'sessionUser')) req.sessionUser = getSessionUser(parseCookies(req.headers.cookie)[COOKIE]);
+  return req.sessionUser;
 }
 
 const customerReturnTo = (req) => customerDestination(parseCookies(req.headers.cookie).pk_next);
@@ -244,7 +264,8 @@ function requireRole(role) {
   return (req, res, next) => {
     const user = currentUser(req);
     if (!user) {
-      if (role === 'customer' && req.method === 'GET') res.cookie('pk_next', customerDestination(req.path), { httpOnly: true, sameSite: 'lax', secure: req.protocol === 'https', maxAge: 10 * 60_000 });
+      if (req.path?.startsWith('/api/') || req.get?.('accept')?.includes('application/json') || String(req.headers['content-type'] || '').startsWith('application/json')) return res.status(401).json({error:'Sign in again to continue with your saved checkout.',login:'/login'});
+      if (role === 'customer' && req.method === 'GET') res.cookie('pk_next', customerDestination(req.path), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' || req.protocol === 'https', maxAge: 10 * 60_000 });
       return res.redirect(LOGIN_FOR[role] || '/login');
     }
     if (user.role !== role) {
@@ -268,7 +289,7 @@ app.get('/login', (req, res) => {
 });
 
 function sessionCookie(req, token) {
-  const secure = req.protocol === 'https' ? '; Secure' : '';
+  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
   return [`${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`, `pk_next=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`];
 }
 
@@ -277,19 +298,19 @@ const isAdminEmail = (email) => {
   const envAdmin = String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
   return envAdmin && norm === envAdmin;
 };
-app.post('/login', loginLimiter, (req, res) => {
-  const user = verifyCredentials(req.body.email, req.body.password);
+app.post('/login', loginLimiter, asyncHandler(async (req, res) => {
+  const user = await verifyCredentials(req.body.email, req.body.password);
   if (!user || user.role !== 'customer') {
     return res.status(401).send(loginView('Please continue with Google to sign in.'));
   }
   const token = createSession(user.id);
   res.setHeader('Set-Cookie', sessionCookie(req, token));
   res.redirect(customerReturnTo(req));
-});
+}));
 
 // Passwordless customer login: email → 6-digit code → dashboard.
 // This is how guest-order customers (no password on file) get back in.
-app.post('/login/code-request', loginLimiter, async (req, res) => {
+app.post('/login/code-request', loginLimiter, asyncHandler(async (req, res) => {
   if (currentUser(req)) return res.redirect('/');
   const email = normEmail(req.body.email);
   const db = loadDb();
@@ -300,7 +321,7 @@ app.post('/login/code-request', loginLimiter, async (req, res) => {
   const otp = await requestEmailOtp(email);
   if (!otp.ok) return res.status(429).send(loginView(otp.error));
   res.send(loginOtpPage(email, otp.mailed ? null : otp.demo, otp.mailed ? null : otp.error, null));
-});
+}));
 
 app.post('/login/code-verify', loginLimiter, (req, res) => {
   if (currentUser(req)) return res.redirect('/');
@@ -326,8 +347,8 @@ function staffLogin(role) {
       if (user) return res.redirect(HOME[user.role] || '/');
       res.send(mkPage(null));
     },
-    run: (req, res) => {
-      const user = verifyCredentials(req.body.email, req.body.password);
+    run: async (req, res) => {
+      const user = await verifyCredentials(req.body.email, req.body.password);
       if (!user || user.role !== role) return res.status(401).send(mkPage('No match — check your email and password.'));
       const token = createSession(user.id);
       res.setHeader('Set-Cookie', sessionCookie(req, token));
@@ -337,20 +358,21 @@ function staffLogin(role) {
 }
 const adminLogin = staffLogin('admin');
 app.get('/admin/login', adminLogin.show);
-app.post('/admin/login', loginLimiter, adminLogin.run);
+app.post('/admin/login', staffLimiter, staffAccountLimiter, asyncHandler(adminLogin.run));
 for (const role of ['partner','rider']) {
   const login = staffLogin(role);
   app.get(`/${role}/login`, login.show);
-  app.post(`/${role}/login`, loginLimiter, login.run);
+  app.post(`/${role}/login`, staffLimiter, staffAccountLimiter, asyncHandler(login.run));
 }
 
 
 
-app.get('/auth/google', (req, res) => {
+app.get('/auth/google', loginLimiter, (req, res) => {
   if (!GOOGLE.id) return res.redirect('/login');
+  for (const [key,expiry] of oauthStates) if (expiry < Date.now()) oauthStates.delete(key);
   const state = crypto.randomBytes(16).toString('hex');
   oauthStates.set(state, Date.now() + 10 * 60_000);
-  res.setHeader('Set-Cookie', `g_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${req.protocol === 'https' ? '; Secure' : ''}`);
+  res.setHeader('Set-Cookie', `g_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : ''}`);
   const params = new URLSearchParams({
     client_id: GOOGLE.id,
     redirect_uri: googleRedirectUri(req),
@@ -362,7 +384,7 @@ app.get('/auth/google', (req, res) => {
   res.redirect('https://accounts.google.com/o/oauth2/v2/auth?' + params.toString());
 });
 
-app.get('/auth/google/callback', async (req, res) => {
+app.get('/auth/google/callback', asyncHandler(async (req, res) => {
   const fail = () => res.status(401).send(loginView('Google could not verify your account. Please try again.'));
   try {
     if (!GOOGLE.id || !GOOGLE.secret) return fail();
@@ -372,6 +394,7 @@ app.get('/auth/google/callback', async (req, res) => {
     oauthStates.delete(state);
     if (!code || !state || !exp || exp < Date.now() || cookies.g_state !== state) return fail();
     const tok = await (await fetch('https://oauth2.googleapis.com/token', {
+      signal: AbortSignal.timeout(15000),
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -381,10 +404,11 @@ app.get('/auth/google/callback', async (req, res) => {
     })).json();
     if (!tok.access_token) return fail();
     const info = await (await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      signal: AbortSignal.timeout(15000),
       headers: { Authorization: `Bearer ${tok.access_token}` }
     })).json();
     const email = String(info.email || '').toLowerCase();
-    if (!email || info.email_verified === false) return fail();
+    if (!email || info.email_verified !== true) return fail();
     const db = loadDb();
     let user = db.users.find((u) => u.email.toLowerCase() === email);
     // Customer OAuth never creates or signs in a staff account.
@@ -392,7 +416,7 @@ app.get('/auth/google/callback', async (req, res) => {
 
     if (!user) {
       user = {
-        id: 'CUS-g' + Date.now().toString(36), role: 'customer',
+        id: 'CUS-' + crypto.randomUUID(), role: 'customer',
         name: String(info.name || email.split('@')[0]).slice(0, 60),
         email, password: null, phone: '', student: false
       };
@@ -405,11 +429,11 @@ app.get('/auth/google/callback', async (req, res) => {
     res.setHeader('Set-Cookie', sessionCookie(req, token));
     res.redirect(user.role === 'customer' ? customerReturnTo(req) : HOME[user.role] || '/');
   } catch { return fail(); }
-});
+}));
 
 app.post('/logout', (req, res) => {
   destroySession(parseCookies(req.headers.cookie)[COOKIE]);
-  const secure = req.protocol === 'https' ? '; Secure' : '';
+  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
   res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
   res.redirect('/login');
 });
@@ -517,7 +541,7 @@ app.get('/admin/orders', requireRole('admin'), (req, res) => {
   }));
 });
 
-app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
+app.get('/admin/orders/:id', requireRole('admin'), asyncHandler(async (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === req.params.id);
   if (!o) return res.status(404).send(oops(req.user, '/admin/orders', 'Order <em>not found.</em>'));
@@ -539,7 +563,7 @@ app.get('/admin/orders/:id', requireRole('admin'), async (req, res) => {
   saveDb(db);
   const queuePause = db.orders.find(x => !x.fulfillmentId && ['PRINTING', 'PRINT_FAILED'].includes(x.status));
   res.send(adminOrderDetail(req.user, { ...o, queuePause: queuePause?.id }, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt, collectQr));
-});
+}));
 
 function finishPrintAtKiosk(db, order, by) {
   order.printAwaitingVerification = false;
@@ -597,12 +621,12 @@ function safeOrderId(id) {
   if (!/^(PK-[A-Z0-9-]{3,}|D[A-Za-z0-9]{6,})$/.test(s)) return null;
   return s;
 }
-app.get('/admin/orders/:id/file', requireRole('admin'), async (req, res) => {
+app.get('/admin/orders/:id/file', requireRole('admin'), asyncHandler(async (req, res) => {
   const safe = safeOrderId(req.params.id);
   if (!safe) return res.status(400).send(oops(req.user, '/admin/orders', 'Bad <em>ID.</em>'));
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe);
-  const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o && o.fileExt));
+  const p = path.join(DATA_DIR, 'uploads', orderFile(safe, o && o.fileExt));
   if (!fs.existsSync(p)) return res.status(404).send(oops(req.user, '/admin/orders', 'File <em>missing.</em>'));
   try {
     if(req.query.part==='cover')return res.type('pdf').attachment(safe+'-cover.pdf').send(await buildOrderCover(o));
@@ -610,7 +634,7 @@ app.get('/admin/orders/:id/file', requireRole('admin'), async (req, res) => {
     if(req.query.part)return res.status(400).send('Choose the cover, B&W or colour set.');
     res.download(p, orderFile(safe, o && o.fileExt));
   }catch{return res.status(400).send(oops(req.user,`/admin/orders/${safe}`,'Could not prepare this print set. Review the original PDF before printing.'));}
-});
+}));
 
 // §47 route map: printer status lives inside the print queue — canonical redirect.
 app.get('/admin/printers', requireRole('admin'), (_req, res) => {
@@ -896,11 +920,22 @@ app.post('/admin/settings', requireRole('admin'), (req, res) => {
 // ---- Customer (§5–§19) ----
 function maxUploadBytes() {
   const db = loadDb();
-  return Math.max(1, db.settings?.order?.maxFileMb || 50) * 1024 * 1024;
+  return Math.min(20, Math.max(1, db.settings?.order?.maxFileMb || 20)) * 1024 * 1024;
 }
+let uploadsInFlight = 0;
+app.use(['/order/upload','/customer/orders/new/upload'], (req,res,next) => {
+  if (req.method !== 'POST') return next();
+  // ponytail: at most two 20 MB parses; use isolated PDF workers/object storage before increasing these limits.
+  if (uploadsInFlight >= 2) return res.status(503).set('Retry-After','5').send(oops(currentUser(req),'/order','Other files are being processed. Retry this upload in a few seconds.'));
+  uploadsInFlight++;
+  let released=false;
+  const release=()=>{if(!released){released=true;uploadsInFlight--;}};
+  req.once('aborted',release);res.once('finish',release);res.once('close',release);
+  next();
+});
 const upload = multer({
-  dest: 'data/uploads/',
-  limits: { fileSize: 200 * 1024 * 1024, files: 1 },
+  dest: path.join(DATA_DIR, 'uploads'),
+  limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 50, parts: 52 },
   fileFilter: (_req, file, cb) => {
     if (!/\.(pdf|png|jpe?g)$/i.test(file.originalname)) return cb(new Error('PDF, PNG or JPG only — DOCX and PPTX are not supported yet.'));
     cb(null, true);
@@ -911,19 +946,14 @@ function countPdfPages(buf) {
   const m = buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g);
   return m ? m.length : 0;
 }
-function nextOrderId(db) {
-  let max = 1023;
-  for (const o of db.orders) {
-    const m = /(\d+)/.exec(o.id || '');
-    if (m) max = Math.max(max, parseInt(m[1], 10));
-  }
-  return 'PK-' + (max + 1);
+function nextOrderId(_db) {
+  return 'PK-' + crypto.randomUUID().toUpperCase();
 }
 function offerDevice(req, res) {
   const token = parseCookies(req.headers.cookie).pk_offer_device;
   if (/^[a-f0-9]{32}$/.test(token || '')) return token;
   const fresh = crypto.randomBytes(16).toString('hex');
-  res.append('Set-Cookie', `pk_offer_device=${fresh}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${req.protocol === 'https' ? '; Secure' : ''}`);
+  res.append('Set-Cookie', `pk_offer_device=${fresh}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : ''}`);
   return fresh;
 }
 function zoneOf(area) {
@@ -972,6 +1002,7 @@ function restorePackQuota(db, order) {
 
 function refundPaidOrder(db, order) {
   if (order.paymentStatus !== 'paid') return;
+  if (order.paymentMethod === 'razorpay') throw Object.assign(new Error('Online refunds need confirmation from the payment provider. Contact support before marking this order refunded.'), {code:'ONLINE_REFUND_REQUIRED',status:409});
   if (order.paymentMethod === 'wallet' && !order.walletRefunded) {
     refundWallet(db, order.customerId, order.walletDebitId, order.total, `Refund #${order.id}`);
     order.walletRefunded = true;
@@ -985,7 +1016,7 @@ app.get('/customer', requireRole('customer'), (req, res) => {
   const current = mine.find(ACTIVE) || null;
   const notes = (db.notifications || []).filter((n) => n.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at));
   const lastDoc = mine.find((o) => o.status === 'DELIVERED') || null;
-  if (lastDoc) lastDoc.fileAvailable = fs.existsSync(path.join(ROOT, 'data', 'uploads', orderFile(lastDoc.id, lastDoc.fileExt)));
+  if (lastDoc) lastDoc.fileAvailable = fs.existsSync(path.join(DATA_DIR, 'uploads', orderFile(lastDoc.id, lastDoc.fileExt)));
   res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc, walletBalance: walletOf(db, req.user.id).balance, packsHtml: packDashboardHtml(mySubs(db, req.user.id)), campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db, req.user.id) : [] }));
 });
 
@@ -1000,7 +1031,7 @@ app.get('/customer/orders', requireRole('customer'), (req, res) => {
   };
   res.send(ordersList(req.user, {
     tab, counts: { active: groups.active.length, completed: groups.completed.length, cancelled: groups.cancelled.length },
-    orders: groups[tab].map((o) => ({ ...o, fileAvailable: fs.existsSync(path.join(ROOT, 'data', 'uploads', orderFile(o.id, o.fileExt))) }))
+    orders: groups[tab].map((o) => ({ ...o, fileAvailable: fs.existsSync(path.join(DATA_DIR, 'uploads', orderFile(o.id, o.fileExt))) }))
   }));
 });
 
@@ -1040,7 +1071,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
     if (!d) {const p=purchaseForDraft(db,req.user.id,req.query.draft);return p ? res.redirect(`/customer/purchases/${p.id}`) : res.status(404).send(oops(req.user,'/customer/orders','That draft <em>expired.</em>'));}
     const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
-    const last=db.orders.filter(o=>o.customerId===req.user.id && (o.paymentStatus==='paid' || o.codConfirmedAt) && !['CANCELLED','REFUNDED'].includes(o.status)).at(-1);
+    const last=db.orders.filter(o=>o.customerId===req.user.id && o.paymentStatus==='paid' && !['CANCELLED','REFUNDED'].includes(o.status)).at(-1);
     if(last){d.previousPrint=Object.fromEntries(['printType','copies','sides','orientation','binding'].filter(k=>last[k]!==undefined).map(k=>[k,last[k]]));d.defaults={addressId:last.institutionDelivery ? last.addressId : db.addresses.find(a=>a.customerId===req.user.id && a.isDefault)?.id || last.addressId,deliverySlot:deliveryChoice(last),institutionName:last.institutionName};}
     return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req)));
   }
@@ -1051,7 +1082,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
   res.send(uploadStep(req.user, { shop, pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
 });
 
-app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), async (req, res) => {
+app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), asyncHandler(async (req, res) => {
   if (!req.file) return res.status(400).send(oops(req.user, '/customer/orders/new', 'No file <em>arrived.</em>'));
   if (req.file.size > maxUploadBytes()) {
     try { fs.unlinkSync(req.file.path); } catch {}
@@ -1085,9 +1116,10 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   db.drafts.push(draft);
   saveDb(db);
   res.redirect(`/customer/orders/new?draft=${draft.id}`);
-});
+}));
 
-app.post('/customer/orders/new/confirm', requireRole('customer'), async (req, res) => {
+app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(async (req, res) => {
+  if (req.body.checkout === '1' && !['add','wallet'].includes(req.body.next) && !['wallet','online'].includes(req.body.paymentMethod)) return res.status(400).send(oops(req.user, '/customer/orders/new', 'Choose wallet or Razorpay.'));
   let db = loadDb();
   let d = (db.drafts || []).find((x) => x.id === req.body.draft && x.customerId === req.user.id);
   if (!d) {const p=purchaseForDraft(db,req.user.id,req.body.draft);return p ? res.redirect('/customer/purchases/'+p.id) : res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));}
@@ -1099,7 +1131,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), async (req, re
   if (print.splitMixed) {
     const form = d.form;
     let splitError;
-    try { await splitMixedPdf(fs.readFileSync(path.join(ROOT,'data','uploads',d.stored)), {...print,filePages:d.pages}); }
+    try { await splitMixedPdf(fs.readFileSync(path.join(DATA_DIR,'uploads',d.stored)), {...print,filePages:d.pages}); }
     catch (error) { splitError = error; }
     // PDF parsing can yield; keep writes made by other requests during splitting.
     db = loadDb();
@@ -1171,7 +1203,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), async (req, re
   delete d.form;
   saveDb(db);
   res.redirect(`/customer/orders/new/summary?draft=${d.id}${req.body.checkout==='1' ? '&'+new URLSearchParams({coupon:String(req.body.coupon || ''),referral:String(req.body.referral || '')}) : ''}`);
-});
+}));
 
 app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   const db = loadDb();
@@ -1232,7 +1264,7 @@ async function sendSplitDraft(req, res, draft) {
   if (!draft || !draft.stored || path.basename(draft.stored) !== draft.stored || !['bw','color'].includes(req.params.part) || draft.fileType === 'image') return res.sendStatus(404);
   try {
     const plan = printPlan({printType:'mixed',splitMixed:'1',mixedRange:req.query.mixedRange,range:req.query.range},draft.pages);
-    const parts = await splitMixedPdf(await fs.promises.readFile(path.join(ROOT,'data','uploads',draft.stored)),{...plan,filePages:draft.pages});
+    const parts = await splitMixedPdf(await fs.promises.readFile(path.join(DATA_DIR,'uploads',draft.stored)),{...plan,filePages:draft.pages});
     res.set('Cache-Control','private, no-store').type('pdf').send(parts.find(p=>p.printType === req.params.part).bytes);
   } catch (error) { res.status(400).type('text').send('Could not split this PDF. Check the page selection and upload an unlocked, printable PDF.'); }
 }
@@ -1249,13 +1281,14 @@ app.get('/customer/orders/new/:draftId/preview.pdf', requireRole('customer'), (r
   const db = loadDb();
   const d = (db.drafts || []).find((x) => x.id === req.params.draftId && x.customerId === req.user.id);
   if (!d || !d.stored || path.basename(d.stored) !== d.stored) return res.sendStatus(404);
-  const p = path.join(ROOT, 'data', 'uploads', d.stored);
+  const p = path.join(DATA_DIR, 'uploads', d.stored);
   if (!fs.existsSync(p)) return res.sendStatus(404);
   res.setHeader('Cache-Control', 'private, no-store');
   res.type(mimeFor(d.fileExt)).sendFile(p);
 });
 
 app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
+  if (req.body.checkout === '1' && !['add','wallet'].includes(req.body.next) && !['wallet','online'].includes(req.body.paymentMethod)) return res.status(400).send(oops(req.user, '/customer/orders/new', 'Choose wallet or Razorpay.'));
   const db = loadDb();
   const di = (db.drafts || []).findIndex((x) => x.id === req.body.draft && x.customerId === req.user.id);
   if (di < 0 || !db.drafts[di].selections) {
@@ -1343,13 +1376,12 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
       catch(error){return req.get('accept')?.includes('application/json') ? res.status(400).json({error:error.message}) : res.status(400).send(oops(req.user,`/customer/orders/new/summary?draft=${d.id}`,esc(error.message)));}
     }
   }
-  try { fs.renameSync(`data/uploads/${d.stored}`, `data/uploads/${orderFile(id, d.fileExt)}`); }
+  try { fs.renameSync(path.join(DATA_DIR,'uploads',d.stored), path.join(DATA_DIR,'uploads',orderFile(id,d.fileExt))); }
   catch { return res.status(400).send(oops(req.user, '/customer/orders/new', 'Upload the file again before <em>placing this order.</em>')); }
   db.drafts.splice(di,1);
   saveDb(db);
   if(purchase && req.get('accept')?.includes('application/json'))return res.json({id:purchase.id,total:purchase.total,paid:false});
-  if(purchase && req.body.paymentMethod==='cod' && req.body.confirmCash==='1' && req.body.next!=='wallet' && Number(req.body.expectedTotal)===purchase.total)return res.redirect(307,`/customer/purchases/${purchase.id}/cod`);
-  res.redirect(ownerTest ? `/customer/orders/${id}/pay` : req.body.next==='add' ? '/customer/orders/new?fresh=1' : purchase ? req.body.next==='wallet' ? `/customer/wallet?purchase=${purchase.id}` : `/customer/purchases/${purchase.id}${req.body.paymentMethod==='cod' ? '#cash-choice' : ''}` : '/cart');
+  res.redirect(ownerTest ? `/customer/orders/${id}/pay` : req.body.next==='add' ? '/customer/orders/new?fresh=1' : purchase ? req.body.next==='wallet' ? `/customer/wallet?purchase=${purchase.id}` : `/customer/purchases/${purchase.id}` : '/cart');
 });
 
 app.get('/customer/orders/:id/preview.pdf', requireRole('customer'), (req, res) => {
@@ -1358,7 +1390,7 @@ app.get('/customer/orders/:id/preview.pdf', requireRole('customer'), (req, res) 
   const db = loadDb();
   const o = db.orders.find((x) => x.id === safe && x.customerId === req.user.id);
   if (!o) return res.sendStatus(404);
-  const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o.fileExt));
+  const p = path.join(DATA_DIR, 'uploads', orderFile(safe, o.fileExt));
   if (!fs.existsSync(p)) return res.sendStatus(404);
   res.setHeader('Cache-Control', 'private, no-store');
   res.type(mimeFor(o.fileExt)).sendFile(p);
@@ -1390,7 +1422,9 @@ app.post('/customer/orders/:id/pay', requireRole('customer'), couponOnce, (req, 
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   if (!['CREATED', 'PAYMENT_PENDING'].includes(o.status)) return res.redirect(`/customer/orders/${o.id}`);
-  let method = ['upi', 'wallet', 'wallet_topup'].includes(req.body.method) ? req.body.method : 'upi';
+  if (!['upi', 'wallet', 'wallet_topup'].includes(req.body.method)) return res.status(400).send(oops(req.user, '/customer/orders', 'Choose wallet or Razorpay.'));
+  if (o.gatewayOrderId || o.gatewayCreating || o.purchaseId) return res.status(409).send(oops(req.user, '/customer/orders', 'Use the saved checkout to complete payment.'));
+  let method = req.body.method;
   if (livePayFor(db) && method !== 'wallet') {
     return res.status(400).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'That method is <em>demo-only.</em>'));
   }
@@ -1502,6 +1536,7 @@ app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
+  if (o.gatewayOrderId || o.gatewayCreating) return res.status(409).send(oops(req.user, '/customer/orders', 'An online payment is open. Contact support before cancellation.'));
   if (o.purchaseId) return res.status(409).send(oops(req.user, `/customer/purchases/${o.purchaseId}`, 'Cancel the whole shared purchase from its receipt.'));
   if ((db.purchases || []).some((p) => p.status === 'CREATED' && p.printIds.includes(o.id))) return res.status(409).send(oops(req.user, '/cart', 'Cancel the shared checkout before cancelling this print.'));
   try {
@@ -1623,7 +1658,7 @@ app.post('/customer/packs/:id/subscribe', requireRole('customer'), (req, res) =>
     qualifyForPack(db, sub);
   }
   db.notifications ||= [];
-  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `${pack.name} secured — ${due >= sub.price ? 'fully paid' : `₹${due} booking, ₹${Math.round((sub.price - due) * 100) / 100} in installments`}.`, at: now, read: false });
+  db.notifications.push({ id: `NT-${crypto.randomUUID()}`, customerId: req.user.id, orderId: sub.id, text: `${pack.name} secured — ${due >= sub.price ? 'fully paid' : `₹${due} booking, ₹${Math.round((sub.price - due) * 100) / 100} in installments`}.`, at: now, read: false });
   saveDb(db);
   res.redirect('/customer/packs');
 });
@@ -1668,7 +1703,7 @@ app.post('/customer/packs/:subId/files/claim', requireRole('customer'), (req, re
   sub.filesUsed = (sub.filesUsed || 0) + 1;
   sub.updatedAt = new Date().toISOString();
   db.notifications ||= [];
-  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: sub.id, text: `Free file claimed (${sub.filesUsed}/${sub.filesTotal}) — ready for handover with your next delivery. Contact support to arrange it.`, at: new Date().toISOString(), read: false });
+  db.notifications.push({ id: `NT-${crypto.randomUUID()}`, customerId: req.user.id, orderId: sub.id, text: `Free file claimed (${sub.filesUsed}/${sub.filesTotal}) — ready for handover with your next delivery. Contact support to arrange it.`, at: new Date().toISOString(), read: false });
   saveDb(db);
   res.redirect('/customer/packs');
 });
@@ -1723,11 +1758,11 @@ app.post('/customer/referrals/withdraw', requireRole('customer'), (req, res) => 
   const now = new Date().toISOString();
   cash.balance = Math.round((cash.balance - amount) * 100) / 100;
   db.cashTx ||= [];
-  db.cashTx.push({ id: `CTX-${Date.now()}`, customerId: req.user.id, amount: -amount, kind: 'debit', label: `Withdrawal to ${upiId}`, at: now });
+  db.cashTx.push({ id: `CTX-${crypto.randomUUID()}`, customerId: req.user.id, amount: -amount, kind: 'debit', label: `Withdrawal to ${upiId}`, at: now });
   db.payouts ||= [];
-  db.payouts.push({ id: 'PAY-' + Date.now().toString(36).toUpperCase(), customerId: req.user.id, amount, upiId, status: 'requested', createdAt: now, decidedAt: null });
+  db.payouts.push({ id: 'PAY-' + crypto.randomUUID(), customerId: req.user.id, amount, upiId, status: 'requested', createdAt: now, decidedAt: null });
   db.notifications ||= [];
-  db.notifications.push({ id: `NT-${Date.now()}`, customerId: req.user.id, orderId: null, text: `Withdrawal of ₹${amount} requested — the shop sends it on UPI shortly.`, at: now, read: false });
+  db.notifications.push({ id: `NT-${crypto.randomUUID()}`, customerId: req.user.id, orderId: null, text: `Withdrawal of ₹${amount} requested — the shop sends it on UPI shortly.`, at: now, read: false });
   saveDb(db);
   res.redirect('/customer/referrals');
 });
@@ -1779,7 +1814,7 @@ app.post('/admin/referrals/payouts/:id/pay', requireRole('admin'), (req, res) =>
   p.status = 'paid';
   p.decidedAt = new Date().toISOString();
   db.notifications ||= [];
-  db.notifications.push({ id: `NT-${Date.now()}`, customerId: p.customerId, orderId: null, text: `₹${p.amount} sent to ${p.upiId} — spend it well.`, at: p.decidedAt, read: false });
+  db.notifications.push({ id: `NT-${crypto.randomUUID()}`, customerId: p.customerId, orderId: null, text: `₹${p.amount} sent to ${p.upiId} — spend it well.`, at: p.decidedAt, read: false });
   saveDb(db);
   res.redirect('/admin/referrals');
 });
@@ -1792,7 +1827,7 @@ app.post('/admin/referrals/payouts/:id/reject', requireRole('admin'), (req, res)
   p.decidedAt = new Date().toISOString();
   const w = cashWalletOf(db, p.customerId);
   w.balance = Math.round((w.balance + p.amount) * 100) / 100;
-  db.cashTx.push({ id: `CTX-${Date.now()}`, customerId: p.customerId, amount: p.amount, kind: 'credit', label: `Withdrawal to ${p.upiId} rejected — refunded`, at: p.decidedAt });
+  db.cashTx.push({ id: `CTX-${crypto.randomUUID()}`, customerId: p.customerId, amount: p.amount, kind: 'credit', label: `Withdrawal to ${p.upiId} rejected — refunded`, at: p.decidedAt });
   saveDb(db);
   res.redirect('/admin/referrals');
 });
@@ -1810,13 +1845,7 @@ app.get('/customer/profile', requireRole('customer'), (req, res) => {
 
 // Reviews are public, but only their author or an admin can remove them.
 function siteOrigin(req, res, next) {
-  const alias = new URL(SITE);
-  alias.hostname = alias.hostname.startsWith('www.') ? alias.hostname.slice(4) : 'www.' + alias.hostname;
-  let origin = req.get('origin');
-  // A www-to-apex POST redirect makes browsers send Origin: null; verify the original page instead.
-  if (origin === 'null') { try { origin = new URL(req.get('referer')).origin; } catch {} }
-  if (req.get('sec-fetch-site') === 'cross-site' || (origin && ![SITE, alias.origin, `${req.protocol}://${req.get('host')}`].includes(origin))) return res.status(403).send('Please submit this form from this website.');
-  next();
+  return sameOrigin(req, res, next, SITE);
 }
 app.post('/customer/review', requireRole('customer'), siteOrigin, (req, res) => {
   const db = loadDb();
@@ -1884,7 +1913,7 @@ function guestToken(req, res) {
   const c = parseCookies(req.headers.cookie).pk_guest;
   if (c) return c;
   const t = 'G' + crypto.randomBytes(12).toString('hex');
-  const secure = req.protocol === 'https' ? '; Secure' : '';
+  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
   res.setHeader('Set-Cookie', `pk_guest=${t}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
   return t;
 }
@@ -1906,7 +1935,7 @@ app.get('/order', (req, res) => {
   const db = loadDb();
   const ref = String(req.query.ref || '').trim().toUpperCase();
   if (/^[A-Z2-9]{6,12}$/.test(ref) && findReferrer(db, ref)) {
-    const secure = req.protocol === 'https' ? '; Secure' : '';
+    const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
     res.append('Set-Cookie', `pk_ref=${ref}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
   }
   const d = req.query.draft ? guestDraft(db, req) : null;
@@ -1917,7 +1946,7 @@ app.get('/order', (req, res) => {
   res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
-app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(307, '/customer/orders/new/upload') : next(), upload.single('doc'), async (req, res) => {
+app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(307, '/customer/orders/new/upload') : next(), upload.single('doc'), asyncHandler(async (req, res) => {
   if (!req.file) return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'No file arrived — try again.', maxMb: loadDb().settings.order.maxFileMb }));
   if (req.file.size > maxUploadBytes()) {
     try { fs.unlinkSync(req.file.path); } catch {}
@@ -1950,15 +1979,15 @@ app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(30
   db.drafts.push(draft);
   saveDb(db);
   res.redirect(`/order?draft=${draft.id}`);
-});
+}));
 
 app.get('/order/:draft/preview', (req,res)=>{
   const d=guestDraft(loadDb(),{headers:req.headers,query:{draft:req.params.draft}});
   if(!d || !d.stored || path.basename(d.stored)!==d.stored)return res.sendStatus(404);
-  res.set('Cache-Control','private, no-store');res.type(mimeFor(d.fileExt)).sendFile(path.join(ROOT,'data','uploads',d.stored));
+  res.set('Cache-Control','private, no-store');res.type(mimeFor(d.fileExt)).sendFile(path.join(DATA_DIR,'uploads',d.stored));
 });
 
-app.post('/order/options', async (req, res) => {
+app.post('/order/options', asyncHandler(async (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
   let db = loadDb();
   let d = guestDraft(db, req);
@@ -1971,7 +2000,7 @@ app.post('/order/options', async (req, res) => {
   if (print.splitMixed) {
     const form = d.form;
     let splitError;
-    try { await splitMixedPdf(fs.readFileSync(path.join(ROOT,'data','uploads',d.stored)), {...print,filePages:d.pages}); }
+    try { await splitMixedPdf(fs.readFileSync(path.join(DATA_DIR,'uploads',d.stored)), {...print,filePages:d.pages}); }
     catch (error) { splitError = error; }
     db = loadDb();
     d = guestDraft(db, req);
@@ -1995,7 +2024,7 @@ app.post('/order/options', async (req, res) => {
   delete d.form;
   saveDb(db);
   res.redirect(`/order/phone?draft=${d.id}`);
-});
+}));
 
 app.get('/order/phone', (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
@@ -2006,7 +2035,7 @@ app.get('/order/phone', (req, res) => {
   res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: null, referral: parseCookies(req.headers.cookie).pk_ref }));
 });
 
-app.post('/order/otp-request', otpLimiter, async (req, res) => {
+app.post('/order/otp-request', otpLimiter, asyncHandler(async (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
   const db = loadDb();
   const d = guestDraft(db, req);
@@ -2055,23 +2084,26 @@ app.post('/order/otp-request', otpLimiter, async (req, res) => {
   const otp = await requestEmailOtp(email);
   if (!otp.ok) return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: otp.error }));
   res.send(otpPage({ draft: d, email, demoCode: otp.mailed ? null : otp.demo, mailError: otp.mailed ? null : otp.error, error: null }));
-});
+}));
 
 app.post('/order/otp-verify', otpLimiter, (req, res) => {
   if (currentUser(req)) return res.redirect('/customer/orders/new');
-  const db = loadDb();
-  const d = guestDraft(db, req);
+  let db = loadDb();
+  let d = guestDraft(db, req);
   if (!d || !d.selections || !d.contact) return res.redirect('/order');
   try { deliveryFeeFor(db.pricing, d.selections.zone, d.contact.deliveryPoint, d.selections); }
   catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point before confirming.' })); }
   const v = verifyEmailOtp(d.contact.email, req.body.code);
   if (!v.ok) return res.send(otpPage({ draft: d, email: d.contact.email, demoCode: null, mailError: null, error: v.error }));
+  // Verification consumes the OTP in a separate save; keep that write when creating the customer.
+  db = loadDb();d = guestDraft(db,req);
+  if (!d || !d.contact || !d.selections) return res.redirect('/order');
   // Action becomes identity: find by email or create the account.
   let user = db.users.find((u) => String(u.email || '').toLowerCase() === d.contact.email.toLowerCase());
   if (user && user.role !== 'customer') return res.status(403).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Use a customer account for this order.' }));
   if (!user) {
     user = {
-      id: 'CUS-' + Date.now().toString(36), role: 'customer', name: d.contact.name,
+      id: 'CUS-' + crypto.randomUUID(), role: 'customer', name: d.contact.name,
       email: d.contact.email, password: null,
       phone: d.contact.phone || '', student: false
     };
@@ -2081,7 +2113,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   referralCodeFor(db, user);
   const s = d.selections;
   const address = {
-    id: 'ADR' + Date.now().toString(36), customerId: user.id, campusId: s.campusId, institutionName: s.institutionName, label: s.institutionDelivery || s.campusId ? 'School / College' : 'Home',
+    id: 'ADR-' + crypto.randomUUID(), customerId: user.id, campusId: s.campusId, institutionName: s.institutionName, label: s.institutionDelivery || s.campusId ? 'School / College' : 'Home',
     name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
     area: s.area, landmark: d.contact.landmark, pin: d.contact.pin,
     ...d.contact.deliveryPoint, lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: !db.addresses.some(a => a.customerId === user.id && a.isDefault)
@@ -2099,14 +2131,13 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
   }
   saveDb(db);
   const token = createSession(user.id);
-  const secure = req.protocol === 'https' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
+  res.setHeader('Set-Cookie', sessionCookie(req,token));
   res.redirect(`/customer/orders/new/summary?draft=${d.id}`);
 });
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
 installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon, notifyState, restorePackQuota, voidPendingForOrder, qualifyForOrder, gateway: RAZORPAY });
-installPartnerRoutes(app, { loadDb, saveDb, requireRole, siteOrigin, uploadsDir: path.join(ROOT,'data','uploads'), notifyState, qualifyForOrder });
+installPartnerRoutes(app, { loadDb, saveDb, requireRole, siteOrigin, uploadsDir: path.join(DATA_DIR,'uploads'), notifyState, qualifyForOrder });
 installNotificationRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin });
 
 app.use((err, req, res, next) => {
@@ -2124,7 +2155,7 @@ app.use((err, req, res, next) => {
 
 // ---- API ----
 app.get('/api/health', (_req, res) =>
-  res.json({ ok: true, app: 'printkarr', mode: 'demo', time: new Date().toISOString() })
+  res.json({ ok: true, app: 'printkarr', mode: process.env.NODE_ENV === 'production' ? 'live' : 'demo', time: new Date().toISOString() })
 );
 
 app.get('/api/me', (req, res) => {
@@ -2183,7 +2214,7 @@ app.get('/api/agent/file/:id', agentAuth, (req, res) => {
   if (!o || !canFulfil(o) || o.fulfillmentId || o.printType === 'mixed' && !o.splitMixed || !['PRINT_QUEUE', 'PRINTING'].includes(o.status)) {
     return res.status(404).json({ error: 'Not printable right now.' });
   }
-  const p = path.join(ROOT, 'data', 'uploads', orderFile(safe, o.fileExt));
+  const p = path.join(DATA_DIR, 'uploads', orderFile(safe, o.fileExt));
   if (!fs.existsSync(p)) return res.status(404).json({ error: 'File missing.' });
   res.setHeader('Content-Type', mimeFor(o.fileExt));
   res.sendFile(p);
@@ -2267,7 +2298,7 @@ app.post('/api/agent/:id/failed', agentAuth, (req, res) => {
 // Classroom QR (V0 §11): always encodes THIS server's /order URL, so the
 // printed QR works wherever the laptop sits (LAN IP included).
 const qrCache = new Map();
-app.get('/qr.png', async (req, res) => {
+app.get('/qr.png', asyncHandler(async (req, res) => {
   const url = `${baseUrl(req)}/order`;
   try {
     if (!qrCache.has(url)) {
@@ -2280,7 +2311,7 @@ app.get('/qr.png', async (req, res) => {
   } catch {
     res.status(500).send('QR unavailable.');
   }
-});
+}));
 
 function safeToken(t) {
   return /^[a-f0-9]{32}$/.test(String(t || '')) ? String(t) : null;
@@ -2298,7 +2329,7 @@ app.get('/share/:token', (req, res) => {
   if (!safe) return res.status(410).send('Bad link.');
   const o = db.orders.find((x) => x.id === safe);
   const fname = orderFile(safe, o && o.fileExt);
-  const p = path.join(ROOT, 'data', 'uploads', fname);
+  const p = path.join(DATA_DIR, 'uploads', fname);
   if (!fs.existsSync(p)) return res.status(404).send('File not found.');
   res.setHeader('Content-Type', mimeFor(o && o.fileExt));
   res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
@@ -2360,7 +2391,7 @@ app.post('/c/:token/collect', (req, res) => {
   res.send(collectPage({ state: 'collected', message: `Order #${o.id} marked collected. Enjoy your prints!` }));
 });
 
-app.get('/api/agent/health', (_req, res) => {
+app.get('/api/agent/health', agentAuth, (_req, res) => {
   const db = loadDb();
   const queueDepth = db.orders.filter(o => ['PRINT_QUEUE','PRINTING'].includes(o.status)).length;
   res.json({ ok: true, agentSeenAt: agentSeenAt || null, queueDepth, secondsSinceSeen: agentSeenAt ? Math.round((Date.now()-agentSeenAt)/1000) : null });
@@ -2368,12 +2399,13 @@ app.get('/api/agent/health', (_req, res) => {
 
 // Readiness probe for production debugging: counts + capability flags,
 // no secrets, no personal data.
-app.get('/api/ready', (_req, res) => {
+app.get('/api/ready', (_req,res) => res.json({ok:true,storage:atlasEnabled ? 'mongodb-atlas' : 'persistent-local'}));
+app.get('/api/ready/details', requireRole('admin'), (_req, res) => {
   const db = loadDb();
   let uploadsWritable = false;
   try {
-    fs.mkdirSync(path.join(ROOT, 'data', 'uploads'), { recursive: true });
-    const probe = path.join(ROOT, 'data', 'uploads', '.probe');
+    fs.mkdirSync(path.join(DATA_DIR, 'uploads'), { recursive: true });
+    const probe = path.join(DATA_DIR, 'uploads', '.probe');
     fs.writeFileSync(probe, 'ok');
     fs.unlinkSync(probe);
     uploadsWritable = true;
@@ -2397,41 +2429,89 @@ app.get('/api/ready', (_req, res) => {
   });
 });
 
-// Razorpay: create a gateway order for a payable customer order.
-app.post('/api/razorpay/order', apiLimiter, couponOnce, async (req, res) => {
-  const user = currentUser(req);
-  if (!user) return res.status(401).json({ error: 'Not signed in.' });
-  if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
-  const db = loadDb();
-  const o = db.orders.find((x) => x.id === req.body.orderId && x.customerId === user.id);
-  if (!o || !['CREATED', 'PAYMENT_PENDING'].includes(o.status)) {
-    return res.status(400).json({ error: 'Order cannot be paid.' });
-  }
+// Persist the provider order before returning it. Never accept an unrelated payment proof.
+app.post('/api/razorpay/order', requireRole('customer'), couponOnce, asyncHandler(async (req, res) => {
+  if (!gatewayOn()) return res.status(503).json({ error: 'Online payment is unavailable.' });
+  let db = loadDb(), o = db.orders.find(x => x.id === req.body.orderId && x.customerId === req.user.id);
+  if (!o || o.purchaseId || !['CREATED','PAYMENT_PENDING'].includes(o.status) || !(o.total > 0)) return res.status(400).json({error:'Use the saved checkout to complete payment.'});
+  if (o.gatewayOrderId) return res.json({keyId:RAZORPAY.id,rzpOrderId:o.gatewayOrderId,amount:Math.round(o.total*100),orderId:o.id});
+  if (o.gatewayCreating) return res.status(409).json({error:'Payment is opening. Please wait and retry.'});
+  const id=o.id, amount=Math.round(o.total*100);
+  o.gatewayCreating=true; saveDb(db);
   try {
-    const r = await fetch('https://api.razorpay.com/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Basic ' + Buffer.from(`${RAZORPAY.id}:${RAZORPAY.secret}`).toString('base64')
-      },
-      body: JSON.stringify({
-        amount: Math.round(o.total * 100),
-        currency: 'INR',
-        receipt: o.id,
-        notes: { orderId: o.id, customer: user.email }
-      })
-    });
-    const d = await r.json();
-    if (!r.ok || !d.id) return res.status(502).json({ error: 'Gateway refused the order.' });
-    res.json({ keyId: RAZORPAY.id, rzpOrderId: d.id, amount: d.amount, orderId: o.id });
-  } catch {
-    res.status(502).json({ error: 'Gateway unreachable. Try again or pick another method.' });
+    const r=await fetch('https://api.razorpay.com/v1/orders',{method:'POST',signal:AbortSignal.timeout(15000),headers:{'Content-Type':'application/json',Authorization:'Basic '+Buffer.from(`${RAZORPAY.id}:${RAZORPAY.secret}`).toString('base64')},body:JSON.stringify({amount,currency:'INR',receipt:id,notes:{orderId:id}})});
+    const d=await r.json();
+    if(!r.ok || !d.id || d.amount!==amount || d.currency!=='INR')throw new Error('Payment provider refused this order.');
+    db=loadDb();o=db.orders.find(x=>x.id===id && x.customerId===req.user.id);
+    if(!o || !['CREATED','PAYMENT_PENDING'].includes(o.status) || Math.round(o.total*100)!==amount)throw new Error('Order changed. Contact support before retrying.');
+    o.gatewayOrderId=d.id;o.gatewayCreating=false;saveDb(db);
+    res.json({keyId:RAZORPAY.id,rzpOrderId:d.id,amount,orderId:id});
+  } catch(error) {
+    db=loadDb();o=db.orders.find(x=>x.id===id);if(o){o.gatewayCreating=false;saveDb(db);}
+    res.status(502).json({error:'Payment could not open. Your order is saved; please retry.'});
   }
-});
+}));
+
+function gatewayTarget(db, providerOrderId) {
+  const topup=(db.topups || []).find(t=>t.rzpOrderId===providerOrderId);
+  if(topup)return {kind:'topup',record:topup,amount:topup.amount,ownerId:topup.rzpOrderId};
+  const purchase=(db.purchases || []).find(p=>p.gatewayOrderId===providerOrderId);
+  if(purchase)return {kind:'purchase',record:purchase,amount:purchase.total,ownerId:purchase.id};
+  const order=db.orders.find(o=>!o.purchaseId && o.gatewayOrderId===providerOrderId);
+  return order ? {kind:'order',record:order,amount:order.total,ownerId:order.id} : null;
+}
+
+function finishGatewayPayment(db, payment) {
+  const target=gatewayTarget(db,payment.order_id);
+  if(!target || payment.currency!=='INR' || payment.status!=='captured' || payment.amount!==Math.round(target.amount*100))throw new Error('Payment does not match the saved checkout. Contact support.');
+  const {kind,record,ownerId}=target;
+  if(record.paymentId===payment.id && (record.used || ['paid','refunded'].includes(record.paymentStatus)))return {target,changed:false};
+  assertUnusedPayment(db,payment.id,ownerId);
+  if(kind==='purchase')return {target,changed:confirmPurchase(db,record,'razorpay',payment.id,validateCoupon)};
+  if(kind==='topup') {
+    if(record.used)throw new Error('Top-up already used.');
+    const user=db.users.find(u=>u.id===record.customerId);
+    if(!user || user.role!=='customer')throw new Error('Customer account unavailable. Contact support.');
+    let referrer;
+    if(record.referral){const v=validateReferral(db,user,record.referral,record.amount);if(v.ok)referrer=v.referrer;}
+    const tx=applyTopup(db,user.id,record.terms || topupTerms(db,user.id,record.amount),`Top-up via Razorpay (${payment.id.slice(0,14)})`,payment.id);
+    record.used=true;record.paymentId=payment.id;
+    if(referrer)createReferral(db,{referrerId:referrer.id,refereeId:user.id,code:record.referral,friendDiscount:0,sourceKind:'topup',sourceId:tx.id});
+    qualifyForTopup(db,tx.id,user.id);
+  } else {
+    if(!['CREATED','PAYMENT_PENDING'].includes(record.status) || record.paymentStatus==='paid')throw new Error('Order already changed. Contact support.');
+    if(record.status==='CREATED')transition(record,'PAYMENT_PENDING',{by:record.customerId});
+    record.paymentStatus='paid';record.paymentMethod='razorpay';record.paymentId=payment.id;
+    transition(record,'CONFIRMED',{by:record.customerId,note:'Captured Razorpay payment'});
+    transition(record,'PRINT_QUEUE',{by:'system',note:'auto-queued on payment'});
+    consumePackQuota(db,record);
+  }
+  return {target,changed:true};
+}
+
+function paymentNotifications(db, target) {
+  if(target.kind==='order')notifyState(target.record,db);
+  if(target.kind==='purchase')for(const id of target.record.printIds)notifyState(db.orders.find(o=>o.id===id),db);
+}
+
+app.post('/api/payments/webhook', asyncHandler(async (req,res) => {
+  const secret=process.env.RAZORPAY_WEBHOOK_SECRET;
+  if(!secret)return res.sendStatus(503);
+  if(!Buffer.isBuffer(req.body) || !validSignature(secret,req.body,req.get('x-razorpay-signature')))return res.sendStatus(400);
+  let event;try{event=JSON.parse(req.body.toString('utf8'));}catch{return res.sendStatus(400);}
+  if(event.event!=='payment.captured')return res.sendStatus(200);
+  const received=event.payload?.payment?.entity;
+  const target=gatewayTarget(loadDb(),received?.order_id);
+  if(!target)return res.status(503).send('Saved payment order not available. Retry later.');
+  const payment=await capturedPayment(RAZORPAY,received.order_id,received.id,target.amount,undefined,fetch,true);
+  const db=loadDb(), result=finishGatewayPayment(db,payment);
+  if(result.changed){paymentNotifications(db,result.target);saveDb(db);}
+  res.sendStatus(200);
+}));
 
 // Real wallet top-up via Razorpay: pending record first (amount stays
 // server-side so the verify step can never be told a bigger number).
-app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
+app.post('/api/wallet/topup-order', asyncHandler(async (req, res) => {
   const user = currentUser(req);
   if (!user || user.role !== 'customer') return res.status(401).json({ error: 'Not signed in.' });
   if (!(RAZORPAY.id && RAZORPAY.secret)) return res.status(503).json({ error: 'Online payment not configured.' });
@@ -2452,6 +2532,7 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
   try {
     const r = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
+      signal: AbortSignal.timeout(15000),
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Basic ' + Buffer.from(`${RAZORPAY.id}:${RAZORPAY.secret}`).toString('base64')
@@ -2459,12 +2540,12 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
       body: JSON.stringify({
         amount: Math.round(amount * 100),
         currency: 'INR',
-        receipt: `wallet-${user.id}-${Date.now()}`,
+        receipt: 'w-' + crypto.randomBytes(16).toString('hex'),
         notes: { customer: user.id, kind: 'wallet-topup' }
       })
     });
     const d = await r.json();
-    if (!r.ok || !d.id) return res.status(502).json({ error: 'Gateway refused the order.' });
+    if (!r.ok || !d.id || d.amount !== Math.round(amount * 100) || d.currency !== 'INR') return res.status(502).json({ error: 'Gateway refused the order.' });
     const db = loadDb();
     db.topups ||= [];
     db.topups.push({ rzpOrderId: d.id, customerId: user.id, amount, terms, referral: refIn || null, returnPurchaseId:returnPurchase?.id || null,returnOrderId: returnOrder?.id || null, used: false, at: new Date().toISOString() });
@@ -2473,69 +2554,28 @@ app.post('/api/wallet/topup-order', apiLimiter, async (req, res) => {
   } catch {
     res.status(502).json({ error: 'Gateway unreachable. Try again.' });
   }
-});
+}));
 
-app.post('/customer/wallet/topup-verify', requireRole('customer'), (req, res) => {
-  if (!(RAZORPAY.id && RAZORPAY.secret)) {
-    return res.status(503).send(oops(req.user, '/customer/wallet', 'Online payment <em>not configured.</em>'));
-  }
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    return res.status(400).send(oops(req.user, '/customer/wallet', 'Payment proof <em>incomplete.</em>'));
-  }
-  const expect = crypto.createHmac('sha256', RAZORPAY.secret).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest('hex');
-  if (expect !== razorpay_signature) {
-    return res.status(400).send(oops(req.user, '/customer/wallet', 'Payment signature <em>mismatch.</em>'));
-  }
-  const db = loadDb();
-  const pending = (db.topups || []).find((t) => t.rzpOrderId === razorpay_order_id && t.customerId === req.user.id && !t.used);
-  if (!pending) {
-    return res.status(400).send(oops(req.user, '/customer/wallet', 'Unknown or reused <em>top-up.</em>'));
-  }
-  let referrer;
-  if (pending.referral) {
-    const v = validateReferral(db, req.user, pending.referral, pending.amount);
-    if (v.ok) referrer = v.referrer;
-  }
-  let topTx;
-  try { topTx = applyTopup(db, req.user.id, pending.terms || topupTerms(db, req.user.id, pending.amount), `Top-up via Razorpay (${razorpay_payment_id.slice(0, 14)})`, razorpay_payment_id); }
-  catch (error) { return res.status(400).send(oops(req.user, '/customer/wallet', esc(error.message))); }
-  pending.used = true;
-  if (referrer) createReferral(db, { referrerId: referrer.id, refereeId: req.user.id, code: pending.referral, friendDiscount: 0, sourceKind: 'topup', sourceId: topTx.id });
-  qualifyForTopup(db, topTx.id, req.user.id);
-  saveDb(db);
+app.post('/customer/wallet/topup-verify', requireRole('customer'), asyncHandler(async (req,res) => {
+  const {razorpay_order_id:orderId,razorpay_payment_id:paymentId,razorpay_signature:signature}=req.body;
+  const target=gatewayTarget(loadDb(),orderId);
+  if(!target || target.kind!=='topup' || target.record.customerId!==req.user.id)return res.status(400).send(oops(req.user,'/customer/wallet','Unknown top-up.'));
+  const payment=await capturedPayment(RAZORPAY,orderId,paymentId,target.amount,signature,fetch);
+  const db=loadDb(),result=finishGatewayPayment(db,payment);
+  if(result.changed)saveDb(db);
+  const pending=result.target.record;
   res.redirect(pending.returnPurchaseId ? `/customer/purchases/${encodeURIComponent(pending.returnPurchaseId)}` : pending.returnOrderId ? `/customer/orders/${encodeURIComponent(pending.returnOrderId)}/pay` : '/customer/wallet');
-});
+}));
 
-// Razorpay: verify signature, then confirm exactly like a normal payment.
-app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), couponOnce, (req, res) => {
-  if (!(RAZORPAY.id && RAZORPAY.secret)) {
-    return res.status(503).send(oops(req.user, '/customer/orders', 'Online payment <em>not configured.</em>'));
-  }
-  const db = loadDb();
-  const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
-  if (!o || !['CREATED', 'PAYMENT_PENDING'].includes(o.status)) return res.redirect(`/customer/orders/${req.params.id}`);
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    return res.status(400).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'Payment proof <em>incomplete.</em>'));
-  }
-  const expect = crypto.createHmac('sha256', RAZORPAY.secret).update(`${razorpay_order_id}|${razorpay_payment_id}`).digest('hex');
-  if (expect !== razorpay_signature) {
-    return res.status(400).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'Payment signature <em>mismatch.</em>'));
-  }
-  if (o.status === 'CREATED') transition(o, 'PAYMENT_PENDING', { by: req.user.id });
-  o.paymentStatus = 'paid';
-  o.paymentMethod = 'razorpay';
-  transition(o, 'CONFIRMED', { by: req.user.id, note: `razorpay ${razorpay_payment_id}` });
-  // V0 pilot: a paid order goes straight to the print queue — no human click.
-  // (Both transitions first, one save, then both pings — see note above.)
-  try { transition(o, 'PRINT_QUEUE', { by: 'system', note: 'auto-queued on payment' }); } catch {}
-  consumePackQuota(db, o);
-  saveDb(db);
-  notifyState({ ...o, status: 'CONFIRMED' });
-  if (o.status === 'PRINT_QUEUE') notifyState(o);
-  res.redirect(`/customer/orders/${o.id}`);
-});
+app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), couponOnce, asyncHandler(async (req,res) => {
+  const {razorpay_order_id:orderId,razorpay_payment_id:paymentId,razorpay_signature:signature}=req.body;
+  const target=gatewayTarget(loadDb(),orderId);
+  if(!target || target.kind!=='order' || target.record.id!==req.params.id || target.record.customerId!==req.user.id)return res.status(400).send(oops(req.user,'/customer/orders','Payment proof does not belong to this order.'));
+  const payment=await capturedPayment(RAZORPAY,orderId,paymentId,target.amount,signature,fetch);
+  const db=loadDb(),result=finishGatewayPayment(db,payment);
+  if(result.changed){paymentNotifications(db,result.target);saveDb(db);}
+  res.redirect(`/customer/orders/${encodeURIComponent(req.params.id)}`);
+}));
 
 // Kiosk pickup — no rider tracking. Orders are collected at the counter.
 
@@ -2603,6 +2643,16 @@ app.get('*', (req, res, next) => {
   res.status(404).set('X-Robots-Tag', 'noindex').send(notFoundPage());
 });
 
+app.use((error,req,res,_next) => {
+  console.error('Request failed:', error.code || error.name || 'Error');
+  if(res.headersSent)return res.destroy();
+  const status=error.status || (error.message?.includes('Rate-limit') ? 503 : 500);
+  const message=error.code==='DB_STALE_WRITE' ? 'Your order changed. Refresh and retry. No newer data was overwritten.' : error.code==='ONLINE_REFUND_REQUIRED' ? error.message : 'We could not complete this request. Your saved checkout is available. Retry, or contact support if money was deducted.';
+  res.status(status);
+  if(req.path.startsWith('/api/') || req.get('accept')?.includes('application/json'))return res.json({error:message});
+  res.send(oops(currentUser(req),'/customer/orders',esc(message)));
+});
+
 // Production bootstrap: on a fresh volume (no users yet), create the owner
 // admin from env so the live app never needs the demo credentials.
 function storageCheck() {
@@ -2611,7 +2661,7 @@ function storageCheck() {
   try {
     const db = loadDb();
     saveDb(db);
-    const up = path.join(ROOT, 'data', 'uploads');
+    const up = path.join(DATA_DIR, 'uploads');
     fs.mkdirSync(up, { recursive: true });
     const probe = path.join(up, '.probe');
     fs.writeFileSync(probe, 'ok');
@@ -2649,6 +2699,7 @@ function diskCheck() {
 }
 
 async function bootstrap() {
+  if (process.env.NODE_ENV === 'production' && process.env.ADMIN_PASSWORD && (process.env.ADMIN_PASSWORD.length < 12 || process.env.ADMIN_PASSWORD.length > 200)) throw new Error('ADMIN_PASSWORD must contain 12–200 characters.');
   assertPersistentStorage();
   await initAtlas(DATA_FILE, path.join(DATA_DIR, 'uploads'));
   await refreshAtlas(); // File restoration can take long enough for another instance to update Atlas.
@@ -2661,7 +2712,7 @@ async function bootstrap() {
     throw new Error(`Storage unavailable: ${store.error}`);
   }
   console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
-  janitor(ROOT); // Remove expired/restored working files before accepting traffic.
+  janitor(ROOT,undefined,DATA_FILE,path.join(DATA_DIR,'uploads')); // Remove expired/restored working files before accepting traffic.
   const vol = atlasEnabled ? { fresh: false } : diskCheck();
   if (vol.fresh && process.env.NODE_ENV === 'production') {
     console.warn('Fresh data marker created. Confirm this is the intended data directory and verify customer, order, coupon and pricing records before accepting traffic.');
@@ -2672,6 +2723,8 @@ async function bootstrap() {
   if (settleWallets(db)) saveDb(db);
   // Backfill referral codes + config for databases created before referrals.
   let touched = false;
+  // An unfinished create call never returned a provider ID to the browser; allow a fresh attempt after restart.
+  for (const record of [...db.orders,...db.purchases]) if (record.gatewayCreating) { record.gatewayCreating=false; touched=true; }
   for (const u of db.users) {
     if (u.role === 'customer' && !u.referralCode) {
       referralCodeFor(db, u);
@@ -2686,12 +2739,14 @@ async function bootstrap() {
     const normOwner = String(process.env.ADMIN_EMAIL).trim().toLowerCase();
     let owner = db.users.find(u => u.email.toLowerCase() === normOwner);
     if (!owner) {
-      owner = { id: 'ADM-OWNER', role: 'admin', name: 'Owner', email: process.env.ADMIN_EMAIL.trim(), password: process.env.ADMIN_PASSWORD, phone: '', online: true };
+      owner = { id: 'ADM-' + crypto.randomUUID(), role: 'admin', name: 'Owner', email: process.env.ADMIN_EMAIL.trim(), passwordHash: hashPassword(process.env.ADMIN_PASSWORD), phone: '', online: true };
       db.users.push(owner);
       saveDb(db);
       console.log(`Bootstrapped owner admin ${process.env.ADMIN_EMAIL}`);
-    } else if (owner.password !== process.env.ADMIN_PASSWORD || owner.role !== 'admin') {
-      owner.password = process.env.ADMIN_PASSWORD;
+    } else if (!passwordMatches(process.env.ADMIN_PASSWORD, owner.passwordHash) || owner.role !== 'admin') {
+      owner.passwordHash = hashPassword(process.env.ADMIN_PASSWORD);
+      delete owner.password;
+      db.sessions = db.sessions.filter(s => s.userId !== owner.id);
       owner.role = 'admin';
       saveDb(db);
       console.log(`Updated owner admin ${process.env.ADMIN_EMAIL} password/role`);
@@ -2700,15 +2755,22 @@ async function bootstrap() {
     console.warn('⚠ No users and no ADMIN_EMAIL/ADMIN_PASSWORD — nobody can log in. Set the env vars and restart.');
   }
   if (process.env.NODE_ENV === 'production') {
+    for (const user of db.users) {
+      if (user.password && !String(user.email || '').endsWith('@demo.printkarr.in')) {
+        user.passwordHash ||= hashPassword(user.password); delete user.password;
+        db.sessions = db.sessions.filter(s => s.userId !== user.id);
+      }
+    }
+    saveDb(db);
     const weak = db.users.find((u) => u.email === 'admin@demo.printkarr.in' && u.password === 'admin123');
     if (weak) {
-      console.warn('⚠ PRODUCTION WARNING: default demo admin credentials are live. Change or remove them before sharing the URL.');
+      console.warn('Demo admin records exist but production authentication refuses them.');
     }
     if (!OWNER_WA) console.warn('⚠ OWNER_WHATSAPP_NUMBER not set — WhatsApp order forwarding is hidden.');
-    if (!(RAZORPAY.id && RAZORPAY.secret)) console.warn('⚠ RAZORPAY_KEY_ID/SECRET not set — only simulated payments offered.');
+    if (!(RAZORPAY.id && RAZORPAY.secret)) console.warn('⚠ RAZORPAY_KEY_ID/SECRET not set — online payments unavailable; funded wallets remain usable.');
     if (!GOOGLE.id) console.warn('⚠ GOOGLE_CLIENT_ID not set — no Google sign-in button.');
   }
-  await flushAtlas();
+  await flushAtlas(true);
 }
 async function start() {
   // Only boot maintenance is retried; customer writes must still fail on a version conflict.
@@ -2720,10 +2782,20 @@ async function start() {
     }
   }
   const server = app.listen(PORT);
+  server.requestTimeout = 120000;
+  server.headersTimeout = 20000;
+  server.keepAliveTimeout = 5000;
   await new Promise((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });
+  const stop = () => {
+    server.close(async () => {
+      try { await flushAtlas(); await closeAtlas(); }
+      catch (error) { console.error('Shutdown storage flush failed:', error.message); process.exitCode=1; }
+    });
+  };
+  process.once('SIGTERM',stop);process.once('SIGINT',stop);
   console.log(`Printkarr (${process.env.NODE_ENV === 'production' ? 'production' : 'demo'}) live on port ${PORT}`);
   setInterval(async () => {
-    try { await refreshAtlas(); janitor(ROOT); await flushAtlas(); }
+    try { await refreshAtlas(); janitor(ROOT,undefined,DATA_FILE,path.join(DATA_DIR,'uploads')); await flushAtlas(true); }
     catch (error) { console.error('File cleanup failed:', error.message); }
   }, 300e3).unref();
   setInterval(async () => {
@@ -2731,7 +2803,7 @@ async function start() {
     catch (error) { console.error('Wallet settlement failed:', error.message); }
   }, 60000).unref();
   setInterval(async () => {
-    try { await refreshAtlas(); await runNotificationJobs(); }
+    try { await refreshAtlas(); await runNotificationJobs(); await flushAtlas(); }
     catch (error) { console.error('Notification delivery failed:', error.message); }
   }, 60000).unref();
 }

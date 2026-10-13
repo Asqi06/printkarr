@@ -31,7 +31,7 @@ async function start(number) {
     cwd: dir,
     env: {
       ...process.env, NODE_ENV: 'production', MONGODB_DB: dbName,
-      PORT: String(number), ADMIN_EMAIL: 'smoke@example.test',
+      PORT: String(number), PUBLIC_SITE_URL:`http://127.0.0.1:${number}`, PRINTKARR_DATA_DIR:path.join(dir,'data'), ADMIN_EMAIL: 'smoke@example.test',
       ADMIN_PASSWORD: 'smoke-password-123', DEMO_LOGIN: 'off',
       GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: ''
     },
@@ -74,7 +74,7 @@ try {
   let url = await start(number);
   const login = await fetch(`${url}/admin/login`, {
     method: 'POST', redirect: 'manual',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { Origin:url,'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ email: 'smoke@example.test', password: 'smoke-password-123' })
   });
   assert.equal(login.status, 302);
@@ -82,7 +82,7 @@ try {
   assert.ok(cookie);
   const price = await fetch(`${url}/admin/pricing`, {
     method: 'POST', redirect: 'manual',
-    headers: { Cookie: cookie, 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { Cookie: cookie, Origin:url,'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ bw: '7' })
   });
   assert.equal(price.status, 302);
@@ -97,7 +97,7 @@ try {
   fs.rmSync(path.join(dir, 'data', 'db.json'));
   fs.rmSync(path.join(dir, 'data', 'uploads', 'smoke.pdf'));
   url = await start(number);
-  const ready = await (await fetch(`${url}/api/ready`)).json();
+  const ready = await (await fetch(`${url}/api/ready/details`,{headers:{Cookie:cookie}})).json();
   assert.equal(ready.users, 1);
   assert.equal(ready.volume.provider, 'mongodb-atlas');
   assert.equal(fs.existsSync(path.join(dir, 'data', 'uploads', 'smoke.pdf')), true);

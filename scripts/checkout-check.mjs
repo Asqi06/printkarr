@@ -1,3 +1,5 @@
+import { asyncHandler } from '../lib/security.js';
+import { capturedPayment,assertUnusedPayment } from '../lib/payments.js';
 import * as printPricingPolicy from '../public/print-pricing.js';
 import { LOCALITIES, kmBetween, distanceFee } from '../public/localities.js';
 import { pageRange, printPlan, printSides, printDescription } from '../public/print-plan.js';
@@ -27,17 +29,17 @@ const pdf = buildCoverPdf('Sample document', [['Name','Fictional preview']]);
 let gatewayCalls = 0;
 function handler(method, route, extra = {}) {
   let result;
-  const start = source.indexOf(`app.${method}('${route}'`), end = source.indexOf('\napp.',start+1);
+  const start = source.indexOf(`app.${method}('${route}'`), ending = /\n\}\)\)?;/.exec(source.slice(start)), end = start + ending.index + ending[0].length;
   assert.ok(start>=0,route);
   const pricing = readFileSync(new URL('../lib/pricing.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('export ','');
   const quote = runInNewContext(pricing+'\nquote;', {...printPricingPolicy,loadDb:()=>db,Intl,Date,Set,Number,pageRange,printSides,LOCALITIES,kmBetween,distanceFee});
-  runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+source.slice(start,end), {
+  runInNewContext(source.match(/function zoneOf\(area\) \{[\s\S]*?\n\}/)[0]+'\n'+source.slice(source.indexOf('function couponOrder('),source.indexOf('const isDemoUser'))+'\n'+(route.includes('verify') ? source.slice(source.indexOf('function gatewayTarget('),source.indexOf("app.post('/api/payments/webhook'")) : '')+'\n'+source.slice(start,end), {
     app:{[method](...args){result=args.at(-1);result.middleware=args.slice(1,-1).filter(Boolean);}}, requireRole(){}, apiLimiter(){}, otpLimiter(){}, upload:{single(){}},
-    loadDb:()=>db, saveDb(){}, currentUser:()=>user, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, institutionAddress, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, addressPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
-    printPlan,printSides,printDescription,optionsStep,activePrintJobs,surchargeFees,normPhone,normEmail,esc,crypto,path,Buffer,URLSearchParams,ROOT:'fixture',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
+    loadDb:()=>db, saveDb(){}, currentUser:()=>user, asyncHandler, campaignConfig, deliveryPlan, deliveryChoice, validateDestination, institutionAddress, fulfillmentFor, batchPrice, deliveryFeeFor, deliveryPoint, addressPoint, quote, rangePages, cartFor, cartItems, cartQuote, printNet, addPrint, checkPackQuota, walletOf, gatewayOn:()=>false,
+    printPlan,printSides,printDescription,optionsStep,activePrintJobs,surchargeFees,normPhone,normEmail,esc,crypto,path,Buffer,URLSearchParams,AbortSignal,ROOT:'fixture',DATA_DIR:'fixture/data',orderFile, maxUploadBytes:()=>50*1024*1024, analyzeUpload, canUseOwnerTestPrint,
     fs:{copyFileSync(){throw new Error('Expired file');},readFileSync:()=>pdf},
-    topupTerms,applyTopup,claimWalletFiles,fulfilWalletFiles,siteOrigin(){},qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
-    fetch:async()=>{gatewayCalls++;return {ok:true,json:async()=>({id:'rzp-fixture',amount:4900})};},
+    topupTerms,applyTopup,claimWalletFiles,fulfilWalletFiles,capturedPayment,assertUnusedPayment,siteOrigin(){},qualifyForTopup(){},RAZORPAY:{id:'fixture-id',secret:'fixture-secret'},
+    fetch:async(url)=>{gatewayCalls++;return {ok:true,json:async()=>url.includes('/payments/') ? {id:'pay_fixture',order_id:'order_fixture',amount:4900,currency:'INR',status:'captured'} : {id:'order_fixture',amount:4900,currency:'INR'}};},
     oops:(_user,_path,message)=>message,...extra
   });
   return result;
@@ -50,18 +52,18 @@ assert.throws(()=>deliveryPlan(db,'pickup'),/in development/);
 db.settings.campaign.delivery.local.vapi={enabled:true,fee:7,radiusKm:2};
 const plan = deliveryPlan(db,route,null,at);
 assert.equal(plan.promisedBy,'2026-10-02T09:30:00.000Z');
-assert.equal(deliveryFeeFor(db.pricing,'vapi',point,plan).fee,10);
+assert.equal(deliveryFeeFor(db.pricing,'vapi',point,plan).fee,0);
 assert.throws(()=>deliveryFeeFor(db.pricing,'vapi',{lat:20.43,lng:72.9},plan),/Outside/);
-assert.equal(deliveryFeeFor(db.pricing,'vapi',point,{...plan,scheduledFee:-1}).fee,10,'Vapi distance bands ignore a submitted flat fee');
+assert.equal(deliveryFeeFor(db.pricing,'vapi',point,{...plan,scheduledFee:-1}).fee,0,'Vapi distance bands ignore a submitted flat fee');
 assert.equal(deliveryPlan(db,route,null,Date.parse('2026-10-02T11:00:00+05:30')).promisedBy,'2026-10-03T09:30:00.000Z');
 assert.throws(()=>validateCampaign({...campaignConfig(db),delivery:{...campaignConfig(db).delivery,pickup:{enabled:true,address:''}}}),/collection address/);
 db.drafts=[{id:'D',customerId:'A',document:'Notes.pdf',pages:12,fileType:'pdf'}];
 const confirm=response();
-handler('post','/customer/orders/new/confirm')({user,body:{draft:'D',deliverySlot:route,addressId:'__new',nn_area:'Vapi',nn_address:'Test road',nn_pin:'396191',nn_phone:user.phone,deliveryLat:point.lat,deliveryLng:point.lng,copies:2,printType:'color',sides:'double'}},confirm);
+await handler('post','/customer/orders/new/confirm')({user,body:{draft:'D',deliverySlot:route,addressId:'__new',nn_area:'Vapi',nn_address:'Test road',nn_pin:'396191',nn_phone:user.phone,deliveryLat:point.lat,deliveryLng:point.lng,copies:2,printType:'color',sides:'double'}},confirm);
 assert.match(confirm.url,/summary/); assert.equal(db.drafts[0].selections.deliveryMode,'scheduled');
 const review=response();
 handler('get','/customer/orders/new/summary',{firstOffers:()=>({print:0,delivery:0}),coverFor:()=>null,parseCookies:()=>({}),summaryStep:(u,d,s,q)=>({s,q})})({user,query:{draft:'D'},headers:{}},review);
-assert.equal(review.body.q.deliveryFee,10); assert.equal(review.body.q.total,110);
+assert.equal(review.body.q.deliveryFee,0); assert.equal(review.body.q.total,96);
 db.settings.campaign.delivery.local.vapi.enabled=false;
 const disabled=response();handler('get','/customer/orders/new/summary')({user,query:{draft:'D'},headers:{}},disabled);assert.equal(disabled.code,400);
 const saved = optionsStep(user,db.drafts[0],db.addresses,campaignConfig(db),db.pricing);
@@ -72,17 +74,17 @@ db.orders=[own,{id:'PK-1025',customerId:'B',status:'CREATED'}];
 const denied=response();await handler('post','/api/wallet/topup-order')({body:{orderId:'PK-1025',amount:49,offerId:'first'}},denied);assert.equal(denied.code,400);assert.equal(gatewayCalls,0);
 const topup=response();await handler('post','/api/wallet/topup-order')({body:{orderId:own.id,amount:49,offerId:'first'}},topup);assert.equal(topup.code,200);assert.equal(db.topups[0].returnOrderId,own.id);
 assert.ok(!eligibleWalletOffers(db,'A').some(o=>o.id==='first'),'Pending first offer must not be promoted again');
-const proof={razorpay_order_id:'rzp-fixture',razorpay_payment_id:'pay-fixture'};proof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(proof.razorpay_order_id+'|'+proof.razorpay_payment_id).digest('hex');
-const verify=response();handler('post','/customer/wallet/topup-verify')({user,body:proof},verify);assert.equal(verify.url,'/customer/orders/PK-1024/pay');assert.equal(walletOf(db,'A').balance,59);
-const replay=response();handler('post','/customer/wallet/topup-verify')({user,body:proof},replay);assert.equal(replay.code,400);assert.equal(walletOf(db,'A').balance,59);
+const proof={razorpay_order_id:'order_fixture',razorpay_payment_id:'pay_fixture'};proof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(proof.razorpay_order_id+'|'+proof.razorpay_payment_id).digest('hex');
+const verify=response();await handler('post','/customer/wallet/topup-verify')({user,body:proof},verify);assert.equal(verify.url,'/customer/orders/PK-1024/pay');assert.equal(walletOf(db,'A').balance,59);
+const replay=response();await handler('post','/customer/wallet/topup-verify')({user,body:proof},replay);assert.equal(replay.code,200);assert.equal(walletOf(db,'A').balance,59);
 db.purchases=[{id:'SHOP-RETURN',customerId:'A',status:'CREATED'},{id:'SHOP-OTHER',customerId:'B',status:'CREATED'}];
 const deniedPurchase=response();await handler('post','/api/wallet/topup-order')({body:{purchaseId:'SHOP-OTHER',amount:149,offerId:'files'}},deniedPurchase);assert.equal(deniedPurchase.code,400);
-const fileTopup=response();await handler('post','/api/wallet/topup-order',{fetch:async()=>({ok:true,json:async()=>({id:'rzp-files',amount:14900})})})({body:{amount:149,offerId:'files',freeFiles:999,purchaseId:'SHOP-RETURN'}},fileTopup);
+const fileTopup=response();await handler('post','/api/wallet/topup-order',{fetch:async()=>({ok:true,json:async()=>({id:'order_files',amount:14900,currency:'INR'})})})({body:{amount:149,offerId:'files',freeFiles:999,purchaseId:'SHOP-RETURN'}},fileTopup);
 assert.equal(fileTopup.code,200);assert.equal(db.topups.at(-1).returnPurchaseId,'SHOP-RETURN');assert.equal(db.topups.at(-1).terms.freeFiles,3);assert.ok(!db.walletTx.some(t=>t.freeFiles));
-const fileProof={razorpay_order_id:'rzp-files',razorpay_payment_id:'pay-files'};fileProof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(fileProof.razorpay_order_id+'|'+fileProof.razorpay_payment_id).digest('hex');
-const fileVerify=response();handler('post','/customer/wallet/topup-verify')({user,body:fileProof},fileVerify);assert.equal(fileVerify.url,'/customer/purchases/SHOP-RETURN');assert.equal(walletOf(db,'A').balance,208);
+const fileProof={razorpay_order_id:'order_files',razorpay_payment_id:'pay_files'};fileProof.razorpay_signature=crypto.createHmac('sha256','fixture-secret').update(fileProof.razorpay_order_id+'|'+fileProof.razorpay_payment_id).digest('hex');
+const fileVerify=response();await handler('post','/customer/wallet/topup-verify',{fetch:async()=>({ok:true,json:async()=>({id:'pay_files',order_id:'order_files',amount:14900,currency:'INR',status:'captured'})})})({user,body:fileProof},fileVerify);assert.equal(fileVerify.url,'/customer/purchases/SHOP-RETURN');assert.equal(walletOf(db,'A').balance,208);
 const fileTx=db.walletTx.find(t=>t.freeFiles);assert.equal(fileTx.freeFiles.quantity,3);
-const fileReplay=response();handler('post','/customer/wallet/topup-verify')({user,body:fileProof},fileReplay);assert.equal(fileReplay.code,400);assert.equal(db.walletTx.filter(t=>t.freeFiles).length,1);
+const fileReplay=response();await handler('post','/customer/wallet/topup-verify',{fetch:async()=>({ok:true,json:async()=>({id:'pay_files',order_id:'order_files',amount:14900,currency:'INR',status:'captured'})})})({user,body:fileProof},fileReplay);assert.equal(fileReplay.code,200);assert.equal(db.walletTx.filter(t=>t.freeFiles).length,1);
 const claim=response();handler('post','/customer/wallet/files/:txId/claim')({user,params:{txId:fileTx.id},body:{color:'green'}},claim);assert.equal(claim.url,'/customer/wallet#free-files');assert.equal(fileTx.freeFiles.color,'green');
 const handover=response();handler('post','/admin/customers/:id/files/:txId/fulfil')({user:{id:'staff',role:'admin'},params:{id:user.id,txId:fileTx.id}},handover);assert.equal(handover.url,'/admin/customers/A');assert.ok(fileTx.freeFiles.fulfilledAt);
 assert.equal(walletPrompt(campaignConfig(db),eligibleWalletOffers(db,'A'),1000),'');

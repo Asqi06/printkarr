@@ -11,6 +11,12 @@ import { previewDb, createStorePreview, couponPolicy } from './store-preview.mjs
 import { walletOf, topupTerms, applyTopup, settleWallets, deliveryPlan } from '../lib/campus.js';
 const validate = couponPolicy.validateCoupon, customer = 'preview-customer';
 const selection = { addressId: 'preview-address', deliverySlot: 'express' };
+{
+  const db = {products:[{id:'sku',stock:2}],purchases:[{id:'old',status:'CREATED',createdAt:new Date(Date.now()-31*60*1000).toISOString(),items:[{productId:'sku',quantity:2}]}]};
+  assert.equal(availableStock(db,'sku'),2,'Abandoned unpaid checkout cannot hold inventory forever');
+  db.purchases[0].gatewayCreating=true;assert.equal(availableStock(db,'sku'),0,'In-flight provider order retains inventory');
+  db.purchases[0].gatewayCreating=false;db.purchases[0].gatewayOrderId='order_live';assert.equal(availableStock(db,'sku'),0,'Potentially captured payment retains inventory until reconciliation');
+}
 const print = (db, id, subtotal = 50) => { const o = { id, customerId: customer, status: 'CREATED', paymentStatus: 'pending', subtotal, total: subtotal + 15, pages: 25, copies: 1, printType: 'bw', document: 'Assignment.pdf', history: [] }; db.orders.push(o); return o; };
 for (const type of ['stationery', 'prints', 'mixed']) for (const amount of [148.99, 149, 150]) {
   const db = previewDb(true), cart = cartFor(db, customer);
@@ -100,15 +106,15 @@ console.log('Cart checks passed: all basket types below/at/above ₹149, discoun
 
 let captures=0,paid=false;
 const fixture = createStorePreview(previewDb(true), { preview: false, gateway: {id:'fake-key',secret:'fake-secret'}, fetchGateway:async(url,options)=>{
-  if(url.endsWith('/orders'))return {ok:true,json:async()=>({id:'order-bound',amount:2400,currency:'INR'})};
+  if(url.endsWith('/orders'))return {ok:true,json:async()=>({id:'order_bound',amount:2400,currency:'INR'})};
   if(url.endsWith('/capture')){assert.deepEqual(JSON.parse(options.body),{amount:2400,currency:'INR'});captures++;paid=true;}
-  return {ok:true,json:async()=>({order_id:'order-bound',amount:2400,currency:'INR',status:paid?'captured':'authorized'})};
+  return {ok:true,json:async()=>({id:'pay_bound',order_id:'order_bound',amount:2400,currency:'INR',status:paid?'captured':'authorized'})};
 } });
 const server = await new Promise(resolve=>{const s=fixture.app.listen(0,'127.0.0.1',()=>resolve(s));});
 const base = `http://127.0.0.1:${server.address().port}`;
 let cookie='';
 async function request(route, body, extraHeaders={}) {
-  const response=await fetch(base+route,{method:body?'POST':'GET',headers:{Cookie:cookie,...(body?{'Content-Type':'application/x-www-form-urlencoded'}:{}),...extraHeaders},body:body?new URLSearchParams(body):undefined,redirect:'manual'});
+  const response=await fetch(base+route,{method:body?'POST':'GET',headers:{Cookie:cookie,...(body?{'Content-Type':'application/x-www-form-urlencoded',Origin:base}:{}),...extraHeaders},body:body?new URLSearchParams(body):undefined,redirect:'manual'});
   const cookies=response.headers.getSetCookie();if(cookies.length)cookie=[cookie,...cookies.map(c=>c.split(';')[0])].filter(Boolean).join('; ');
   return response;
 }
@@ -125,7 +131,7 @@ try {
   const next=await request('/cart/checkout',selection);const online=next.headers.get('location');
   assert.equal((await request(online+'/gateway',{})).status,200);
   assert.equal((await request(online+'/cancel',{})).status,400,'Do not release stock while a bound gateway order is payable');
-  const proof={razorpay_order_id:'order-bound',razorpay_payment_id:'pay-bound'};proof.razorpay_signature=crypto.createHmac('sha256','fake-secret').update('order-bound|pay-bound').digest('hex');
+  const proof={razorpay_order_id:'order_bound',razorpay_payment_id:'pay_bound'};proof.razorpay_signature=crypto.createHmac('sha256','fake-secret').update('order_bound|pay_bound').digest('hex');
   assert.equal((await request(online+'/verify',{...proof,razorpay_order_id:'other-order'})).status,400);
   assert.equal((await request(online+'/verify',{...proof,razorpay_signature:'0'.repeat(64)})).status,400);
   assert.equal((await request(online+'/verify',proof)).status,302);assert.equal(fixture.snapshot().purchases[1].paymentStatus,'paid');
@@ -144,7 +150,7 @@ try {
     const form = new FormData();
     for (const [key, value] of Object.entries({name:'Photo product',category:'Files',price:'25',stock:'5',active:'on',...fields})) form.set(key,value);
     form.set('photo',new Blob([bytes]),filename);
-    return fetch(base+'/admin/catalogue',{method:'POST',body:form,headers:{Cookie:cookie,...headers},redirect:'manual'});
+    return fetch(base+'/admin/catalogue',{method:'POST',body:form,headers:{Cookie:cookie,Origin:base,...headers},redirect:'manual'});
   }
   const beforePhotos=fixture.snapshot().products.length;
   assert.equal((await uploadPhoto(png,'photo.png',{}, {Cookie:'preview_role=customer'})).status,403);

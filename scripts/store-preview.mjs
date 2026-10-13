@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { blankDb } from '../lib/db.js';
 import { DEMO_PRODUCTS, addPrint } from '../lib/store.js';
 import { parseCookies } from '../lib/auth.js';
+import { sameOrigin } from '../lib/security.js';
 import { installStoreRoutes } from '../lib/store_routes.js';
 import { layout } from '../lib/views.js';
 import { landing } from '../lib/views_public.js';
@@ -35,7 +36,7 @@ export function createStorePreview(seed = previewDb(), { preview = true, gateway
   const loadDb = () => structuredClone(db), saveDb = (next) => { db = structuredClone(next); };
   const currentUser = (req) => { if (resolveUser) return resolveUser(db, req); const role = parseCookies(req.headers.cookie).preview_role || 'customer'; return role === 'guest' ? null : db.users.find((u) => u.role === role); };
   const requireRole = (role) => (req, res, next) => { req.user = currentUser(req); if (!req.user) return res.redirect('/login'); if (req.user.role !== role) return res.sendStatus(403); next(); };
-  const siteOrigin = runInNewContext(source.match(/function siteOrigin\(req, res, next\) \{[\s\S]*?\n\}/)[0] + '\nsiteOrigin;', { SITE: 'https://printkarr.in', URL });
+  const siteOrigin = runInNewContext(source.match(/function siteOrigin\(req, res, next\) \{[\s\S]*?\n\}/)[0] + '\nsiteOrigin;', { SITE: 'https://printkarr.in', sameOrigin });
   const restorePackQuota = (db, o) => { const sub = db.packSubs.find((s) => s.id === o.packSubId); if (sub && !o.packRestored) { const sides = printSides(o); sub.bwUsed = Math.max(0,(sub.bwUsed||0)-sides.bw); sub.colorUsed = Math.max(0,(sub.colorUsed||0)-sides.color); o.packRestored = true; } };
   installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon: couponPolicy.validateCoupon, notifyState() {}, restorePackQuota, voidPendingForOrder() {}, qualifyForOrder() {}, gateway, preview, fetchGateway, uploadsDir });
   app.get('/', (req, res) => res.send(landing({ signedIn: currentUser(req)?.role === 'customer', pricing: db.pricing, campaign: db.settings.campaign, walletOffers: db.settings.campaign.wallets.filter((o) => o.enabled) })));

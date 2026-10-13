@@ -94,7 +94,7 @@ On PowerShell, set `$env:CONFIRM='INIT_EMPTY_ATLAS'` before the command.
 The initializer refuses to overwrite an existing Atlas database. Add
 `MONGODB_URI` to Render's Environment page using **Save only**, then deploy
 the code. The app refuses to start if Atlas is unavailable or uninitialized;
-`/api/ready` reports `mongodb-atlas` when connected. Remove any old
+`/api/ready` reports storage `mongodb-atlas` when connected. Private counts and diagnostics require an admin session at `/api/ready/details`. Remove any old
 `INIT_EMPTY_DB` variable. Atlas Free has a 512 MB hard storage limit, so
 monitor usage and export regular backups as the shop grows.
 
@@ -121,7 +121,7 @@ declaration alone does not provision a Render persistent disk.
 or deploying again.** Copy both `data/db.json` and the entire
 `data/uploads/` directory from the currently running instance to a safe
 location, then restore them onto the new disk before starting the new
-version. Verify the customer and order counts against `/api/ready` and
+version. Verify the customer and order counts against `/api/ready/details` after signing in as admin and
 check a recent admin price and coupon. Do not run `npm run seed` or
 `npm run reset-prod` during this migration. On a paid Render web service,
 use its Shell/SSH access to export the current files. Free Render web
@@ -131,7 +131,7 @@ still-running data before upgrading or redeploying.
 For a genuinely new empty shop, set `INIT_EMPTY_DB=yes` for its first
 boot on the mounted disk, then remove that variable. Existing shops
 should restore their database instead. After the next deploy,
-`/api/ready` and the boot log should show that the same volume marker
+`/api/ready/details` (admin session) and the boot log should show that the same volume marker
 survived. The owner admin is created from the env vars above on an
 empty database; demo accounts are not created in production.
 
@@ -204,11 +204,10 @@ keys first, then swap to live keys.
 
 ### Is production healthy?
 
-Open `https://YOUR-DOMAIN/api/ready` — user/order counts, uploads
-writability, and capability flags (razorpay/whatsapp/google). If anything
+Open `https://YOUR-DOMAIN/api/ready` for public readiness. Sign in as admin and open `/api/ready/details` for user/order counts, uploads writability and capability flags. If anything
 shows `false` or `0 users`, fix env/storage before sharing the URL.
-Boot logs also self-report: storage status, missing keys, and weak demo
-credentials are all printed at startup — read them first when something
+Boot logs also self-report: storage status, missing keys, and disabled demo
+accounts are all printed at startup — read them first when something
 looks dead.
 
 ### Env keys (see `.env.example` — copy, don't invent)
@@ -381,3 +380,5 @@ own retention. Agent temporary documents are removed after the monitored invocat
 Paper-free regression checks: `node scripts/print-safety-check.mjs` and `npm test`.
 The real printer still needs an operator-observed run of the previously failing PDF;
 queue status cannot certify whether a sheet is blank.
+
+Security, payment changes, load checks and deployment setup: [Security rollout notes](docs/SECURITY-ROLLOUT.md).

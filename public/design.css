@@ -460,3 +460,4 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
 @media(max-width:760px){.btn.big{font-size:13px}.field input,.field select,.field textarea{font-size:16px}.app-customer .dashboard-action{min-height:140px}}
 
 .address-fields{border:0;padding:0;margin:16px 0 0;min-width:0}.address-fields[hidden]{display:none}
+.store-skip{position:absolute;left:-9999px}.store-skip:focus{left:16px;top:12px;background:var(--ink);color:white;padding:12px;z-index:100}
