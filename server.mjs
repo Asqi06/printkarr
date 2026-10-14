@@ -152,7 +152,7 @@ function shareTokenFor(db, orderId) {
 function baseUrl(req) {
   if (process.env.NODE_ENV === 'production') return SITE;
   const hostname=new URL(SITE).hostname;
-  return [hostname,'www.'+hostname,'printkarr.onrender.com'].includes(req.hostname) ? SITE : `${req.protocol}://${req.get('host')}`;
+  return [hostname,'www.'+hostname,'printkarr.onrender.com','printkarr.com','www.printkarr.com'].includes(req.hostname) ? SITE : `${req.protocol}://${req.get('host')}`;
 }
 
 // Full order brief → wa.me chat with the owner. No API key involved.

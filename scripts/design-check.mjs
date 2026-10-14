@@ -281,7 +281,7 @@ for (const reducedMotion of [false, true]) {
   assert.equal(look.classList.contains('double'), false);
 }
 console.log('Interaction checks passed: demo replay guard, reduced motion and live paper settings.');
-assert.match(pages.get('/'), /Good ideas\.<br><span>Great on paper\./);
+assert.match(pages.get('/'), /B&amp;W &amp; colour<br><span>printouts, delivered\./);
 
 for (const html of pages.values()) assert.doesNotMatch(html, /liquid-glass/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /backdrop-filter|liquid-glass/);

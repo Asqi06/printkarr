@@ -19,6 +19,21 @@ function start() {
   gtag('set',page);
   gtag('config',measurementId,page);
   gtag('event','page_view',{page_location:page.page_location,page_title:page.page_title,page_referrer:''});
+  const viewed = new WeakSet();
+  function printScreen() {
+    const quote = document.querySelector('[data-print-quote]');
+    if (read(key) === 'granted' && quote && !viewed.has(quote)) {
+      viewed.add(quote); gtag('event','print_options_view');
+    }
+  }
+  printScreen();
+  document.addEventListener('print-screen',printScreen);
+  document.addEventListener('submit',event => {
+    if (read(key) !== 'granted' || !event.target.checkValidity()) return;
+    const form = event.target;
+    if (form.matches('[data-home-upload],[data-order-upload]')) gtag('event','print_upload_start');
+    if (form.matches('.quick-order,[data-print-payment]') && !['wallet','add'].includes(event.submitter?.value)) gtag('event','begin_checkout');
+  });
   if (document.querySelector('[data-contact-confirmed]')) gtag('event','generate_lead',{form_name:'contact_enquiry'});
   const receipt = document.querySelector('[data-analytics-purchase]');
   if (receipt) {
@@ -45,7 +60,7 @@ function preferences() {
   if (!dialog) {
     dialog = document.createElement('dialog'); dialog.id='cookie-dialog'; dialog.className='cookie-dialog';
     dialog.setAttribute('aria-labelledby','cookie-title');
-    dialog.innerHTML='<h2 id="cookie-title">Your cookies. Your choice.</h2><p>Essential cookies keep your sign-in, basket and orders working.</p><p>'+ (enabled?'With your permission, Google Analytics helps us understand page visits, successful enquiries and purchases. We do not send document contents or contact details in these events.':'Optional analytics is currently switched off. You can continue using every ordering feature.')+'</p><a href="/privacy">Read our privacy policy</a><div class="cookie-actions">'+(enabled?'<button type="button" class="btn ghost" data-choice="denied">Essential only</button><button type="button" class="btn loud" data-choice="granted">Allow analytics</button>':'<button type="button" class="btn loud" data-close>Got it</button>')+'</div>';
+    dialog.innerHTML='<h2 id="cookie-title">Your cookies. Your choice.</h2><p>Essential cookies keep your sign-in, basket and orders working.</p><p>'+ (enabled?'With your permission, Google Analytics helps us understand page visits, print-order steps, successful enquiries and purchases. We do not send document contents or contact details in these events.':'Optional analytics is currently switched off. You can continue using every ordering feature.')+'</p><a href="/privacy">Read our privacy policy</a><div class="cookie-actions">'+(enabled?'<button type="button" class="btn ghost" data-choice="denied">Essential only</button><button type="button" class="btn loud" data-choice="granted">Allow analytics</button>':'<button type="button" class="btn loud" data-close>Got it</button>')+'</div>';
     document.body.append(dialog);
     dialog.addEventListener('click',event=>{
       const button=event.target.closest('button'); if(!button)return;

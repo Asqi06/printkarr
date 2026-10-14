@@ -66,7 +66,7 @@ try {
         await page.screenshot({path:'tmp/direct-checkout/settings-'+width+'.png',fullPage:true});
         await page.click('.order-continue button');await page.waitForFunction(()=>location.pathname.includes('/customer/purchases/') || !document.querySelector('[data-payment-error]').hidden);
         if(!page.url().includes('/customer/purchases/'))throw new Error(await page.$eval('[data-payment-error]',e=>e.textContent));
-        assert.match(await page.locator('h1').textContent(),/coming together/);assert.equal(await page.locator('.customer-mobile-nav').count(),0);const order=preview.snapshot().orders[0];assert.equal(order.paymentStatus,'paid');assert.equal(order.bwPages,6);assert.equal(order.colorPages,2);assert.equal(preview.snapshot().purchases[0].codFee,0);
+        assert.match(await page.locator('h1').textContent(),/Order confirmed/);assert.equal(await page.locator('.customer-mobile-nav').count(),0);const order=preview.snapshot().orders[0];assert.equal(order.paymentStatus,'paid');assert.equal(order.bwPages,6);assert.equal(order.colorPages,2);assert.equal(preview.snapshot().purchases[0].codFee,0);
         await page.screenshot({path:'tmp/direct-checkout/receipt-'+width+'.png',fullPage:true});await page.close();
       }
       preview.reset();const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:390,height:900});await page.goto(base+'/customer/orders/new');await page.locator('[name=doc]').setInputFiles(fixture);await page.waitForFunction(()=>document.querySelector('[name=expectedTotal]')?.value);

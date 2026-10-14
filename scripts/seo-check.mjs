@@ -7,11 +7,13 @@ import { pages } from './design-check.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { get as httpGet } from 'node:http';
 import {runInNewContext} from 'node:vm';
+import { bulkPricingGuide } from '../lib/views_order.js';
+import { printPricing } from '../public/print-pricing.js';
 
 const serverSource=readFileSync(new URL('../server.mjs',import.meta.url),'utf8').replaceAll('\r\n','\n');
 const originEnv={NODE_ENV:'development'};
 const origin=runInNewContext(serverSource.match(/function baseUrl\(req\) \{[^]*?\n\}/)[0]+'\n'+serverSource.match(/function googleRedirectUri\(req\) \{[^]*?\n\}/)[0]+'\n({baseUrl,googleRedirectUri});',{SITE,URL,process:{env:originEnv}});
-for(const hostname of ['printkarr.onrender.com','printkarr.in','www.printkarr.in']){const req={hostname,protocol:'https',get:()=> 'printkarr.onrender.com'};assert.equal(origin.baseUrl(req),SITE);assert.equal(origin.googleRedirectUri(req),SITE+'/auth/google/callback');}
+for(const hostname of ['printkarr.onrender.com','printkarr.in','www.printkarr.in','printkarr.com','www.printkarr.com']){const req={hostname,protocol:'https',get:()=> 'printkarr.onrender.com'};assert.equal(origin.baseUrl(req),SITE);assert.equal(origin.googleRedirectUri(req),SITE+'/auth/google/callback');}
 assert.equal(origin.baseUrl({hostname:'localhost',protocol:'http',get:()=> 'localhost:3000'}),'http://localhost:3000');
 originEnv.NODE_ENV='production';assert.equal(origin.baseUrl({hostname:'forged.example',protocol:'https',get:()=> 'forged.example'}),SITE,'Production redirects ignore untrusted Host');
 const app = express();
@@ -43,6 +45,10 @@ try {
     const json = html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)?.[1];
     assert.ok(json, path + ' structured data');
     const data = JSON.parse(json);
+    for (const node of data['@graph'].filter(n => ['Organization','Service'].includes(n['@type']))) {
+      assert.match(node.description, /₹5 flat/, path + ' schema matches current institution delivery');
+      assert.doesNotMatch(node.description, /₹10|₹25/, path + ' no stale delivery fees');
+    }
     assert.equal(data['@graph'].find(node => node['@id'] === SITE + path + '#page')?.url, SITE + path);
     assert.equal((html.match(/<h1\b/g) || []).length, 1, path + ' one main heading');
     assert.match(html, /name="robots" content="index,follow/);
@@ -65,6 +71,12 @@ try {
   const titles = [...Object.keys(PAGES),...POSTS.map(p=>'/blogs/'+p.slug)].map(path=>pages.get(path).match(/<title>([^<]*)<\/title>/)[1]);
   assert.equal(new Set(titles).size,titles.length,'Public page titles are unique');
   assert.equal([...sitemap.matchAll(/<lastmod>/g)].length, POSTS.length, 'Sitemap dates track actual article revisions');
+  for (const pricing of [blankDb().pricing, {...blankDb().pricing, bw:7, printOffers:[{id:'test',name:'Test offer',enabled:true,type:'bw',sides:50,price:45,repeat:true}]}]) {
+    const examples = bulkPricingGuide(pricing).split('<details')[0];
+    for (const count of [50,100]) assert.ok(examples.includes(`${count} pages = ₹${printPricing({bw:count,color:0},pricing).subtotal}`), 'Visible examples follow configured rates and active offers');
+    assert.match(examples, /Printing only/);
+  }
+  assert.match(pages.get('/'), /data-price-examples/, 'Homepage examples are server rendered');
   assert.match(printPricesPage({ pricing:{...blankDb().pricing, bw:7, color:11, studentBw:6} }), /Black & white<\/h2><strong>₹7<\/strong>[\s\S]*Colour<\/h2><strong>₹11<\/strong>[\s\S]*Student B&W<\/h2><strong>₹6<\/strong>/, 'Public prices use actual configured rates');
   for (const [path, target] of [['/PRINTING-IN-VAPI/?utm_source=check','/printing-in-vapi?utm_source=check'], ['/printing-in-daman/','/printing-in-daman'], ['/index.html','/']]) {
     const response = await fetch(base + path, { redirect:'manual' });
@@ -75,6 +87,13 @@ try {
   });
   const hostRedirect = await withHost('www.' + new URL(SITE).host);
   assert.equal(hostRedirect.status,301); assert.equal(hostRedirect.location,SITE + '/about?source=check');
+  for (const alias of ['printkarr.com','www.printkarr.com']) {
+    const redirect = await withHost(alias);
+    assert.equal(redirect.status,301); assert.equal(redirect.location,SITE+'/about?source=check');
+    const checkout = await withHost(alias,'/order?draft=demo');
+    assert.equal(checkout.status,302); assert.equal(checkout.location,SITE+'/order?draft=demo');
+    assert.equal((await withHost(alias,'/api/agent/next')).status,404,'Agent credentials stay on their original host');
+  }
   assert.equal((await withHost('unrelated.example')).status,404, 'No host-header-driven external redirect');
   for(const route of ['/order?draft=demo','/customer/purchases/demo','/auth/google']){const redirect=await withHost('printkarr.onrender.com',route);assert.equal(redirect.status,302);assert.equal(redirect.location,SITE+route);}
   assert.equal((await withHost('printkarr.onrender.com','/api/agent/next')).status,404,'Agent authorization is not redirected across origins');
