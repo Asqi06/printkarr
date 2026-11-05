@@ -1,7 +1,7 @@
 // One page assignment shared by the form, pricing and fulfilment instructions.
 export function pageRange(text, total) {
   if (!Number.isInteger(total) || total < 1 || total > 1000) throw new Error('The file must contain 1–1000 pages.');
-  const value = String(text || '').trim().replace(/[–—−]/g, '-').replace(/\s*-\s*/g, '-');
+  const value = String(text || '').trim().replace(/^pages?\.?\s*/i, '').replace(/[–—−]/g, '-').replace(/\s+(?:to|through)\s+/gi, '-').replace(/\s*-\s*/g, '-');
   if (value.length > 6000) throw new Error('The page list is too long.');
   if (!value) return Array.from({ length: total }, (_, i) => i + 1);
   const picked = new Set();
