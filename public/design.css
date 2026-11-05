@@ -454,7 +454,6 @@ input[type=checkbox], input[type=radio] { flex-shrink: 0; }
 .app-customer .dashboard-action{min-height:180px;background:white}
 .app-customer .dashboard-action .eyebrow{font-size:10px}
 .app-customer .dashboard-action h2{font-size:27px}
-.app-customer .dashboard-action.nearby-action{background:#edf2ff;border-color:#d1ddff}
 .app-customer .dashboard-pricing{border-radius:12px;background:white}
 .app-partner .main,.app-rider .main{max-width:1200px}
 @media(max-width:760px){.btn.big{font-size:13px}.field input,.field select,.field textarea{font-size:16px}.app-customer .dashboard-action{min-height:140px}}

@@ -84,7 +84,6 @@ try {
   assert.equal((await request('/rider/purchases/'+p.id+'/status','rider-one',{to:'DELIVERED'})).status,302);
   assert.equal((await request('/rider/purchases/'+p.id+'/status','rider-one',{to:'DELIVERED'})).status,400,'No duplicate delivery');
   const receipt=await request('/customer/purchases/'+p.id,user.id);assert.match(await receipt.text(),/delivered/);
-  const shops=await(await fetch(base+'/shops')).text();assert.match(shops,/Example print shop/);assert.match(shops,/shop=shop-one/);
   const storefront=await(await fetch(base+'/stationery?shop=shop-one')).text();assert.match(storefront,/Cardboard file/);assert.doesNotMatch(storefront,/Everyday notebook/);
   const ownCatalogue=await(await request('/partner/catalogue','staff-one')).text();assert.match(ownCatalogue,/Cardboard file/);assert.doesNotMatch(ownCatalogue,/Everyday notebook/);
   assert.equal((await request('/partner/catalogue?edit='+db.products[1].id,'staff-one')).status,404);

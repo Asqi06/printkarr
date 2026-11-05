@@ -1,18 +1,11 @@
 [
   {
     "route": "/",
-    "title": "Online Printing &amp; Doorstep Delivery — PrintKarr",
+    "title": "B&amp;W &amp; Colour Printouts with Local Delivery — PrintKarr",
     "workspace": false,
     "forms": [
       "/order/upload"
     ],
-    "theme": true
-  },
-  {
-    "route": "/shops",
-    "title": "Nearby Print &amp; Stationery Shops — PrintKarr",
-    "workspace": false,
-    "forms": [],
     "theme": true
   },
   {
@@ -24,14 +17,14 @@
   },
   {
     "route": "/printing-in-daman",
-    "title": "Printing in Daman — PDF &amp; Document Delivery — PrintKarr",
+    "title": "Online Printouts in Daman — PDF &amp; Colour Printing — PrintKarr",
     "workspace": false,
     "forms": [],
     "theme": true
   },
   {
     "route": "/printing-prices",
-    "title": "Document Printing Prices in Vapi &amp; Daman — PrintKarr",
+    "title": "B&amp;W &amp; Colour Printout Prices in Vapi &amp; Daman — PrintKarr",
     "workspace": false,
     "forms": [],
     "theme": true
@@ -93,7 +86,7 @@
   },
   {
     "route": "/printing-in-vapi",
-    "title": "A4 &amp; College Assignment Printing in Vapi — PrintKarr",
+    "title": "Online Printouts &amp; College Assignment Printing in Vapi — PrintKarr",
     "workspace": false,
     "forms": [],
     "theme": true
@@ -347,7 +340,8 @@
     "forms": [
       "/logout",
       "/logout",
-      "/admin/customers/preview/files/paid-files/fulfil"
+      "/admin/customers/preview/files/paid-files/fulfil",
+      "/admin/customers/preview/wallet-credit"
     ],
     "theme": true
   },
@@ -424,7 +418,8 @@
     "workspace": true,
     "forms": [
       "/logout",
-      "/logout"
+      "/logout",
+      "/admin/customers/preview/wallet-credit"
     ],
     "theme": true
   },
@@ -798,7 +793,6 @@
       "/logout",
       "/logout",
       "/customer/purchases/PK-DESIGN-RECEIPT/wallet",
-      "/customer/purchases/PK-DESIGN-RECEIPT/cod",
       "/customer/purchases/PK-DESIGN-RECEIPT/cancel"
     ],
     "theme": true
@@ -863,14 +857,13 @@
     "workspace": false,
     "forms": [
       "/customer/purchases/PK-DESIGN-RECEIPT/wallet",
-      "/customer/purchases/PK-DESIGN-RECEIPT/cod",
       "/customer/purchases/PK-DESIGN-RECEIPT/cancel"
     ],
     "theme": true
   },
   {
     "route": "/customer/checkout/paid",
-    "title": "Cash order confirmed. — PrintKarr",
+    "title": "Order confirmed. — PrintKarr",
     "workspace": false,
     "forms": [
       "/customer/purchases/PK-DESIGN-RECEIPT/cancel"

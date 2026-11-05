@@ -22,7 +22,7 @@ try {
     await page.locator('.studio-steps summary').nth(1).click();assert.equal(await page.locator('.studio-steps details[open]').count(),1);
     await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:`docs/paper-studio/home-${width}.jpg`});
     if(width===1440)await page.screenshot({path:'docs/paper-studio/home-full.jpg',fullPage:true});
-    for(const route of ['/order','/stationery','/shops','/customer','/customer/wallet','/customer/profile','/contact','/printing-prices','/page-that-does-not-exist']) {
+    for(const route of ['/order','/stationery','/customer','/customer/wallet','/customer/profile','/contact','/printing-prices','/page-that-does-not-exist']) {
       await page.goto(base+route,{waitUntil:'networkidle'});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,route+' overflow '+width);
       if([1440,390].includes(width))await page.screenshot({path:`docs/paper-studio/${route.slice(1).replaceAll('/','-')}-${width}.jpg`});

@@ -29,7 +29,6 @@ const order = { ...draft, status: 'PAYMENT_PENDING', printType: 'bw', sides: 'do
 const campaign = campaignDefaults();
 export const pages = new Map([
   ['/', publicViews.landing({ pagesWeek: 128, queueDepth: 2, pricing, campaign, walletOffers:campaign.wallets.filter(o=>o.enabled) })],
-  ['/shops', publicViews.nearbyShopsPage([])],
   ['/kiosks', publicViews.kioskStatusPage()],
   ['/printing-in-daman', publicViews.damanPage()],
   ['/printing-prices', publicViews.printPricesPage({ pricing })],
@@ -132,7 +131,7 @@ for (const route of ['/customer']) {
 assert.match(pages.get('/customer'), /<a href="\/customer" class="live"\s+aria-current="page">[\s\S]*?<span>Home<\/span><\/a>/);
 for (const route of ['/customer', '/customer/active', '/customer/returning']) {
   const services = pages.get(route).match(/<div class="dashboard-grid">([\s\S]*?)<\/div>/)[1];
-  assert.deepEqual([...services.matchAll(/<a[^>]*href="([^"]+)"/g)].map(m=>m[1]), ['/shops','/stationery'], 'Dashboard keeps nearby prints and stationery directly accessible');
+  assert.deepEqual([...services.matchAll(/<a[^>]*href="([^"]+)"/g)].map(m=>m[1]), ['/order','/stationery'], 'Dashboard keeps print and stationery directly accessible');
 }
 assert.match(pages.get('/customer/active'), /<h1>Good (morning|afternoon|evening), Ananya<\/h1>/, 'Long account names do not overwhelm the dashboard greeting');
 assert.match(pages.get('/customer/active'), /href="\/customer\/orders\/preview"[\s\S]*?Out for delivery[\s\S]*?Semester-assignments-and-colour-lab-records.pdf/);
@@ -153,7 +152,6 @@ assert.match(pages.get('/'), /<nav class="customer-mobile-nav"/);
 const heroActions = pages.get('/').match(/<section class="studio-hero[\s\S]*?<\/section>/)[0];
 assert.equal((heroActions.match(/data-home-upload/g)||[]).length, 1, 'One real upload form in the hero');
 assert.match(heroActions,/enctype="multipart\/form-data"/);
-assert.match(pages.get('/'),/href="\/shops"/);
 assert.match(heroActions, /href="\/order"/);
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.public-site\s+\.pk-footer\s*\{[^}]*background\s*:\s*(?:white|#fff(?:fff)?)\b/i, 'Public footer keeps the shared blue background for its white links');
 assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta.url), 'utf8'), /\.site-header\s*\{[^}]*visibility:hidden/);
@@ -218,7 +216,7 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
 assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);
 assert.match(publicViews.landing({ pricing: { ...pricing, bw: 7, color: 11, studentBw: 6 } }), /BLACK &amp; WHITE<\/span><b>₹7 <small>\/ side/);
-for (const id of ['how-it-works', 'delivery', 'packs', 'wallet', 'stationery', 'partners', 'faq']) assert.match(pages.get('/'), new RegExp(`id="${id}"`));
+for (const id of ['how-it-works', 'delivery', 'packs', 'wallet', 'stationery', 'faq']) assert.match(pages.get('/'), new RegExp(`id="${id}"`));
 assert.match(pages.get('/'), /Self-service kiosks|IN DEVELOPMENT/);
 assert.match(pages.get('/order/options'), /name="deliverySlot" value="school" checked/);
 assert.match(pages.get('/order/options'), /<details class="order-more"[^>]*>/);

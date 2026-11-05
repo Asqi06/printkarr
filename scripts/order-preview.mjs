@@ -45,7 +45,6 @@ export function createOrderPreview(seed = previewDb()) {
     resolveUser(db, req) { const cookies = parseCookies(req.headers.cookie); if (cookies[COOKIE]) return db.users.find(u => u.id === cookies[COOKIE]) || null; const role = cookies.preview_role || 'customer'; return role === 'guest' ? null : db.users.find(u => u.role === role); },
     installPrintRoutes({ app, loadDb, saveDb, currentUser, requireRole, uploadsDir }) {
       installPartnerRoutes(app, {loadDb, saveDb, requireRole, siteOrigin:(_req,_res,next)=>next(), uploadsDir, notifyState(){}, qualifyForOrder(){}});
-      app.get('/shops',(_req,res)=>res.send(publicViews.nearbyShopsPage(loadDb().partners || [])));
       app.get('/kiosks',(_req,res)=>res.send(publicViews.kioskStatusPage()));
       const upload = runInNewContext(source.slice(source.indexOf('const upload = multer('),source.indexOf('function countPdfPages(')).replace("dest: 'data/uploads/'", 'dest: uploadsDir')+'\nupload;', {multer,path,uploadsDir,DATA_DIR:path.dirname(uploadsDir)});
       const disk = { ...fs, promises: { ...fs.promises, readFile: name => fs.promises.readFile(path.join(uploadsDir,path.basename(name))) }, readFileSync: name => fs.readFileSync(path.join(uploadsDir,path.basename(name))), renameSync:(from,to)=>fs.renameSync(path.join(uploadsDir,path.basename(from)),path.join(uploadsDir,path.basename(to))) };

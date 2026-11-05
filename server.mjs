@@ -50,7 +50,7 @@ import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.
 import { kioskLive, effectiveLive } from './lib/kiosk.js';
 import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
 import { emailConfigured } from './lib/email.js';
-import { POSTS, vapiPage, damanPage, printPricesPage, landing, nearbyShopsPage, kioskStatusPage, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, CONTACT_TOPICS, contactThankYouPage, notFoundPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { POSTS, vapiPage, damanPage, printPricesPage, landing, kioskStatusPage, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, CONTACT_TOPICS, contactThankYouPage, notFoundPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import { discoveryRoutes, SITE } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { buildOrderCover } from './agent/cover.js';
@@ -195,7 +195,6 @@ app.use(['/admin', '/customer', '/partner', '/rider', '/cart', '/order', '/login
   res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   next();
 });
-app.get('/shops', (req,res) => res.send(nearbyShopsPage(loadDb().partners || [], req.query.area)));
 app.get('/kiosks', (_req,res) => res.send(kioskStatusPage()));
 app.get(['/admin/qr','/qr.png','/c/:token','/customer/orders/:id/scan'], (_req,res) => res.redirect('/kiosks'));
 app.post('/c/:token/collect', (_req,res) => res.status(409).send('Kiosks are in development. Contact support for an existing order.'));
@@ -1078,7 +1077,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const repeat = db.orders.find((o) => o.id === req.query.repeat && o.customerId === req.user.id);
   const shop = req.query.shop && (db.partners || []).find(s=>s.id===req.query.shop && s.active);
-  if (req.query.shop && !shop) return res.status(404).send(oops(req.user,'/shops','This shop is unavailable.'));
+  if (req.query.shop && !shop) return res.status(404).send(oops(req.user,'/order','This shop is unavailable.'));
   res.send(uploadStep(req.user, { shop, pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
 });
 
@@ -1104,7 +1103,7 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   db.drafts ||= [];
   const repeat = db.orders.find((o) => o.id === req.body.repeat && o.customerId === req.user.id);
   const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
-  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/shops','This shop is unavailable.'));}
+  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/order','This shop is unavailable.'));}
   const draft = {
     preferredShopId: chosenShop?.id || null,
     id: 'D' + crypto.randomUUID(), customerId: req.user.id,
@@ -1942,7 +1941,7 @@ app.get('/order', (req, res) => {
   if (req.query.draft && !d) return res.redirect('/order');
   const jobs = activePrintJobs(db);
   const shop=req.query.shop && (db.partners || []).find(s=>s.id===req.query.shop && s.active);
-  if(req.query.shop && !shop)return res.status(404).send(oops(null,'/shops','This shop is unavailable.'));
+  if(req.query.shop && !shop)return res.status(404).send(oops(null,'/order','This shop is unavailable.'));
   res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
@@ -1968,7 +1967,7 @@ app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(30
   db.drafts ||= [];
   const t = guestToken(req, res);
   const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
-  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/shops','This shop is unavailable.'));}
+  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/order','This shop is unavailable.'));}
   const draft = {
     preferredShopId: chosenShop?.id || null,
     id: 'D' + crypto.randomUUID(), guest: t, customerId: null,
