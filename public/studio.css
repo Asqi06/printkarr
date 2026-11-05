@@ -113,3 +113,35 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}body,.pk-page{background:va
 .public-site .service-guide>p.eyebrow{font-size:10px!important;line-height:1.5;letter-spacing:.12em;color:#627851}
 
 .quote-breakdown{display:grid;gap:10px;margin-top:18px;font-size:12px}.quote-breakdown[hidden]{display:none}.quote-breakdown>div{display:flex;justify-content:space-between;gap:12px}.quote-breakdown b,.quote-breakdown s{white-space:nowrap}.quote-breakdown [data-quote-savings]{color:var(--primary)}
+
+/* ---- Convenience pass: print order flow (upload -> settings & delivery -> pay) ---- */
+.order-steps{list-style:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:0;margin:-2px 0 26px;padding:0;font:600 11px/1 'DM Sans',sans-serif;letter-spacing:.02em;color:#8fa294}
+.order-steps li{display:flex;align-items:center;gap:7px;min-height:28px;color:inherit;white-space:nowrap}
+.order-steps li:not(:first-child)::before{content:"";display:inline-block;width:22px;height:1px;background:#cdd8bf;margin-right:8px}
+.order-steps b{display:grid;place-items:center;width:22px;height:22px;flex-shrink:0;border:1px solid #cdd8bf;border-radius:50%;background:#fff;color:#8fa294;font-weight:700}
+.order-steps li.done b{background:#dcef87;border-color:#c4d474;color:#2c431f}
+.order-steps li.now{color:#18221a}
+.order-steps li.now b{background:#234be8;border-color:#234be8;color:#fff}
+@media(max-width:380px){.order-steps{column-gap:2px}.order-steps span{display:none}.order-steps li:not(:first-child)::before{width:14px;margin-right:2px}}
+
+.order-focus .order-upload .drop:focus-within{border-color:#234be8!important;background:#eef2ff!important}
+.order-focus .order-upload #fname{font-weight:700;color:#18221a}
+
+.order-focus .order-copy-row{background:none;border:0;border-radius:0;padding:6px 0 2px}
+.order-focus .order-main .order-more{background:none;border:0;border-radius:0;padding:2px 0;margin:14px 0 0}
+.order-focus .order-main .order-more>summary{padding-left:0}
+.order-main [data-local-fields]{margin-top:4px}
+.order-main [data-local-fields] select{max-width:260px}
+@media(max-width:640px){.order-main [data-local-fields] select{max-width:none}}
+.order-focus legend.eyebrow{font-size:10px;color:#7b8a70}
+
+.quick-order [data-price-examples]{font-size:11px;line-height:1.7;border-top:1px solid #dce5d1;padding-top:16px;margin-top:6px}
+.quick-order [data-price-examples] b{font-weight:700;color:#3c4a33}
+.quick-order .delivery-guide{border:0;background:transparent;padding:0}
+.quick-order .delivery-guide>summary{min-height:38px;padding:9px 0;font-size:12px;color:#47632a}
+.quick-order .delivery-guide .delivery-guide-body{border:0;background:transparent;padding:0;margin-top:4px}
+
+.order-focus .order-main .order-quote .order-price-lines{background:none;border:0;padding:18px 0 12px;margin:0;color:#5d6f52;font-size:13px}
+.order-focus .order-main .order-quote .order-price-lines>div{margin:0 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;line-height:1.5}
+.order-focus .order-main .order-quote .order-price-lines b{font-size:13px;font-weight:600;color:#18221a}
+@media(max-width:760px){.order-focus .order-main .order-quote .order-price-lines{padding-top:14px}}

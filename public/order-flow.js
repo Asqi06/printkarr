@@ -40,3 +40,12 @@ document.addEventListener('click', event => {
   if(open){const dialog=document.querySelector('.order-preview');for(const frame of dialog.querySelectorAll('[data-preview-src]')) if(!frame.src)frame.src=frame.dataset.previewSrc;dialog.showModal();}
   if(close)close.closest('dialog').close();
 });
+
+document.addEventListener('dragover', event => { if (event.target.closest('[data-order-upload] .drop')) event.preventDefault(); });
+document.addEventListener('drop', event => {
+  const zone = event.target.closest('[data-order-upload] .drop');
+  if (!zone || !event.dataTransfer?.files?.length) return;
+  event.preventDefault();
+  const input = zone.closest('form').querySelector('input[type=file]');
+  if (input?.files) { input.files = event.dataTransfer.files; input.dispatchEvent(new Event('change', { bubbles: true })); }
+});
