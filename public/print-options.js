@@ -135,6 +135,33 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
   const area = form.elements.area;
   if (area && form.dataset.area) area.value = form.dataset.area;
   for (const id of ['cMinus','cPlus']) form.querySelector('#'+id)?.addEventListener('click', () => { form.elements.copies.value = Math.max(1, Math.min(200, Number(get('copies')) + (id === 'cMinus' ? -1 : 1))); form.dispatchEvent(new Event('input',{bubbles:true})); });
+  for (const btn of form.querySelectorAll('[data-aov-add]')) {
+    btn.addEventListener('click', async function () {
+      const productId = btn.dataset.productId;
+      const price = Number(btn.dataset.price) || 0;
+      btn.disabled = true;
+      btn.textContent = 'Adding…';
+      try {
+        const res = await fetch('/cart/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+          body: new URLSearchParams({ productId: productId, quantity: '1', add: '1' })
+        });
+        if (res.ok) {
+          btn.textContent = '✓ Added';
+          btn.classList.add('added');
+          cfg.otherItemsSubtotal = (Number(cfg.otherItemsSubtotal) || 0) + price;
+          update();
+        } else {
+          btn.disabled = false;
+          btn.textContent = '+ Add';
+        }
+      } catch {
+        btn.disabled = false;
+        btn.textContent = '+ Add';
+      }
+    });
+  }
   update();
 }
 

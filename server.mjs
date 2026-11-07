@@ -30,7 +30,7 @@ import {
 import { layout, esc, loginPage, loginOtpPage, staffLoginPage, completeProfilePage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor, splitMixedPdf } from './lib/files.js';
 import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
-import { addPrint, cartFor, cartItems, cartQuote, createPurchase, confirmPurchase, printNet, checkPackQuota } from './lib/store.js';
+import { addPrint, cartFor, cartItems, cartQuote, createPurchase, confirmPurchase, printNet, checkPackQuota, cancelPurchase } from './lib/store.js';
 import { installStoreRoutes } from './lib/store_routes.js';
 import { fulfillmentFor } from './lib/partners.js';
 import { installPartnerRoutes } from './lib/partner_routes.js';
@@ -1096,7 +1096,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
     if (!d) {const p=purchaseForDraft(db,req.user.id,req.query.draft);return p ? res.redirect(`/customer/purchases/${p.id}`) : res.status(404).send(oops(req.user,'/customer/orders','That draft <em>expired.</em>'));}
     const addresses = db.addresses.filter((a) => a.customerId === req.user.id);
     const last=db.orders.filter(o=>o.customerId===req.user.id && o.paymentStatus==='paid' && !['CANCELLED','REFUNDED'].includes(o.status)).at(-1);
-    if(last){d.previousPrint=Object.fromEntries(['printType','copies','sides','orientation','binding'].filter(k=>last[k]!==undefined).map(k=>[k,last[k]]));d.defaults={addressId:last.institutionDelivery ? last.addressId : db.addresses.find(a=>a.customerId===req.user.id && a.isDefault)?.id || last.addressId,deliverySlot:deliveryChoice(last),institutionName:last.institutionName};}
+    if(last){d.previousPrint=Object.fromEntries(['printType','copies','sides','paperGsm','orientation','binding'].filter(k=>last[k]!==undefined).map(k=>[k,last[k]]));d.defaults={addressId:last.institutionDelivery ? last.addressId : db.addresses.find(a=>a.customerId===req.user.id && a.isDefault)?.id || last.addressId,deliverySlot:deliveryChoice(last),institutionName:last.institutionName};}
     return res.send(optionsStep(req.user, d, addresses, campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req)));
   }
   const db = loadDb();
@@ -1149,7 +1149,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(a
   let db = loadDb();
   let d = (db.drafts || []).find((x) => x.id === req.body.draft && x.customerId === req.user.id);
   if (!d) {const p=purchaseForDraft(db,req.user.id,req.body.draft);return p ? res.redirect('/customer/purchases/'+p.id) : res.status(404).send(oops(req.user, '/customer/orders', 'That draft <em>expired.</em>'));}
-  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes','deliverySlot','institutionName','institutionLocation','schoolMeeting','schoolPhone','addressId','nn_phone','nn_address','nn_area','nn_pin','nn_landmark','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
+  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','paperGsm','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes','deliverySlot','institutionName','institutionLocation','schoolMeeting','schoolPhone','addressId','nn_phone','nn_address','nn_area','nn_pin','nn_landmark','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
   const fail = (message) => { saveDb(db); return res.status(400).send(optionsStep(req.user, d, db.addresses.filter(a => a.customerId === req.user.id), campaignConfig(db), db.pricing, printQuoteExtras(db, req.user, req), message)); };
   let print;
   try { print = printPlan({ ...req.body, range: d.fileType === 'image' ? '' : req.body.range }, d.pages); }
@@ -1219,7 +1219,8 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(a
   d.selections = {
     ...print,
     orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto',
-    binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none',
+    paperGsm: ['75gsm', '100gsm'].includes(req.body.paperGsm) ? req.body.paperGsm : '75gsm',
+    binding: ['staple', 'spiral', 'wiro', 'hardcover'].includes(req.body.binding) ? req.body.binding : 'none',
     notes: String(req.body.notes || '').slice(0, 300),
     addressId: address.id, zone, deliveryPoint: point,
     zoneLabel: plan.campus || { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone],
@@ -1323,7 +1324,15 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     return res.redirect(purchase ? `/customer/purchases/${purchase.id}` : '/customer/orders/new');
   }
   const d = db.drafts[di];
-  if ((db.carts || []).some((c) => c.customerId === req.user.id && c.purchaseId)) return res.status(409).send(oops(req.user, '/cart', 'Finish or cancel your current checkout before adding a print.'));
+  const pendingCart = (db.carts || []).find((c) => c.customerId === req.user.id && c.purchaseId);
+  if (pendingCart) {
+    const pendingPurchase = (db.purchases || []).find(p => p.id === pendingCart.purchaseId && p.customerId === req.user.id);
+    if (pendingPurchase && pendingPurchase.status === 'CREATED' && pendingPurchase.paymentStatus === 'pending' && !pendingPurchase.gatewayOrderId && !pendingPurchase.gatewayCreating) {
+      cancelPurchase(db, pendingPurchase, req.user.id);
+    } else if (pendingPurchase && pendingPurchase.paymentStatus !== 'pending') {
+      return res.status(409).send(oops(req.user, '/cart', 'Finish or cancel your current checkout before adding a print.'));
+    }
+  }
   const s = d.selections;
   try { Object.assign(s, printPlan(s, d.pages)); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }

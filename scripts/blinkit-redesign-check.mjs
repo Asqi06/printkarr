@@ -4,6 +4,7 @@ import { orderTrack, orderDetail } from '../lib/views_customer.js';
 import { landing } from '../lib/views_public.js';
 import { layout } from '../lib/views.js';
 import { optionsStep } from '../lib/views_order.js';
+import { cartPage } from '../lib/views_store.js';
 import { seoHead } from '../lib/seo.js';
 
 // 1. Check orderTrack progress calculations
@@ -51,15 +52,23 @@ const detailHtml = orderDetail(mockUser, mockOrder, null, null, false);
 assert.match(detailHtml, /class="order-track"/, 'Order detail must render the progress tracker');
 assert.match(detailHtml, /order-track-dot/, 'Order detail tracker must render tracker dots');
 
-// 5. Check Printo configurator in optionsStep
+// 5. Check Printo configurator & Blinkit AOV in optionsStep
 const mockDraft = { id: 'draft-test', document: 'Report.pdf', pages: 20, fileType: 'pdf' };
 const optionsHtml = optionsStep(mockUser, mockDraft, [], undefined, { bw: 2, color: 4 });
 assert.match(optionsHtml, /name="paperGsm"/, 'optionsStep must provide Paper GSM selector');
 assert.match(optionsHtml, /value="wiro"/, 'optionsStep must offer Wiro binding');
 assert.match(optionsHtml, /value="hardcover"/, 'optionsStep must offer Hardcover Thesis binding');
 assert.match(optionsHtml, /id="gutterNotice"/, 'optionsStep must render gutter preflight safety alert');
+assert.match(optionsHtml, /pk-checkout-grid/, 'optionsStep must use responsive 2-column grid layout');
+assert.match(optionsHtml, /pk-aov-section/, 'optionsStep must render AOV cross-sell section');
+assert.match(optionsHtml, /data-aov-add/, 'optionsStep must have 1-tap AOV add buttons');
 
-// 6. Check SEO Product schema
+// 6. Check Cart AOV meter & distraction-free footer
+const cartHtml = cartPage(mockUser, { addresses: [], products: [] }, { lines: [], printIds: [] }, { items: [], prints: [], subtotal: 50 }, { total: 50, net: 50 }, null, {});
+assert.match(cartHtml, /pk-cart-aov-meter/, 'cartPage must render AOV free delivery progress meter');
+assert.match(cartHtml, /pk-checkout-footer/, 'cartPage must render distraction-free checkout footer');
+
+// 7. Check SEO Product schema
 const headHtml = seoHead('/', 'PrintKarr', 'Hyperlocal printing in Vapi');
 assert.match(headHtml, /#document-printing-product/, 'SEO head must output Product rich schema');
 
