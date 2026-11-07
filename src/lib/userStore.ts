@@ -1,6 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import {
+  getCustomers,
+  creditCustomerWallet,
+  debitCustomerWallet,
+  type CustomerRecord,
+} from "./customersStore";
 
 export type UserProfile = {
   id: string;
@@ -14,18 +20,21 @@ export type UserProfile = {
   walletBalance: number;
 };
 
-const STORAGE_KEY = "pk_user_v2";
+const STORAGE_KEY = "pk_user_v3";
 
-const DEFAULT_USER: UserProfile = {
-  id: "usr-anirudh-01",
-  name: "Anirudh Verma",
-  email: "anirudh.verma@gmail.com",
-  phone: "+91 90167 03180",
-  avatar: "https://api.dicebear.com/7.x/initials/svg?seed=AV&backgroundColor=0c831f",
+/**
+ * Default active profile: PRINSKUMAR SINGH from E:\prntkr (LIT Sarigam, ₹111 balance)
+ */
+export const DEFAULT_USER: UserProfile = {
+  id: "CUS-gmuqlfkbw",
+  name: "PRINSKUMAR SINGH",
+  email: "230860116032@laxmi.edu.in",
+  phone: "+91 6354362220",
+  avatar: "https://api.dicebear.com/7.x/initials/svg?seed=PS&backgroundColor=0c831f",
   isLoggedIn: true,
   isStudent: true,
   collegeName: "Laxmi Institute of Technology (LIT), Sarigam",
-  walletBalance: 150,
+  walletBalance: 111,
 };
 
 let cachedUser: UserProfile | null = null;
@@ -66,6 +75,28 @@ export function getUser(): UserProfile {
   return cachedUser;
 }
 
+export function switchCustomer(customer: CustomerRecord): UserProfile {
+  const user: UserProfile = {
+    id: customer.id,
+    name: customer.name,
+    email: customer.email,
+    phone: customer.phone,
+    avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+      customer.name
+    )}&backgroundColor=0c831f`,
+    isLoggedIn: true,
+    isStudent: Boolean(
+      customer.college || customer.email.includes(".edu") || customer.email.includes("laxmi")
+    ),
+    collegeName: customer.college || "LIT Sarigam",
+    walletBalance: customer.walletBalance,
+  };
+  cachedUser = user;
+  persistUser(user);
+  notify();
+  return user;
+}
+
 export function loginWithGoogle(): UserProfile {
   const user: UserProfile = {
     ...DEFAULT_USER,
@@ -87,27 +118,45 @@ export function logout() {
   notify();
 }
 
-export function topUpWallet(amount: number): number {
+export function topUpWallet(
+  amount: number,
+  customBonus = 0,
+  label = "Wallet Top-up"
+): number {
   const user = getUser();
-  // Bonus ladder: ₹100 -> +5%, ₹250 -> +10%, ₹500 -> +15%
-  let bonus = 0;
-  if (amount >= 500) bonus = Math.round(amount * 0.15);
-  else if (amount >= 250) bonus = Math.round(amount * 0.1);
-  else if (amount >= 100) bonus = Math.round(amount * 0.05);
+  let bonus = customBonus;
+  if (!customBonus) {
+    if (amount >= 500) bonus = Math.round(amount * 0.15);
+    else if (amount >= 250) bonus = Math.round(amount * 0.1);
+    else if (amount >= 100) bonus = Math.round(amount * 0.05);
+  }
 
   const newBalance = user.walletBalance + amount + bonus;
   cachedUser = { ...user, walletBalance: newBalance };
   persistUser(cachedUser);
+
+  // Sync with customersStore
+  creditCustomerWallet(
+    user.id,
+    amount + bonus,
+    `${label} (+₹${bonus} Bonus)`,
+    bonus > 0 ? "bonus" : "topup"
+  );
+
   notify();
   return newBalance;
 }
 
-export function deductWallet(amount: number): boolean {
+export function deductWallet(amount: number, label = "Order Payment"): boolean {
   const user = getUser();
   if (user.walletBalance < amount) return false;
   const newBalance = Math.round((user.walletBalance - amount) * 100) / 100;
   cachedUser = { ...user, walletBalance: newBalance };
   persistUser(cachedUser);
+
+  // Sync with customersStore
+  debitCustomerWallet(user.id, amount, label);
+
   notify();
   return true;
 }
@@ -139,5 +188,7 @@ export function useUser() {
     topUpWallet,
     deductWallet,
     updateUserProfile,
+    switchCustomer,
   };
 }
+

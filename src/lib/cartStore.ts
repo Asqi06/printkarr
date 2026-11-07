@@ -258,11 +258,28 @@ export function applyCoupon(code: string): { success: boolean; message: string }
   const subtotal = calculateSubtotal(s);
 
   if (trimmed === "WELCOME10") {
+    if (subtotal < 29) return { success: false, message: "WELCOME10 requires minimum order of ₹29." };
     const discount = Math.min(50, Math.round(subtotal * 0.1));
     cachedState = { ...s, couponCode: trimmed, couponDiscount: discount };
     persistState();
     notify();
     return { success: true, message: `Code applied! Saved ₹${discount}` };
+  }
+  if (trimmed === "SUBMISSION15") {
+    if (subtotal < 49) return { success: false, message: "SUBMISSION15 requires minimum order of ₹49." };
+    const discount = Math.min(75, Math.round(subtotal * 0.15));
+    cachedState = { ...s, couponCode: trimmed, couponDiscount: discount };
+    persistState();
+    notify();
+    return { success: true, message: `Submission Offer applied! Saved ₹${discount}` };
+  }
+  if (trimmed === "KHUSH10") {
+    if (subtotal < 29) return { success: false, message: "KHUSH10 requires minimum order of ₹29." };
+    const discount = Math.min(40, Math.round(subtotal * 0.1));
+    cachedState = { ...s, couponCode: trimmed, couponDiscount: discount };
+    persistState();
+    notify();
+    return { success: true, message: `Student Community code applied! Saved ₹${discount}` };
   }
   if (trimmed === "STUDENT5") {
     const discount = 5;
@@ -311,7 +328,11 @@ function recalcDiscount() {
   if (!cachedState?.couponCode) return;
   const sub = calculateSubtotal(cachedState);
   if (cachedState.couponCode === "WELCOME10") {
-    cachedState.couponDiscount = Math.min(50, Math.round(sub * 0.1));
+    cachedState.couponDiscount = sub >= 29 ? Math.min(50, Math.round(sub * 0.1)) : 0;
+  } else if (cachedState.couponCode === "SUBMISSION15") {
+    cachedState.couponDiscount = sub >= 49 ? Math.min(75, Math.round(sub * 0.15)) : 0;
+  } else if (cachedState.couponCode === "KHUSH10") {
+    cachedState.couponDiscount = sub >= 29 ? Math.min(40, Math.round(sub * 0.1)) : 0;
   } else if (cachedState.couponCode === "STUDENT5") {
     cachedState.couponDiscount = 5;
   } else if (cachedState.couponCode === "PRINTKARR") {
