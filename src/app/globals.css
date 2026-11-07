@@ -1,26 +1,154 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Printkarr Blinkit Brand Tokens ─────────────────────────────────────────────── */
+@theme {
+  --color-paper: #f8f6f0;
+  --color-ink: #1c1c1c;
+  --color-karr: #f8cb46;
+  --color-cobalt: #2d5bff;
+  --color-slate: #5b6577;
+  --color-magenta: #e6007e;
+  --color-go: #0c831f;
+
+  --color-blinkit-yellow: #f8cb46;
+  --color-blinkit-green: #0c831f;
+  --color-blinkit-green-dark: #096a18;
+  --color-blinkit-light-green: #e8f8ec;
+
+  --shadow-card: 0 1px 2px rgb(14 26 43 / 0.05), 0 16px 40px -16px rgb(14 26 43 / 0.16);
+  --shadow-lift: 0 2px 4px rgb(14 26 43 / 0.06), 0 24px 48px -16px rgb(14 26 43 / 0.24);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-grotesk: var(--font-space-grotesk);
+  --font-body: var(--font-inter);
+  --font-ops: var(--font-jetbrains);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f8f9fa;
+  color: #1c1c1c;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #f8cb46;
+  color: #1c1c1c;
+}
+
+/* ── Brand graphics ─────────────────────────────────────────────────────── */
+
+@utility highlight {
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+  color: var(--color-ink);
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: -0.18em;
+    right: -0.14em;
+    top: 0.08em;
+    bottom: -0.02em;
+    background: #f8cb46;
+    rotate: -0.7deg;
+    border-radius: 0.18em;
+  }
+}
+
+@utility halftone {
+  background-image: radial-gradient(rgb(14 26 43 / 0.1) 1px, transparent 1.4px);
+  background-size: 11px 11px;
+}
+@utility halftone-paper {
+  background-image: radial-gradient(rgb(248 246 240 / 0.14) 1px, transparent 1.4px);
+  background-size: 11px 11px;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Components ─────────────────────────────────────────────────────────── */
+@layer components {
+  .btn {
+    @apply inline-flex min-h-11 select-none items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c831f] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-karr {
+    @apply bg-[#f8cb46] text-ink hover:-translate-y-px hover:shadow-lift active:translate-y-0 font-bold;
+  }
+  .btn-green {
+    @apply bg-[#0c831f] text-white hover:bg-[#096a18] hover:-translate-y-px hover:shadow-lift active:translate-y-0 font-bold;
+  }
+  .btn-ink {
+    @apply bg-ink text-white hover:-translate-y-px hover:shadow-lift active:translate-y-0;
+  }
+  .btn-ghost {
+    @apply border border-ink/15 text-ink hover:border-ink/30 hover:bg-ink/[0.04];
+  }
+  .btn-ghost-paper {
+    @apply border border-paper/25 text-paper hover:bg-paper/10;
+  }
+  .eyebrow {
+    @apply font-ops text-[11px] font-medium tracking-[0.22em] uppercase;
+  }
+  .card {
+    @apply rounded-2xl border border-ink/10 bg-white shadow-card;
+  }
+}
+
+/* ── FAQ accordion ─────────────────────────────────────────────────────── */
+.faq details > summary::-webkit-details-marker,
+details > summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary {
+  @apply cursor-pointer list-none;
+}
+.faq-icon {
+  transition: rotate 0.25s ease;
+}
+details[open] > summary .faq-icon {
+  rotate: 45deg;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dash-anim {
+    animation: dash-slide 1.6s linear infinite;
+  }
+  .float-soft {
+    animation: float-soft 5s ease-in-out infinite;
+  }
+  .float-soft-2 {
+    animation: float-soft 6.5s ease-in-out 0.8s infinite;
+  }
+}
+@keyframes dash-slide {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+@keyframes float-soft {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -7px;
+  }
 }
