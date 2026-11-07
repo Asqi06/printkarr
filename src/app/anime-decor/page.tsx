@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
 import { STATIONERY_CATALOGUE } from "@/lib/stationeryData";
+import { AnimeDecorStudio } from "@/components/custom/AnimeDecorStudio";
 
 export const metadata: Metadata = {
   title: "Anime Wall Light, LED Posters & Wall Hanging Decor · PrintKarr Vapi",
@@ -105,8 +106,81 @@ export default function AnimeDecorPage() {
         </Container>
       </section>
 
-      {/* Product Grid */}
+      {/* Anime Decor Content */}
       <Container className="py-12 space-y-12">
+        {/* Interactive Anime Lighting & Decor Studio */}
+        <AnimeDecorStudio />
+
+        {/* Technical Safety & Electronics Guide */}
+        <div className="rounded-3xl border border-edge bg-white p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="border-b border-edge pb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0c831f]">
+              Electronics &amp; Optical Specifications
+            </span>
+            <h2 className="font-grotesk text-xl sm:text-2xl font-bold text-ink mt-0.5">
+              Precision Laser Crafting &amp; Safety Rating
+            </h2>
+            <p className="text-xs text-slate mt-1">
+              Low-power, eye-friendly LED illumination designed for study desks, bedside tables, and gaming rooms.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">💡</span>
+              <h3 className="text-xs font-bold text-ink">Zero Heat Emission</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Powered by cool-running solid-state 2.5W LEDs. The optical acrylic sheet and wooden base stay 
+                cool to touch even after 12+ continuous hours of illumination.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                100% Safe For Kids &amp; Desks<br />
+                Under 2.5W power draw
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">⚡</span>
+              <h3 className="text-xs font-bold text-ink">Universal 5V USB Powered</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Runs on any standard USB port: mobile charger adapter, laptop USB port, power bank, or extension board. 
+                Supplied with a 1.2-meter braided USB cable with inline toggle switch.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                5V / 1A USB input<br />
+                Inline power button
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🪵</span>
+              <h3 className="text-xs font-bold text-ink">Solid Beech &amp; Teak Wood</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Every base and magnetic scroll hanger is turned from real, natural beech and teak wood. Sanded smooth, 
+                weighted for stability, and laser engraved with high precision.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Natural Grain Beechwood<br />
+                Anti-scratch velvet feet
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🧲</span>
+              <h3 className="text-xs font-bold text-ink">Neodymium Magnetic Clamping</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Our wooden scroll hangers use high-strength neodymium magnets embedded in wood. Clamp any poster in 5 seconds 
+                without thumb tacks, tape residue, or holes.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Zero poster damage<br />
+                Re-usable indefinitely
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Grid */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>

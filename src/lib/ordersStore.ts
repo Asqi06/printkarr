@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { type PrintCartItem, type StationeryCartItem } from "./cartStore";
+import { type PrintCartItem, type StationeryCartItem, type CustomPrintCartItem } from "./cartStore";
 import { type UserAddress } from "./addressStore";
 
 export type OrderStatus =
@@ -25,6 +25,7 @@ export type OrderRecord = {
     tag?: string;
   };
   prints: PrintCartItem[];
+  customPrints?: CustomPrintCartItem[];
   stationery: StationeryCartItem[];
   subtotal: number;
   deliveryFee: number;
@@ -38,7 +39,7 @@ export type OrderRecord = {
     vehicle: string;
   };
   otp: string;
-  paymentMethod?: "RAZORPAY" | "WALLET";
+  paymentMethod?: "RAZORPAY" | "WALLET" | "COD";
   paymentId?: string;
 };
 
@@ -217,13 +218,14 @@ export function getOrderById(id: string): OrderRecord | undefined {
 export function createOrder(data: {
   customer: UserAddress;
   prints: PrintCartItem[];
+  customPrints?: CustomPrintCartItem[];
   stationery: StationeryCartItem[];
   subtotal: number;
   deliveryFee: number;
   discount: number;
   total: number;
   deliverySlot: string;
-  paymentMethod?: "RAZORPAY" | "WALLET";
+  paymentMethod?: "RAZORPAY" | "WALLET" | "COD";
   paymentId?: string;
 }): OrderRecord {
   const id = `PK-${Math.floor(10000 + Math.random() * 90000)}`;
@@ -240,6 +242,7 @@ export function createOrder(data: {
       tag: data.customer.tag,
     },
     prints: data.prints,
+    customPrints: data.customPrints || [],
     stationery: data.stationery,
     subtotal: data.subtotal,
     deliveryFee: data.deliveryFee,

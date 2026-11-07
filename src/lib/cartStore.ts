@@ -1,7 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { type StationeryItem, STATIONERY_CATALOGUE } from "./stationeryData";
+import { type StationeryItem } from "./stationeryData";
+import { pricing } from "./pricing";
 
 export type PrintCartItem = {
   id: string;
@@ -18,6 +19,44 @@ export type PrintCartItem = {
   subtotal: number;
 };
 
+export type CustomPrintCategory =
+  | "poster"
+  | "business-cards"
+  | "name-plate"
+  | "anime-decor"
+  | "POSTER"
+  | "BUSINESS_CARD"
+  | "NAME_PLATE"
+  | "ANIME_DECOR";
+
+export type CustomPrintCartItem = {
+  id: string;
+  category: CustomPrintCategory;
+  title: string;
+  specs?: string;
+  specification?: string;
+  quantity: number;
+  price?: number;
+  unitPrice?: number;
+  totalPrice?: number;
+  customDetails?: {
+    textLine1?: string;
+    textLine2?: string;
+    textLine3?: string;
+    textLines?: string[];
+    material?: string;
+    size?: string;
+    paper?: string;
+    finish?: string;
+    lamination?: string;
+    mounting?: string;
+    corners?: string;
+    packSize?: number;
+    theme?: string;
+    artworkFileName?: string;
+  };
+};
+
 export type StationeryCartItem = {
   item: StationeryItem;
   quantity: number;
@@ -27,6 +66,7 @@ export type DeliverySlot = "express" | "campus" | "evening";
 
 export type CartState = {
   prints: PrintCartItem[];
+  customPrints: CustomPrintCartItem[];
   stationery: StationeryCartItem[];
   deliverySlot: DeliverySlot;
   couponCode: string | null;
@@ -34,11 +74,12 @@ export type CartState = {
   isOpen: boolean;
 };
 
-const STORAGE_KEY = "pk_cart_v2";
-export const FREE_DELIVERY_THRESHOLD = 149;
+const STORAGE_KEY = "pk_cart_v3";
+export const FREE_DELIVERY_THRESHOLD = pricing.freeDeliveryThreshold; // ₹149
 
 const INITIAL_STATE: CartState = {
   prints: [],
+  customPrints: [],
   stationery: [],
   deliverySlot: "express",
   couponCode: null,
@@ -61,6 +102,7 @@ function loadState(): CartState {
     const parsed = JSON.parse(raw);
     return {
       prints: Array.isArray(parsed.prints) ? parsed.prints : [],
+      customPrints: Array.isArray(parsed.customPrints) ? parsed.customPrints : [],
       stationery: Array.isArray(parsed.stationery) ? parsed.stationery : [],
       deliverySlot: parsed.deliverySlot || "express",
       couponCode: parsed.couponCode || null,
@@ -77,6 +119,7 @@ function persistState() {
   try {
     const toSave = {
       prints: cachedState.prints,
+      customPrints: cachedState.customPrints,
       stationery: cachedState.stationery,
       deliverySlot: cachedState.deliverySlot,
       couponCode: cachedState.couponCode,
@@ -168,6 +211,40 @@ export function removePrint(id: string) {
   notify();
 }
 
+export function addCustomPrint(
+  item: Partial<CustomPrintCartItem> & { category: CustomPrintCategory; title: string }
+) {
+  const s = getCartState();
+  const id = item.id || `custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const quantity = item.quantity || 1;
+  const unitPrice = item.unitPrice ?? item.price ?? 0;
+  const totalPrice = item.totalPrice ?? unitPrice * quantity;
+  const normalizedItem: CustomPrintCartItem = {
+    id,
+    category: item.category,
+    title: item.title,
+    specs: item.specs || item.specification || "",
+    specification: item.specification || item.specs || "",
+    quantity,
+    price: unitPrice,
+    unitPrice,
+    totalPrice,
+    customDetails: item.customDetails,
+  };
+  cachedState = { ...s, customPrints: [...s.customPrints, normalizedItem] };
+  recalcDiscount();
+  persistState();
+  notify();
+}
+
+export function removeCustomPrint(id: string) {
+  const s = getCartState();
+  cachedState = { ...s, customPrints: s.customPrints.filter((p) => p.id !== id) };
+  recalcDiscount();
+  persistState();
+  notify();
+}
+
 export function setDeliverySlot(slot: DeliverySlot) {
   const s = getCartState();
   cachedState = { ...s, deliverySlot: slot };
@@ -212,18 +289,22 @@ export function removeCoupon() {
 }
 
 export function clearCart() {
-  cachedState = { ...INITIAL_STATE, stationery: [], prints: [] };
+  cachedState = { ...INITIAL_STATE, stationery: [], prints: [], customPrints: [] };
   persistState();
   notify();
 }
 
 function calculateSubtotal(s: CartState): number {
   const printTotal = s.prints.reduce((acc, p) => acc + p.subtotal, 0);
+  const customPrintTotal = s.customPrints.reduce(
+    (acc, p) => acc + (p.totalPrice ?? (p.price ? p.price * p.quantity : 0)),
+    0
+  );
   const stationeryTotal = s.stationery.reduce(
     (acc, item) => acc + item.item.price * item.quantity,
     0
   );
-  return printTotal + stationeryTotal;
+  return printTotal + customPrintTotal + stationeryTotal;
 }
 
 function recalcDiscount() {
@@ -257,18 +338,22 @@ export function useCart() {
   );
 
   const printTotal = state.prints.reduce((acc, p) => acc + p.subtotal, 0);
+  const customPrintTotal = state.customPrints.reduce(
+    (acc, p) => acc + (p.totalPrice ?? (p.price ? p.price * p.quantity : 0)),
+    0
+  );
   const stationeryTotal = state.stationery.reduce(
     (acc, item) => acc + item.item.price * item.quantity,
     0
   );
-  const subtotal = printTotal + stationeryTotal;
+  const subtotal = printTotal + customPrintTotal + stationeryTotal;
 
-  // Delivery fee logic: ₹20 standard, ₹5 campus, or FREE on >= ₹149
+  // Delivery fee from E:prntkr: ₹15 standard Vapi, ₹5 campus gate, or FREE on >= ₹149
   let deliveryFee = 0;
   if (subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD) {
-    if (state.deliverySlot === "campus") deliveryFee = 5;
-    else if (state.deliverySlot === "express") deliveryFee = 20;
-    else deliveryFee = 0; // evening free
+    if (state.deliverySlot === "campus") deliveryFee = pricing.delivery.campus; // ₹5
+    else if (state.deliverySlot === "express") deliveryFee = pricing.delivery.vapi; // ₹15
+    else deliveryFee = 0; // scheduled evening window is free
   }
 
   const freeDeliveryRemaining = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
@@ -276,12 +361,14 @@ export function useCart() {
   const total = Math.max(0, subtotal + deliveryFee - state.couponDiscount);
   const totalCount =
     state.prints.length +
+    state.customPrints.length +
     state.stationery.reduce((acc, x) => acc + x.quantity, 0);
 
   return {
     ...state,
     totalCount,
     printTotal,
+    customPrintTotal,
     stationeryTotal,
     subtotal,
     deliveryFee,
@@ -296,6 +383,8 @@ export function useCart() {
     addPrint,
     addMultiplePrints,
     removePrint,
+    addCustomPrint,
+    removeCustomPrint,
     setDeliverySlot,
     applyCoupon,
     removeCoupon,

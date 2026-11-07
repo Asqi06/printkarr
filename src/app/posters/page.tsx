@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
 import { STATIONERY_CATALOGUE } from "@/lib/stationeryData";
+import { PosterStudio } from "@/components/custom/PosterStudio";
 
 export const metadata: Metadata = {
   title: "Poster Printing Near Me · HD Glossy A3, A4 & A2 Posters | PrintKarr",
@@ -114,13 +115,87 @@ export default function PostersPage() {
         </Container>
       </section>
 
-      {/* Posters Grid */}
+      {/* Posters Main Content */}
       <Container className="py-12 space-y-12">
+        {/* Interactive Studio Configurator */}
+        <PosterStudio />
+
+        {/* Technical Printing Specifications & File Guidelines */}
+        <div className="rounded-3xl border border-edge bg-white p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="border-b border-edge pb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0c831f]">
+              Technical Preflight &amp; Print Guidelines
+            </span>
+            <h2 className="font-grotesk text-xl sm:text-2xl font-bold text-ink mt-0.5">
+              Everything You Need to Know Before Printing
+            </h2>
+            <p className="text-xs text-slate mt-1">
+              Ensure razor-sharp, museum-quality poster reproduction with zero blur or color shift.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">📐</span>
+              <h3 className="text-xs font-bold text-ink">Resolution &amp; DPI Target</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                For pixel-perfect prints, prepare images at <strong>300 DPI</strong> at actual print dimensions. 
+                Minimum acceptable resolution for wall viewing is <strong>150 DPI</strong>.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                A3: 3508 × 4960 px<br />
+                A4: 2480 × 3508 px<br />
+                12×18: 3600 × 5400 px
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🎨</span>
+              <h3 className="text-xs font-bold text-ink">CMYK vs RGB Colorspace</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Digital displays illuminate in sRGB; print machines use 12-color pigment CMYK. We automatically
+                map neon RGB tones to the deepest possible CMYK gamuts without mudding tones.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                12-Color Pigment Gamut<br />
+                Fade-resistant for 50+ years
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">✂️</span>
+              <h3 className="text-xs font-bold text-ink">3mm Bleed &amp; Trim Line</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Keep vital design elements, text, and signatures at least <strong>5mm inside</strong> the canvas edge. 
+                Full-bleed artwork is trimmed edge-to-edge so no white borders remain.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Bleed: +3mm per edge<br />
+                Precision hydraulic cutter
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🛡️</span>
+              <h3 className="text-xs font-bold text-ink">Paper &amp; Protective Laminates</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Choose between <strong>300 GSM High Gloss</strong> for punchy photography, or <strong>280 GSM Velvet Matte</strong> 
+                for zero-reflection gallery displays. Add thermal lamination for moisture and UV resistance.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Thermal Gloss (+₹15)<br />
+                Soft-Touch Velvet (+₹25)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Posters Grid */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="font-grotesk text-xl sm:text-2xl font-bold text-ink">
-                Popular Poster Formats
+                Popular Pre-Made Poster Formats
               </h2>
               <p className="text-xs text-slate mt-0.5">Heavy 300 GSM photo stock with smudge-proof inks</p>
             </div>

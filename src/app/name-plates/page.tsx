@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
 import { STATIONERY_CATALOGUE } from "@/lib/stationeryData";
+import { NamePlateStudio } from "@/components/custom/NamePlateStudio";
 
 export const metadata: Metadata = {
   title: "Name Plate Shop Near Me · Custom Acrylic & Wooden Name Plates in Vapi & Daman",
@@ -115,13 +116,86 @@ export default function NamePlatesPage() {
         </Container>
       </section>
 
-      {/* Product Showcase */}
+      {/* Name Plates Content */}
       <Container className="py-12 space-y-12">
+        {/* Interactive Custom Name Plate Studio */}
+        <NamePlateStudio />
+
+        {/* Technical Material & Installation Guide */}
+        <div className="rounded-3xl border border-edge bg-white p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="border-b border-edge pb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0c831f]">
+              Outdoor Durability &amp; Installation Standards
+            </span>
+            <h2 className="font-grotesk text-xl sm:text-2xl font-bold text-ink mt-0.5">
+              Material Engineering &amp; Drill-Free Mounting
+            </h2>
+            <p className="text-xs text-slate mt-1">
+              Crafted specifically to endure coastal Gujarat heat, monsoon humidity, and dust without fading or rusting.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">✨</span>
+              <h3 className="text-xs font-bold text-ink">5mm Cast Outdoor Acrylic</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                We use genuine Grade-A cast acrylic sheets that resist UV discoloration and surface scratches. 
+                Raised 3D letters are laser cut and fused under high pressure.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                10-Year UV Stability<br />
+                Zero yellowing in sunlight
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🪵</span>
+              <h3 className="text-xs font-bold text-ink">Kiln-Dried Hardwood</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Natural teak and pine blanks are kiln-dried to under 8% moisture content to prevent warping or 
+                splitting. Finished with two coats of marine-grade polyurethane.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                CNC Deep Laser Burnt Text<br />
+                Termite &amp; moisture sealed
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🩹</span>
+              <h3 className="text-xs font-bold text-ink">Drill-Free 3M Outdoor Tape</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Supplied with pre-applied <strong>3M VHB industrial exterior foam tape</strong>. Holds securely up to 
+                5kg on tiles, polished marble, granite, or wooden doors without drilling.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Waterproof bond<br />
+                Ideal for rented apartments
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🔩</span>
+              <h3 className="text-xs font-bold text-ink">Solid SS-304 Standoff Bolts</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                For outdoor compound walls and bungalow gates, we include heavy <strong>SS-304 mirror screws</strong> 
+                and brass wall plugs that project the plaque 15mm off the wall for a floating look.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Floating 3D wall shadow<br />
+                100% rust-proof stainless steel
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Showcase */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="font-grotesk text-xl sm:text-2xl font-bold text-ink">
-                Popular Name Plate Designs
+                Popular Pre-Designed Styles
               </h2>
               <p className="text-xs text-slate mt-0.5">
                 Laser-cut with ultra-durable outdoor materials

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui";
 import { STATIONERY_CATALOGUE } from "@/lib/stationeryData";
+import { BusinessCardStudio } from "@/components/custom/BusinessCardStudio";
 
 export const metadata: Metadata = {
   title: "Business Card Printing Near Me · Visiting Cards Delivered in 30 Mins | PrintKarr",
@@ -114,13 +115,87 @@ export default function BusinessCardsPage() {
         </Container>
       </section>
 
-      {/* Cards Grid */}
+      {/* Cards Content */}
       <Container className="py-12 space-y-12">
+        {/* Interactive Studio Configurator */}
+        <BusinessCardStudio />
+
+        {/* Technical Production Guidelines */}
+        <div className="rounded-3xl border border-edge bg-white p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="border-b border-edge pb-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0c831f]">
+              Visiting Card Technical Specifications
+            </span>
+            <h2 className="font-grotesk text-xl sm:text-2xl font-bold text-ink mt-0.5">
+              Production Standards &amp; Preflight Guidelines
+            </h2>
+            <p className="text-xs text-slate mt-1">
+              Ensure crisp typography, exact cut alignments, and professional heft in the hand.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">📏</span>
+              <h3 className="text-xs font-bold text-ink">Exact Trim &amp; Bleed Sizes</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Standard cut size is <strong>89 × 54 mm</strong> (3.5 × 2.125 in). Supply artwork with 
+                <strong>1.5mm bleed</strong> on all 4 sides (92 × 57 mm canvas).
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Trim: 89 × 54 mm<br />
+                Canvas Bleed: 92 × 57 mm<br />
+                Safe Zone: 83 × 48 mm
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">🃏</span>
+              <h3 className="text-xs font-bold text-ink">Heavy 350 GSM Artboard</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Unlike flimsy 250-300 GSM local market cards, we use heavy <strong>350 GSM European Artboard</strong> 
+                that offers superior snap, rigidity, and premium executive feel.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                European Virgin Pulp<br />
+                Rigid, no bending or dog-ears
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">✨</span>
+              <h3 className="text-xs font-bold text-ink">Matte vs Gloss vs Spot UV</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                <strong>Velvet Matte</strong> resists fingerprint smudges. <strong>Raised Spot UV</strong> applies a 
+                tactile 3D gloss glaze over logos or text while keeping the background matte.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Velvet Matte: Included<br />
+                Spot UV: +₹80 per 100 cards
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-edge bg-slate-50/60 p-4 space-y-2">
+              <span className="text-2xl">📦</span>
+              <h3 className="text-xs font-bold text-ink">Packaging &amp; Fast Dispatch</h3>
+              <p className="text-[11px] text-slate leading-relaxed">
+                Every pack is delivered inside a durable, transparent snap-lock acrylic card box to keep your cards 
+                immaculate in your briefcase or office drawer.
+              </p>
+              <div className="pt-1 text-[10px] font-mono text-slate-500">
+                Acrylic Dispenser Included<br />
+                30-Min Fast Drop in Vapi GIDC
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pre-configured Options */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="font-grotesk text-xl sm:text-2xl font-bold text-ink">
-                Visiting Card Formats
+                Popular Quick-Order Packs
               </h2>
               <p className="text-xs text-slate mt-0.5">High definition digital laser printing</p>
             </div>

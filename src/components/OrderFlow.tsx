@@ -68,7 +68,7 @@ export function OrderFlow() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState("");
   const [addedStationery, setAddedStationery] = useState<{ item: StationeryItem; quantity: number }[]>([]);
-  const [paymentChoice, setPaymentChoice] = useState<"RAZORPAY" | "WALLET">("RAZORPAY");
+  const [paymentChoice, setPaymentChoice] = useState<"RAZORPAY" | "WALLET" | "COD">("RAZORPAY");
   const [isPlacing, setIsPlacing] = useState(false);
 
   const hydrated = useRef(false);
@@ -124,15 +124,19 @@ export function OrderFlow() {
     (acc, x) => acc + x.item.price * x.quantity,
     0
   );
-  const subtotal = printSubtotal + stationerySubtotal;
+  const customPrintSubtotal = cart.customPrints.reduce(
+    (acc, cp) => acc + (cp.totalPrice ?? ((cp.price ?? 0) * cp.quantity)),
+    0
+  );
+  const subtotal = printSubtotal + stationerySubtotal + customPrintSubtotal;
 
   const isFreeDelivery = subtotal >= pricing.freeDeliveryThreshold;
   const freeRemaining = Math.max(0, pricing.freeDeliveryThreshold - subtotal);
 
   let deliveryFee = 0;
   if (!isFreeDelivery && subtotal > 0) {
-    if (deliverySlot === "campus") deliveryFee = 5;
-    else if (deliverySlot === "express") deliveryFee = 20;
+    if (deliverySlot === "campus") deliveryFee = pricing.delivery.campus; // ₹5
+    else if (deliverySlot === "express") deliveryFee = pricing.delivery.vapi; // ₹15 (mirrors E:prntkr)
     else deliveryFee = 0; // evening window is free
   }
 
@@ -241,12 +245,19 @@ export function OrderFlow() {
 
     const allPrints = [...cart.prints, ...currentConfiguredPrints];
 
+    const slotLabel =
+      deliverySlot === "express"
+        ? "⚡ Express (30–45 mins)"
+        : deliverySlot === "campus"
+        ? "🎓 Campus Gate Schedule"
+        : "📦 Same-Day Evening Window";
+
     if (paymentChoice === "WALLET") {
       if (user.walletBalance < grandTotal) {
         alert(
           `Wallet balance (₹${user.walletBalance.toFixed(
             2
-          )}) is insufficient for ₹${grandTotal}. Please top up in your account or select Razorpay online.`
+          )}) is insufficient for ₹${grandTotal}. Please top up in your account, select Razorpay online, or pay on delivery.`
         );
         return;
       }
@@ -257,18 +268,35 @@ export function OrderFlow() {
       const order = createOrder({
         customer: activeAddress,
         prints: allPrints,
+        customPrints: cart.customPrints,
         stationery: allStationery,
         subtotal,
         deliveryFee,
         discount: couponDiscount,
         total: grandTotal,
         paymentMethod: "WALLET",
-        deliverySlot:
-          deliverySlot === "express"
-            ? "⚡ Express (30–45 mins)"
-            : deliverySlot === "campus"
-            ? "🎓 Campus Gate Schedule"
-            : "📦 Same-Day Evening Window",
+        deliverySlot: slotLabel,
+      });
+
+      cart.clearCart();
+      setIsPlacing(false);
+      router.push(`/track?id=${order.id}`);
+      return;
+    }
+
+    if (paymentChoice === "COD") {
+      setIsPlacing(true);
+      const order = createOrder({
+        customer: activeAddress,
+        prints: allPrints,
+        customPrints: cart.customPrints,
+        stationery: allStationery,
+        subtotal,
+        deliveryFee,
+        discount: couponDiscount,
+        total: grandTotal,
+        paymentMethod: "COD",
+        deliverySlot: slotLabel,
       });
 
       cart.clearCart();
@@ -292,6 +320,7 @@ export function OrderFlow() {
         const order = createOrder({
           customer: activeAddress,
           prints: allPrints,
+          customPrints: cart.customPrints,
           stationery: allStationery,
           subtotal,
           deliveryFee,
@@ -299,12 +328,7 @@ export function OrderFlow() {
           total: grandTotal,
           paymentMethod: "RAZORPAY",
           paymentId,
-          deliverySlot:
-            deliverySlot === "express"
-              ? "⚡ Express (30–45 mins)"
-              : deliverySlot === "campus"
-              ? "🎓 Campus Gate Schedule"
-              : "📦 Same-Day Evening Window",
+          deliverySlot: slotLabel,
         });
 
         cart.clearCart();
@@ -753,7 +777,7 @@ export function OrderFlow() {
                     id: "express" as const,
                     label: "⚡ Express 30-Min Delivery",
                     desc: "Immediate print and fast rider dispatch to your doorstep",
-                    fee: isFreeDelivery ? "FREE" : "₹20",
+                    fee: isFreeDelivery ? "FREE" : "₹15",
                   },
                   {
                     id: "campus" as const,
@@ -874,6 +898,33 @@ export function OrderFlow() {
                     ₹{user.walletBalance.toFixed(0)}
                   </span>
                 </label>
+
+                <label
+                  className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3 text-xs transition ${
+                    paymentChoice === "COD"
+                      ? "border-[#0c831f] bg-[#e8f8ec]/40 font-bold text-ink shadow-xs"
+                      : "border-ink/10 hover:border-ink/20 text-slate"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="flowPaymentChoice"
+                      checked={paymentChoice === "COD"}
+                      onChange={() => setPaymentChoice("COD")}
+                      className="accent-[#0c831f]"
+                    />
+                    <div>
+                      <p className="font-bold text-ink">💵 Cash / QR on Delivery</p>
+                      <p className="text-[11px] text-slate">
+                        Pay cash or scan rider UPI QR code at your door or college gate
+                      </p>
+                    </div>
+                  </div>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-ink">
+                    FLEXIBLE
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -884,6 +935,12 @@ export function OrderFlow() {
                 <span>Document Printing ({totalSides} sides)</span>
                 <span className="font-semibold text-ink">₹{printSubtotal}</span>
               </div>
+              {customPrintSubtotal > 0 ? (
+                <div className="flex justify-between text-slate">
+                  <span>Custom Prints &amp; Decor ({cart.customPrints.length} items)</span>
+                  <span className="font-semibold text-ink">₹{customPrintSubtotal}</span>
+                </div>
+              ) : null}
               {stationerySubtotal > 0 ? (
                 <div className="flex justify-between text-slate">
                   <span>Stationery &amp; Study Essentials ({allStationery.length} items)</span>

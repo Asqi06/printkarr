@@ -8,6 +8,7 @@ import {
   closeCart,
   updateStationeryQuantity,
   removePrint,
+  removeCustomPrint,
   addStationery,
   setDeliverySlot,
   applyCoupon,
@@ -28,7 +29,7 @@ export function CartDrawer() {
   const [couponInput, setCouponInput] = useState("");
   const [couponMsg, setCouponMsg] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [paymentChoice, setPaymentChoice] = useState<"RAZORPAY" | "WALLET">("RAZORPAY");
+  const [paymentChoice, setPaymentChoice] = useState<"RAZORPAY" | "WALLET" | "COD">("RAZORPAY");
 
   useEffect(() => {
     if (!cart.isOpen) return;
@@ -55,12 +56,19 @@ export function CartDrawer() {
   const handleCheckout = () => {
     if (cart.totalCount === 0) return;
 
+    const deliverySlotLabel =
+      cart.deliverySlot === "express"
+        ? "⚡ Express (30–45 mins)"
+        : cart.deliverySlot === "campus"
+        ? "🎓 Campus Gate Schedule"
+        : "📦 Same-Day Evening";
+
     if (paymentChoice === "WALLET") {
       if (user.walletBalance < cart.total) {
         alert(
           `Insufficient wallet balance (₹${user.walletBalance.toFixed(
             2
-          )}). Please top up in your account or select Razorpay online payment.`
+          )}). Please top up in your account or select Razorpay or Pay on Delivery.`
         );
         return;
       }
@@ -71,18 +79,36 @@ export function CartDrawer() {
       const order = createOrder({
         customer: activeAddress,
         prints: cart.prints,
+        customPrints: cart.customPrints,
         stationery: cart.stationery,
         subtotal: cart.subtotal,
         deliveryFee: cart.deliveryFee,
         discount: cart.couponDiscount,
         total: cart.total,
         paymentMethod: "WALLET",
-        deliverySlot:
-          cart.deliverySlot === "express"
-            ? "⚡ Express (30–45 mins)"
-            : cart.deliverySlot === "campus"
-            ? "🎓 Campus Gate Schedule"
-            : "📦 Same-Day Evening",
+        deliverySlot: deliverySlotLabel,
+      });
+
+      cart.clearCart();
+      cart.closeCart();
+      setIsCheckingOut(false);
+      router.push(`/track?id=${order.id}`);
+      return;
+    }
+
+    if (paymentChoice === "COD") {
+      setIsCheckingOut(true);
+      const order = createOrder({
+        customer: activeAddress,
+        prints: cart.prints,
+        customPrints: cart.customPrints,
+        stationery: cart.stationery,
+        subtotal: cart.subtotal,
+        deliveryFee: cart.deliveryFee,
+        discount: cart.couponDiscount,
+        total: cart.total,
+        paymentMethod: "COD",
+        deliverySlot: deliverySlotLabel,
       });
 
       cart.clearCart();
@@ -107,6 +133,7 @@ export function CartDrawer() {
         const order = createOrder({
           customer: activeAddress,
           prints: cart.prints,
+          customPrints: cart.customPrints,
           stationery: cart.stationery,
           subtotal: cart.subtotal,
           deliveryFee: cart.deliveryFee,
@@ -114,12 +141,7 @@ export function CartDrawer() {
           total: cart.total,
           paymentMethod: "RAZORPAY",
           paymentId,
-          deliverySlot:
-            cart.deliverySlot === "express"
-              ? "⚡ Express (30–45 mins)"
-              : cart.deliverySlot === "campus"
-              ? "🎓 Campus Gate Schedule"
-              : "📦 Same-Day Evening",
+          deliverySlot: deliverySlotLabel,
         });
 
         cart.clearCart();
@@ -347,6 +369,62 @@ export function CartDrawer() {
             </div>
           ) : null}
 
+          {/* Custom Prints & Decor Section */}
+          {cart.customPrints.length > 0 ? (
+            <div className="space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate px-1">
+                Custom Prints &amp; Decor ({cart.customPrints.length})
+              </h3>
+              {cart.customPrints.map((cp) => (
+                <div
+                  key={cp.id}
+                  className="rounded-2xl border border-ink/10 bg-white p-3.5 shadow-xs flex items-start justify-between gap-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-xl border border-purple-200">
+                      {cp.category.toString().toLowerCase().includes("poster")
+                        ? "🖼️"
+                        : cp.category.toString().toLowerCase().includes("card") || cp.category.toString().toLowerCase().includes("business")
+                        ? "📇"
+                        : cp.category.toString().toLowerCase().includes("plate") || cp.category.toString().toLowerCase().includes("name")
+                        ? "🚪"
+                        : "✨"}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-ink leading-snug">{cp.title}</h4>
+                      <p className="text-[11px] text-slate mt-0.5">{cp.specs || cp.specification}</p>
+                      {cp.customDetails?.textLines && cp.customDetails.textLines.length > 0 ? (
+                        <p className="text-[10px] text-slate/80 italic mt-0.5">
+                          Text: {cp.customDetails.textLines.filter(Boolean).join(" · ")}
+                        </p>
+                      ) : cp.customDetails?.textLine1 ? (
+                        <p className="text-[10px] text-slate/80 italic mt-0.5">
+                          Text: {[cp.customDetails.textLine1, cp.customDetails.textLine2, cp.customDetails.textLine3].filter(Boolean).join(" · ")}
+                        </p>
+                      ) : null}
+                      <span className="text-[11px] font-semibold text-ink mt-0.5 block">
+                        Qty: {cp.quantity}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <b className="text-sm font-bold text-ink">
+                      ₹{cp.totalPrice ?? ((cp.price ?? 0) * cp.quantity)}
+                    </b>
+                    <button
+                      type="button"
+                      onClick={() => removeCustomPrint(cp.id)}
+                      className="block text-[11px] text-red-500 hover:underline mt-1"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           {/* Quick Add a Print Action if in Cart */}
           {cart.totalCount > 0 ? (
             <Link
@@ -409,7 +487,7 @@ export function CartDrawer() {
                     id: "express" as DeliverySlot,
                     label: "⚡ Express Dark-Store (30–45 mins)",
                     desc: "Fulfilled immediately from local print desk",
-                    price: cart.isFreeDelivery ? "FREE" : "₹20",
+                    price: cart.isFreeDelivery ? "FREE" : "₹15",
                   },
                   {
                     id: "campus" as DeliverySlot,
@@ -555,6 +633,33 @@ export function CartDrawer() {
                     ₹{user.walletBalance.toFixed(0)}
                   </span>
                 </label>
+
+                <label
+                  className={`flex cursor-pointer items-center justify-between rounded-xl border p-2.5 text-xs transition ${
+                    paymentChoice === "COD"
+                      ? "border-[#0c831f] bg-[#e8f8ec]/40 font-semibold text-ink"
+                      : "border-ink/10 hover:border-ink/20 text-slate"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="cartPaymentMethod"
+                      checked={paymentChoice === "COD"}
+                      onChange={() => setPaymentChoice("COD")}
+                      className="accent-[#0c831f]"
+                    />
+                    <div>
+                      <p className="font-bold text-ink">💵 Cash / QR on Delivery</p>
+                      <p className="text-[10px] text-slate">
+                        Pay cash or scan partner QR at your doorstep / campus gate
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-ink bg-slate-100 px-2 py-0.5 rounded-md">
+                    FLEXIBLE
+                  </span>
+                </label>
               </div>
             </div>
           ) : null}
@@ -567,6 +672,12 @@ export function CartDrawer() {
                 <div className="flex justify-between text-slate">
                   <span>Document Printing Total</span>
                   <span className="text-ink font-semibold">₹{cart.printTotal}</span>
+                </div>
+              ) : null}
+              {cart.customPrintTotal > 0 ? (
+                <div className="flex justify-between text-slate">
+                  <span>Custom Prints &amp; Decor</span>
+                  <span className="text-ink font-semibold">₹{cart.customPrintTotal}</span>
                 </div>
               ) : null}
               {cart.stationeryTotal > 0 ? (
