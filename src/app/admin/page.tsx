@@ -195,10 +195,6 @@ export default function AdminPage() {
               </span>
             </div>
           </div>
-                Processing in dark-store
-              </span>
-            </div>
-          </div>
 
           {/* Main Top Section Selector Navigation */}
           <div className="mt-6 flex items-center gap-2 border-t border-ink/10 pt-4">
