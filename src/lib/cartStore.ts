@@ -240,11 +240,15 @@ export function subscribeCart(listener: () => void): () => void {
   };
 }
 
+function getServerSnapshot(): CartState {
+  return INITIAL_STATE;
+}
+
 export function useCart() {
   const state = useSyncExternalStore(
     subscribeCart,
     getCartState,
-    () => INITIAL_STATE
+    getServerSnapshot
   );
 
   const printTotal = state.prints.reduce((acc, p) => acc + p.subtotal, 0);

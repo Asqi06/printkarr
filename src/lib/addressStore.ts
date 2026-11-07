@@ -18,7 +18,7 @@ export type UserAddress = {
 const STORAGE_KEY = "pk_addresses_v2";
 const ACTIVE_KEY = "pk_active_address_id";
 
-const DEFAULT_ADDRESSES: UserAddress[] = [
+export const DEFAULT_ADDRESSES: UserAddress[] = [
   {
     id: "addr-home-vapi",
     name: "Anirudh Verma",
@@ -57,12 +57,33 @@ const DEFAULT_ADDRESSES: UserAddress[] = [
   },
 ];
 
+export type AddressStoreSnapshot = {
+  addresses: UserAddress[];
+  activeAddress: UserAddress;
+  isOpen: boolean;
+};
+
+const SERVER_SNAPSHOT: AddressStoreSnapshot = {
+  addresses: DEFAULT_ADDRESSES,
+  activeAddress: DEFAULT_ADDRESSES[0],
+  isOpen: false,
+};
+
 let cachedAddresses: UserAddress[] | null = null;
 let cachedActiveId: string | null = null;
 let isDrawerOpen = false;
+let currentSnapshot: AddressStoreSnapshot = SERVER_SNAPSHOT;
+
 const listeners = new Set<() => void>();
 
 function notify() {
+  const addrs = getAddresses();
+  const active = getActiveAddress();
+  currentSnapshot = {
+    addresses: addrs,
+    activeAddress: active,
+    isOpen: isDrawerOpen,
+  };
   for (const l of listeners) l();
 }
 
@@ -169,18 +190,23 @@ export function subscribeAddresses(listener: () => void): () => void {
   };
 }
 
-export function useAddresses() {
-  return useSyncExternalStore(
-    subscribeAddresses,
-    () => ({
-      addresses: getAddresses(),
-      activeAddress: getActiveAddress(),
-      isOpen: getAddressDrawerOpen(),
-    }),
-    () => ({
-      addresses: DEFAULT_ADDRESSES,
-      activeAddress: DEFAULT_ADDRESSES[0],
-      isOpen: false,
-    })
-  );
+function getClientSnapshot(): AddressStoreSnapshot {
+  if (currentSnapshot === SERVER_SNAPSHOT && typeof window !== "undefined") {
+    const addrs = getAddresses();
+    const active = getActiveAddress();
+    currentSnapshot = {
+      addresses: addrs,
+      activeAddress: active,
+      isOpen: isDrawerOpen,
+    };
+  }
+  return currentSnapshot;
+}
+
+function getServerSnapshot(): AddressStoreSnapshot {
+  return SERVER_SNAPSHOT;
+}
+
+export function useAddresses(): AddressStoreSnapshot {
+  return useSyncExternalStore(subscribeAddresses, getClientSnapshot, getServerSnapshot);
 }

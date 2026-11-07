@@ -284,11 +284,15 @@ export function subscribeOrders(listener: () => void): () => void {
   };
 }
 
+function getServerOrdersSnapshot(): OrderRecord[] {
+  return SEED_ORDERS;
+}
+
 export function useOrders() {
   const orders = useSyncExternalStore(
     subscribeOrders,
     getOrders,
-    () => SEED_ORDERS
+    getServerOrdersSnapshot
   );
   return {
     orders,
