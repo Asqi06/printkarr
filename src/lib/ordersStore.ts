@@ -38,6 +38,8 @@ export type OrderRecord = {
     vehicle: string;
   };
   otp: string;
+  paymentMethod?: "RAZORPAY" | "WALLET";
+  paymentId?: string;
 };
 
 const STORAGE_KEY = "pk_orders_v2";
@@ -221,6 +223,8 @@ export function createOrder(data: {
   discount: number;
   total: number;
   deliverySlot: string;
+  paymentMethod?: "RAZORPAY" | "WALLET";
+  paymentId?: string;
 }): OrderRecord {
   const id = `PK-${Math.floor(10000 + Math.random() * 90000)}`;
   const order: OrderRecord = {
@@ -242,6 +246,8 @@ export function createOrder(data: {
     discount: data.discount,
     total: data.total,
     deliverySlot: data.deliverySlot,
+    paymentMethod: data.paymentMethod ?? "RAZORPAY",
+    paymentId: data.paymentId ?? `pay_${Math.random().toString(36).substring(2, 10)}`,
     eta: "Arriving in 30-40 mins",
     rider: {
       name: "Rajesh Solanki",

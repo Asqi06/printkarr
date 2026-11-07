@@ -1,74 +1,123 @@
 import Link from "next/link";
-import { site } from "@/lib/site";
 import { Wordmark } from "./Wordmark";
 import { Container } from "./ui";
 
-const nav: { title: string; items: { href: string; label: string }[] }[] = [
+const footerSections = [
   {
-    title: "PrintKarr",
+    title: "Online Xerox",
     items: [
-      { href: "/order", label: "Print Documents" },
-      { href: "/stationery", label: "Stationery & Essentials" },
-      { href: "/pricing", label: "Pricing & Volume Slabs" },
-      { href: "/track", label: "Live Order Tracking" },
-      { href: "/how-it-works", label: "How It Works" },
+      { href: "/order", label: "B&W Document Xerox (₹1.25/p)" },
+      { href: "/order", label: "Vivid Colour Prints (₹4.75/p)" },
+      { href: "/order", label: "Spiral & Thesis Binding" },
+      { href: "/pricing", label: "Bulk Notes Xerox (Save 40%)" },
+      { href: "/order", label: "Admit Card & Form Printing" },
     ],
   },
   {
-    title: "Services",
+    title: "Study & Stationery",
     items: [
-      { href: "/bulk-printing", label: "Bulk & Thesis Printing" },
-      { href: "/business-printing", label: "Business & Office Prints" },
-      { href: "/admin", label: "Dark-Store Console" },
-      { href: "/faq", label: "Customer FAQ" },
-      { href: "/contact", label: "Contact & Helpdesk" },
+      { href: "/stationery", label: "A4 Clear Report Folders (₹10)" },
+      { href: "/stationery", label: "Cello Ball & Gel Pens (₹10)" },
+      { href: "/stationery", label: "Neon Highlighters (₹25)" },
+      { href: "/stationery", label: "Exam Geometry Pouches (₹35)" },
+      { href: "/stationery", label: "Ruled College Notebooks (₹65)" },
     ],
   },
   {
-    title: "Locations",
+    title: "Fast Delivery Zones",
     items: [
-      { href: "/order", label: "Vapi (Chala, GIDC, Gunjan)" },
-      { href: "/order", label: "Sarigam & LIT Campus" },
+      { href: "/order", label: "Vapi (Chala, Gunjan, GIDC)" },
+      { href: "/order", label: "Sarigam (LIT Campus Gate)" },
       { href: "/order", label: "Daman (Nani & Moti Daman)" },
-      { href: "/order", label: "Bhilad" },
+      { href: "/order", label: "Bhilad & Surrounding Areas" },
+      { href: "/how-it-works", label: "30-Min Delivery Promise" },
     ],
   },
   {
-    title: "Legal & Security",
+    title: "Account & Help",
     items: [
-      { href: "/privacy", label: "Document Privacy & Deletion" },
-      { href: "/terms", label: "Terms of Service" },
-      { href: "/refund-policy", label: "Cancellation & Refunds" },
-      { href: "/about", label: "About Our Dark-Stores" },
+      { href: "/track", label: "Live Order Tracking" },
+      { href: "/account", label: "My Account & Wallet" },
+      { href: "/pricing", label: "Xerox Rates & Volume Slabs" },
+      { href: "/contact", label: "WhatsApp Support (+91 90167 03180)" },
+      { href: "/privacy", label: "Confidential File Deletion" },
     ],
   },
 ];
 
 export function Footer() {
   return (
-    <footer className="bg-[#0e1a2b] text-[#f8f6f0]">
-      <Container className="pb-10">
-        <div className="grid gap-12 pt-16 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
-          <div className="flex flex-col gap-4">
-            <Wordmark link={false} />
-            <p className="max-w-xs text-sm leading-relaxed text-[#f8f6f0]/70">
-              Print kar. Pahunch gaya. High-speed document printing, spiral thesis binding, and
-              impulse stationery delivered in 30–45 mins to your doorstep.
+    <footer className="bg-[#111827] text-white">
+      {/* Trust & Guarantee Banner */}
+      <div className="border-b border-white/10 bg-[#0d1424] py-6">
+        <Container>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-2.5">
+              <span className="text-xl">⚡</span>
+              <div>
+                <p className="text-xs font-bold text-white">30-Min Fast Delivery</p>
+                <p className="text-[11px] text-gray-400">Direct to hostel or home</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center sm:justify-start gap-2.5">
+              <span className="text-xl">🔒</span>
+              <div>
+                <p className="text-xs font-bold text-white">100% Confidential</p>
+                <p className="text-[11px] text-gray-400">Auto-deleted after printing</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center sm:justify-start gap-2.5">
+              <span className="text-xl">📄</span>
+              <div>
+                <p className="text-xs font-bold text-white">Crisp 75 &amp; 100 GSM</p>
+                <p className="text-[11px] text-gray-400">Jam-free laser quality</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center sm:justify-start gap-2.5">
+              <span className="text-xl">💳</span>
+              <div>
+                <p className="text-xs font-bold text-white">Razorpay &amp; Wallet</p>
+                <p className="text-[11px] text-gray-400">UPI, Cards, NetBanking</p>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </div>
+
+      {/* Main Footer Links */}
+      <Container className="py-12 sm:py-16">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1fr]">
+          {/* Brand Info Column */}
+          <div className="space-y-4">
+            <Wordmark theme="dark" />
+            <p className="text-xs leading-relaxed text-gray-400 max-w-xs">
+              PrintKarr is India&apos;s fastest online xerox and stationery delivery network.
+              Upload PDFs, pick print options, and get crisp documents at your gate in 30 minutes.
             </p>
-            <div className="text-xs text-[#f8f6f0]/60 space-y-1">
-              <p>📍 Central Dark-Store: Vapi GIDC Phase 1, Gujarat</p>
-              <p>📞 Phone / WhatsApp: +91 90167 03180</p>
-              <p>⏰ Open 8:30 AM – 10:00 PM (Monday to Saturday)</p>
+            <div className="space-y-1.5 text-xs text-gray-400">
+              <p className="flex items-center gap-1.5">
+                <span>📍</span>
+                <span>Central Print Hub: Vapi GIDC, Gujarat</span>
+              </p>
+              <p className="flex items-center gap-1.5">
+                <span>📞</span>
+                <span>Helpline: +91 90167 03180</span>
+              </p>
+              <p className="flex items-center gap-1.5">
+                <span>⏰</span>
+                <span>Open 8:30 AM to 10:00 PM (Mon-Sat)</span>
+              </p>
             </div>
           </div>
 
-          {nav.map((col) => (
-            <div key={col.title} className="flex flex-col gap-3">
-              <p className="font-ops text-xs font-semibold tracking-wider text-[#ffc700] uppercase">
-                {col.title}
-              </p>
-              <ul className="flex flex-col gap-2 text-xs text-[#f8f6f0]/75">
-                {col.items.map((item) => (
+          {/* Nav Columns */}
+          {footerSections.map((section) => (
+            <div key={section.title} className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#f8cb46]">
+                {section.title}
+              </h4>
+              <ul className="space-y-2 text-xs text-gray-300">
+                {section.items.map((item) => (
                   <li key={item.label}>
                     <Link
                       href={item.href}
@@ -83,13 +132,22 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row text-xs text-[#f8f6f0]/50">
+        {/* Bottom Legal & Copyright Bar */}
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-gray-400 sm:flex-row">
           <p>© 2026 PrintKarr Technologies Private Limited. All rights reserved.</p>
-          <p className="flex items-center gap-2">
-            <span>🔒 256-Bit SSL Encrypted</span>
+          <div className="flex flex-wrap items-center gap-4 text-xs">
+            <Link href="/terms" className="hover:text-white transition">
+              Terms of Service
+            </Link>
             <span>·</span>
-            <span>⚡ Dark-Store Instant Dispatch</span>
-          </p>
+            <Link href="/privacy" className="hover:text-white transition">
+              Privacy &amp; Deletion
+            </Link>
+            <span>·</span>
+            <Link href="/refund-policy" className="hover:text-white transition">
+              Refund Policy
+            </Link>
+          </div>
         </div>
       </Container>
     </footer>

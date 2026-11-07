@@ -39,10 +39,7 @@ export const FREE_DELIVERY_THRESHOLD = 149;
 
 const INITIAL_STATE: CartState = {
   prints: [],
-  stationery: [
-    // Pre-populate with 1 essential item so user sees immediate value
-    { item: STATIONERY_CATALOGUE[0], quantity: 1 },
-  ],
+  stationery: [],
   deliverySlot: "express",
   couponCode: null,
   couponDiscount: 0,
@@ -150,6 +147,14 @@ export function removeStationery(itemId: string) {
 export function addPrint(print: PrintCartItem) {
   const s = getCartState();
   cachedState = { ...s, prints: [...s.prints, print] };
+  recalcDiscount();
+  persistState();
+  notify();
+}
+
+export function addMultiplePrints(prints: PrintCartItem[]) {
+  const s = getCartState();
+  cachedState = { ...s, prints: [...s.prints, ...prints] };
   recalcDiscount();
   persistState();
   notify();
@@ -289,6 +294,7 @@ export function useCart() {
     updateStationeryQuantity,
     removeStationery,
     addPrint,
+    addMultiplePrints,
     removePrint,
     setDeliverySlot,
     applyCoupon,

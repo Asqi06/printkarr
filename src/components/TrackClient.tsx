@@ -10,7 +10,7 @@ const STAGES: { id: OrderStatus; label: string; icon: string; desc: string }[] =
     id: "RECEIVED",
     label: "Order Placed & Confirmed",
     icon: "✅",
-    desc: "Payment verified. Dark-store desk has accepted your order.",
+    desc: "Payment verified. Print hub has accepted your order.",
   },
   {
     id: "PRINTING",
@@ -265,8 +265,13 @@ export function TrackClient() {
             ))}
 
             {/* Bill Total Line */}
-            <div className="border-t border-ink/10 pt-3 flex justify-between font-extrabold text-sm text-ink">
-              <span>Total Paid</span>
+            <div className="border-t border-ink/10 pt-3 flex items-center justify-between font-extrabold text-sm text-ink">
+              <div>
+                <span>Total Paid</span>
+                <span className="block text-[10px] font-normal text-slate">
+                  Via {currentOrder.paymentMethod || "Razorpay Online"}
+                </span>
+              </div>
               <span>₹{currentOrder.total}</span>
             </div>
           </div>

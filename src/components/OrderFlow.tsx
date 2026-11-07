@@ -28,9 +28,11 @@ import {
   type BindingType,
 } from "@/lib/pricing";
 import { useAddresses, openAddressDrawer } from "@/lib/addressStore";
+import { useUser } from "@/lib/userStore";
+import { triggerRazorpayPayment } from "@/lib/razorpay";
 import { STATIONERY_CATALOGUE, type StationeryItem } from "@/lib/stationeryData";
 import { createOrder } from "@/lib/ordersStore";
-import { addPrint, useCart } from "@/lib/cartStore";
+import { addMultiplePrints, useCart } from "@/lib/cartStore";
 
 type Row = { meta: UploadedMeta; pagesUnknown: boolean };
 
@@ -54,6 +56,7 @@ export function OrderFlow() {
   const router = useRouter();
   const { activeAddress } = useAddresses();
   const cart = useCart();
+  const { user, deductWallet } = useUser();
 
   const [rows, setRows] = useState<Row[]>([]);
   const [cfg, setCfg] = useState<Record<string, FileConfig>>({});
@@ -65,6 +68,7 @@ export function OrderFlow() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState("");
   const [addedStationery, setAddedStationery] = useState<{ item: StationeryItem; quantity: number }[]>([]);
+  const [paymentChoice, setPaymentChoice] = useState<"RAZORPAY" | "WALLET">("RAZORPAY");
   const [isPlacing, setIsPlacing] = useState(false);
 
   const hydrated = useRef(false);
@@ -95,8 +99,28 @@ export function OrderFlow() {
     [rows, cfg]
   );
 
-  const printSubtotal = lines.reduce((acc, l) => acc + l.line.total, 0);
-  const stationerySubtotal = addedStationery.reduce(
+  // Combine items already in cart with any essentials toggled on this page
+  const allStationery = useMemo(() => {
+    const map = new Map<string, { item: StationeryItem; quantity: number }>();
+    for (const s of cart.stationery) {
+      map.set(s.item.id, { ...s });
+    }
+    for (const a of addedStationery) {
+      const prev = map.get(a.item.id);
+      if (prev) {
+        map.set(a.item.id, { item: a.item, quantity: prev.quantity + a.quantity });
+      } else {
+        map.set(a.item.id, { ...a });
+      }
+    }
+    return Array.from(map.values());
+  }, [cart.stationery, addedStationery]);
+
+  const currentPrintsTotal = lines.reduce((acc, l) => acc + l.line.total, 0);
+  const existingPrintsTotal = cart.prints.reduce((acc, p) => acc + p.subtotal, 0);
+  const printSubtotal = currentPrintsTotal + existingPrintsTotal;
+
+  const stationerySubtotal = allStationery.reduce(
     (acc, x) => acc + x.item.price * x.quantity,
     0
   );
@@ -113,7 +137,9 @@ export function OrderFlow() {
   }
 
   const grandTotal = Math.max(0, subtotal + deliveryFee - couponDiscount);
-  const totalSides = lines.reduce((acc, l) => acc + l.line.pages * l.cfg.copies, 0);
+  const totalSides =
+    lines.reduce((acc, l) => acc + l.line.pages * l.cfg.copies, 0) +
+    cart.prints.reduce((acc, p) => acc + p.pages * p.copies, 0);
 
   function addFiles(list: FileList | File[]) {
     void (async () => {
@@ -169,45 +195,126 @@ export function OrderFlow() {
     }
   }
 
-  function handlePlaceOrder() {
+  function handleAddToCart() {
     if (lines.length === 0) return;
-    setIsPlacing(true);
+    const printCartItems = lines.map((l) => ({
+      id: l.row.meta.id,
+      fileName: l.row.meta.name,
+      fileSize: l.row.meta.size,
+      pages: l.line.pages,
+      copies: l.cfg.copies,
+      printType: l.cfg.printType,
+      sideType: l.cfg.sideType,
+      paperGrade: l.cfg.paperGrade,
+      binding: l.cfg.binding,
+      range: l.cfg.pageSpec,
+      notes: l.cfg.notes,
+      subtotal: l.line.total,
+    }));
 
-    setTimeout(() => {
-      const printCartItems = lines.map((l) => ({
-        id: l.row.meta.id,
-        fileName: l.row.meta.name,
-        fileSize: l.row.meta.size,
-        pages: l.line.pages,
-        copies: l.cfg.copies,
-        printType: l.cfg.printType,
-        sideType: l.cfg.sideType,
-        paperGrade: l.cfg.paperGrade,
-        binding: l.cfg.binding,
-        range: l.cfg.pageSpec,
-        notes: l.cfg.notes,
-        subtotal: l.line.total,
-      }));
+    addMultiplePrints(printCartItems);
+    for (const extra of addedStationery) {
+      cart.addStationery(extra.item, extra.quantity);
+    }
+    setAddedStationery([]);
+    setRows([]);
+    cart.openCart();
+  }
+
+  function handlePlaceOrder() {
+    if (lines.length === 0 && cart.prints.length === 0 && allStationery.length === 0) return;
+
+    const currentConfiguredPrints = lines.map((l) => ({
+      id: l.row.meta.id,
+      fileName: l.row.meta.name,
+      fileSize: l.row.meta.size,
+      pages: l.line.pages,
+      copies: l.cfg.copies,
+      printType: l.cfg.printType,
+      sideType: l.cfg.sideType,
+      paperGrade: l.cfg.paperGrade,
+      binding: l.cfg.binding,
+      range: l.cfg.pageSpec,
+      notes: l.cfg.notes,
+      subtotal: l.line.total,
+    }));
+
+    const allPrints = [...cart.prints, ...currentConfiguredPrints];
+
+    if (paymentChoice === "WALLET") {
+      if (user.walletBalance < grandTotal) {
+        alert(
+          `Wallet balance (₹${user.walletBalance.toFixed(
+            2
+          )}) is insufficient for ₹${grandTotal}. Please top up in your account or select Razorpay online.`
+        );
+        return;
+      }
+
+      setIsPlacing(true);
+      deductWallet(grandTotal);
 
       const order = createOrder({
         customer: activeAddress,
-        prints: printCartItems,
-        stationery: addedStationery,
+        prints: allPrints,
+        stationery: allStationery,
         subtotal,
         deliveryFee,
         discount: couponDiscount,
         total: grandTotal,
+        paymentMethod: "WALLET",
         deliverySlot:
           deliverySlot === "express"
-            ? "⚡ Express Dark-Store (30–45 mins)"
+            ? "⚡ Express (30–45 mins)"
             : deliverySlot === "campus"
             ? "🎓 Campus Gate Schedule"
             : "📦 Same-Day Evening Window",
       });
 
+      cart.clearCart();
       setIsPlacing(false);
       router.push(`/track?id=${order.id}`);
-    }, 600);
+      return;
+    }
+
+    // Razorpay Flow
+    setIsPlacing(true);
+    void triggerRazorpayPayment({
+      amount: grandTotal,
+      name: "PrintKarr.in",
+      description: `Online Xerox & Study Essentials (${allPrints.length} documents)`,
+      prefill: {
+        name: user.name,
+        email: user.email,
+        contact: user.phone,
+      },
+      onSuccess: (paymentId) => {
+        const order = createOrder({
+          customer: activeAddress,
+          prints: allPrints,
+          stationery: allStationery,
+          subtotal,
+          deliveryFee,
+          discount: couponDiscount,
+          total: grandTotal,
+          paymentMethod: "RAZORPAY",
+          paymentId,
+          deliverySlot:
+            deliverySlot === "express"
+              ? "⚡ Express (30–45 mins)"
+              : deliverySlot === "campus"
+              ? "🎓 Campus Gate Schedule"
+              : "📦 Same-Day Evening Window",
+        });
+
+        cart.clearCart();
+        setIsPlacing(false);
+        router.push(`/track?id=${order.id}`);
+      },
+      onDismiss: () => {
+        setIsPlacing(false);
+      },
+    });
   }
 
   const essentials = STATIONERY_CATALOGUE.slice(0, 4);
@@ -221,12 +328,12 @@ export function OrderFlow() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-[#f8cb46] px-2.5 py-0.5 text-xs font-bold text-ink">
-                  ⚡ 30-Min Fast Desk
+                  ⚡ 30-Min Online Xerox Shop
                 </span>
-                <span className="text-xs text-slate">PDF, Photos &amp; Assignment Prints</span>
+                <span className="text-xs text-slate">Assignments, Thesis, Admit Cards &amp; Forms</span>
               </div>
               <h1 className="font-grotesk text-2xl sm:text-3xl font-extrabold text-ink mt-1">
-                Print Documents &amp; Bind
+                Online Xerox &amp; Document Printing
               </h1>
             </div>
 
@@ -644,20 +751,20 @@ export function OrderFlow() {
                 {[
                   {
                     id: "express" as const,
-                    label: "⚡ Express Dark-Store (30–45 mins)",
-                    desc: "Immediate print & dispatch to your door",
+                    label: "⚡ Express 30-Min Delivery",
+                    desc: "Immediate print and fast rider dispatch to your doorstep",
                     fee: isFreeDelivery ? "FREE" : "₹20",
                   },
                   {
                     id: "campus" as const,
-                    label: "🎓 Campus / College Gate Drop",
-                    desc: "LIT Sarigam & ROFEL main gate handover",
+                    label: "🎓 Campus and College Gate Handover",
+                    desc: "LIT Sarigam and ROFEL main gate delivery",
                     fee: isFreeDelivery ? "FREE" : "₹5",
                   },
                   {
                     id: "evening" as const,
                     label: "📦 Same-Day Evening (6 PM - 8 PM)",
-                    desc: "Scheduled batch delivery",
+                    desc: "Scheduled batch delivery to your address",
                     fee: "FREE",
                   },
                 ].map((s) => (
@@ -710,6 +817,66 @@ export function OrderFlow() {
               ) : null}
             </div>
 
+            {/* Payment Choice */}
+            <div className="rounded-3xl border border-ink/10 bg-white p-4 sm:p-5 shadow-xs space-y-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate">
+                Payment Option
+              </h3>
+              <div className="space-y-2">
+                <label
+                  className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3 text-xs transition ${
+                    paymentChoice === "RAZORPAY"
+                      ? "border-[#0c831f] bg-[#e8f8ec]/40 font-bold text-ink shadow-xs"
+                      : "border-ink/10 hover:border-ink/20 text-slate"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="flowPaymentChoice"
+                      checked={paymentChoice === "RAZORPAY"}
+                      onChange={() => setPaymentChoice("RAZORPAY")}
+                      className="accent-[#0c831f]"
+                    />
+                    <div>
+                      <p className="font-bold text-ink">💳 Razorpay Online Payment</p>
+                      <p className="text-[11px] text-slate">UPI, Google Pay, PhonePe, Cards, NetBanking</p>
+                    </div>
+                  </div>
+                  <span className="rounded-md bg-[#0c831f]/10 px-2 py-0.5 text-[10px] font-bold text-[#0c831f]">
+                    SECURE
+                  </span>
+                </label>
+
+                <label
+                  className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3 text-xs transition ${
+                    paymentChoice === "WALLET"
+                      ? "border-[#0c831f] bg-[#e8f8ec]/40 font-bold text-ink shadow-xs"
+                      : "border-ink/10 hover:border-ink/20 text-slate"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="flowPaymentChoice"
+                      checked={paymentChoice === "WALLET"}
+                      onChange={() => setPaymentChoice("WALLET")}
+                      className="accent-[#0c831f]"
+                    />
+                    <div>
+                      <p className="font-bold text-ink">👛 PrintKarr Wallet Balance</p>
+                      <p className="text-[11px] text-slate">
+                        Available: ₹{user.walletBalance.toFixed(2)} · 1-click checkout
+                      </p>
+                    </div>
+                  </div>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-bold text-ink">
+                    ₹{user.walletBalance.toFixed(0)}
+                  </span>
+                </label>
+              </div>
+            </div>
+
             {/* Bill Details */}
             <div className="rounded-3xl border border-ink/10 bg-white p-5 shadow-xs space-y-2.5 text-xs">
               <h3 className="font-bold uppercase tracking-wider text-slate">Bill Details</h3>
@@ -719,7 +886,7 @@ export function OrderFlow() {
               </div>
               {stationerySubtotal > 0 ? (
                 <div className="flex justify-between text-slate">
-                  <span>Stationery &amp; Essentials ({addedStationery.length} items)</span>
+                  <span>Stationery &amp; Study Essentials ({allStationery.length} items)</span>
                   <span className="font-semibold text-ink">₹{stationerySubtotal}</span>
                 </div>
               ) : null}
@@ -741,21 +908,33 @@ export function OrderFlow() {
               </div>
             </div>
 
-            {/* Pay Button / Sticky CTA */}
-            <button
-              type="button"
-              disabled={lines.length === 0 || isPlacing}
-              onClick={handlePlaceOrder}
-              className="w-full flex items-center justify-between rounded-2xl bg-[#0c831f] px-5 py-4 text-white shadow-lg hover:bg-[#096a18] active:translate-y-0.5 transition font-bold disabled:opacity-50"
-            >
-              <div className="text-left">
-                <span className="text-xs font-normal opacity-90 block">Total to Pay</span>
-                <span className="text-xl leading-tight">₹{grandTotal}</span>
-              </div>
-              <span className="text-sm font-bold">
-                {isPlacing ? "Processing Order…" : "Pay Online &amp; Print →"}
-              </span>
-            </button>
+            {/* Action Buttons: Add to Cart OR Pay Online */}
+            <div className="space-y-2.5">
+              <button
+                type="button"
+                disabled={(lines.length === 0 && allStationery.length === 0) || isPlacing}
+                onClick={handlePlaceOrder}
+                className="w-full flex items-center justify-between rounded-2xl bg-[#0c831f] px-5 py-4 text-white shadow-lg hover:bg-[#096a18] active:translate-y-0.5 transition font-bold disabled:opacity-50"
+              >
+                <div className="text-left">
+                  <span className="text-xs font-normal opacity-90 block">Total to Pay</span>
+                  <span className="text-xl leading-tight">₹{grandTotal}</span>
+                </div>
+                <span className="text-sm font-bold">
+                  {isPlacing ? "Processing Order…" : "Pay Online &amp; Print →"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={lines.length === 0}
+                onClick={handleAddToCart}
+                className="w-full rounded-2xl border-2 border-[#0c831f] bg-white py-3 text-xs font-bold text-[#0c831f] hover:bg-[#e8f8ec] transition disabled:opacity-50"
+              >
+                + Add Documents to Basket &amp; View All
+              </button>
+            </div>
+
             <p className="text-center text-[11px] text-slate">
               🔒 100% Safe Razorpay &amp; UPI Payments · Auto-deleted after delivery
             </p>

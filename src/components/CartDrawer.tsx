@@ -15,6 +15,8 @@ import {
   type DeliverySlot,
 } from "@/lib/cartStore";
 import { useAddresses, openAddressDrawer } from "@/lib/addressStore";
+import { useUser } from "@/lib/userStore";
+import { triggerRazorpayPayment } from "@/lib/razorpay";
 import { STATIONERY_CATALOGUE, type StationeryItem } from "@/lib/stationeryData";
 import { createOrder } from "@/lib/ordersStore";
 
@@ -22,9 +24,11 @@ export function CartDrawer() {
   const router = useRouter();
   const cart = useCart();
   const { activeAddress } = useAddresses();
+  const { user, deductWallet } = useUser();
   const [couponInput, setCouponInput] = useState("");
   const [couponMsg, setCouponMsg] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [paymentChoice, setPaymentChoice] = useState<"RAZORPAY" | "WALLET">("RAZORPAY");
 
   useEffect(() => {
     if (!cart.isOpen) return;
@@ -49,8 +53,21 @@ export function CartDrawer() {
   };
 
   const handleCheckout = () => {
-    setIsCheckingOut(true);
-    setTimeout(() => {
+    if (cart.totalCount === 0) return;
+
+    if (paymentChoice === "WALLET") {
+      if (user.walletBalance < cart.total) {
+        alert(
+          `Insufficient wallet balance (₹${user.walletBalance.toFixed(
+            2
+          )}). Please top up in your account or select Razorpay online payment.`
+        );
+        return;
+      }
+
+      setIsCheckingOut(true);
+      deductWallet(cart.total);
+
       const order = createOrder({
         customer: activeAddress,
         prints: cart.prints,
@@ -59,6 +76,7 @@ export function CartDrawer() {
         deliveryFee: cart.deliveryFee,
         discount: cart.couponDiscount,
         total: cart.total,
+        paymentMethod: "WALLET",
         deliverySlot:
           cart.deliverySlot === "express"
             ? "⚡ Express (30–45 mins)"
@@ -71,7 +89,48 @@ export function CartDrawer() {
       cart.closeCart();
       setIsCheckingOut(false);
       router.push(`/track?id=${order.id}`);
-    }, 600);
+      return;
+    }
+
+    // Razorpay Flow
+    setIsCheckingOut(true);
+    void triggerRazorpayPayment({
+      amount: cart.total,
+      name: "PrintKarr.in",
+      description: "Online Xerox & Study Essentials",
+      prefill: {
+        name: user.name,
+        email: user.email,
+        contact: user.phone,
+      },
+      onSuccess: (paymentId) => {
+        const order = createOrder({
+          customer: activeAddress,
+          prints: cart.prints,
+          stationery: cart.stationery,
+          subtotal: cart.subtotal,
+          deliveryFee: cart.deliveryFee,
+          discount: cart.couponDiscount,
+          total: cart.total,
+          paymentMethod: "RAZORPAY",
+          paymentId,
+          deliverySlot:
+            cart.deliverySlot === "express"
+              ? "⚡ Express (30–45 mins)"
+              : cart.deliverySlot === "campus"
+              ? "🎓 Campus Gate Schedule"
+              : "📦 Same-Day Evening",
+        });
+
+        cart.clearCart();
+        cart.closeCart();
+        setIsCheckingOut(false);
+        router.push(`/track?id=${order.id}`);
+      },
+      onDismiss: () => {
+        setIsCheckingOut(false);
+      },
+    });
   };
 
   return (
@@ -288,6 +347,18 @@ export function CartDrawer() {
             </div>
           ) : null}
 
+          {/* Quick Add a Print Action if in Cart */}
+          {cart.totalCount > 0 ? (
+            <Link
+              href="/order"
+              onClick={closeCart}
+              className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#0c831f]/40 bg-[#e8f8ec]/30 py-2.5 text-xs font-bold text-[#0c831f] hover:border-[#0c831f] hover:bg-[#e8f8ec]/60 transition"
+            >
+              <span>🖨️</span>
+              <span>+ Add a document print to this basket</span>
+            </Link>
+          ) : null}
+
           {/* Impulse Cross-Sell Essentials */}
           {impulseItems.length > 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-3.5 shadow-xs">
@@ -423,6 +494,68 @@ export function CartDrawer() {
               {couponMsg ? (
                 <p className="text-[11px] text-slate mt-1.5 font-medium">{couponMsg}</p>
               ) : null}
+            </div>
+          ) : null}
+
+          {/* Payment Method Choice */}
+          {cart.totalCount > 0 ? (
+            <div className="rounded-2xl border border-ink/10 bg-white p-3.5 shadow-xs space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate">
+                Payment Method
+              </h4>
+              <div className="space-y-1.5">
+                <label
+                  className={`flex cursor-pointer items-center justify-between rounded-xl border p-2.5 text-xs transition ${
+                    paymentChoice === "RAZORPAY"
+                      ? "border-[#0c831f] bg-[#e8f8ec]/40 font-semibold text-ink"
+                      : "border-ink/10 hover:border-ink/20 text-slate"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="cartPaymentMethod"
+                      checked={paymentChoice === "RAZORPAY"}
+                      onChange={() => setPaymentChoice("RAZORPAY")}
+                      className="accent-[#0c831f]"
+                    />
+                    <div>
+                      <p className="font-bold text-ink">💳 Razorpay Online</p>
+                      <p className="text-[10px] text-slate">UPI, Google Pay, PhonePe, Cards, NetBanking</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-[#0c831f] bg-[#0c831f]/10 px-2 py-0.5 rounded-md">
+                    FAST
+                  </span>
+                </label>
+
+                <label
+                  className={`flex cursor-pointer items-center justify-between rounded-xl border p-2.5 text-xs transition ${
+                    paymentChoice === "WALLET"
+                      ? "border-[#0c831f] bg-[#e8f8ec]/40 font-semibold text-ink"
+                      : "border-ink/10 hover:border-ink/20 text-slate"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="cartPaymentMethod"
+                      checked={paymentChoice === "WALLET"}
+                      onChange={() => setPaymentChoice("WALLET")}
+                      className="accent-[#0c831f]"
+                    />
+                    <div>
+                      <p className="font-bold text-ink">👛 PrintKarr Wallet</p>
+                      <p className="text-[10px] text-slate">
+                        Available: ₹{user.walletBalance.toFixed(2)} · 1-click checkout
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-ink font-mono bg-slate-100 px-2 py-0.5 rounded-md">
+                    ₹{user.walletBalance.toFixed(0)}
+                  </span>
+                </label>
+              </div>
             </div>
           ) : null}
 

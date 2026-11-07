@@ -28,17 +28,16 @@ export default function Home() {
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full border border-edge bg-surface px-3 py-1 text-xs font-semibold text-slate">
                 <span className="flex h-2 w-2 rounded-full bg-[#0c831f]" aria-hidden="true" />
-                <span>30-minute dark-store print desk in Vapi &amp; Sarigam</span>
+                <span>⚡ 30-Minute Online Xerox Shop in Vapi, Sarigam &amp; Daman</span>
               </div>
 
               <h1 className="font-grotesk text-3xl sm:text-5xl lg:text-[3.25rem] font-extrabold tracking-tight text-ink leading-[1.08] text-balance">
-                Your printer shop, delivered to your door in 30 minutes.
+                Online Xerox &amp; Stationery, delivered to your door in 30 minutes.
               </h1>
 
               <p className="max-w-xl text-sm sm:text-base text-slate leading-relaxed">
-                Upload assignments, thesis reports, or government forms. We print on high-speed laser
-                presses, pack with exam-ready stationery, and deliver straight to your home, hostel, or
-                office.
+                Skip long xerox shop queues. Upload your PDF, notes, or government forms. We print on
+                crisp laser paper, pack with pens and folders, and deliver straight to your hostel or home.
               </p>
 
               {/* Action Buttons */}
@@ -47,7 +46,7 @@ export default function Home() {
                   href="/order"
                   className="rounded-xl bg-[#0c831f] px-6 py-3 text-sm font-bold text-white shadow-xs hover:bg-[#096a18] active:translate-y-px transition"
                 >
-                  Start a Print Order →
+                  Start Online Xerox Order →
                 </Link>
                 <Link
                   href="/stationery"
@@ -57,14 +56,14 @@ export default function Home() {
                 </Link>
               </div>
 
-              {/* Real Value Pillars (R-17: honest factual data, no buzzwords) */}
+              {/* Real Value Pillars */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-edge text-xs">
                 <div>
-                  <b className="font-bold text-ink block text-sm">₹1.50/side</b>
-                  <span className="text-slate">Clean B&amp;W Laser</span>
+                  <b className="font-bold text-ink block text-sm">₹1.25/page</b>
+                  <span className="text-slate">B&amp;W Laser Xerox</span>
                 </div>
                 <div>
-                  <b className="font-bold text-ink block text-sm">30-45 Mins</b>
+                  <b className="font-bold text-ink block text-sm">30 Mins</b>
                   <span className="text-slate">Vapi &amp; Sarigam</span>
                 </div>
                 <div>
@@ -72,8 +71,8 @@ export default function Home() {
                   <span className="text-[#0c831f]">Zero delivery fee</span>
                 </div>
                 <div>
-                  <b className="font-bold text-ink block text-sm">Auto-Purged</b>
-                  <span className="text-slate">100% Private files</span>
+                  <b className="font-bold text-ink block text-sm">Auto-Deleted</b>
+                  <span className="text-slate">100% Confidential</span>
                 </div>
               </div>
             </div>
@@ -364,7 +363,7 @@ export default function Home() {
           {[
             {
               q: "How do you protect the privacy of my documents?",
-              a: "Your files are sent over an encrypted HTTPS connection straight to our local dark-store print queue. They are never indexed, shared, or retained. Once your order is handed over and confirmed, the files are permanently purged from the print desk spool.",
+              a: "Your files are sent over an encrypted HTTPS connection straight to our secure print queue. They are never indexed, shared, or retained. Once your order is handed over and confirmed, the files are permanently deleted automatically from our system.",
             },
             {
               q: "How does college gate delivery work at LIT Sarigam or ROFEL Vapi?",

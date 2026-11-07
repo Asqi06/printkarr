@@ -1,35 +1,36 @@
 import Link from "next/link";
 
-/** "printkarr" wordmark: lowercase grotesk, yellow block under "karr". */
 export function Wordmark({
   small = false,
   link = true,
+  theme = "light",
 }: {
   small?: boolean;
   link?: boolean;
+  theme?: "light" | "dark";
 }) {
-  const text = (
-    <span
-      className={`relative z-0 inline-block select-none font-grotesk font-bold tracking-tight text-ink ${
-        small ? "text-[1.35rem]" : "text-2xl"
-      }`}
-    >
-      print
-      <span className="relative">
-        karr
-        <span
-          aria-hidden
-          className="absolute inset-x-[-2px] bottom-[0.08em] z-[-1] h-[0.42em] rounded-[3px] bg-karr"
-        />
-      </span>
-    </span>
+  const content = (
+    <div className="flex items-center gap-1.5 shrink-0">
+      <img
+        src="/logo-white.png"
+        alt="Printkarr.in: Online Xerox and Printing"
+        className={`object-contain transition ${
+          small ? "h-6 sm:h-7 w-auto" : "h-7 sm:h-8 w-auto"
+        } ${theme === "light" ? "brightness-0" : ""}`}
+      />
+    </div>
   );
+
   if (link) {
     return (
-      <Link href="/" aria-label="printkarr: home" className="shrink-0">
-        {text}
+      <Link
+        href="/"
+        aria-label="Printkarr.in Home: Online Xerox Shop"
+        className="shrink-0 flex items-center"
+      >
+        {content}
       </Link>
     );
   }
-  return text;
+  return content;
 }

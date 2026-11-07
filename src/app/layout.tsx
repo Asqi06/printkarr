@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { site } from "@/lib/site";
 import "./globals.css";
@@ -28,26 +29,27 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "PrintKarr · 30-Min Instant Document Printing & Stationery in Vapi",
+    default: "PrintKarr · 30-Min Online Xerox Shop & Stationery in Vapi, Sarigam & Daman",
     template: "%s · PrintKarr",
   },
   description:
-    "India's fastest document printing and stationery delivery. High quality B&W and colour printing, spiral binding, and office essentials delivered in 30–45 mins to Vapi, Sarigam, and Daman.",
+    "Online Xerox and stationery delivery in 30 minutes. Crisp B&W and colour prints, spiral thesis binding, college notes, and essentials delivered to your door.",
   keywords: [
-    "online printing in Vapi",
-    "print delivery in Vapi",
-    "online PDF printing Vapi",
-    "document printing Vapi",
+    "online xerox near me",
+    "xerox shop Vapi",
+    "online printout delivery",
+    "spiral thesis binding Vapi",
+    "college notes xerox Sarigam",
+    "document printing Daman",
     "colour printing Vapi",
-    "spiral binding Vapi",
-    "stationery delivery Vapi",
-    "Blinkit print alternative",
+    "exam stationery delivery",
+    "Printkarr online xerox",
   ],
   openGraph: {
-    siteName: "PrintKarr",
+    siteName: "PrintKarr.in",
     locale: "en_IN",
     type: "website",
-    description: "30-min document printing & stationery delivery in Vapi, Sarigam & Daman.",
+    description: "30-min online xerox and stationery delivery in Vapi, Sarigam and Daman.",
   },
   alternates: { canonical: "/" },
 };
@@ -82,6 +84,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <AddressDrawer />
         <CartDrawer />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusiness) }}
