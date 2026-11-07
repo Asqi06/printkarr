@@ -239,6 +239,117 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Trending Custom Prints & Decor in Vapi (Top Queries) ── */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0c831f]">
+              🔥 Local Favorites &amp; Top Searches
+            </span>
+            <h2 className="font-grotesk text-2xl font-bold text-ink mt-0.5">
+              Custom Name Plates, Anime Lights &amp; Business Cards
+            </h2>
+            <p className="text-xs text-slate mt-0.5">
+              Handcrafted locally in Vapi with high-definition laser cutting &amp; express 30-min delivery.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Card 1: Name Plates */}
+          <Link
+            href="/name-plates"
+            className="rounded-3xl border border-edge bg-white p-5 shadow-xs hover:border-[#0c831f] transition group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-3xl">🚪</span>
+              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
+                Custom Shop
+              </span>
+            </div>
+            <h3 className="font-grotesk text-base font-bold text-ink mt-3 group-hover:text-[#0c831f] transition">
+              Custom Door Name Plates
+            </h3>
+            <p className="text-xs text-slate mt-1 leading-relaxed">
+              Golden mirror acrylic, wooden house plaques &amp; clinic desk plates.
+            </p>
+            <div className="mt-4 pt-3 border-t border-edge flex items-center justify-between text-xs font-bold">
+              <span>From ₹349</span>
+              <span className="text-[#0c831f]">Explore Designs →</span>
+            </div>
+          </Link>
+
+          {/* Card 2: Anime Lights */}
+          <Link
+            href="/anime-decor"
+            className="rounded-3xl border border-edge bg-white p-5 shadow-xs hover:border-[#0c831f] transition group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-3xl">💡</span>
+              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-bold text-red-900">
+                Trending
+              </span>
+            </div>
+            <h3 className="font-grotesk text-base font-bold text-ink mt-3 group-hover:text-[#0c831f] transition">
+              Anime Wall Lights &amp; Posters
+            </h3>
+            <p className="text-xs text-slate mt-1 leading-relaxed">
+              Glowing LED acrylic lights, backlit frames &amp; scroll wall hangers.
+            </p>
+            <div className="mt-4 pt-3 border-t border-edge flex items-center justify-between text-xs font-bold">
+              <span>From ₹249</span>
+              <span className="text-[#0c831f]">Shop Anime Decor →</span>
+            </div>
+          </Link>
+
+          {/* Card 3: Business Cards */}
+          <Link
+            href="/business-cards"
+            className="rounded-3xl border border-edge bg-white p-5 shadow-xs hover:border-[#0c831f] transition group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-3xl">💼</span>
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-900">
+                Pack of 100
+              </span>
+            </div>
+            <h3 className="font-grotesk text-base font-bold text-ink mt-3 group-hover:text-[#0c831f] transition">
+              Business Card Printing
+            </h3>
+            <p className="text-xs text-slate mt-1 leading-relaxed">
+              350 GSM matte laminated &amp; spot UV executive visiting cards.
+            </p>
+            <div className="mt-4 pt-3 border-t border-edge flex items-center justify-between text-xs font-bold">
+              <span>From ₹199</span>
+              <span className="text-[#0c831f]">Order Cards →</span>
+            </div>
+          </Link>
+
+          {/* Card 4: Posters */}
+          <Link
+            href="/posters"
+            className="rounded-3xl border border-edge bg-white p-5 shadow-xs hover:border-[#0c831f] transition group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-3xl">🖼️</span>
+              <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-900">
+                HD Photo
+              </span>
+            </div>
+            <h3 className="font-grotesk text-base font-bold text-ink mt-3 group-hover:text-[#0c831f] transition">
+              HD Poster Printing (A3/A4)
+            </h3>
+            <p className="text-xs text-slate mt-1 leading-relaxed">
+              Glossy 300 GSM photo prints for anime, gaming &amp; room decor.
+            </p>
+            <div className="mt-4 pt-3 border-t border-edge flex items-center justify-between text-xs font-bold">
+              <span>From ₹29</span>
+              <span className="text-[#0c831f]">Print Posters →</span>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* ── 3. Quick-Commerce Study Essentials Grid (Increases AOV) ── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">

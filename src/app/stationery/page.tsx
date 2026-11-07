@@ -52,15 +52,15 @@ function StationeryContent() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-[#f8cb46] px-2.5 py-0.5 text-xs font-bold text-ink">
-                  ⚡ 30-Min Dark Store
+                  ⚡ 30-Min Instant Delivery
                 </span>
                 <span className="text-xs text-slate">Delivered in same parcel with your prints</span>
               </div>
               <h1 className="font-grotesk text-2xl sm:text-3xl font-extrabold text-ink mt-1">
-                Study &amp; Office Essentials
+                Stationery, Custom Prints &amp; Anime Decor
               </h1>
               <p className="text-xs sm:text-sm text-slate mt-0.5">
-                Transparent folders, smooth signing pens, neon highlighters, notebook registers, and clips.
+                Anime LED wall lights, custom name plates, business cards, HD posters, folders, and study essentials.
               </p>
             </div>
 

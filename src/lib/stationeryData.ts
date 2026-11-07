@@ -1,7 +1,17 @@
+export type StationeryCategory =
+  | "files"
+  | "pens"
+  | "notebooks"
+  | "tools"
+  | "anime-decor"
+  | "name-plates"
+  | "business-cards"
+  | "posters";
+
 export type StationeryItem = {
   id: string;
   name: string;
-  category: "files" | "pens" | "notebooks" | "tools";
+  category: StationeryCategory;
   price: number;
   mrp: number;
   unit: string;
@@ -12,11 +22,15 @@ export type StationeryItem = {
 };
 
 export const STATIONERY_CATEGORIES = [
-  { id: "all", label: "⚡ All Essentials", icon: "✨" },
+  { id: "all", label: "⚡ All Items", icon: "✨" },
+  { id: "anime-decor", label: "💡 Anime Wall Lights & Decor", icon: "⚡" },
+  { id: "name-plates", label: "📛 Custom Name Plates", icon: "🚪" },
+  { id: "business-cards", label: "💼 Business & Visiting Cards", icon: "📇" },
+  { id: "posters", label: "🖼️ HD Poster Prints", icon: "🎨" },
   { id: "files", label: "📁 Files & Folders", icon: "📁" },
   { id: "pens", label: "🖊️ Pens & Writing", icon: "🖊️" },
   { id: "notebooks", label: "📓 Notebooks & Pads", icon: "📓" },
-  { id: "tools", label: "📎 Binding & Desk Tools", icon: "📎" },
+  { id: "tools", label: "📎 Desk & Binding Tools", icon: "📎" },
 ] as const;
 
 export const STATIONERY_CATALOGUE: StationeryItem[] = [
@@ -186,6 +200,151 @@ export const STATIONERY_CATALOGUE: StationeryItem[] = [
     icon: "🧴",
     badge: "Photo Paste",
     description: "Clean, non-messy glue stick for pasting passport photos onto exam and application forms.",
+    inStock: true,
+  },
+  // Top Searched Products (Anime Wall Light, Name Plates, Business Cards, Posters)
+  {
+    id: "prod-anime-wall-light",
+    name: "Anime LED Acrylic Wall Light",
+    category: "anime-decor",
+    price: 599,
+    mrp: 899,
+    unit: "1 LED Lightbox · USB Powered",
+    icon: "💡",
+    badge: "🔥 Trending Anime",
+    description: "Laser-engraved acrylic LED silhouette wall light with soft glowing outline. Includes USB cable and wooden base.",
+    inStock: true,
+  },
+  {
+    id: "prod-led-anime-poster",
+    name: "Backlit LED Anime Poster Frame (A4)",
+    category: "anime-decor",
+    price: 749,
+    mrp: 1099,
+    unit: "A4 Lightbox Frame",
+    icon: "✨",
+    badge: "Best Seller",
+    description: "Ultra-bright illuminated poster frame that brings high-definition anime artwork to life with warm ambient backlight.",
+    inStock: true,
+  },
+  {
+    id: "prod-anime-wall-scroll",
+    name: "Japanese Anime Wooden Scroll Wall Hanger",
+    category: "anime-decor",
+    price: 349,
+    mrp: 499,
+    unit: "Canvas Fabric + Teak Hanger",
+    icon: "🎋",
+    badge: "Room Aesthetic",
+    description: "Premium fabric canvas wall hanging with magnetic natural wooden rods for easy mounting without nail damage.",
+    inStock: true,
+  },
+  {
+    id: "prod-anime-manga-collage",
+    name: "Manga Panels Room Wall Decor Kit (50 Prints)",
+    category: "anime-decor",
+    price: 249,
+    mrp: 399,
+    unit: "Pack of 50 · 4x6 inch",
+    icon: "🖼️",
+    badge: "50 Photo Cards",
+    description: "Curated black and white manga aesthetic wall collage cards on 300 GSM matte cardstock for bedroom or study desk.",
+    inStock: true,
+  },
+  {
+    id: "prod-acrylic-nameplate-door",
+    name: "Custom Golden Acrylic Door Name Plate",
+    category: "name-plates",
+    price: 449,
+    mrp: 699,
+    unit: "12 x 4 inch · Waterproof",
+    icon: "🚪",
+    badge: "Personalized",
+    description: "Mirror-finish golden embossed acrylic name plate with UV weatherproofing for home, flat, and apartment entrance.",
+    inStock: true,
+  },
+  {
+    id: "prod-desk-nameplate",
+    name: "Doctor & Executive Desk Name Plate",
+    category: "name-plates",
+    price: 349,
+    mrp: 499,
+    unit: "8 x 2.5 inch · Stand Included",
+    icon: "💼",
+    badge: "Office & Clinic",
+    description: "Professional triangular desk name stand with dual-tone laser engraved name, designation, and company logo.",
+    inStock: true,
+  },
+  {
+    id: "prod-wooden-nameplate",
+    name: "Laser Engraved Wooden House Name Plate",
+    category: "name-plates",
+    price: 499,
+    mrp: 799,
+    unit: "12 x 6 inch · Pine Wood",
+    icon: "🏡",
+    badge: "Handcrafted",
+    description: "Natural polished pine wood plaque with deep laser engraved family name and door number.",
+    inStock: true,
+  },
+  {
+    id: "prod-visiting-cards-matte",
+    name: "Premium Business Cards (Pack of 100)",
+    category: "business-cards",
+    price: 199,
+    mrp: 299,
+    unit: "100 Cards · 350 GSM Matte",
+    icon: "📇",
+    badge: "Ready in 30 Mins",
+    description: "High-definition offset digital visiting cards on thick 350 GSM European artboard with smooth matte lamination.",
+    inStock: true,
+  },
+  {
+    id: "prod-visiting-cards-spot-uv",
+    name: "Velvet Spot UV Business Cards (Pack of 100)",
+    category: "business-cards",
+    price: 349,
+    mrp: 499,
+    unit: "100 Cards · Raised UV",
+    icon: "💎",
+    badge: "Luxury Finish",
+    description: "Soft-touch velvet laminated business cards with glossy raised UV highlights on your brand logo and name.",
+    inStock: true,
+  },
+  {
+    id: "prod-hd-poster-a3",
+    name: "Custom HD Glossy Poster Print (A3)",
+    category: "posters",
+    price: 49,
+    mrp: 80,
+    unit: "1 Poster · 12 x 18 inch",
+    icon: "🎨",
+    badge: "300 GSM Photo",
+    description: "Vivid 12-colour digital poster printing on heavy gloss paper. Perfect for gaming, music, movie posters, and events.",
+    inStock: true,
+  },
+  {
+    id: "prod-hd-poster-a4",
+    name: "Custom HD Room Decor Poster (A4)",
+    category: "posters",
+    price: 29,
+    mrp: 50,
+    unit: "1 Poster · 8.3 x 11.7 inch",
+    icon: "🖼️",
+    badge: "Photo Quality",
+    description: "Studio-quality vibrant photo print on 300 GSM lustre paper for photo frames and desk art.",
+    inStock: true,
+  },
+  {
+    id: "prod-giant-poster-a2",
+    name: "Giant Architectural & Movie Poster (A2)",
+    category: "posters",
+    price: 129,
+    mrp: 199,
+    unit: "1 Poster · 16.5 x 23.4 inch",
+    icon: "📐",
+    badge: "Large Format",
+    description: "Wide-format architectural CAD blueprints, exhibition presentations, and oversized cinematic posters.",
     inStock: true,
   },
 ];

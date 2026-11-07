@@ -14,6 +14,16 @@ const footerSections = [
     ],
   },
   {
+    title: "Custom & Wall Decor",
+    items: [
+      { href: "/name-plates", label: "Custom Acrylic Name Plates" },
+      { href: "/anime-decor", label: "Anime LED Wall Lights" },
+      { href: "/anime-decor", label: "Anime Scroll Wall Hangers" },
+      { href: "/business-cards", label: "Business Card Printing" },
+      { href: "/posters", label: "HD Poster Printing (A3/A4)" },
+    ],
+  },
+  {
     title: "Study & Stationery",
     items: [
       { href: "/stationery", label: "A4 Clear Report Folders (₹10)" },

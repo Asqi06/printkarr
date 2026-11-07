@@ -44,7 +44,7 @@ export type OrderRecord = {
 
 const STORAGE_KEY = "pk_orders_v2";
 
-const SEED_ORDERS: OrderRecord[] = [
+const INITIAL_ORDERS: OrderRecord[] = [
   {
     id: "PK-92841",
     createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
@@ -179,17 +179,17 @@ function notify() {
 }
 
 function loadOrders(): OrderRecord[] {
-  if (typeof window === "undefined") return SEED_ORDERS;
+  if (typeof window === "undefined") return INITIAL_ORDERS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_ORDERS));
-      return SEED_ORDERS;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
+      return INITIAL_ORDERS;
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : SEED_ORDERS;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_ORDERS;
   } catch {
-    return SEED_ORDERS;
+    return INITIAL_ORDERS;
   }
 }
 
@@ -291,7 +291,7 @@ export function subscribeOrders(listener: () => void): () => void {
 }
 
 function getServerOrdersSnapshot(): OrderRecord[] {
-  return SEED_ORDERS;
+  return INITIAL_ORDERS;
 }
 
 export function useOrders() {
