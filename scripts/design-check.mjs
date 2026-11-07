@@ -169,7 +169,7 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
   };
   const source = readFileSync(new URL('../server.mjs', import.meta.url), 'utf8');
   runInNewContext(source.slice(source.indexOf('function currentUser('), source.indexOf('function staffLogin(')), scope);
-  const response = () => ({ cookies: {}, headers: {}, status() { return this; }, cookie(name, value, options) { this.cookies[name] = { value, options }; }, setHeader(name, value) { this.headers[name] = value; }, redirect(to) { this.location = to; }, send(body) { this.body = body; } });
+  const response = () => ({ cookies: {}, headers: {}, status(code) { this.code = code; return this; }, cookie(name, value, options) { this.cookies[name] = { value, options }; }, setHeader(name, value) { this.headers[name] = value; }, redirect(to) { this.location = to; }, send(body) { this.body = body; } });
   for (const destination of ['/customer/wallet', '/customer/profile', '/customer/orders']) {
     const guard = response();
     scope.requireRole('customer')({ method: 'GET', path: destination, protocol: 'https', headers: {} }, guard, () => assert.fail('Guest must sign in'));
@@ -177,14 +177,14 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
     assert.equal(guard.cookies.pk_next.value, destination);
     assert.equal(guard.cookies.pk_next.options.httpOnly, true);
     const req = { protocol: 'https', headers: { cookie: 'pk_next=' + encodeURIComponent(destination) }, body: { email: user.email, password: 'fake', code: '123456' } };
-    for (const route of ['POST /login', 'POST /login/code-verify']) {
+    const blocked = response(); await routes.get('POST /login')(req, blocked);
+    assert.equal(blocked.code, 401, 'Customer password login is retired');
+    assert.match(blocked.body, /Google/, 'POST /login points at Google');
+    for (const route of ['POST /login/code-request', 'POST /login/code-verify']) {
       const res = response(); await routes.get(route)(req, res);
-      assert.equal(res.location, destination, `${route}: restore the selected page`);
-      assert.ok(res.headers['Set-Cookie'].some(cookie => cookie.startsWith('pk_next=;') && cookie.includes('Max-Age=0')));
+      assert.equal(res.location, '/login', `${route}: email-code login is retired`);
+      assert.equal(res.headers['Set-Cookie'], undefined, `${route}: no session is created`);
     }
-    const otp = response(); await routes.get('POST /login/code-request')(req, otp);
-    assert.equal(otp.body, 'code');
-    assert.equal(otp.headers['Set-Cookie'], undefined, 'Code request retains the destination cookie');
   }
   for (const value of [undefined, '//evil.example', 'https://evil.example', '/customer/../admin', '/customer/wallet?next=https://evil.example', '/customer/wallet\r\n', '/customer/wallet\n', ['/customer/wallet']]) assert.equal(customerDestination(value), '/customer');
   for (const route of ['/customer', '/customer/orders/new', '/customer/packs', '/customer/referrals']) assert.equal(customerDestination(route), route);
@@ -195,12 +195,13 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
   const source = readFileSync(new URL('../server.mjs', import.meta.url), 'utf8');
   for (const scenario of ['customer','new-customer','staff','owner-email','unverified','replayed-state']) {
     let callback, sessions=0, saves=0;
-    const db={users:scenario==='new-customer'||scenario==='owner-email'?[]:[scenario==='staff'?staff:user],wallets:[{customerId:user.id,balance:150}]};
+    const db={users:scenario==='new-customer'||scenario==='owner-email'?[]:[scenario==='staff'?staff:user],wallets:[{customerId:user.id,balance:150}],addresses:scenario==='new-customer'||scenario==='owner-email'?[]:[{id:'addr',customerId:user.id,address:'Demo address',area:'Vapi',pin:'396191',isDefault:true}]};
     const scope={
       asyncHandler,crypto,AbortSignal,app:{get(route,fn){callback=fn;}}, GOOGLE:{id:'test',secret:'test'}, process:{env:{ADMIN_EMAIL:scenario==='owner-email'?user.email:''}},
       oauthStates:new Map(scenario==='replayed-state'?[]:[['nonce',Date.now()+60000]]), parseCookies, URLSearchParams,
       googleRedirectUri:()=> 'https://printkarr.in/auth/google/callback', loadDb:()=>db, saveDb(){saves++;}, referralCodeFor(){},
       createSession(){sessions++;return 'session';}, sessionCookie:()=>['session=test'], customerReturnTo:()=>'/customer/wallet', HOME:{customer:'/customer',admin:'/admin'}, loginView:error=>error,
+      profileComplete:(db,u)=>!!(u&&u.phone&&(db.addresses||[]).length),
       isAdminEmail:email=>scenario==='owner-email'&&email===user.email,
       fetch:async url=>({json:async()=>url.endsWith('/token')?{access_token:'test'}:{email:user.email,name:user.name,email_verified:scenario!=='unverified'}})
     };
@@ -209,9 +210,10 @@ assert.doesNotMatch(readFileSync(new URL('../public/qk-landing.css', import.meta
     await callback({headers:{cookie:'g_state=nonce'},query:{state:'nonce',code:'test'}},res);
     if(scenario==='staff'||scenario==='owner-email'){assert.equal(res.location,'/admin/login');assert.equal(sessions,0);assert.equal(saves,0);}
     else if(scenario==='unverified'||scenario==='replayed-state'){assert.equal(res.code,401);assert.equal(sessions,0);}
+    else if(scenario==='new-customer'){assert.equal(res.location,'/account/complete?next=%2Fcustomer%2Fwallet');assert.equal(sessions,1);assert.equal(saves,1);}
     else {assert.equal(res.location,'/customer/wallet');assert.equal(sessions,1);assert.equal(saves,scenario==='new-customer'?1:0);assert.equal(db.wallets[0].balance,150);}
   }
-  console.log('OAuth checked: Google customer access, retained wallet, staff credential separation and invalid-state rejection.');
+  console.log('OAuth checked: Google customer access, first-login profile capture, retained wallet, staff credential separation and invalid-state rejection.');
 }
 assert.match(pages.get('/customer/orders/preview/scan'), /jsqr@1\.4\.0\/dist\/jsQR\.js/);
 assert.match(pages.get('/'), /Printing in Vapi/);

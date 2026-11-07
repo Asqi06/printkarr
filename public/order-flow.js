@@ -28,12 +28,13 @@ document.addEventListener('change', event => {
 document.addEventListener('submit', async event => {
   const form=event.target; if(!form.matches('[data-order-upload],[data-inline-order]')) return;
   if(event.defaultPrevented)return;
-  event.preventDefault();if(form.dataset.busy)return; const button=form.querySelector('[type=submit]'), previous=button.textContent;
-  const data=new FormData(form);form.dataset.busy='1';button.disabled=true;button.setAttribute('aria-busy','true');button.textContent=form.matches('[data-order-upload]')?'Uploading & counting…':'Please wait…';
+  event.preventDefault();if(form.dataset.busy)return; const button=form.querySelector('[type=submit]'); const previous=button?button.textContent:'';
+  const busyText=form.matches('[data-order-upload]')?'Uploading & counting…':'Please wait…';
+  const data=new FormData(form);form.dataset.busy='1';if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent=busyText;}
   const status=form.querySelector('[role=status]'); if(status)status.textContent='Keep this page open while your file uploads.';
   try { const get=form.method.toLowerCase()==='get', url=get?form.action+'?'+new URLSearchParams(data):form.action; const response=await fetch(url,get?{}:{method:'POST',body:form.enctype==='multipart/form-data'?data:new URLSearchParams(data)}); await showOrderScreen(response); }
   catch (failure) { const error=document.createElement('p');error.className='login-err';error.setAttribute('role','alert');error.textContent=failure instanceof TypeError ? 'Could not connect. Your details are still here; please retry.' : failure.message;form.prepend(error); }
-  finally { delete form.dataset.busy;button.disabled=false;button.removeAttribute('aria-busy');button.textContent=previous; }
+  finally { delete form.dataset.busy;if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent=previous;} }
 });
 document.addEventListener('click', event => {
   const open=event.target.closest('[data-open-preview]'), close=event.target.closest('[data-close-preview]');
@@ -41,11 +42,13 @@ document.addEventListener('click', event => {
   if(close)close.closest('dialog').close();
 });
 
-document.addEventListener('dragover', event => { if (event.target.closest('[data-order-upload] .drop')) event.preventDefault(); });
+document.addEventListener('dragover', event => { const zone=event.target.closest('[data-order-upload] .drop'); if (!zone) return; event.preventDefault(); zone.classList.add('is-dragging'); });
+document.addEventListener('dragleave', event => { const zone=event.target.closest('[data-order-upload] .drop'); if (zone) zone.classList.remove('is-dragging'); });
 document.addEventListener('drop', event => {
   const zone = event.target.closest('[data-order-upload] .drop');
   if (!zone || !event.dataTransfer?.files?.length) return;
   event.preventDefault();
+  zone.classList.remove('is-dragging');
   const input = zone.closest('form').querySelector('input[type=file]');
   if (input?.files) { input.files = event.dataTransfer.files; input.dispatchEvent(new Event('change', { bubbles: true })); }
 });

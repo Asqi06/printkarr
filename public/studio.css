@@ -145,3 +145,41 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}body,.pk-page{background:va
 .order-focus .order-main .order-quote .order-price-lines>div{margin:0 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;line-height:1.5}
 .order-focus .order-main .order-quote .order-price-lines b{font-size:13px;font-weight:600;color:#18221a}
 @media(max-width:760px){.order-focus .order-main .order-quote .order-price-lines{padding-top:14px}}
+
+/* ---- One-page guest checkout: trust rows, merged contact, honest delivery groups ---- */
+.order-focus .order-trust{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+.order-trust span{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#2c431f;background:#eef4de;border:1px solid #ccd9a4;border-radius:6px;padding:7px 11px}
+.order-focus .order-file{background:none;border:0;border-bottom:1px solid #e2e8d8;border-radius:0;padding:0 0 13px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.order-focus .order-file h1{font-size:19px;line-height:1.25;font-weight:700;letter-spacing:-.02em;max-width:34ch;margin:0;word-break:break-word}
+.order-focus .order-file h1+p{margin:4px 0 0}
+.order-main .route-picks .pick b{font-size:13px}
+.order-main .route-picks .pick small{font-size:11px;color:#57654c}
+.route-where{margin:20px 0 8px;font-size:12px;font-weight:700;color:#234be8;letter-spacing:.04em}
+.route-picks .route-where:first-child{margin-top:0}
+.order-main .route-picks .pick:has(input:checked){border-color:#234be8;background:#eef2ff;box-shadow:inset 0 0 0 1px #234be8}
+.order-main .route-picks .pick:has(input:checked)::after,.order-main .order-choice .chip-pick:has(input:checked)::after{content:'✓';margin-left:auto;margin-right:-2px;color:#234be8;font-weight:700;font-size:13px}
+.order-main .order-choice .chip-pick:has(input:checked)::after{margin-left:2px}
+.order-main [data-home-details]{border-top:1px dashed #dbe4d0;padding-top:6px;margin-top:2px}
+.order-main [data-home-details][hidden]{display:none}
+.order-main .order-section:last-of-type .order-more{margin-top:8px}
+.order-main .guide-inline{background:none;border:0;padding:0;margin:14px 0 4px}
+.order-main .guide-inline .delivery-guide-body{background:none;border:0;padding:0;margin:0}
+.order-fix-labels .field label,.order-focus .order-main .field label{font-size:12px;color:#20281e;font-weight:600}
+.order-focus .order-main legend.eyebrow{color:#8a967e}
+.order-focus .order-main .order-more>summary{color:#2f3a26}
+.order-focus .order-main .order-quote-box .sumrow{padding:11px 0;font-size:13px;color:#42513a;border-color:#e6ecdd}
+.order-focus .order-main .order-quote-box .sumrow.total{font-size:18px;color:#234be8;font-weight:750}
+.order-main [data-order-upload] .drop.is-dragging{border-color:#234be8!important;background:#eef2ff!important}
+.order-main .order-contact-note{font-size:12px;color:#5d6f52}
+/* Sticky total bar: align with the card padding and kill the trailing dead space. */
+.order-focus .order-main{padding-bottom:30px}
+.order-focus .order-main .order-continue{margin-inline:-38px;padding-inline:38px;margin-bottom:-30px;border-radius:0 0 11px 11px}
+@media(max-width:760px){
+  .order-focus .order-main{padding:26px 22px 24px}
+  .order-focus .order-main .order-continue{margin-inline:-22px;padding-inline:22px;margin-bottom:-24px}
+  .order-trust span{font-size:10px;padding:6px 9px}
+}
+@media(max-width:360px){
+  .order-focus .order-main{padding-inline:16px}
+  .order-focus .order-main .order-continue{margin-inline:-16px;padding-inline:16px}
+}

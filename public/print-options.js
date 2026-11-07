@@ -1,4 +1,4 @@
-import { printPricing, processingFee, collegeDeliveryFee } from './print-pricing.js?v=20261010-mixed-calculator';
+import { printPricing, processingFee, collegeDeliveryFee, BULK_TIERS } from './print-pricing.js?v=20261010-mixed-calculator';
 import { printPlan, packCovers, pageRange, compactRange } from './print-plan.js?v=20261007-split-print';
 
 function initPrintOptions() {
@@ -64,14 +64,47 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       if(wallet?.checked && wallet.disabled){const available=form.querySelector('[name="paymentMethod"][value="online"]');if(available){available.checked=true;update();return;}}
       for(const [selector,cost] of [['[data-other-cost]',otherSubtotal],['[data-night-cost]',late],['[data-demand-cost]',surge]]){const line=form.querySelector(selector);if(line){line.textContent='₹'+cost.toLocaleString('en-IN');line.closest('div').hidden=!cost;}}
       const final=form.querySelector('[data-final-review]');if(final){final.querySelector('.total span:last-child').textContent='₹'+due.toLocaleString('en-IN');}
-      quote.querySelector('span').textContent = form.dataset.reviewedTotal ? 'Final total' : cfg.guest || cfg.otherPrintedSides ? 'Estimate · checked before payment' : 'Total';
-      quote.querySelector('b').textContent = '₹'+due.toLocaleString('en-IN');
-      quote.querySelector('button').textContent = (cfg.guest ? 'Continue' : get('paymentMethod')==='wallet' ? 'Pay with wallet' : 'Pay online')+' →';
+      const fmt = (n) => '₹' + n.toLocaleString('en-IN');
+      const parts = ['Print ' + fmt(net)];
+      if (Number(otherSubtotal) > 0) parts.push('Extras ' + fmt(otherSubtotal));
+      if (processFee) parts.push('Processing ' + fmt(processFee));
+      parts.push('Delivery ' + (fee === 0 ? 'FREE' : fmt(fee)));
+      quote.querySelector('span').textContent = form.dataset.reviewedTotal ? 'Final total' : parts.join(' + ') + (cfg.guest || cfg.otherPrintedSides ? ' — checked before payment' : '');
+      quote.querySelector('b').textContent = fmt(due);
+      quote.querySelector('button').textContent = (cfg.guest ? 'Verify email' : get('paymentMethod')==='wallet' ? 'Pay with wallet' : 'Pay online')+' →';
       const payable=cfg.guest || form.querySelector('[name="paymentMethod"]:checked:not(:disabled)');
       quote.querySelector('button').disabled=!payable;
       if (!payable) { hint.textContent='Your wallet needs funds and online payment is unavailable. Try again later or contact support.';hint.hidden=false; }
       form.querySelector('[data-print-cost]').textContent = '₹'+net.toLocaleString('en-IN')+(pack ? ' · pack' : discount ? ' · offer applied' : '');
       form.querySelector('[data-delivery-cost]').textContent = fee === 0 ? 'FREE' : '₹'+fee;
+      // Rate ladder + savings: same tier math as the desk's progressive pricing.
+      const baseRates={bw:cfg.bw,color:cfg.color};
+      const rate=(tier,kind)=>Math.round((baseRates[kind]-Math.max(0,baseRates[kind]-(kind==='bw'?1.4:3))*tier[kind])*100)/100;
+      const fmtRate=(r)=>'₹'+r.toLocaleString('en-IN',{maximumFractionDigits:2});
+      const slab=form.querySelector('[data-slab]');
+      if(slab){
+        const idx=BULK_TIERS.findIndex((t)=>printedSides<=t.through);
+        const now=BULK_TIERS[Math.max(0,idx)], next=BULK_TIERS[idx+1]||null, prevThrough=idx>0?BULK_TIERS[idx-1].through:0;
+        const bar=slab.querySelector('[data-slab-bar]'), copy=slab.querySelector('[data-slab-copy]'), side=slab.querySelector('[data-slab-side]');
+        if(side)side.textContent=printedSides.toLocaleString('en-IN')+' sides';
+        if(bar)bar.style.width=Math.round(Math.min(1,Math.max(0.04,next?(printedSides-prevThrough)/(now.through-prevThrough):1))*100)+'%';
+        const kindLine=(tier)=>{const parts=[];if(rate(tier,'bw')<baseRates.bw)parts.push(fmtRate(rate(tier,'bw'))+'/side B&amp;W');if(rate(tier,'color')<baseRates.color)parts.push(fmtRate(rate(tier,'color'))+'/side colour');return parts.join(' · ')||'already the desk’s best rate';};
+        if(copy){
+          if(pack)copy.innerHTML='<b>Semester pack</b>: covered sides print at pack rates — the ladder doesn’t apply here.';
+          else if(!BULK_TIERS.some((t)=>t.through>=printedSides))copy.innerHTML='<b>'+printedSides.toLocaleString('en-IN')+' printed sides</b> — this checkout prints at our lowest tray rates: '+kindLine(now)+'.';
+          else if(next)copy.innerHTML='<b>'+printedSides.toLocaleString('en-IN')+' printed sides</b> on the desk. The next <b>'+(now.through+1-printedSides)+'+</b> added sides drop to <b>'+kindLine(next)+'</b>. Copies, colour pages and other files in this checkout count together.';
+          else copy.innerHTML='<b>'+printedSides.toLocaleString('en-IN')+' printed sides</b> — you\'re printing at our lowest tray rates: '+kindLine(now)+'.';
+        }
+        slab.hidden=false;
+      }
+      const saveLine=form.querySelector('[data-print-save]');
+      if(saveLine){
+        const baseTotal=Math.round((plan.bwPages*plan.copies*baseRates.bw+plan.colorPages*plan.copies*baseRates.color)*100)/100;
+        const save=Math.round((baseTotal-printing+discount)*100)/100;
+        const row=saveLine.parentElement||saveLine.closest('div');
+        if(save>0&&(net>0||pack)){row.hidden=false;saveLine.textContent='₹'+save.toLocaleString('en-IN')+(pack?' · pack':'');}
+        else row.hidden=true;
+      }
     } catch (error) {
       hint.textContent = error.message; hint.hidden = false;
       let field = mixed ? form.elements.mixedRange : form.elements.range || form.elements.mixedRange;

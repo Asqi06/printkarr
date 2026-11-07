@@ -114,3 +114,95 @@
 /* Stationery shopping uses the same restrained, student-friendly design. */
 .store-view{background:#fafbfc}.store-wrap{max-width:1120px}.store-hero{border-radius:22px;min-height:370px}.store-hero h1{font:600 clamp(36px,4.8vw,56px)/1.08 var(--font-s);letter-spacing:-.045em}.store-hero em,.store-catalogue em,.store-print-banner em,.cart-heading em,.empty-cart em{font-family:var(--font-s);font-style:normal;font-weight:600}.store-hero-copy>p{font-size:14px;line-height:1.8}.store-hero-copy .btn{margin-top:22px}.store-promise{font-size:11px;gap:24px;line-height:1.7}.catalogue-heading h2,.store-print-banner h2{font:600 clamp(28px,3.5vw,40px)/1.14 var(--font-s);letter-spacing:-.04em}.product-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:white}.product-art{border-radius:0}.product-placeholder b{font:600 26px/1.12 var(--font-s);letter-spacing:-.03em}.product-info{padding:20px}.product-heading h3{font-size:16px;letter-spacing:-.025em}.product-add{border-radius:100px;min-height:44px}.store-search input,.store-sort select,.store-filters select{border-radius:10px}.store-print-banner{border-radius:20px;background:#edf2ff}.store-demo-note{border-radius:12px;font-size:12px}.store-topline{padding-top:20px}.store-selection{border:1px solid var(--line);background:white;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px}.store-selection p{font-size:12px;color:var(--muted)}.store-selection .rowlink{font-size:12px}.cart-checkout{border-radius:18px;background:white}.cart-heading h1{font:600 clamp(36px,4.5vw,52px)/1.1 var(--font-s);letter-spacing:-.05em}.delivery-progress{border-radius:12px}.store-cart-link{border-radius:100px}.store-hero-photo{border-radius:22px}.store-no-results{border-radius:16px;background:white}.purchase-row{border-radius:12px}
 @media(max-width:760px){.store-hero{min-height:310px}.store-hero h1{font-size:36px}.store-hero-copy{padding:28px 24px}.store-promise{font-size:11px;gap:10px}.product-grid{gap:14px}.product-info{padding:16px}.product-heading h3{font-size:15px}.store-selection{align-items:flex-start;flex-direction:column;gap:10px}.store-topline{padding-top:0}}
+
+/* Blinkit-style add → quantity stepper + category rail, in Printkarr ink. */
+.store-chip-rail{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:8px;padding:22px 0 12px}
+.store-chip-rail::-webkit-scrollbar{display:none}
+.store-chip-rail button{flex:none;border-radius:100px;min-height:40px;padding:9px 16px}
+.qty-step{display:flex;align-items:center;justify-content:space-between;gap:2px;width:100%;min-height:44px;padding:4px 6px;border:1px solid var(--ink);border-radius:100px;background:var(--ink);color:#fff}
+.qty-step form{display:contents}
+.qty-btn{width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#fff;font-size:20px;line-height:1;font-weight:600;display:grid;place-items:center;cursor:pointer;transition:background .15s}
+.qty-btn:hover{background:#ffffff22}
+.qty-step [data-qty-num]{min-width:2ch;text-align:center;font-size:14px;font-weight:700}
+.product-info [hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){.qty-btn{transition:none}}
+@media (hover:hover){.qty-step:hover{border-color:var(--ink)}}
+
+
+
+/* ---------- Blinkit Visual Overhaul (Phase 4) ---------- */
+.product-card {
+  border: none !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  background: var(--surface-0) !important;
+  overflow: hidden !important;
+  transition: transform 0.15s var(--spring), box-shadow 0.15s !important;
+}
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md) !important;
+}
+.product-art {
+  border-radius: var(--r-md) var(--r-md) 0 0 !important;
+  position: relative;
+}
+.product-add {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #fff !important;
+  color: var(--brand-green) !important;
+  border: 1.5px solid var(--brand-green) !important;
+  border-radius: var(--r-sm) !important;
+  font-weight: var(--fw-bold) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.02em;
+  padding: 10px 16px !important;
+  transition: all 0.15s var(--spring) !important;
+}
+.product-add:hover {
+  background: var(--brand-green) !important;
+  color: #fff !important;
+}
+.qty-step {
+  border: 1.5px solid var(--brand-green) !important;
+  background: var(--brand-green) !important;
+  color: #fff !important;
+  border-radius: var(--r-sm) !important;
+}
+.qty-btn {
+  color: #fff !important;
+}
+.qty-btn:hover {
+  background: rgb(255 255 255 / 0.25) !important;
+}
+.store-chip-rail button[aria-pressed="true"] {
+  background: var(--brand-green) !important;
+  border-color: var(--brand-green) !important;
+  color: #fff !important;
+  font-weight: var(--fw-bold) !important;
+}
+.store-chip-rail button {
+  border-radius: var(--r-pill) !important;
+  font-weight: var(--fw-medium);
+  transition: background 0.12s, color 0.12s;
+}
+.store-chip-rail button:hover:not([aria-pressed="true"]) {
+  background: var(--surface-1);
+}
+.product-demo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--brand-amber) !important;
+  color: #fff !important;
+  font-size: 10px !important;
+  font-weight: var(--fw-bold) !important;
+  padding: 3px 8px !important;
+  border-radius: var(--r-xs) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.15);
+}

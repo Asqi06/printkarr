@@ -11,7 +11,15 @@
     const empty = document.querySelector('[data-no-results]'); if (empty) empty.hidden = !!shown;
   }
   search?.addEventListener('input', filter);
-  document.querySelector('[data-product-category]')?.addEventListener('change', (event) => { category = event.target.value; filter(); });
+  const chipRail = [...document.querySelectorAll('[data-category-chip]')];
+  const categorySelect = document.querySelector('[data-product-category]');
+  function paintCategory() {
+    chipRail.forEach((chip) => chip.setAttribute('aria-pressed', String(chip.dataset.categoryChip === category)));
+    if (categorySelect) categorySelect.value = category;
+  }
+  chipRail.forEach((chip) => chip.addEventListener('click', () => { category = chip.dataset.categoryChip; paintCategory(); filter(); }));
+  categorySelect?.addEventListener('change', (event) => { category = event.target.value; paintCategory(); filter(); });
+  paintCategory();
   document.querySelector('[data-product-sort]')?.addEventListener('change', (event) => {
     const mode = event.target.value, grid = document.getElementById('product-grid');
     [...cards].sort((a, b) => mode === 'featured' ? a.dataset.index - b.dataset.index : mode === 'low' ? a.dataset.price - b.dataset.price : b.dataset.price - a.dataset.price).forEach((card) => grid.append(card));
@@ -20,16 +28,57 @@
   document.querySelectorAll('[data-add-product]').forEach((form) => {
     form.querySelectorAll('[name="color"]').forEach((input) => input.addEventListener('change', () => { form.querySelector('[data-color-label]').textContent = input.value; }));
     form.addEventListener('submit', async (event) => {
-      event.preventDefault(); const button = form.querySelector('[type="submit"]'), message = form.querySelector('.product-feedback');
+      event.preventDefault(); const button = form.querySelector('[type="submit"]'), message = form.parentElement.querySelector('.product-feedback');
       button.disabled = true; button.setAttribute('aria-busy', 'true'); message.hidden = true;
       try {
         const response = await fetch(form.action, { method: 'POST', headers: { Accept: 'application/json' }, body: new URLSearchParams(new FormData(form)) });
-        const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not add this item.');
+        const result = await response.json();
+        if (response.status === 401 && result.login) { location.assign(result.login); return; }
+        if (!response.ok) throw new Error(result.error || 'Could not add this item.');
         document.querySelectorAll('[data-cart-count]').forEach((badge) => { badge.textContent = result.count; });
+        const step = form.parentElement.querySelector('[data-qty]');
+        if (step) {
+          const quantity = Number(result.quantity) || 0;
+          const chosen = form.querySelector('[name="color"]:checked');
+          if (chosen) { step.dataset.color = chosen.value; step.querySelectorAll('input[name="color"]').forEach((input) => { input.value = chosen.value; }); }
+          step.dataset.qty = String(quantity);
+          step.querySelector('[data-qty-num]').textContent = quantity;
+          const decForm = step.querySelector('[data-qty-dec]')?.closest('form');
+          if (decForm) decForm.elements.quantity.value = Math.max(0, quantity - 1);
+          if (quantity > 0) { form.hidden = true; step.hidden = false; }
+        }
         const toast = document.querySelector('[data-store-toast]'); if (toast) { toast.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.hidden = true; }, 6000); }
       } catch (error) { message.textContent = error.message || 'Please try again.'; message.hidden = false; }
       finally { button.disabled = false; button.removeAttribute('aria-busy'); }
     });
+  });
+  document.addEventListener('submit', async (event) => {
+    const form = event.target.closest('[data-qty-form]');
+    if (!form) return;
+    event.preventDefault();
+    const step = form.closest('[data-qty]');
+    if (!step || step.dataset.busy) return;
+    step.dataset.busy = '1';
+    try {
+      const response = await fetch(form.action, { method: 'POST', headers: { Accept: 'application/json' }, body: new URLSearchParams(new FormData(form)) });
+      const result = await response.json();
+      if (response.status === 401 && result.login) { location.assign(result.login); return; }
+      if (!response.ok) throw new Error(result.error || 'Could not update your cart.');
+      const quantity = Number(result.quantity) || 0;
+      step.dataset.qty = String(quantity);
+      step.querySelector('[data-qty-num]').textContent = quantity;
+      const decForm = step.querySelector('[data-qty-dec]')?.closest('form');
+      if (decForm) decForm.elements.quantity.value = Math.max(0, quantity - 1);
+      document.querySelectorAll('[data-cart-count]').forEach((badge) => { badge.textContent = result.count; });
+      if (quantity === 0) {
+        step.hidden = true;
+        const addForm = step.parentElement.querySelector('[data-add-product]');
+        if (addForm) { addForm.hidden = false; const feedback = addForm.parentElement.querySelector('.product-feedback'); if (feedback) feedback.hidden = true; }
+      }
+    } catch (error) {
+      const message = step.parentElement.querySelector('.product-feedback');
+      if (message) { message.textContent = error.message || 'Please try again.'; message.hidden = false; }
+    } finally { delete step.dataset.busy; }
   });
   function initPayment() {
     for(const form of document.querySelectorAll('[data-print-payment]')) {
@@ -105,4 +154,22 @@
   }
   document.addEventListener('click',event=>{if(event.target.closest('[data-store-gateway]'))pay(event);});
   document.addEventListener('submit',event=>{if(event.target.matches('[data-print-payment]'))pay(event);});
+})();
+
+/* ── Persistent cart strip (Phase 2 redesign, Blinkit cart_strip pattern) ── */
+(function () {
+  function syncCartStrip() {
+    const strip = document.getElementById('cartStrip');
+    if (!strip) return;
+    const count = +(localStorage.getItem('pk_cart_count') || 0);
+    const price = +(localStorage.getItem('pk_cart_price') || 0);
+    strip.classList.toggle('strip-visible', count > 0);
+    const countEl = document.getElementById('cartStripCount');
+    const priceEl = document.getElementById('cartStripPrice');
+    if (countEl) countEl.textContent = count + ' item' + (count !== 1 ? 's' : '');
+    if (priceEl) priceEl.textContent = price > 0 ? '\u20b9' + price.toFixed(2) : '';
+  }
+  document.addEventListener('DOMContentLoaded', syncCartStrip);
+  document.addEventListener('pk:cart-updated', syncCartStrip);
+  window.pkSyncCartStrip = syncCartStrip;
 })();

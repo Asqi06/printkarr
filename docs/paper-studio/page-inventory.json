@@ -49,7 +49,7 @@
   },
   {
     "route": "/order/phone",
-    "title": "Confirm &amp; pay — PrintKarr",
+    "title": "Your details — PrintKarr",
     "workspace": false,
     "forms": [
       "/order/otp-request"
@@ -58,7 +58,7 @@
   },
   {
     "route": "/order/college",
-    "title": "Confirm &amp; pay — PrintKarr",
+    "title": "Your details — PrintKarr",
     "workspace": false,
     "forms": [
       "/order/otp-request"
@@ -67,7 +67,7 @@
   },
   {
     "route": "/order/local",
-    "title": "Confirm &amp; pay — PrintKarr",
+    "title": "Your details — PrintKarr",
     "workspace": false,
     "forms": [
       "/order/otp-request"
@@ -76,7 +76,7 @@
   },
   {
     "route": "/order/verify",
-    "title": "Confirm &amp; pay — PrintKarr",
+    "title": "Verify your email — PrintKarr",
     "workspace": false,
     "forms": [
       "/order/otp-verify",
@@ -727,6 +727,18 @@
     "title": "Stationery — PrintKarr",
     "workspace": false,
     "forms": [
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
+      "/cart/items",
       "/cart/items",
       "/cart/items",
       "/cart/items",

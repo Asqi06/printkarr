@@ -234,3 +234,28 @@
     setTimeout(function () { burstAt(el, n); }, 350);
   });
 })();
+
+/* ── Bottom sheet helpers (Phase 2, pk-sheet / pk-overlay pattern) ── */
+function pkOpenSheet(id) {
+  const sheet = document.getElementById(id);
+  const overlay = document.getElementById(id + 'Overlay');
+  if (sheet)   sheet.classList.add('pk-open');
+  if (overlay) overlay.classList.add('pk-open');
+  document.body.style.overflow = 'hidden';
+}
+function pkCloseSheet(id) {
+  const sheet = document.getElementById(id);
+  const overlay = document.getElementById(id + 'Overlay');
+  if (sheet)   sheet.classList.remove('pk-open');
+  if (overlay) overlay.classList.remove('pk-open');
+  document.body.style.overflow = '';
+}
+// Close on overlay click
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('click', function (e) {
+    if (e.target?.classList?.contains?.('pk-overlay') && e.target?.classList?.contains?.('pk-open')) {
+      const sheetId = e.target.id ? e.target.id.replace('Overlay', '') : '';
+      pkCloseSheet(sheetId);
+    }
+  });
+}

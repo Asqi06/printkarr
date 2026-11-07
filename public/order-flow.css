@@ -54,3 +54,89 @@
 .school-destination{border:0;padding:20px 0 0;margin:0}.school-destination>legend{font-size:14px;font-weight:600}.cash-consent .pick{background:#f1f5ff;border:1px solid var(--primary);padding:16px;align-items:flex-start}.cash-consent input{margin-top:4px;flex-shrink:0}.cash-consent small{display:block;line-height:1.6;margin-top:6px}.order-price-lines[hidden],.cash-consent[hidden],.school-destination[hidden]{display:none}.order-main .order-continue{margin-inline:-32px;padding-inline:32px}.order-section .order-choice>.pick{margin:8px 0}.order-main [data-final-review]{border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:20px}
 @media(max-width:760px){.order-main .order-continue{margin-inline:-20px;padding-inline:20px;gap:12px}.order-continue .btn{min-width:0;white-space:normal;max-width:65%}.order-continue b{font-size:21px}}
 @media(max-width:360px){.order-main .order-continue{margin-inline:-16px;padding-inline:16px}}
+
+
+/* ---------- Blinkit Visual Overhaul (Phase 5) ---------- */
+.order-section {
+  background: var(--surface-0);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  border: none;
+}
+
+.order-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.order-section-title {
+  font-size: 15px;
+  font-weight: var(--fw-semibold);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.order-section-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  flex-shrink: 0;
+}
+.order-section-num.done {
+  background: var(--brand-green);
+  color: #fff;
+}
+.order-section-body {
+  padding: 0 20px 20px;
+  display: none;
+}
+.order-section.open .order-section-body {
+  display: block;
+}
+.order-section.done .order-section-header {
+  cursor: default;
+}
+.order-section-edit {
+  font-size: 12px;
+  color: var(--brand-green);
+  font-weight: var(--fw-semibold);
+}
+
+/* Sticky order summary */
+.order-summary-rail {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  background: var(--surface-0);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+}
+.order-pay-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: var(--brand-green);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  padding: 16px;
+  font-size: 16px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  margin-top: 16px;
+  transition: background 0.15s;
+}
+.order-pay-btn:hover {
+  background: var(--brand-green-dark);
+}

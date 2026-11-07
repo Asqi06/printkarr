@@ -6,3 +6,8 @@ data/.diskid
 data/uploads/*
 .env
 .seo-cache/
+tmp/
+*.apkm
+tmp-*
+.pitch-build/
+output/

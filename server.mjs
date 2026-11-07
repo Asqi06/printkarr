@@ -17,6 +17,7 @@ import { atlasEnabled, initAtlas, flushAtlas, refreshAtlas, closeAtlas } from '.
 import { DATA_DIR, DATA_FILE, assertPersistentStorage, blankDb, loadDb, saveDb } from './lib/db.js';
 import { transition, canTransition, nextStates, printedAt, canFulfil } from './lib/machine.js';
 import { quote, activePrintJobs, surchargeFees, deliveryPoint, addressPoint, deliveryFeeFor } from './lib/pricing.js';
+import { LOCALITIES } from './public/localities.js';
 import { notifyState, runNotificationJobs } from './lib/notify.js';
 import { installNotificationRoutes } from './lib/notify_routes.js';
 import { influencerStats } from './lib/influencers.js';
@@ -26,7 +27,7 @@ import {
   COOKIE, verifyCredentials, createSession, getSessionUser,
   destroySession, parseCookies, demoLoginOn, customerDestination, hashPassword, passwordMatches
 } from './lib/auth.js';
-import { layout, esc, loginPage, loginOtpPage, staffLoginPage } from './lib/views.js';
+import { layout, esc, loginPage, loginOtpPage, staffLoginPage, completeProfilePage } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor, splitMixedPdf } from './lib/files.js';
 import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
 import { addPrint, cartFor, cartItems, cartQuote, createPurchase, confirmPurchase, printNet, checkPackQuota } from './lib/store.js';
@@ -256,6 +257,16 @@ function currentUser(req) {
   return req.sessionUser;
 }
 
+// A customer can order only after Google sign-in has captured their mobile and
+// a delivery address. This is the single source of truth for that gate.
+function defaultAddressFor(db, userId) {
+  const mine = (db.addresses || []).filter((a) => a.customerId === userId && !a.campusId && a.area !== 'Kiosk pickup');
+  return mine.find((a) => a.isDefault) || mine[0] || null;
+}
+function profileComplete(db, user) {
+  return !!(user && user.role === 'customer' && user.phone && defaultAddressFor(db, user.id));
+}
+
 const customerReturnTo = (req) => customerDestination(parseCookies(req.headers.cookie).pk_next);
 
 const LOGIN_FOR = { customer: '/login', admin: '/admin/login', partner: '/partner/login', rider: '/rider/login' };
@@ -283,7 +294,12 @@ function requireRole(role) {
 // ---- Auth (§3) ----
 app.get('/login', (req, res) => {
   const user = currentUser(req);
-  if (user) return res.redirect(user.role === 'customer' ? customerReturnTo(req) : HOME[user.role] || '/');
+  if (user) {
+    if (user.role !== 'customer') return res.redirect(HOME[user.role] || '/');
+    const db = loadDb(), fresh = db.users.find((u) => u.id === user.id) || user;
+    const next = customerReturnTo(req);
+    return res.redirect(profileComplete(db, fresh) ? next : '/account/complete' + (next !== '/customer' ? '?next=' + encodeURIComponent(next) : ''));
+  }
   res.send(loginView(null));
 });
 
@@ -297,45 +313,13 @@ const isAdminEmail = (email) => {
   const envAdmin = String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
   return envAdmin && norm === envAdmin;
 };
-app.post('/login', loginLimiter, asyncHandler(async (req, res) => {
-  const user = await verifyCredentials(req.body.email, req.body.password);
-  if (!user || user.role !== 'customer') {
-    return res.status(401).send(loginView('Please continue with Google to sign in.'));
-  }
-  const token = createSession(user.id);
-  res.setHeader('Set-Cookie', sessionCookie(req, token));
-  res.redirect(customerReturnTo(req));
-}));
-
-// Passwordless customer login: email → 6-digit code → dashboard.
-// This is how guest-order customers (no password on file) get back in.
-app.post('/login/code-request', loginLimiter, asyncHandler(async (req, res) => {
-  if (currentUser(req)) return res.redirect('/');
-  const email = normEmail(req.body.email);
-  const db = loadDb();
-  const user = email && db.users.find((u) => String(u.email || '').toLowerCase() === email);
-  if (!user || user.role !== 'customer') {
-    return res.status(404).send(loginView('Please continue with Google to sign in.'));
-  }
-  const otp = await requestEmailOtp(email);
-  if (!otp.ok) return res.status(429).send(loginView(otp.error));
-  res.send(loginOtpPage(email, otp.mailed ? null : otp.demo, otp.mailed ? null : otp.error, null));
-}));
-
-app.post('/login/code-verify', loginLimiter, (req, res) => {
-  if (currentUser(req)) return res.redirect('/');
-  const email = normEmail(req.body.email);
-  const v = email ? verifyEmailOtp(email, req.body.code) : { ok: false, error: 'Enter the email you requested the code for.' };
-  if (!v.ok) return res.status(401).send(loginOtpPage(email || '', null, null, v.error));
-  const db = loadDb();
-  const user = db.users.find((u) => String(u.email || '').toLowerCase() === email);
-  if (!user || user.role !== 'customer') {
-    return res.status(401).send(loginView('Please continue with Google to sign in.'));
-  }
-  const token = createSession(user.id);
-  res.setHeader('Set-Cookie', sessionCookie(req, token));
-  res.redirect(customerReturnTo(req));
+app.post('/login', loginLimiter, (req, res) => {
+  res.status(401).send(loginView('Customers sign in only with Google. Continue with Google to print.'));
 });
+
+// Customer email codes are retired: Google is the only customer sign-in.
+app.post('/login/code-request', loginLimiter, (req, res) => res.redirect('/login'));
+app.post('/login/code-verify', loginLimiter, (req, res) => res.redirect('/login'));
 
 function staffLogin(role) {
   const home = HOME[role];
@@ -424,9 +408,14 @@ app.get('/auth/google/callback', asyncHandler(async (req, res) => {
       referralCodeFor(db, user);
       saveDb(db);
     }
+    const destination = user.role === 'customer' ? customerReturnTo(req) : HOME[user.role] || '/';
     const token = createSession(user.id);
     res.setHeader('Set-Cookie', sessionCookie(req, token));
-    res.redirect(user.role === 'customer' ? customerReturnTo(req) : HOME[user.role] || '/');
+    if (user.role === 'customer') {
+      const freshDb = loadDb(), fresh = freshDb.users.find((u) => u.id === user.id) || user;
+      if (!profileComplete(freshDb, fresh)) return res.redirect('/account/complete' + (destination !== '/customer' ? '?next=' + encodeURIComponent(destination) : ''));
+    }
+    res.redirect(destination);
   } catch { return fail(); }
 }));
 
@@ -435,6 +424,48 @@ app.post('/logout', (req, res) => {
   const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
   res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
   res.redirect('/login');
+});
+
+// ---- One-time profile capture after Google sign-in ----
+// Name, mobile and address are saved here, never asked again at print checkout.
+const profileLocalities = () => LOCALITIES.filter((l) => ['vapi', 'daman', 'sarigam', 'bhilad'].includes(l.zone));
+app.get('/account/complete', requireRole('customer'), (req, res) => {
+  const db = loadDb(), fresh = db.users.find((u) => u.id === req.user.id) || req.user;
+  const next = customerDestination(req.query.next || parseCookies(req.headers.cookie).pk_next);
+  res.send(completeProfilePage(fresh, null, next, profileLocalities()));
+});
+
+app.post('/account/complete', requireRole('customer'), siteOrigin, (req, res) => {
+  const db = loadDb();
+  const user = db.users.find((u) => u.id === req.user.id) || req.user;
+  const next = customerDestination(req.body.next);
+  const fail = (message) => res.status(400).send(completeProfilePage(user, message, next, profileLocalities()));
+  const name = String(req.body.name || '').trim().slice(0, 60);
+  const phone = normPhone(req.body.phone);
+  const line = String(req.body.address || '').trim().slice(0, 200);
+  const pin = String(req.body.pin || '').trim();
+  const locality = profileLocalities().find((l) => l.id === req.body.localityId);
+  if (!name || !phone || line.length < 5 || !/^[1-9]\d{5}$/.test(pin) || !locality) {
+    return fail('Add your name, a 10-digit mobile, street address, locality and a valid six-digit PIN.');
+  }
+  let point;
+  try { point = addressPoint(locality.zone, { localityId: locality.id }, {}); }
+  catch (error) { return fail(error.message); }
+  const area = { vapi: 'Vapi', daman: 'Daman', sarigam: 'Sarigam', bhilad: 'Bhilad' }[locality.zone];
+  const mine = (db.addresses || []).filter((a) => a.customerId === user.id && !a.campusId && a.area !== 'Kiosk pickup');
+  const existing = mine.find((a) => a.isDefault) || mine[0] || null;
+  const record = {
+    customerId: user.id, ...point, label: 'Home', name, phone: '+91 ' + phone,
+    address: line, area, landmark: String(req.body.landmark || '').trim().slice(0, 100), pin, isDefault: true
+  };
+  if (existing) Object.assign(existing, record, { id: existing.id });
+  else db.addresses.push({ id: 'ADR-' + crypto.randomUUID(), ...record });
+  const savedId = existing ? existing.id : db.addresses.at(-1).id;
+  mine.forEach((a) => { a.isDefault = a.id === savedId; });
+  user.name = name;
+  user.phone = '+91 ' + phone;
+  saveDb(db);
+  res.redirect(next);
 });
 
 // ---- Admin (§26–§37) ----
@@ -1057,14 +1088,8 @@ function purchaseForDraft(db, customerId, draftId) {
 
 app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
   offerDevice(req, res);
-  if (!req.query.draft && !req.query.repeat && !req.query.fresh) {
-    const db = loadDb(), token = parseCookies(req.headers.cookie).pk_guest;
-    const draft = token && (db.drafts || []).filter(d => !d.customerId && d.guest === token).at(-1);
-    if (draft) {
-      if (!draft.customerId) { draft.customerId = req.user.id; delete draft.guest; saveDb(db); }
-      return res.redirect(`/customer/orders/new?draft=${encodeURIComponent(draft.id)}`);
-    }
-  }
+  const gateDb = loadDb(), gateUser = gateDb.users.find((u) => u.id === req.user.id) || req.user;
+  if (!profileComplete(gateDb, gateUser)) return res.redirect('/account/complete?next=/customer/orders/new');
   if (req.query.draft) {
     const db = loadDb();
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
@@ -1082,6 +1107,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
 });
 
 app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), asyncHandler(async (req, res) => {
+  if (!profileComplete(loadDb(), req.user)) { try { if (req.file) fs.unlinkSync(req.file.path); } catch {} return res.redirect('/account/complete?next=/customer/orders/new'); }
   if (!req.file) return res.status(400).send(oops(req.user, '/customer/orders/new', 'No file <em>arrived.</em>'));
   if (req.file.size > maxUploadBytes()) {
     try { fs.unlinkSync(req.file.path); } catch {}
@@ -1118,6 +1144,7 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
 }));
 
 app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(async (req, res) => {
+  if (!profileComplete(loadDb(), req.user)) return res.redirect('/account/complete?next=/customer/orders/new');
   if (req.body.checkout === '1' && !['add','wallet'].includes(req.body.next) && !['wallet','online'].includes(req.body.paymentMethod)) return res.status(400).send(oops(req.user, '/customer/orders/new', 'Choose wallet or Razorpay.'));
   let db = loadDb();
   let d = (db.drafts || []).find((x) => x.id === req.body.draft && x.customerId === req.user.id);
@@ -1924,214 +1951,81 @@ function guestDraft(db, req) {
 
 app.get('/order', (req, res) => {
   const user = currentUser(req);
-  if (user) {
-    const db = loadDb(), token = parseCookies(req.headers.cookie).pk_guest;
-    const draft = token && (db.drafts || []).filter(d => d.guest === token && !d.customerId && (!req.query.draft || d.id === req.query.draft)).at(-1);
-    if (draft && user.role === 'customer') { draft.customerId = user.id; delete draft.guest; saveDb(db); return res.redirect(`/customer/orders/new?draft=${encodeURIComponent(draft.id)}`); }
-    return res.redirect('/customer/orders/new' + (req.query.shop ? '?shop=' + encodeURIComponent(req.query.shop) : ''));
-  }
-  offerDevice(req, res);
-  const db = loadDb();
-  const ref = String(req.query.ref || '').trim().toUpperCase();
-  if (/^[A-Z2-9]{6,12}$/.test(ref) && findReferrer(db, ref)) {
-    const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
-    res.append('Set-Cookie', `pk_ref=${ref}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
-  }
-  const d = req.query.draft ? guestDraft(db, req) : null;
-  if (req.query.draft && !d) return res.redirect('/order');
-  const jobs = activePrintJobs(db);
-  const shop=req.query.shop && (db.partners || []).find(s=>s.id===req.query.shop && s.active);
-  if(req.query.shop && !shop)return res.status(404).send(oops(null,'/order','This shop is unavailable.'));
-  res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
+  if (user?.role === 'customer') return res.redirect('/customer/orders/new' + (req.query.shop ? '?shop=' + encodeURIComponent(req.query.shop) : ''));
+  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
+  res.append('Set-Cookie', `pk_next=${encodeURIComponent('/customer/orders/new')}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${secure}`);
+  res.redirect('/login');
 });
 
-app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(307, '/customer/orders/new/upload') : next(), upload.single('doc'), asyncHandler(async (req, res) => {
-  if (!req.file) return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'No file arrived — try again.', maxMb: loadDb().settings.order.maxFileMb }));
-  if (req.file.size > maxUploadBytes()) {
-    try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: `Choose a file no larger than ${maxUploadBytes() / 1024 / 1024} MB.`, maxMb: loadDb().settings.order.maxFileMb }));
-  }
-  let file = null;
-  try {
-    file = await analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
-  } catch (error) {
-    try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: error.message, maxMb: loadDb().settings.order.maxFileMb }));
-  }
-  const maxPages = Math.min(1000, loadDb().settings.order.maxPages || 1000);
-  if (file.pages > maxPages) {
-    try { fs.unlinkSync(req.file.path); } catch {}
-    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: `Over ${maxPages} pages — split it.`, maxMb: loadDb().settings.order.maxFileMb }));
-  }
-  const db = loadDb();
-  db.drafts ||= [];
-  const t = guestToken(req, res);
-  const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
-  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/order','This shop is unavailable.'));}
-  const draft = {
-    preferredShopId: chosenShop?.id || null,
-    id: 'D' + crypto.randomUUID(), guest: t, customerId: null,
-    document: req.file.originalname.slice(0, 120), stored: req.file.filename,
-    pages: file.pages, fileType: file.fileType, fileExt: file.ext,
-    createdAt: new Date().toISOString()
-  };
-  db.drafts.push(draft);
-  saveDb(db);
-  res.redirect(`/order?draft=${draft.id}`);
-}));
+app.post('/order/upload', (req, res) => {
+  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
+  res.append('Set-Cookie', `pk_next=${encodeURIComponent('/customer/orders/new')}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${secure}`);
+  res.redirect('/login');
+});
 
 app.get('/order/:draft/preview', (req,res)=>{
-  const d=guestDraft(loadDb(),{headers:req.headers,query:{draft:req.params.draft}});
-  if(!d || !d.stored || path.basename(d.stored)!==d.stored)return res.sendStatus(404);
-  res.set('Cache-Control','private, no-store');res.type(mimeFor(d.fileExt)).sendFile(path.join(DATA_DIR,'uploads',d.stored));
+  res.redirect('/login');
 });
 
-app.post('/order/options', asyncHandler(async (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
-  let db = loadDb();
-  let d = guestDraft(db, req);
-  if (!d) return res.redirect('/order');
-  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes','area','deliverySlot','institutionName','institutionLocation','schoolMeeting','schoolPhone'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
-  const fail = (message) => { saveDb(db); return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: message, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) })); };
-  let print;
-  try { print = printPlan({ ...req.body, range: d.fileType === 'image' ? '' : req.body.range }, d.pages); }
-  catch (error) { return fail(error.message); }
-  if (print.splitMixed) {
-    const form = d.form;
-    let splitError;
-    try { await splitMixedPdf(fs.readFileSync(path.join(DATA_DIR,'uploads',d.stored)), {...print,filePages:d.pages}); }
-    catch (error) { splitError = error; }
-    db = loadDb();
-    d = guestDraft(db, req);
-    if (!d) return res.redirect('/order');
-    d.form = form;
-    if (splitError) return fail('Could not split this PDF. Upload an unlocked, printable PDF.');
-  }
-  let plan;
-  let schoolAddress;
-  try { if (String(req.body.deliverySlot).startsWith('school') && req.body.institutionLocation) schoolAddress=institutionAddress(db,req.body,req.user?.id); } catch(error) { return fail(error.message); }
-  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), schoolAddress?.institutionName || req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
-  catch (error) { return fail(error.message); }
-  const campus = plan.campusId ? campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId) : null;
-  const area = schoolAddress ? {sarigam:'Sarigam',bhilad:'Bhilad',vapi:'Vapi',daman:'Daman'}[schoolAddress.area.toLowerCase()] : campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : plan.deliveryMode === 'pickup' ? 'Pickup' : ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
-  if (!area || area === 'Pickup') return fail('Choose a supported delivery area. Kiosks are in development.');
-  if (!campus && area === 'Pickup') plan = deliveryPlan(db, 'pickup');
-  d.selections = {
-    ...print, orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto', binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none', notes: String(req.body.notes || '').slice(0, 300),
-    area, zone: zoneOf(area), zoneLabel: area, ...plan, institutionAddress:schoolAddress, campusAddress: campus?.address, campusPin: campus?.pin, campusPoint: campus ? { lat: campus.lat, lng: campus.lng } : null
-  };
-  delete d.form;
+// Shared by the one-page guest checkout (/order/options submits contact along with
+// print settings) and the fallback /order/phone screen (/order/otp-request).
+// Validates the contact block, resolves the delivery point and sends the email code.
+async function guestContactFlow(db, d, req) {
+  d.contactForm = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['name','email','phone','address','pin','landmark','referral','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key,value]) => [key,value.slice(0,200)]));
   saveDb(db);
-  res.redirect(`/order/phone?draft=${d.id}`);
-}));
+  const email = normEmail(req.body.email);
+  const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
+  const phone = phoneRaw ? normPhone(phoneRaw) : '';
+  if (!req.body.name || !email || (!d.selections.institutionAddress && !d.selections.campusId && d.selections.zone !== 'pickup' && (!req.body.address || !/^\d{6}$/.test(String(req.body.pin || ''))))) {
+    return { error: 'Add your name and email, plus an address and PIN for delivery.', status: 200 };
+  }
+  if ((phoneRaw && !phone) || (d.selections.zone !== 'pickup' && !phone)) {
+    return { error: 'That phone number looks off — enter a 10-digit contact number for delivery.', status: 200 };
+  }
+  let point;
+  try {
+    point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : addressPoint(d.selections.zone, d.selections.institutionAddress ? {} : req.body, d.selections.institutionAddress || {});
+    if (point) Object.assign(d.selections, fulfillmentFor(db, point, { ...d.selections, zone: d.selections.zone }, [d.selections]));
+    d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
+    d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
+  }
+  catch (error) { return { error: error.message, status: 400 }; }
+  d.contact = {
+    name: String(req.body.name).slice(0, 60), email,
+    phone: phone ? '+91 ' + phone : '',
+    address: d.selections.zone === 'pickup' ? d.selections.pickupAddress : d.selections.campusId ? d.selections.campusAddress : d.selections.institutionAddress?.address || String(req.body.address).slice(0, 200),
+    landmark: String(d.selections.institutionAddress?.landmark || req.body.landmark || '').slice(0, 100),
+    pin: d.selections.campusId ? d.selections.campusPin : d.selections.institutionAddress?.pin || String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
+    referral: String(req.body.referral || '').trim().toUpperCase().slice(0, 12)
+  };
+  if (d.contact.referral) {
+    // Preliminary check now (the checkout page can show the error); re-validated
+    // strictly at verify time once the account is resolved.
+    const existing = db.users.find((u) => String(u.email || '').toLowerCase() === email);
+    const q0 = quote({ ...d.selections, pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, bwPages: d.selections.bwPages, colorPages: d.selections.colorPages, student: !!(existing && existing.student), zone: d.selections.zone, point });
+    const pv = validateReferral(db, existing || { id: '__new__' }, d.contact.referral, q0.subtotal);
+    if (!pv.ok) return { error: pv.error, status: 200 };
+  }
+  saveDb(db);
+  const otp = await requestEmailOtp(email);
+  if (!otp.ok) return { error: otp.error, status: 200 };
+  return { email, otp: { mailed: otp.mailed, demo: otp.demo, error: otp.error } };
+}
+
+app.post('/order/options', (req, res) => {
+  res.redirect('/login');
+});
 
 app.get('/order/phone', (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
-  const db = loadDb();
-  const d = guestDraft(db, req);
-  if (!d || !d.selections) return res.redirect('/order');
-  // carry the guest cookie (area preselect) — no-op read, keeps flow honest
-  res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: null, referral: parseCookies(req.headers.cookie).pk_ref }));
+  res.redirect('/login');
 });
 
-app.post('/order/otp-request', otpLimiter, asyncHandler(async (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
-  const db = loadDb();
-  const d = guestDraft(db, req);
-  if (!d || !d.selections) return res.redirect('/order');
-  if (!req.body.resend) {
-    d.contactForm = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['name','email','phone','address','pin','landmark','referral','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key,value]) => [key,value.slice(0,200)]));
-    saveDb(db);
-    const email = normEmail(req.body.email);
-    const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
-    const phone = phoneRaw ? normPhone(phoneRaw) : '';
-    if (!req.body.name || !email || (!d.selections.institutionAddress && !d.selections.campusId && d.selections.zone !== 'pickup' && (!req.body.address || !/^\d{6}$/.test(String(req.body.pin || ''))))) {
-      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Add your name and email, plus an address and PIN for delivery.' }));
-    }
-    if ((phoneRaw && !phone) || (d.selections.zone !== 'pickup' && !phone)) {
-      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — enter a 10-digit contact number for delivery.' }));
-    }
-    let point;
-    try {
-      point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : addressPoint(d.selections.zone, d.selections.institutionAddress ? {} : req.body, d.selections.institutionAddress || {});
-      if (point) Object.assign(d.selections, fulfillmentFor(db, point, { ...d.selections, zone: d.selections.zone }, [d.selections]));
-      d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
-      d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
-    }
-    catch (error) { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: error.message })); }
-    d.contact = {
-      name: String(req.body.name).slice(0, 60), email,
-      phone: phone ? '+91 ' + phone : '',
-      address: d.selections.zone === 'pickup' ? d.selections.pickupAddress : d.selections.campusId ? d.selections.campusAddress : d.selections.institutionAddress?.address || String(req.body.address).slice(0, 200),
-      landmark: String(d.selections.institutionAddress?.landmark || req.body.landmark || '').slice(0, 100),
-      pin: d.selections.campusId ? d.selections.campusPin : d.selections.institutionAddress?.pin || String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
-      referral: String(req.body.referral || '').trim().toUpperCase().slice(0, 12)
-    };
-    if (d.contact.referral) {
-      // Preliminary check now (phone page can show the error); re-validated
-      // strictly at verify time once the account is resolved.
-      const existing = db.users.find((u) => String(u.email || '').toLowerCase() === email);
-      const q0 = quote({ ...d.selections, pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, bwPages: d.selections.bwPages, colorPages: d.selections.colorPages, student: !!(existing && existing.student), zone: d.selections.zone, point });
-      const pv = validateReferral(db, existing || { id: '__new__' }, d.contact.referral, q0.subtotal);
-      if (!pv.ok) {
-        return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: pv.error }));
-      }
-    }
-    saveDb(db);
-  }
-  const email = d.contact.email;
-  const otp = await requestEmailOtp(email);
-  if (!otp.ok) return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: otp.error }));
-  res.send(otpPage({ draft: d, email, demoCode: otp.mailed ? null : otp.demo, mailError: otp.mailed ? null : otp.error, error: null }));
-}));
+app.post('/order/otp-request', (req, res) => {
+  res.redirect('/login');
+});
 
-app.post('/order/otp-verify', otpLimiter, (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
-  let db = loadDb();
-  let d = guestDraft(db, req);
-  if (!d || !d.selections || !d.contact) return res.redirect('/order');
-  try { deliveryFeeFor(db.pricing, d.selections.zone, d.contact.deliveryPoint, d.selections); }
-  catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point before confirming.' })); }
-  const v = verifyEmailOtp(d.contact.email, req.body.code);
-  if (!v.ok) return res.send(otpPage({ draft: d, email: d.contact.email, demoCode: null, mailError: null, error: v.error }));
-  // Verification consumes the OTP in a separate save; keep that write when creating the customer.
-  db = loadDb();d = guestDraft(db,req);
-  if (!d || !d.contact || !d.selections) return res.redirect('/order');
-  // Action becomes identity: find by email or create the account.
-  let user = db.users.find((u) => String(u.email || '').toLowerCase() === d.contact.email.toLowerCase());
-  if (user && user.role !== 'customer') return res.status(403).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Use a customer account for this order.' }));
-  if (!user) {
-    user = {
-      id: 'CUS-' + crypto.randomUUID(), role: 'customer', name: d.contact.name,
-      email: d.contact.email, password: null,
-      phone: d.contact.phone || '', student: false
-    };
-    db.users.push(user);
-    db.wallets.push({ customerId: user.id, balance: 0 });
-  }
-  referralCodeFor(db, user);
-  const s = d.selections;
-  const address = {
-    id: 'ADR-' + crypto.randomUUID(), customerId: user.id, campusId: s.campusId, institutionName: s.institutionName, label: s.institutionDelivery || s.campusId ? 'School / College' : 'Home',
-    name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
-    area: s.area, landmark: d.contact.landmark, pin: d.contact.pin,
-    ...d.contact.deliveryPoint, lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: !db.addresses.some(a => a.customerId === user.id && a.isDefault)
-  };
-  db.addresses.push(address);
-  if (d.contact.phone) user.phone = d.contact.phone;
-  d.customerId = user.id;
-  delete d.guest;
-  delete d.contactForm;
-  d.selections.addressId = address.id;
-  d.selections.deliveryPoint = d.contact.deliveryPoint;
-  if (d.contact.referral) {
-    const v = validateReferral(db, user, d.contact.referral, 0);
-    if (v.ok) createReferral(db, { referrerId: v.referrer.id, refereeId: user.id, code: d.contact.referral, friendDiscount: 0 });
-  }
-  saveDb(db);
-  const token = createSession(user.id);
-  res.setHeader('Set-Cookie', sessionCookie(req,token));
-  res.redirect(`/customer/orders/new/summary?draft=${d.id}`);
+app.post('/order/otp-verify', (req, res) => {
+  res.redirect('/login');
 });
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
