@@ -443,12 +443,56 @@ export function getCustomerById(id: string): CustomerRecord | undefined {
 
 export function findCustomer(identifier: string): CustomerRecord | undefined {
   const clean = identifier.trim().toLowerCase();
-  return getCustomers().find(
-    (c) =>
-      c.id.toLowerCase() === clean ||
-      c.email.toLowerCase() === clean ||
-      c.phone.replace(/\D/g, "") === clean.replace(/\D/g, "")
-  );
+  const digits = clean.replace(/\D/g, "");
+  return getCustomers().find((c) => {
+    if (c.id.toLowerCase() === clean) return true;
+    if (c.email.toLowerCase() === clean) return true;
+    if (digits.length >= 10 && c.phone.replace(/\D/g, "").includes(digits.slice(-10))) return true;
+    return false;
+  });
+}
+
+export function registerCustomer(params: {
+  name: string;
+  email: string;
+  phone?: string;
+  college?: string;
+}): CustomerRecord {
+  const existing =
+    findCustomer(params.email) ||
+    (params.phone ? findCustomer(params.phone) : undefined);
+  if (existing) {
+    return existing;
+  }
+  const cleanEmail = params.email.trim().toLowerCase();
+  const isCollege =
+    cleanEmail.includes(".edu") ||
+    cleanEmail.includes("laxmi") ||
+    cleanEmail.includes("rofel") ||
+    Boolean(params.college);
+
+  const newCust: CustomerRecord = {
+    id: `CUS-${Math.random().toString(36).substring(2, 11)}`,
+    name: params.name.trim() || cleanEmail.split("@")[0].toUpperCase(),
+    email: cleanEmail,
+    phone: params.phone?.trim() || "",
+    walletBalance: 0,
+    college:
+      params.college ||
+      (cleanEmail.includes("laxmi")
+        ? "Laxmi Institute of Technology (LIT), Sarigam"
+        : cleanEmail.includes("rofel")
+        ? "ROFEL College, Vapi"
+        : isCollege
+        ? "Student Campus Pass"
+        : undefined),
+    addresses: [],
+  };
+  const list = getCustomers();
+  cachedCustomers = [newCust, ...list];
+  persistCustomers();
+  notifyCustomers();
+  return newCust;
 }
 
 export function getCustomerTransactions(customerId: string): WalletTransaction[] {
@@ -560,6 +604,7 @@ export function useCustomers() {
     debitCustomerWallet,
     getCustomerById,
     findCustomer,
+    registerCustomer,
     getCustomerTransactions,
   };
 }

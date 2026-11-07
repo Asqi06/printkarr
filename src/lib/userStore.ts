@@ -3,10 +3,14 @@
 import { useSyncExternalStore } from "react";
 import {
   getCustomers,
+  getCustomerById,
+  findCustomer,
+  registerCustomer,
   creditCustomerWallet,
   debitCustomerWallet,
   type CustomerRecord,
 } from "./customersStore";
+import { openAuthModal } from "./authModalStore";
 
 export type UserProfile = {
   id: string;
@@ -22,8 +26,19 @@ export type UserProfile = {
 
 const STORAGE_KEY = "pk_user_v3";
 
+export const GUEST_USER: UserProfile = {
+  id: "",
+  name: "Guest",
+  email: "",
+  phone: "",
+  avatar: "",
+  isLoggedIn: false,
+  isStudent: false,
+  walletBalance: 0,
+};
+
 /**
- * Default active profile: PRINSKUMAR SINGH from E:\prntkr (LIT Sarigam, ₹111 balance)
+ * Fallback initial user (Prins Kumar Singh, LIT Sarigam, ₹111)
  */
 export const DEFAULT_USER: UserProfile = {
   id: "CUS-gmuqlfkbw",
@@ -53,7 +68,17 @@ function loadUser(): UserProfile {
       return DEFAULT_USER;
     }
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : DEFAULT_USER;
+    if (parsed && typeof parsed === "object" && typeof parsed.id === "string") {
+      // Sync latest balance from customer store if available
+      if (parsed.id && parsed.isLoggedIn) {
+        const cust = getCustomerById(parsed.id);
+        if (cust) {
+          parsed.walletBalance = cust.walletBalance;
+        }
+      }
+      return parsed;
+    }
+    return DEFAULT_USER;
   } catch {
     return DEFAULT_USER;
   }
@@ -75,49 +100,127 @@ export function getUser(): UserProfile {
   return cachedUser;
 }
 
-export function switchCustomer(customer: CustomerRecord): UserProfile {
+/**
+ * Login with decoded Google OAuth / Identity Services payload
+ */
+export function loginWithGooglePayload(payload: {
+  email: string;
+  name: string;
+  picture?: string;
+  sub?: string;
+}): UserProfile {
+  const cleanEmail = payload.email.trim().toLowerCase();
+  let cust = findCustomer(cleanEmail);
+
+  if (!cust) {
+    cust = registerCustomer({
+      name: payload.name || cleanEmail.split("@")[0].toUpperCase(),
+      email: cleanEmail,
+      phone: "",
+    });
+  }
+
+  const isStudent = Boolean(
+    cust.college ||
+      cleanEmail.includes(".edu") ||
+      cleanEmail.includes("laxmi") ||
+      cleanEmail.includes("rofel")
+  );
+
   const user: UserProfile = {
-    id: customer.id,
-    name: customer.name,
-    email: customer.email,
-    phone: customer.phone,
+    id: cust.id,
+    name: cust.name,
+    email: cust.email,
+    phone: cust.phone,
+    avatar:
+      payload.picture ||
+      `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+        cust.name
+      )}&backgroundColor=0c831f`,
+    isLoggedIn: true,
+    isStudent,
+    collegeName: cust.college || (isStudent ? "Campus Pass" : undefined),
+    walletBalance: cust.walletBalance,
+  };
+
+  cachedUser = user;
+  persistUser(user);
+  notify();
+  return user;
+}
+
+/**
+ * Direct phone / college email authentication
+ */
+export function loginWithPhoneOrEmail(
+  identifier: string,
+  name?: string
+): { success: boolean; user?: UserProfile; message?: string } {
+  const clean = identifier.trim();
+  if (!clean) {
+    return { success: false, message: "Please provide a valid phone number or email." };
+  }
+
+  let cust = findCustomer(clean);
+
+  if (!cust) {
+    const isEmail = clean.includes("@");
+    cust = registerCustomer({
+      name: name?.trim() || (isEmail ? clean.split("@")[0].toUpperCase() : "Customer"),
+      email: isEmail ? clean.toLowerCase() : `${clean.replace(/\D/g, "")}@user.printkarr.in`,
+      phone: isEmail ? "" : clean,
+    });
+  }
+
+  const isStudent = Boolean(
+    cust.college ||
+      cust.email.includes(".edu") ||
+      cust.email.includes("laxmi") ||
+      cust.email.includes("rofel")
+  );
+
+  const user: UserProfile = {
+    id: cust.id,
+    name: cust.name,
+    email: cust.email,
+    phone: cust.phone,
     avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-      customer.name
+      cust.name
     )}&backgroundColor=0c831f`,
     isLoggedIn: true,
-    isStudent: Boolean(
-      customer.college || customer.email.includes(".edu") || customer.email.includes("laxmi")
-    ),
-    collegeName: customer.college || "LIT Sarigam",
-    walletBalance: customer.walletBalance,
+    isStudent,
+    collegeName: cust.college || (isStudent ? "Campus Pass" : undefined),
+    walletBalance: cust.walletBalance,
   };
+
   cachedUser = user;
   persistUser(user);
   notify();
-  return user;
+  return { success: true, user };
 }
 
-export function loginWithGoogle(): UserProfile {
-  const user: UserProfile = {
-    ...DEFAULT_USER,
-    isLoggedIn: true,
-  };
-  cachedUser = user;
-  persistUser(user);
-  notify();
-  return user;
+/**
+ * Triggers auth dialog for user to authenticate with their private account
+ */
+export function loginWithGoogle() {
+  openAuthModal();
 }
 
+/**
+ * Private individual sign out
+ */
 export function logout() {
   const user: UserProfile = {
-    ...DEFAULT_USER,
-    isLoggedIn: false,
+    ...GUEST_USER,
   };
   cachedUser = user;
   persistUser(user);
   notify();
 }
 
+/**
+ * Top up the user's wallet and sync with customer ledger
+ */
 export function topUpWallet(
   amount: number,
   customBonus = 0,
@@ -131,22 +234,27 @@ export function topUpWallet(
     else if (amount >= 100) bonus = Math.round(amount * 0.05);
   }
 
-  const newBalance = user.walletBalance + amount + bonus;
+  const newBalance = Math.round((user.walletBalance + amount + bonus) * 100) / 100;
   cachedUser = { ...user, walletBalance: newBalance };
   persistUser(cachedUser);
 
   // Sync with customersStore
-  creditCustomerWallet(
-    user.id,
-    amount + bonus,
-    `${label} (+₹${bonus} Bonus)`,
-    bonus > 0 ? "bonus" : "topup"
-  );
+  if (user.id) {
+    creditCustomerWallet(
+      user.id,
+      amount + bonus,
+      `${label} (+₹${bonus} Bonus)`,
+      bonus > 0 ? "bonus" : "topup"
+    );
+  }
 
   notify();
   return newBalance;
 }
 
+/**
+ * Deduct wallet balance for orders and sync with customer ledger
+ */
 export function deductWallet(amount: number, label = "Order Payment"): boolean {
   const user = getUser();
   if (user.walletBalance < amount) return false;
@@ -155,7 +263,9 @@ export function deductWallet(amount: number, label = "Order Payment"): boolean {
   persistUser(cachedUser);
 
   // Sync with customersStore
-  debitCustomerWallet(user.id, amount, label);
+  if (user.id) {
+    debitCustomerWallet(user.id, amount, label);
+  }
 
   notify();
   return true;
@@ -184,11 +294,11 @@ export function useUser() {
   return {
     user,
     loginWithGoogle,
+    loginWithGooglePayload,
+    loginWithPhoneOrEmail,
     logout,
     topUpWallet,
     deductWallet,
     updateUserProfile,
-    switchCustomer,
   };
 }
-

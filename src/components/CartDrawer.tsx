@@ -634,6 +634,48 @@ export function CartDrawer() {
                   </span>
                 </label>
 
+                {paymentChoice === "WALLET" ? (
+                  user.walletBalance >= cart.total ? (
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-[11px] text-[#0c831f] space-y-0.5">
+                      <div className="flex justify-between font-bold">
+                        <span>Current Wallet Balance:</span>
+                        <span>₹{user.walletBalance.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate">
+                        <span>Order Total to Deduct:</span>
+                        <span>-₹{cart.total.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-extrabold border-t border-emerald-200 pt-1 text-[#0c831f]">
+                        <span>Remaining Balance After Order:</span>
+                        <span>₹{(user.walletBalance - cart.total).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl bg-amber-50 border border-amber-200 p-2.5 text-[11px] text-amber-900 space-y-1">
+                      <p className="font-bold">⚠️ Insufficient Wallet Balance</p>
+                      <p className="text-[10px]">
+                        Available: ₹{user.walletBalance.toFixed(2)} · Required: ₹{cart.total} (Short by ₹{(cart.total - user.walletBalance).toFixed(2)})
+                      </p>
+                      <div className="pt-1 flex items-center gap-2">
+                        <Link
+                          href="/account#wallet"
+                          onClick={cart.closeCart}
+                          className="rounded-lg bg-[#0c831f] px-2.5 py-1 text-[10px] font-bold text-white hover:bg-[#096a18]"
+                        >
+                          Top-Up Wallet →
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentChoice("RAZORPAY")}
+                          className="text-[10px] font-bold text-amber-900 underline"
+                        >
+                          Pay with UPI/Cards instead
+                        </button>
+                      </div>
+                    </div>
+                  )
+                ) : null}
+
                 <label
                   className={`flex cursor-pointer items-center justify-between rounded-xl border p-2.5 text-xs transition ${
                     paymentChoice === "COD"
@@ -724,7 +766,15 @@ export function CartDrawer() {
                 <span className="text-lg leading-tight">₹{cart.total}</span>
               </div>
               <div className="flex items-center gap-1.5 text-sm font-bold">
-                <span>{isCheckingOut ? "Placing Order…" : "Place Order →"}</span>
+                <span>
+                  {isCheckingOut
+                    ? "Placing Order…"
+                    : paymentChoice === "WALLET"
+                    ? user.walletBalance >= cart.total
+                      ? "Pay with Wallet (1-Click) →"
+                      : "Insufficient Balance"
+                    : "Place Order →"}
+                </span>
               </div>
             </button>
             <p className="mt-2 text-center text-[10px] text-slate">

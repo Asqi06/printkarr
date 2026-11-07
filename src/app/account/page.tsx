@@ -1,25 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "@/lib/userStore";
 import { useOrders } from "@/lib/ordersStore";
 import { useAddresses, openAddressDrawer } from "@/lib/addressStore";
 import { useCustomers } from "@/lib/customersStore";
 import { WALLET_OFFERS, ACTIVE_COUPONS, REFERRAL_PROGRAM, type WalletOffer } from "@/lib/offersData";
+import { openAuthModal } from "@/lib/authModalStore";
 import { Container } from "@/components/ui";
 
 export default function AccountPage() {
-  const { user, loginWithGoogle, logout, topUpWallet, switchCustomer } = useUser();
+  const { user, logout, topUpWallet, loginWithGooglePayload } = useUser();
   const { orders } = useOrders();
   const { addresses } = useAddresses();
-  const { customers, getCustomerTransactions } = useCustomers();
+  const { getCustomerTransactions } = useCustomers();
 
   const [topUpAmount, setTopUpAmount] = useState<number | "">("");
   const [topUpSuccessMsg, setTopUpSuccessMsg] = useState("");
   const [copiedCoupon, setCopiedCoupon] = useState("");
   const [copiedRef, setCopiedRef] = useState(false);
-  const [showAccountSwitcher, setShowAccountSwitcher] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auth_success") === "1" && params.get("email")) {
+      loginWithGooglePayload({
+        email: params.get("email") || "",
+        name: params.get("name") || "",
+        picture: params.get("picture") || undefined,
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [loginWithGooglePayload]);
 
   const handleTopUpOffer = (offer: WalletOffer) => {
     topUpWallet(offer.amount, offer.bonus, offer.name);
@@ -51,7 +64,7 @@ export default function AccountPage() {
     setTimeout(() => setCopiedCoupon(""), 3000);
   };
 
-  const referralLink = `https://printkarr.in/?ref=${user.id}`;
+  const referralLink = `https://printkarr.in/?ref=${user.id || "welcome"}`;
 
   const handleCopyRef = () => {
     void navigator.clipboard.writeText(referralLink);
@@ -61,50 +74,50 @@ export default function AccountPage() {
 
   const userOrders = orders.filter(
     (o) =>
-      o.customer.phone === user.phone ||
-      o.customer.name.toLowerCase().includes(user.name.toLowerCase().split(" ")[0])
+      (user.phone && o.customer.phone === user.phone) ||
+      (user.email && o.customer.phone.toLowerCase().includes(user.email.toLowerCase())) ||
+      (user.name && o.customer.name.toLowerCase().includes(user.name.toLowerCase().split(" ")[0]))
   );
 
-  const txHistory = getCustomerTransactions(user.id);
+  const txHistory = user.id ? getCustomerTransactions(user.id) : [];
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-20">
-      {/* Top Banner */}
+      {/* Top Banner (Strictly Private to Logged-in Customer) */}
       <div className="border-b border-edge bg-white py-6">
         <Container>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0c831f] text-white text-lg font-bold shadow-xs">
-                {user.name ? user.name[0] : "P"}
+                {user.isLoggedIn && user.name ? user.name[0] : "👤"}
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="font-grotesk text-xl sm:text-2xl font-bold text-ink">
                     {user.isLoggedIn ? user.name : "My PrintKarr Account"}
                   </h1>
-                  {user.isStudent ? (
+                  {user.isLoggedIn && user.isStudent ? (
                     <span className="rounded-full bg-[#f8cb46]/30 px-2.5 py-0.5 text-[10px] font-bold text-ink border border-[#f8cb46]">
                       🎓 Campus Pass
+                    </span>
+                  ) : null}
+                  {user.isLoggedIn ? (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate border border-slate-200">
+                      🔒 Private Account
                     </span>
                   ) : null}
                 </div>
                 <p className="text-xs text-slate mt-0.5">
                   {user.isLoggedIn
-                    ? `${user.email} · ${user.phone}${user.collegeName ? ` · ${user.collegeName}` : ""}`
-                    : "Sign in with Google to track orders and unlock student discounts"}
+                    ? `${user.email || "Registered account"}${user.phone ? ` · ${user.phone}` : ""}${
+                        user.collegeName ? ` · ${user.collegeName}` : ""
+                      }`
+                    : "Sign in with Google or your phone to view private wallet balance & track orders"}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowAccountSwitcher(!showAccountSwitcher)}
-                className="rounded-xl border border-ink/20 bg-slate-50 px-3 py-1.5 text-xs font-bold text-ink hover:bg-slate-100 transition"
-              >
-                👥 Switch Account ({customers.length})
-              </button>
-
+            <div className="flex items-center gap-2">
               {user.isLoggedIn ? (
                 <button
                   type="button"
@@ -116,79 +129,76 @@ export default function AccountPage() {
               ) : (
                 <button
                   type="button"
-                  onClick={loginWithGoogle}
-                  className="flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-slate transition"
+                  onClick={openAuthModal}
+                  className="flex items-center gap-2 rounded-xl bg-[#0c831f] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#096a18] transition"
                 >
                   <span>G</span>
-                  <span>Continue with Google</span>
+                  <span>Sign In with Google / Mobile</span>
                 </button>
               )}
             </div>
           </div>
-
-          {/* Quick Account Switcher Drawer/Dropdown */}
-          {showAccountSwitcher ? (
-            <div className="mt-4 rounded-2xl border border-ink/10 bg-slate-50 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate">
-                  Registered Customer Profiles (Migrated from PrintKarr E:prntkr)
-                </span>
-                <span className="text-[11px] text-slate font-medium">Click to activate profile</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {customers.map((c) => {
-                  const active = user.id === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        switchCustomer(c);
-                        setShowAccountSwitcher(false);
-                      }}
-                      className={`rounded-xl border p-2.5 text-left transition flex items-center justify-between ${
-                        active
-                          ? "border-[#0c831f] bg-[#e8f8ec]/60 font-bold"
-                          : "border-ink/10 bg-white hover:border-ink/20"
-                      }`}
-                    >
-                      <div className="truncate pr-2">
-                        <p className="text-xs font-bold text-ink truncate">{c.name}</p>
-                        <p className="text-[10px] text-slate truncate">{c.college || c.email}</p>
-                      </div>
-                      <span className="rounded-lg bg-emerald-100 px-2 py-0.5 text-xs font-mono font-bold text-emerald-800 shrink-0">
-                        ₹{c.walletBalance}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
         </Container>
       </div>
 
       <Container className="py-8 space-y-8">
-        {/* Wallet Section */}
-        <section className="rounded-3xl border border-edge bg-white p-6 shadow-xs">
+        {/* Not Logged In Prompt */}
+        {!user.isLoggedIn ? (
+          <div className="rounded-3xl border border-edge bg-white p-8 text-center shadow-xs space-y-4">
+            <span className="text-4xl block">👛</span>
+            <h2 className="text-xl font-bold font-grotesk text-ink">
+              Sign In to Access Your PrintKarr Wallet
+            </h2>
+            <p className="text-xs text-slate max-w-md mx-auto leading-relaxed">
+              Your wallet balance, student discounts, and order records are linked to your private account.
+              Sign in with Google or your mobile number to view your remaining balance and checkout with 1-click.
+            </p>
+            <button
+              type="button"
+              onClick={openAuthModal}
+              className="inline-flex items-center gap-2 rounded-full bg-[#0c831f] px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#096a18] transition"
+            >
+              <span>Continue with Google / Mobile →</span>
+            </button>
+          </div>
+        ) : null}
+
+        {/* ── WALLET HERO & REMAINING BALANCE SECTION ── */}
+        <section id="wallet" className="rounded-3xl border border-edge bg-white p-6 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-edge pb-5">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate">
-                PrintKarr Cashless Wallet
-              </span>
-              <h2 className="font-grotesk text-xl font-bold text-ink mt-0.5">
-                Instant 1-Click Payments for Xerox &amp; Stationery
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0c831f]">
+                  ⚡ Cashless PrintKarr Wallet
+                </span>
+                <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-[#0c831f] border border-emerald-200">
+                  Active
+                </span>
+              </div>
+              <h2 className="font-grotesk text-xl font-bold text-ink mt-1">
+                Remaining Wallet Balance
               </h2>
               <p className="text-xs text-slate mt-0.5 max-w-md">
-                Skip bank OTPs and UPI PIN delays. Pay for your daily notes and prints instantly at doorstep or campus gate.
+                1-click checkout for Xerox, documents, stationery &amp; custom prints. Zero transaction fees and instant delivery dispatch.
               </p>
             </div>
 
-            <div className="rounded-2xl bg-[#e8f8ec] p-4 text-center sm:text-right border border-[#0c831f]/20">
-              <span className="text-xs text-slate block">Current Wallet Balance</span>
-              <span className="font-grotesk text-3xl font-extrabold text-[#0c831f]">
-                ₹{user.walletBalance.toFixed(2)}
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="rounded-2xl bg-[#e8f8ec] p-4 text-center sm:text-right border border-[#0c831f]/20">
+                <span className="text-xs text-slate block font-medium">Available Balance</span>
+                <span className="font-grotesk text-3xl font-extrabold text-[#0c831f]">
+                  ₹{user.walletBalance.toFixed(2)}
+                </span>
+                <span className="text-[10px] text-slate block mt-0.5">Non-expiring credit</span>
+              </div>
+
+              <Link
+                href="/order"
+                className="rounded-2xl bg-[#0c831f] px-4 py-3 text-xs font-bold text-white text-center shadow-xs hover:bg-[#096a18] active:translate-y-0.5 transition flex flex-col justify-center"
+              >
+                <span>🛒 Shop with Wallet</span>
+                <span className="text-[10px] opacity-90 font-normal">Order Xerox &amp; Prints →</span>
+              </Link>
             </div>
           </div>
 
@@ -198,13 +208,130 @@ export default function AccountPage() {
             </div>
           ) : null}
 
-          {/* Campaign Top-Up Packs (Exact Offers from E:prntkr) */}
-          <div className="mt-6 space-y-3">
+          {/* ── USE WALLET TO SHOP MORE (Action Grid) ── */}
+          <div className="mt-6 rounded-2xl border border-ink/10 bg-[#f8f9fa] p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-ink flex items-center gap-1.5">
+                  <span>🛒</span>
+                  <span>Use Your Remaining Balance To Shop More</span>
+                </h3>
+                <p className="text-[11px] text-slate mt-0.5">
+                  Select a category to use your ₹{user.walletBalance.toFixed(2)} balance with instant 1-click checkout:
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Option 1: Xerox */}
+              <Link
+                href="/order"
+                className="group rounded-xl border border-edge bg-white p-3.5 hover:border-[#0c831f] hover:shadow-xs transition flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">🖨️</span>
+                    <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-[#0c831f]">
+                      From ₹1.40
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-ink mt-2 group-hover:text-[#0c831f] transition">
+                    Online Xerox &amp; Prints
+                  </h4>
+                  <p className="text-[11px] text-slate mt-0.5">
+                    Assignments, thesis, spirals &amp; colour question banks.
+                  </p>
+                </div>
+                <span className="mt-3 text-[11px] font-bold text-[#0c831f] flex items-center gap-1">
+                  <span>Print Document</span>
+                  <span>→</span>
+                </span>
+              </Link>
+
+              {/* Option 2: Stationery */}
+              <Link
+                href="/stationery"
+                className="group rounded-xl border border-edge bg-white p-3.5 hover:border-[#0c831f] hover:shadow-xs transition flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">📁</span>
+                    <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                      Exam Prep
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-ink mt-2 group-hover:text-[#0c831f] transition">
+                    Stationery &amp; Essentials
+                  </h4>
+                  <p className="text-[11px] text-slate mt-0.5">
+                    Notebooks, transparent exam pads, pens &amp; files.
+                  </p>
+                </div>
+                <span className="mt-3 text-[11px] font-bold text-[#0c831f] flex items-center gap-1">
+                  <span>Browse Stationery</span>
+                  <span>→</span>
+                </span>
+              </Link>
+
+              {/* Option 3: Anime Wall Lights & Posters */}
+              <Link
+                href="/anime-decor"
+                className="group rounded-xl border border-edge bg-white p-3.5 hover:border-[#0c831f] hover:shadow-xs transition flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">💡</span>
+                    <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                      Hostel Hot
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-ink mt-2 group-hover:text-[#0c831f] transition">
+                    Anime Lights &amp; Decor
+                  </h4>
+                  <p className="text-[11px] text-slate mt-0.5">
+                    LED acrylic lamps, Naruto/Goku wall hangers &amp; posters.
+                  </p>
+                </div>
+                <span className="mt-3 text-[11px] font-bold text-[#0c831f] flex items-center gap-1">
+                  <span>Shop Decor</span>
+                  <span>→</span>
+                </span>
+              </Link>
+
+              {/* Option 4: Name Plates & Cards */}
+              <Link
+                href="/name-plates"
+                className="group rounded-xl border border-edge bg-white p-3.5 hover:border-[#0c831f] hover:shadow-xs transition flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl">📛</span>
+                    <span className="rounded-md bg-purple-50 px-1.5 py-0.5 text-[10px] font-bold text-purple-700">
+                      Custom
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-xs text-ink mt-2 group-hover:text-[#0c831f] transition">
+                    Custom Name Plates
+                  </h4>
+                  <p className="text-[11px] text-slate mt-0.5">
+                    Premium acrylic name plates for door, desk &amp; office.
+                  </p>
+                </div>
+                <span className="mt-3 text-[11px] font-bold text-[#0c831f] flex items-center gap-1">
+                  <span>Customise Plate</span>
+                  <span>→</span>
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* ── CAMPAIGN TOP-UP PACKS ── */}
+          <div className="mt-7 space-y-3">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate">
-                ⚡ Special Campaign Wallet Packs &amp; Student Bonuses
+                ⚡ Top-Up Packs &amp; Instant Bonus Credits
               </label>
-              <span className="text-[11px] font-bold text-[#0c831f]">Auto-credited instantly</span>
+              <span className="text-[11px] font-bold text-[#0c831f]">Recharge via Razorpay UPI / Cards</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -270,7 +397,7 @@ export default function AccountPage() {
             {/* Custom Amount Form */}
             <div className="pt-2">
               <span className="text-[11px] font-semibold text-slate block mb-1">
-                Or enter any custom top-up amount (e.g. ₹150, ₹300):
+                Or enter any custom recharge amount:
               </span>
               <form onSubmit={handleCustomTopUp} className="flex gap-2 max-w-sm">
                 <input
@@ -295,19 +422,21 @@ export default function AccountPage() {
           </div>
         </section>
 
-        {/* Wallet Ledger / Transactions */}
+        {/* ── TRANSACTION HISTORY / PASSBOOK ── */}
         {txHistory.length > 0 ? (
           <section className="rounded-3xl border border-edge bg-white p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-edge pb-4">
               <div>
                 <h3 className="font-grotesk text-base font-bold text-ink">
-                  Wallet Activity &amp; Transaction History
+                  Wallet Passbook &amp; Activity
                 </h3>
                 <p className="text-xs text-slate">
-                  Recent top-ups, bonus credits, and 1-click print order debits
+                  Your private top-ups, bonus credits, and 1-click print order debits
                 </p>
               </div>
-              <span className="text-xs font-bold text-[#0c831f]">{txHistory.length} Transactions</span>
+              <span className="text-xs font-bold text-[#0c831f]">
+                {txHistory.length} Transactions
+              </span>
             </div>
 
             <div className="space-y-2">
@@ -352,7 +481,7 @@ export default function AccountPage() {
           </section>
         ) : null}
 
-        {/* Campus Referral Program */}
+        {/* ── CAMPUS REFERRAL PROGRAM ── */}
         <section className="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-6 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start gap-3">
@@ -409,7 +538,7 @@ export default function AccountPage() {
           </div>
         </section>
 
-        {/* Active Coupons from PrintKarr */}
+        {/* ── ACTIVE COUPONS ── */}
         <section className="rounded-3xl border border-edge bg-white p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-edge pb-4">
             <div>
@@ -456,8 +585,8 @@ export default function AccountPage() {
           </div>
         </section>
 
-        {/* Student Benefits Card */}
-        {user.isStudent ? (
+        {/* ── STUDENT CAMPUS BENEFITS ── */}
+        {user.isLoggedIn && user.isStudent ? (
           <section className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 sm:p-6 shadow-xs">
             <div className="flex items-start gap-3">
               <span className="text-2xl mt-0.5">🎓</span>
@@ -487,7 +616,7 @@ export default function AccountPage() {
           </section>
         ) : null}
 
-        {/* My Orders Section */}
+        {/* ── MY ORDERS SECTION ── */}
         <section className="rounded-3xl border border-edge bg-white p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-edge pb-4">
             <div>
@@ -515,7 +644,7 @@ export default function AccountPage() {
               </p>
               <Link
                 href="/order"
-                className="mt-4 inline-block rounded-full bg-[#0c831f] px-4 py-2 text-xs font-bold text-white"
+                className="mt-4 inline-block rounded-full bg-[#0c831f] px-4 py-2 text-xs font-bold text-white shadow-xs"
               >
                 Start an Online Xerox Order →
               </Link>
@@ -595,7 +724,7 @@ export default function AccountPage() {
           )}
         </section>
 
-        {/* Saved Addresses Section */}
+        {/* ── SAVED ADDRESSES ── */}
         <section className="rounded-3xl border border-edge bg-white p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-edge pb-4">
             <div>

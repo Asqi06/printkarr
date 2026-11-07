@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddressDrawer } from "@/components/AddressDrawer";
 import { CartDrawer } from "@/components/CartDrawer";
+import { AuthModal } from "@/components/AuthModal";
 
 const grotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -114,6 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <AddressDrawer />
         <CartDrawer />
+        <AuthModal />
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
         <script
           type="application/ld+json"

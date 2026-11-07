@@ -899,6 +899,47 @@ export function OrderFlow() {
                   </span>
                 </label>
 
+                {paymentChoice === "WALLET" ? (
+                  user.walletBalance >= grandTotal ? (
+                    <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-[#0c831f] space-y-1">
+                      <div className="flex justify-between font-bold">
+                        <span>Current Wallet Balance:</span>
+                        <span>₹{user.walletBalance.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate">
+                        <span>Order Total to Deduct:</span>
+                        <span>-₹{grandTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-extrabold border-t border-emerald-200 pt-1 text-[#0c831f]">
+                        <span>Remaining Balance After Order:</span>
+                        <span>₹{(user.walletBalance - grandTotal).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 space-y-1.5">
+                      <p className="font-bold">⚠️ Insufficient Wallet Balance</p>
+                      <p className="text-[11px]">
+                        Available: ₹{user.walletBalance.toFixed(2)} · Required: ₹{grandTotal} (Short by ₹{(grandTotal - user.walletBalance).toFixed(2)})
+                      </p>
+                      <div className="pt-1 flex items-center gap-2">
+                        <Link
+                          href="/account#wallet"
+                          className="rounded-lg bg-[#0c831f] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#096a18]"
+                        >
+                          Top-Up Wallet →
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentChoice("RAZORPAY")}
+                          className="text-xs font-bold text-amber-900 underline"
+                        >
+                          Pay with UPI/Cards instead
+                        </button>
+                      </div>
+                    </div>
+                  )
+                ) : null}
+
                 <label
                   className={`flex cursor-pointer items-center justify-between rounded-2xl border p-3 text-xs transition ${
                     paymentChoice === "COD"
@@ -978,7 +1019,13 @@ export function OrderFlow() {
                   <span className="text-xl leading-tight">₹{grandTotal}</span>
                 </div>
                 <span className="text-sm font-bold">
-                  {isPlacing ? "Processing Order…" : "Pay Online &amp; Print →"}
+                  {isPlacing
+                    ? "Processing Order…"
+                    : paymentChoice === "WALLET"
+                    ? user.walletBalance >= grandTotal
+                      ? "Pay with Wallet (1-Click) →"
+                      : "Insufficient Balance"
+                    : "Pay Online & Print →"}
                 </span>
               </button>
 
