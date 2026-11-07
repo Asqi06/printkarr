@@ -5,7 +5,7 @@ function initPrintOptions() {
 for (const quote of document.querySelectorAll('[data-print-quote]')) {
   if (quote.dataset.ready) continue; quote.dataset.ready='1';
   const form = quote.closest('form'), cfg = JSON.parse(quote.dataset.pricing), pages = Number(quote.dataset.pages);
-  const names = ['printType','copies','sides','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes'];
+  const names = ['printType','copies','sides','paperGsm','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes'];
   const key = 'pk-print-draft:v2:' + form.elements.draft.value;
   const get = name => form.elements[name]?.value || '';
   try {
@@ -24,7 +24,9 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       const picked=new Set(get('mixedRange').trim() ? pageRange(get('mixedRange'),pages) : []), allowed=new Set(pageRange(get('range'),pages));
       for (const button of form.querySelectorAll('[data-colour-page]')) { button.setAttribute('aria-pressed',String(picked.has(Number(button.dataset.colourPage)))); button.disabled=!allowed.has(Number(button.dataset.colourPage)); }
     } catch {}
-    const hint = form.querySelector('#range-err');
+        const hint = form.querySelector('#range-err');
+    const gutter = form.querySelector('#gutterNotice');
+    if (gutter) gutter.style.display = ['spiral', 'wiro', 'hardcover'].includes(get('binding')) ? 'flex' : 'none';
     try {
       const plan = printPlan(input, pages), printedSides=plan.effPages*plan.copies+Number(cfg.otherPrintedSides || 0);
       let printing=printPricing({bw:plan.bwPages*plan.copies,color:plan.colorPages*plan.copies},{bw:cfg.bw,color:cfg.color,printOffers:cfg.printOffers},false,printedSides,{bw:plan.bwPages*plan.copies+Number(cfg.otherPrintCounts?.bw || 0),color:plan.colorPages*plan.copies+Number(cfg.otherPrintCounts?.color || 0)}).subtotal;
