@@ -8,7 +8,7 @@ import { inr, pricing } from "@/lib/pricing";
 export const metadata: Metadata = {
   title: "pricing",
   description:
-    "Clear per-side printing rates, double-sided discounts and delivery fees for Vapi, Sarigam, Bhilad and Daman. Transparent before you pay — every time.",
+    "Clear per-side printing rates, double-sided discounts and delivery fees for Vapi, Sarigam, Bhilad and Daman. Transparent before you pay: every time.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -23,7 +23,7 @@ export default function PricingPage() {
             printing shouldn&apos;t <span className="highlight">cost a fortune.</span>
           </>
         }
-        sub="Per-side printing rates and honest delivery fees. You see the full number before you pay — configured by you, priced instantly."
+        sub="Per-side printing rates and honest delivery fees. You see the full number before you pay: configured by you, priced instantly."
       />
 
       {/* Print rates */}
@@ -98,7 +98,7 @@ export default function PricingPage() {
                 {inr(50 * 2 * a4.bw.double)}
               </p>
               <p className="mt-2 text-sm text-slate">
-                Same content, printed on 50 sheets instead of 100 — charged{" "}
+                Same content, printed on 50 sheets instead of 100: charged{" "}
                 {inr(a4.bw.double)} per printed side.
               </p>
             </div>
@@ -159,10 +159,10 @@ export default function PricingPage() {
               the honest fine print
             </h2>
             <ul className="mt-4 flex flex-col gap-2 text-sm leading-relaxed text-slate">
-              <li>· Rates above are indicative and configurable — the checkout always shows the exact number.</li>
+              <li>· Rates above are indicative and configurable: the checkout always shows the exact number.</li>
               <li>· You pay only for pages actually printed, counted per printed side.</li>
               <li>· Delivery fees depend on your zone and delivery mode; both are picked by you before payment.</li>
-              <li>· Bulk quantities (common for classes and offices) get better rates on quote — see <Link className="text-cobalt underline underline-offset-4" href="/bulk-printing">bulk printing</Link>.</li>
+              <li>· Bulk quantities (common for classes and offices) get better rates on quote: see <Link className="text-cobalt underline underline-offset-4" href="/bulk-printing">bulk printing</Link>.</li>
               <li>· Taxes are added as per prevailing rules once GST details are final.</li>
             </ul>
           </div>

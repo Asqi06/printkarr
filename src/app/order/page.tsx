@@ -19,7 +19,7 @@ export default function OrderPage() {
             start your print <span className="highlight">order</span>
           </>
         }
-        sub="Files you picked flow in automatically. Configure, check the price, place it — done."
+        sub="Files you picked flow in automatically. Configure, check the price, place it: done."
       />
       <Container className="pb-20">
         <OrderFlow />

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { waLink } from "@/lib/site";
 
-/** Bulk quotation request — composes a WhatsApp handoff (or a copyable draft). */
+/** Bulk quotation request: composes a WhatsApp handoff (or a copyable draft). */
 export function QuoteForm() {
   const [f, setF] = useState({
     name: "",
@@ -42,7 +42,7 @@ export function QuoteForm() {
       window.open(link, "_blank", "noopener");
       return;
     }
-    /* no WhatsApp number configured yet — offer a copyable draft */
+    /* no WhatsApp number configured yet: offer a copyable draft */
     void navigator.clipboard
       .writeText(message.replace(/%0A/g, "\n"))
       .then(() => {
@@ -102,7 +102,7 @@ export function QuoteForm() {
         </button>
         {copied ? (
           <p className="text-sm text-ink">
-            request copied to clipboard — paste it to us on WhatsApp ✓
+            request copied to clipboard: paste it to us on WhatsApp ✓
           </p>
         ) : null}
         {!link ? (

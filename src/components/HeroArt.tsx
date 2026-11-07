@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 
 /**
- * Printkarr hero illustration — printer → prints → doorstep.
+ * Printkarr hero illustration: printer → prints → doorstep.
  * Hand-built matte shapes in brand colours; animated with Framer Motion,
  * falling back to static when prefers-reduced-motion.
  */

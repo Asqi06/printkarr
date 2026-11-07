@@ -16,13 +16,13 @@ const steps = [
   {
     n: "01",
     t: "upload your files",
-    d: "Pick files from your phone or laptop — PDF (recommended), JPG, PNG. Select exact page ranges like 1–10, 12, 15–20 so you only pay for what you actually need printed. Multiple files? All welcome in one order.",
+    d: "Pick files from your phone or laptop: PDF (recommended), JPG, PNG. Select exact page ranges like 1–10, 12, 15–20 so you only pay for what you actually need printed. Multiple files? All welcome in one order.",
     chips: ["pdf preferred", "page ranges", "multi-file"],
   },
   {
     n: "02",
     t: "choose your print settings",
-    d: "Colour or B&W, single or double-sided, copies, paper size, stapling. Every option updates the price as you set it — the number you see is the number you pay.",
+    d: "Colour or B&W, single or double-sided, copies, paper size, stapling. Every option updates the price as you set it: the number you see is the number you pay.",
     chips: ["live pricing", "double-sided saves", "transparent total"],
   },
   {

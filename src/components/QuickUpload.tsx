@@ -28,7 +28,7 @@ export function QuickUpload({ compact = false }: { compact?: boolean }) {
     for (const f of Array.from(files)) {
       const kind = fileKind(f.name);
       if (!kind) {
-        setErrors((e) => [...e.slice(-2), `“${f.name}” — only ${ACCEPTED.join(", ").toUpperCase()} files are accepted`]);
+        setErrors((e) => [...e.slice(-2), `“${f.name}”: only ${ACCEPTED.join(", ").toUpperCase()} files are accepted`]);
         continue;
       }
       if (f.size > MAX_FILE_MB * 1024 * 1024) {

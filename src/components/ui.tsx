@@ -6,7 +6,7 @@ export function Hi({ children }: { children: ReactNode }) {
   return <span className="highlight">{children}</span>;
 }
 
-/* ── Editorial section eyebrow, e.g. "02 — HOW IT WORKS" ───────────────── */
+/* ── Editorial section eyebrow, e.g. "02: HOW IT WORKS" ───────────────── */
 export function Eyebrow({
   children,
   tone = "ink",
@@ -79,7 +79,7 @@ export function Container({
   );
 }
 
-/* ── Crop marks — printing registration corners, used sparingly ────────── */
+/* ── Crop marks: printing registration corners, used sparingly ────────── */
 export function CropFrame({
   children,
   tone = "ink",

@@ -1,4 +1,4 @@
-/** Shared FAQ data — homepage shows the first six, /faq lists everything. */
+/** Shared FAQ data: homepage shows the first six, /faq lists everything. */
 export const faqs: { q: string; a: string }[] = [
   {
     q: "How does Printkarr work?",
@@ -6,15 +6,15 @@ export const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Which files can I upload?",
-    a: "PDF (recommended), JPG, JPEG and PNG. Multiple files per order are fine. Password-protected PDFs can't be processed — remove the password before uploading.",
+    a: "PDF (recommended), JPG, JPEG and PNG. Multiple files per order are fine. Password-protected PDFs can't be processed: remove the password before uploading.",
   },
   {
     q: "Can I print from my phone?",
-    a: "Yes — the whole flow works on a smartphone. Pick the file from your gallery, downloads or Drive-backed Downloads, configure, pay, done.",
+    a: "Yes: the whole flow works on a smartphone. Pick the file from your gallery, downloads or Drive-backed Downloads, configure, pay, done.",
   },
   {
     q: "Can I select particular pages?",
-    a: "Yes. Every file has its own page selection — ranges like 1–10, 12, 15–20. You only pay for what gets printed.",
+    a: "Yes. Every file has its own page selection: ranges like 1–10, 12, 15–20. You only pay for what gets printed.",
   },
   {
     q: "Is double-sided printing available?",
@@ -22,7 +22,7 @@ export const faqs: { q: string; a: string }[] = [
   },
   {
     q: "How much does delivery cost?",
-    a: "Express delivery starts at ₹39 inside Vapi; the scheduled Karr Run is cheaper. Fees depend on your delivery zone and are shown at checkout — never a surprise later.",
+    a: "Express delivery starts at ₹39 inside Vapi; the scheduled Karr Run is cheaper. Fees depend on your delivery zone and are shown at checkout: never a surprise later.",
   },
   {
     q: "How long does delivery take?",
@@ -30,7 +30,7 @@ export const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Do you accept bulk orders?",
-    a: "Yes — coaching classes, offices, schools and businesses. Big jobs can go on a priority production slot. Send the details on the bulk printing page and we'll quote back.",
+    a: "Yes: coaching classes, offices, schools and businesses. Big jobs can go on a priority production slot. Send the details on the bulk printing page and we'll quote back.",
   },
   {
     q: "Are my documents private?",
@@ -38,7 +38,7 @@ export const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Can I cancel my order?",
-    a: "Until printing starts, yes — from your order page or by messaging us. Once printing begins we can't stop the job, but you can always raise an issue with the delivered order.",
+    a: "Until printing starts, yes: from your order page or by messaging us. Once printing begins we can't stop the job, but you can always raise an issue with the delivered order.",
   },
   {
     q: "How can I track my order?",

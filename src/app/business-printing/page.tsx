@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const services = [
   {
     t: "flyers & pamphlets",
-    d: "Hand-out flyers for new stores, offers and events — from 50 copies, delivered to your shop door.",
+    d: "Hand-out flyers for new stores, offers and events: from 50 copies, delivered to your shop door.",
     chips: ["on quote", "min 50"],
   },
   {
@@ -27,7 +27,7 @@ const services = [
   },
   {
     t: "reports & documents",
-    d: "Bound annual reports, tender documents and HR paperwork — confidential by default.",
+    d: "Bound annual reports, tender documents and HR paperwork: confidential by default.",
     chips: ["binding", "stapling", "confidential"],
   },
 ];
@@ -42,7 +42,7 @@ export default function BusinessPrintingPage() {
             made locally, <span className="highlight">for local business.</span>
           </>
         }
-        sub="Vapi's businesses don't need a Delhi vendor — they need a neighbourhood print partner that picks up and drops off. Proofed clearly, quoted honestly, delivered on time."
+        sub="Vapi's businesses don't need a Delhi vendor: they need a neighbourhood print partner that picks up and drops off. Proofed clearly, quoted honestly, delivered on time."
       />
 
       <Container className="py-12">
@@ -76,7 +76,7 @@ export default function BusinessPrintingPage() {
               </h2>
               <ol className="mt-6 flex flex-col gap-4">
                 {[
-                  ["send your files", "pdf / cdr-friendly — or just the text for a first design."],
+                  ["send your files", "pdf / cdr-friendly: or just the text for a first design."],
                   ["approve the proof", "colour, paper and fold-checked before a single sheet prints."],
                   ["settled clearly", "exact quantity × exact rate, nothing padded."],
                   ["delivery", "to your shop, office or factory gate on a promised date."],
@@ -97,7 +97,7 @@ export default function BusinessPrintingPage() {
               <div className="card flex flex-col gap-4 p-7">
                 <p className="eyebrow text-slate">minimums change per product</p>
                 <p className="text-sm leading-relaxed text-slate">
-                  Print runs are quoted per job — quantity, paper and finishes
+                  Print runs are quoted per job: quantity, paper and finishes
                   all affect pricing. Daily document printing doesn&apos;t need a
                   quote at all:
                 </p>

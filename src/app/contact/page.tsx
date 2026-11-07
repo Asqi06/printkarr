@@ -24,7 +24,7 @@ export default function ContactPage() {
             talk to a <span className="highlight">human.</span>
           </>
         }
-        sub="Order question, bulk quote, delivery area check or just figuring out how this works — we're around."
+        sub="Order question, bulk quote, delivery area check or just figuring out how this works: we're around."
       />
 
       <Container className="py-12">
@@ -33,7 +33,7 @@ export default function ContactPage() {
             <div className="flex flex-col gap-6">
               <Row
                 label="whatsapp"
-                value={hasWhatsApp ? "message us — fastest option" : "number being confirmed for launch"}
+                value={hasWhatsApp ? "message us: fastest option" : "number being confirmed for launch"}
                 live={hasWhatsApp}
               />
               <Row
@@ -71,7 +71,7 @@ export default function ContactPage() {
                 <li>
                   <strong className="text-paper">Print pricing?</strong> It&apos;s all on{" "}
                   <a href="/pricing" className="text-karr underline underline-offset-4">the pricing page</a>{" "}
-                  — live at checkout too.
+                 : live at checkout too.
                 </li>
                 <li>
                   <strong className="text-paper">Bulk or business?</strong> The{" "}
@@ -79,7 +79,7 @@ export default function ContactPage() {
                   gets a faster answer than any inbox.
                 </li>
                 <li>
-                  <strong className="text-paper">Documents private?</strong> Yes — files stay private and are
+                  <strong className="text-paper">Documents private?</strong> Yes: files stay private and are
                   auto-deleted after your order wraps up.
                 </li>
               </ul>

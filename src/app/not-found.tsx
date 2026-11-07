@@ -4,7 +4,7 @@ import { Container, OrderLink } from "@/components/ui";
 export default function NotFound() {
   return (
     <Container className="flex flex-col items-center gap-6 py-32 text-center">
-      <p className="eyebrow text-slate">404 — page not found</p>
+      <p className="eyebrow text-slate">404: page not found</p>
       <h1 className="font-grotesk text-4xl font-bold tracking-tight text-ink sm:text-6xl">
         this page <span className="highlight">didn&apos;t print.</span>
       </h1>

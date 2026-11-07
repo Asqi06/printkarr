@@ -18,7 +18,7 @@ const routes = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Fixed build date — prerendering forbids non-deterministic values
+  // Fixed build date: prerendering forbids non-deterministic values
   const lastModified = new Date("2026-11-05");
   return routes.map((r) => ({
     url: `${site.url}${r}`,

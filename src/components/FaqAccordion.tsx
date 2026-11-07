@@ -1,6 +1,6 @@
 import { faqs } from "@/lib/faqs";
 
-/** Minimal accessible accordion — native <details>, zero JS. */
+/** Minimal accessible accordion: native <details>, zero JS. */
 export function FaqAccordion({
   limit,
   className = "",

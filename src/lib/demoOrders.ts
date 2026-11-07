@@ -1,6 +1,6 @@
 /**
  * Demo-order store (localStorage-backed) exposed as an external store so
- * components can subscribe with useSyncExternalStore — no effects, no
+ * components can subscribe with useSyncExternalStore: no effects, no
  * hydration mismatches. Replaced by the real backend when ordering launches.
  */
 export type DemoOrder = {
@@ -39,7 +39,7 @@ export function getDemoOrders(): DemoOrder[] {
   return cache;
 }
 
-/** Server snapshot: always empty — the client store hydrates itself. */
+/** Server snapshot: always empty: the client store hydrates itself. */
 export function getDemoOrdersServerSnapshot(): DemoOrder[] {
   return EMPTY;
 }
@@ -74,7 +74,7 @@ export function appendDemoOrder(order: DemoOrder): void {
     cache = all;
     notify();
   } catch {
-    /* storage unavailable — on-screen confirmation still works */
+    /* storage unavailable: on-screen confirmation still works */
   }
 }
 

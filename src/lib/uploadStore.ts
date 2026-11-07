@@ -4,7 +4,7 @@
  * Client-side upload relay (Phase 2 preview).
  * Files picked on the homepage are kept in IndexedDB so they can continue
  * into the order flow even after client navigation. A storage failure never
- * blocks ordering — the /order flow re-opens the file picker as fallback.
+ * blocks ordering: the /order flow re-opens the file picker as fallback.
  */
 export type UploadedMeta = {
   id: string;

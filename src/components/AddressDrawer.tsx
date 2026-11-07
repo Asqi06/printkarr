@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useAddresses,
   setActiveAddress,
@@ -23,6 +23,15 @@ export function AddressDrawer() {
   const [landmark, setLandmark] = useState("");
   const [tag, setTag] = useState<"Home" | "College" | "Work" | "Other">("Home");
   const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeAddressDrawer();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

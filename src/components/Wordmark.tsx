@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-/** "printkarr" wordmark — lowercase grotesk, yellow block under "karr". */
+/** "printkarr" wordmark: lowercase grotesk, yellow block under "karr". */
 export function Wordmark({
   small = false,
   link = true,
@@ -26,7 +26,7 @@ export function Wordmark({
   );
   if (link) {
     return (
-      <Link href="/" aria-label="printkarr — home" className="shrink-0">
+      <Link href="/" aria-label="printkarr: home" className="shrink-0">
         {text}
       </Link>
     );

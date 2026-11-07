@@ -33,7 +33,7 @@ export default function AboutPage() {
                 The last page before a submission. A form that&apos;s due
                 tomorrow. A 200-page record for the office. Around here, that
                 usually means one thing: find the print shop, park badly, wait
-                in line, explain instructions to the counter — then do it all
+                in line, explain instructions to the counter: then do it all
                 again in reverse to collect.
               </p>
               <p className="text-ink">
@@ -41,7 +41,7 @@ export default function AboutPage() {
               </p>
               <p>
                 We&apos;re built in {site.areas.join(", ")}, for the people
-                here — students who shouldn&apos;t lose an evening to a queue,
+                here: students who shouldn&apos;t lose an evening to a queue,
                 offices that need paperwork today, and shops that would rather
                 not close during a print run.
               </p>

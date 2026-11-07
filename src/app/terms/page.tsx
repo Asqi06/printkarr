@@ -4,7 +4,7 @@ import { PageIntro, Prose } from "@/components/ui";
 export const metadata: Metadata = {
   title: "terms & conditions",
   description:
-    "Terms of service for using printkarr — ordering, payments, delivery, cancellations and acceptable use.",
+    "Terms of service for using printkarr: ordering, payments, delivery, cancellations and acceptable use.",
   alternates: { canonical: "/terms" },
 };
 
@@ -40,7 +40,7 @@ export default function TermsPage() {
         </p>
         <h2>Cancellations</h2>
         <p>
-          You can cancel until printing starts — the order page shows whether
+          You can cancel until printing starts: the order page shows whether
           it&apos;s still cancellable. After printing begins, the order is
           final print as run; quality issues are covered by the refund policy.
         </p>

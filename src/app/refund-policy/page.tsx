@@ -28,14 +28,14 @@ export default function RefundPolicyPage() {
         <p>
           Orders cancelled before printing starts are refunded in full to the
           original payment method within 5–7 working days. Once printing has
-          physically begun, the order can&apos;t be cancelled — that&apos;s
+          physically begun, the order can&apos;t be cancelled: that&apos;s
           paper already rolling.
         </p>
         <h2>Wrong or poor prints</h2>
         <p>
           If the delivered order doesn&apos;t match your configuration (wrong
           file, wrong settings applied, bad print quality, missing pages), we
-          redo the order or refund the printing cost in full — including any
+          redo the order or refund the printing cost in full: including any
           related delivery fee. Report it from the order page or WhatsApp
           within 24 hours of delivery, with a photo where relevant.
         </p>
@@ -53,8 +53,8 @@ export default function RefundPolicyPage() {
         </p>
         <h2>How refunds arrive</h2>
         <p>
-          All refunds go back to the original payment method — same account,
-          same card or UPI — handled through the payment gateway. No cash,
+          All refunds go back to the original payment method: same account,
+          same card or UPI: handled through the payment gateway. No cash,
           adjustments or credit-notes-as-favours.
         </p>
       </Prose>

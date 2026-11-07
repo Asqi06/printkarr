@@ -6,12 +6,12 @@ import { QuoteForm } from "@/components/QuoteForm";
 export const metadata: Metadata = {
   title: "bulk printing",
   description:
-    "Bulk printing for classes, schools, coaching centres, offices and factories in Vapi — priority production slots and doorstepped delivery.",
+    "Bulk printing for classes, schools, coaching centres, offices and factories in Vapi: priority production slots and doorstepped delivery.",
   alternates: { canonical: "/bulk-printing" },
 };
 
 const audiences = [
-  ["coaching classes", "question banks, notes, test series — before the weekend, not after."],
+  ["coaching classes", "question banks, notes, test series: before the weekend, not after."],
   ["schools", "worksheets, circulars and forms for whole divisions, neatly sorted."],
   ["colleges", "entire class submissions printed together and delivered to the department."],
   ["offices & factories", "records, registers and operational documents on a repeat schedule."],
@@ -27,7 +27,7 @@ export default function BulkPrintingPage() {
             big assignments? <span className="highlight">we&apos;ve got this.</span>
           </>
         }
-        sub="Entire class has submissions? Exam bank due Monday? Send the details, get a quote on WhatsApp, and the whole stack lands at your door — sorted, stapled and on time."
+        sub="Entire class has submissions? Exam bank due Monday? Send the details, get a quote on WhatsApp, and the whole stack lands at your door: sorted, stapled and on time."
       />
 
       {/* audiences */}
@@ -73,7 +73,7 @@ export default function BulkPrintingPage() {
           <Reveal delay={0.1}>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <p className="font-ops text-xs text-paper/70">
-                got something medium-sized? the place below can still be faster —{" "}
+                got something medium-sized? the place below can still be faster -{" "}
               </p>
               <OrderLink className="px-4 py-2 text-sm" />
             </div>
@@ -90,7 +90,7 @@ export default function BulkPrintingPage() {
             </h2>
             <p className="mt-3 text-slate">
               Tell us what needs printing and when. Friendly pricing for repeat
-              schedules — the more regular, the better.
+              schedules: the more regular, the better.
             </p>
           </div>
         </Reveal>

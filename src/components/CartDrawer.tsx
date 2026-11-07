@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -25,6 +25,15 @@ export function CartDrawer() {
   const [couponInput, setCouponInput] = useState("");
   const [couponMsg, setCouponMsg] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  useEffect(() => {
+    if (!cart.isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeCart();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [cart.isOpen]);
 
   if (!cart.isOpen) return null;
 
