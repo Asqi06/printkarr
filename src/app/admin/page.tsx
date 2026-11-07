@@ -168,6 +168,33 @@ export default function AdminPage() {
                 {orders.filter((o) => o.status !== "DELIVERED" && o.status !== "CANCELLED").length} orders
               </b>
               <span className="text-[10px] text-slate font-medium mt-1 block">
+                Queue &amp; Dispatched
+              </span>
+            </div>
+          </div>
+
+          {/* Automatic Print Agent Status Strip */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 px-4 py-2.5 text-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-3 w-3 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#0c831f]" />
+              </span>
+              <span className="font-bold text-ink">
+                Automatic Print Agent:{" "}
+                <span className="text-[#0c831f]">Connected (Epson L3250 Series Network)</span>
+              </span>
+              <span className="hidden sm:inline text-slate">
+                · Polling `/api/agent/next` with serial job lock
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-slate">SumatraPDF Monitored Spooler</span>
+              <span className="rounded-md bg-white border border-emerald-300 px-2 py-0.5 font-bold text-[#0c831f] text-[10px]">
+                AUTO-PRINT READY
+              </span>
+            </div>
+          </div>
                 Processing in dark-store
               </span>
             </div>

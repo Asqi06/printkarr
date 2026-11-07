@@ -6,11 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "agent": "node agent/print-agent.mjs",
+    "agent:install": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1",
+    "agent:status": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1 -Mode Status",
+    "agent:uninstall": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent.ps1 -Mode Uninstall"
   },
   "dependencies": {
+    "dotenv": "^18.0.9",
     "framer-motion": "^14.9.1",
     "next": "16.4.5",
+    "pdf-lib": "^1.17.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
