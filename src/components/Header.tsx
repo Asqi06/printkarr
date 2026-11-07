@@ -34,9 +34,14 @@ export function Header() {
   const { activeAddress } = useAddresses();
   const cart = useCart();
   const { user, loginWithGoogle } = useUser();
+  const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -94,8 +99,8 @@ export function Header() {
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0c831f] block leading-none">
                 30 Mins Delivery
               </span>
-              <span className="truncate text-xs font-bold text-ink block leading-tight mt-0.5">
-                {activeAddress?.locality || activeAddress?.area || "Vapi, Gujarat"} ▾
+              <span suppressHydrationWarning className="truncate text-xs font-bold text-ink block leading-tight mt-0.5">
+                {mounted ? (activeAddress?.locality || activeAddress?.area || "Vapi, Gujarat") : "Vapi, Gujarat"} ▾
               </span>
             </div>
           </button>
@@ -143,7 +148,7 @@ export function Header() {
           </Link>
 
           {/* User Account / Google Login Pill */}
-          {user.isLoggedIn ? (
+          {mounted && user.isLoggedIn ? (
             <Link
               href="/account"
               className="flex items-center gap-2 rounded-xl border border-edge bg-white px-3 py-1.5 text-xs font-bold text-ink hover:border-[#0c831f] transition"
@@ -154,7 +159,7 @@ export function Header() {
               <span className="hidden xl:inline truncate max-w-[80px]">
                 {user.name.split(" ")[0]}
               </span>
-              <span className="rounded-md bg-[#e8f8ec] px-1.5 py-0.5 text-[11px] font-mono font-bold text-[#0c831f]">
+              <span suppressHydrationWarning className="rounded-md bg-[#e8f8ec] px-1.5 py-0.5 text-[11px] font-mono font-bold text-[#0c831f]">
                 ₹{user.walletBalance.toFixed(0)}
               </span>
             </Link>
@@ -179,8 +184,8 @@ export function Header() {
             <span aria-hidden="true" className="text-sm">
               🛒
             </span>
-            <span>
-              {cart.totalCount > 0
+            <span suppressHydrationWarning>
+              {mounted && cart.totalCount > 0
                 ? `${cart.totalCount} items · ₹${cart.total}`
                 : "Cart"}
             </span>
@@ -243,7 +248,7 @@ export function Header() {
       {/* ── Mobile Drawer Menu ── */}
       {mobileMenuOpen ? (
         <div className="border-t border-edge bg-white p-4 sm:hidden space-y-2">
-          {user.isLoggedIn ? (
+          {mounted && user.isLoggedIn ? (
             <Link
               href="/account"
               onClick={() => setMobileMenuOpen(false)}
@@ -256,7 +261,7 @@ export function Header() {
                   <p className="text-[10px] text-slate">{user.email}</p>
                 </div>
               </div>
-              <span className="rounded-md bg-[#e8f8ec] px-2 py-0.5 text-xs font-bold text-[#0c831f]">
+              <span suppressHydrationWarning className="rounded-md bg-[#e8f8ec] px-2 py-0.5 text-xs font-bold text-[#0c831f]">
                 Wallet ₹{user.walletBalance.toFixed(0)}
               </span>
             </Link>

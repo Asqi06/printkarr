@@ -14,12 +14,17 @@ export default function AccountPage() {
   const { user, logout, topUpWallet, loginWithGooglePayload } = useUser();
   const { orders } = useOrders();
   const { addresses } = useAddresses();
-  const { getCustomerTransactions } = useCustomers();
+  const { transactions } = useCustomers();
 
+  const [mounted, setMounted] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number | "">("");
   const [topUpSuccessMsg, setTopUpSuccessMsg] = useState("");
   const [copiedCoupon, setCopiedCoupon] = useState("");
   const [copiedRef, setCopiedRef] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -79,7 +84,34 @@ export default function AccountPage() {
       (user.name && o.customer.name.toLowerCase().includes(user.name.toLowerCase().split(" ")[0]))
   );
 
-  const txHistory = user.id ? getCustomerTransactions(user.id) : [];
+  const txHistory = user.id ? transactions.filter((tx) => tx.customerId === user.id) : [];
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#f8f9fa] pb-20">
+        <div className="border-b border-edge bg-white py-6">
+          <Container>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3.5">
+                <div className="h-12 w-12 rounded-2xl bg-slate-200 animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-5 w-44 rounded-md bg-slate-200 animate-pulse" />
+                  <div className="h-3 w-64 rounded-md bg-slate-100 animate-pulse" />
+                </div>
+              </div>
+              <div className="h-9 w-24 rounded-xl bg-slate-100 animate-pulse" />
+            </div>
+          </Container>
+        </div>
+
+        <Container className="py-8 space-y-6">
+          <div className="h-44 rounded-3xl bg-white border border-edge p-6 animate-pulse" />
+          <div className="h-40 rounded-3xl bg-white border border-edge p-6 animate-pulse" />
+          <div className="h-56 rounded-3xl bg-white border border-edge p-6 animate-pulse" />
+        </Container>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] pb-20">
@@ -434,7 +466,7 @@ export default function AccountPage() {
                   Your private top-ups, bonus credits, and 1-click print order debits
                 </p>
               </div>
-              <span className="text-xs font-bold text-[#0c831f]">
+              <span suppressHydrationWarning className="text-xs font-bold text-[#0c831f]">
                 {txHistory.length} Transactions
               </span>
             </div>
@@ -457,7 +489,7 @@ export default function AccountPage() {
                     </span>
                     <div>
                       <p className="font-bold text-ink">{tx.label}</p>
-                      <p className="text-[10px] text-slate">
+                      <p suppressHydrationWarning className="text-[10px] text-slate">
                         {new Date(tx.at).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",
@@ -660,7 +692,7 @@ export default function AccountPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-ink">{ord.id}</span>
                       <span className="text-xs text-slate">·</span>
-                      <span className="text-xs text-slate">
+                      <span suppressHydrationWarning className="text-xs text-slate">
                         {new Date(ord.createdAt).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",
