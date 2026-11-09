@@ -5969,3 +5969,313 @@ body.order-focus .order-trust span {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ==========================================================================
+   Purchases Page & Shared Checkout Nature Overhaul
+   ========================================================================== */
+
+.pk-purchases-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pk-purchase-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 26px !important;
+  border-radius: 18px !important;
+  border: 1px solid var(--pk-line, #e4e9df) !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 18px -6px rgba(20, 38, 26, 0.05) !important;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+.pk-purchase-card:hover {
+  border-color: #ccd6c5 !important;
+  box-shadow: 0 8px 24px -8px rgba(20, 38, 26, 0.09) !important;
+}
+
+.pk-purchase-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pk-purchase-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.pk-purchase-top .order-id {
+  font-family: var(--pk-font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pk-forest-sub, #586e5c);
+  margin: 0;
+}
+
+.pk-purchase-date {
+  font-size: 12px;
+  color: var(--pk-forest-sub, #728475);
+}
+
+.pk-purchase-title {
+  font-family: var(--pk-font-serif, "Instrument Serif", serif) !important;
+  font-size: clamp(1.2rem, 2vw, 1.45rem) !important;
+  font-weight: 400 !important;
+  color: var(--pk-forest, #14261a) !important;
+  margin: 2px 0 6px !important;
+  line-height: 1.25 !important;
+}
+
+.pk-purchase-dest {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--pk-forest-sub, #586e5c);
+  margin: 0;
+}
+
+.pk-purchase-dest svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--pk-leaf, #2e7d32);
+}
+
+.pk-purchase-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pk-purchase-status-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pk-purchase-price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--pk-forest, #14261a);
+}
+
+@media (max-width: 680px) {
+  .pk-purchase-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px 20px !important;
+  }
+  .pk-purchase-side {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--pk-line, #e4e9df);
+    padding-top: 14px;
+    margin-top: 6px;
+  }
+}
+
+/* Purchase details / Receipt screen */
+.store-receipt {
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line, #e4e9df) !important;
+  border-radius: 20px !important;
+  padding: 26px 28px !important;
+  box-shadow: 0 4px 20px -8px rgba(20, 38, 26, 0.06) !important;
+}
+
+.receipt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+
+.receipt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  background: #fafbf8;
+  border-radius: 12px;
+  border: 1px solid #eef2eb;
+}
+
+.receipt-item-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.receipt-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--pk-leaf-tint, #eaf7e4);
+  color: var(--pk-forest, #14261a);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.receipt-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pk-forest, #14261a);
+  text-decoration: none;
+  display: block;
+}
+
+.receipt-item-title:hover {
+  text-decoration: underline;
+}
+
+.receipt-item-meta {
+  font-size: 12px;
+  color: var(--pk-forest-sub, #586e5c);
+  display: block;
+  margin-top: 2px;
+}
+
+.pk-addr-summary-box {
+  background: #fafbf8;
+  border: 1.5px solid #dce4d6;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+/* Address drawer on print desk */
+.qk-address-drawer {
+  background: #ffffff;
+  border: 1.5px solid #ccd6c5;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin: 12px 0 16px;
+  box-shadow: 0 8px 26px -8px rgba(20, 38, 26, 0.12);
+  animation: pkFadeDown 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes pkFadeDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.qk-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: var(--pk-forest);
+}
+
+.qk-drawer-close {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--pk-forest-sub);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.qk-drawer-close:hover {
+  background: #f1f4ed;
+  color: var(--pk-forest);
+}
+
+.qk-address-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+
+.qk-address-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8dd;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #fafbf8;
+}
+
+.qk-address-option:hover,
+.qk-address-option.active {
+  border-color: var(--pk-forest, #14261a);
+  background: #f4faef;
+}
+
+.qk-address-option input[type="radio"] {
+  margin-top: 3px;
+  accent-color: var(--pk-forest);
+}
+
+.qk-opt-body {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--pk-forest);
+}
+
+.qk-opt-label {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: #eaf7e4;
+  color: var(--pk-forest);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.qk-opt-body b {
+  display: block;
+  font-size: 13px;
+}
+
+.qk-opt-body p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--pk-forest-sub);
+}
+
+.qk-new-addr-details {
+  border-top: 1px dashed #ccd6c5;
+  padding-top: 12px;
+  margin-top: 10px;
+}
+
+.qk-new-addr-details summary {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--pk-orange, #c2410c);
+  cursor: pointer;
+}
+
+.qk-new-addr-fields {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+

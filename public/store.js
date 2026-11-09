@@ -101,7 +101,33 @@
         const data=new URLSearchParams(new FormData(form,event.submitter));
         let action=form.action;
         if(action.endsWith('/customer/orders/new/confirm')) {
-          const checked=await fetch(action,{method:'POST',body:data});
+          const checked=await fetch(action,{method:'POST',headers:{Accept:'application/json'},body:data});
+          if(checked.ok){
+            const result=await checked.json().catch(()=>null);
+            if(result?.id){
+              id=result.id;form.dataset.purchaseId=id;
+              if(event.submitter?.value==='add'){location.assign('/customer/orders/new?fresh=1');return;}
+              if(event.submitter?.value==='wallet'){location.assign(`/customer/wallet?purchase=${encodeURIComponent(id)}`);return;}
+              if(form.elements.paymentMethod?.value==='wallet'){
+                const paid=await fetch(`/customer/purchases/${encodeURIComponent(id)}/wallet`,{method:'POST'});
+                if(!paid.ok)throw new Error('Payment could not be completed with wallet balance.');
+                location.assign(paid.url);return;
+              }
+              // Online payment continues down to Razorpay window!
+              const response=await fetch(`/customer/purchases/${encodeURIComponent(id)}/gateway`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+              if(response.redirected && new URL(response.url).pathname==='/login'){location.assign(response.url);return;}
+              const gResult=await response.json();if(response.status===401 && gResult.login){location.assign(gResult.login);return;}if(!response.ok)throw new Error(gResult.error || 'Could not open payment.');
+              if(!window.Razorpay)throw new Error('Payment provider is still loading. Please retry.');
+              const checkout=new window.Razorpay({key:gResult.keyId,order_id:gResult.id,amount:gResult.amount,currency:'INR',name:'PrintKarr',description:'Prints & stationery',modal:{ondismiss:()=>{reset();}},handler(proof){
+                const proofForm=document.createElement('form');proofForm.method='POST';proofForm.action=`/customer/purchases/${encodeURIComponent(id)}/verify`;
+                Object.entries(proof).forEach(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;proofForm.append(input);});
+                document.body.append(proofForm);proofForm.submit();
+              }});
+              checkout.on?.('payment.failed',event=>{message.textContent=event.error?.description || 'Payment failed. Your checkout is saved; retry online payment. Contact support if money was deducted.';message.hidden=false;reset();});
+              checkout.open();
+              return;
+            }
+          }
           if(checked.ok && checked.redirected && /^\/customer\/purchases\/[^/]+$/.test(new URL(checked.url).pathname)){location.assign(checked.url);return;}
           if(checked.redirected && new URL(checked.url).pathname==='/login'){location.assign(checked.url);return;}
           const doc=new DOMParser().parseFromString(await checked.text(),'text/html'), confirmed=doc.querySelector('[data-print-payment]');
@@ -172,4 +198,99 @@
   document.addEventListener('DOMContentLoaded', syncCartStrip);
   document.addEventListener('pk:cart-updated', syncCartStrip);
   window.pkSyncCartStrip = syncCartStrip;
+})();
+
+/* ── Inline delivery address changer & drawer ── */
+(function () {
+  function initAddressDrawer() {
+    const changeBtn = document.getElementById('qkChangeAddressBtn');
+    const closeBtn = document.getElementById('qkCloseDrawerBtn');
+    const drawer = document.getElementById('qkAddressDrawer');
+    const activeLabel = document.getElementById('qkActiveLabel');
+    const activeContact = document.getElementById('qkActiveContact');
+    const activeText = document.getElementById('qkActiveAddressText');
+    const hiddenInput = document.getElementById('qkSelectedAddressId');
+
+    if (changeBtn && drawer) {
+      changeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        drawer.style.display = (drawer.style.display === 'none' || !drawer.style.display) ? 'block' : 'none';
+      });
+    }
+    if (closeBtn && drawer) {
+      closeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        drawer.style.display = 'none';
+      });
+    }
+
+    document.querySelectorAll('input[name="selectAddressRadio"]').forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        if (activeLabel && radio.dataset.label) activeLabel.textContent = radio.dataset.label;
+        if (activeContact && radio.dataset.contact) activeContact.textContent = radio.dataset.contact;
+        if (activeText && radio.dataset.text) activeText.textContent = radio.dataset.text;
+        if (hiddenInput) hiddenInput.value = radio.value;
+        document.querySelectorAll('.qk-address-option').forEach(function (opt) { opt.classList.remove('active'); });
+        radio.closest('.qk-address-option')?.classList.add('active');
+        if (drawer) drawer.style.display = 'none';
+      });
+    });
+
+    const saveNewBtn = document.getElementById('qkSaveNewAddressBtn');
+    if (saveNewBtn) {
+      saveNewBtn.addEventListener('click', async function (e) {
+        e.preventDefault();
+        const address = document.getElementById('qk_na_address')?.value?.trim();
+        const area = document.getElementById('qk_na_area')?.value;
+        const pin = document.getElementById('qk_na_pin')?.value?.trim();
+        const phone = document.getElementById('qk_na_phone')?.value?.trim();
+        if (!address || !pin || !/^\d{6}$/.test(pin) || !phone) {
+          alert('Please enter a valid street address, 6-digit PIN code and phone number.');
+          return;
+        }
+        saveNewBtn.disabled = true;
+        saveNewBtn.textContent = 'Saving…';
+        try {
+          const res = await fetch('/customer/addresses/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+            body: new URLSearchParams({ address, area, pin, phone, label: 'Saved Address' })
+          });
+          const data = await res.json();
+          if (res.ok && data.address) {
+            if (activeLabel) activeLabel.textContent = data.address.label || 'Home';
+            if (activeContact) activeContact.textContent = (data.address.name || '') + (data.address.phone ? ' · ' + data.address.phone : '');
+            if (activeText) activeText.textContent = data.address.address + ', ' + data.address.area + ' ' + data.address.pin;
+            if (hiddenInput) hiddenInput.value = data.address.id;
+            if (drawer) drawer.style.display = 'none';
+          } else {
+            alert(data.error || 'Could not save new address. Please check your fields.');
+          }
+        } catch (err) {
+          alert('Could not save address. Please retry.');
+        } finally {
+          saveNewBtn.disabled = false;
+          saveNewBtn.textContent = 'Use this address';
+        }
+      });
+    }
+
+    const stripChange = document.querySelector('.qk-strip-change');
+    if (stripChange) {
+      stripChange.addEventListener('click', function (e) {
+        e.preventDefault();
+        const deliverySec = document.getElementById('delivery');
+        if (deliverySec) {
+          deliverySec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (drawer) drawer.style.display = 'block';
+        }
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAddressDrawer);
+  } else {
+    initAddressDrawer();
+  }
 })();

@@ -19,6 +19,7 @@
     "test:design": "node scripts/design-check.mjs",
     "test:delivery": "node scripts/delivery-service-check.mjs",
     "test:checkout": "node scripts/checkout-check.mjs && node scripts/direct-checkout-check.mjs",
+    "test:purchases": "node scripts/purchases-cancellation-check.mjs",
     "test:store": "node scripts/store-check.mjs",
     "test:ux": "node scripts/mixed-print-check.mjs && node scripts/split-print-check.mjs && node scripts/address-ux-check.mjs",
     "preview:orders": "node scripts/order-preview.mjs",

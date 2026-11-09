@@ -619,8 +619,14 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
   if(to==='PAYMENT_PENDING' && o.status==='PRINT_FAILED' && (canFulfil(o) || o.purchaseId))return res.status(409).send(oops(req.user,`/admin/orders/${o.id}`,'Only an unpaid standalone print can return to checkout. Use the shared purchase for other payment changes.'));
   if (['PRINT_QUEUE','PAYMENT_PENDING'].includes(to) && o.status==='PRINT_FAILED' && req.body.confirmRetry!=='1') return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, 'A retry prints the cover and whole document again. Confirm this, or download the split sets to print only missing pages manually.'));
   if (o.purchaseId && ['PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(to)) return res.status(409).send(oops(req.user, `/admin/purchases/${o.purchaseId}`, 'Pack and fulfil all items together from the shared purchase.'));
-  if (['CANCELLED', 'REFUNDED'].includes(to) && o.purchaseId) return res.status(409).send(oops(req.user, `/admin/purchases/${o.purchaseId}`, 'Cancel and refund the whole shared purchase from its receipt.'));
-  if (['CANCELLED', 'REFUNDED'].includes(to) && (db.purchases || []).some((p) => p.status === 'CREATED' && p.printIds.includes(o.id))) return res.status(409).send(oops(req.user, '/admin/purchases', 'Cancel the shared checkout before changing this print.'));
+  if (['CANCELLED', 'REFUNDED'].includes(to)) {
+    const p = (db.purchases || []).find((p) => (o.purchaseId && p.id === o.purchaseId) || (p.printIds || []).includes(o.id));
+    if (p && (!p.items || p.items.length === 0) && (p.printIds || []).filter(id => id !== o.id).length === 0) {
+      try { cancelPurchase(db, p, req.user.id, restorePackQuota, voidPendingForOrder); } catch {}
+    } else if (p) {
+      p.printIds = (p.printIds || []).filter(id => id !== o.id);
+    }
+  }
   if (!canTransition(o.status, to) || to === 'RIDER_ASSIGNED') {
     return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, `This job is now ${esc(o.status)}. Refresh and use the available next action.`));
   }
@@ -1572,17 +1578,35 @@ app.post('/customer/orders/:id/cancel', requireRole('customer'), (req, res) => {
   const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   if (o.gatewayOrderId || o.gatewayCreating) return res.status(409).send(oops(req.user, '/customer/orders', 'An online payment is open. Contact support before cancellation.'));
-  if (o.purchaseId) return res.status(409).send(oops(req.user, `/customer/purchases/${o.purchaseId}`, 'Cancel the whole shared purchase from its receipt.'));
-  if ((db.purchases || []).some((p) => p.status === 'CREATED' && p.printIds.includes(o.id))) return res.status(409).send(oops(req.user, '/cart', 'Cancel the shared checkout before cancelling this print.'));
+  const p = (db.purchases || []).find((p) => (o.purchaseId && p.id === o.purchaseId) || (p.printIds || []).includes(o.id));
+  if (p && (p.gatewayOrderId || p.gatewayCreating)) return res.status(409).send(oops(req.user, '/customer/orders', 'An online payment is open. Contact support before cancellation.'));
+  if (p && (!p.items || p.items.length === 0) && (p.printIds || []).filter(id => id !== o.id).length === 0) {
+    try {
+      cancelPurchase(db, p, req.user.id, restorePackQuota, voidPendingForOrder);
+      saveDb(db);
+      notifyState(o);
+      return res.redirect(`/customer/orders/${o.id}`);
+    } catch {}
+  }
   try {
     transition(o, 'CANCELLED', { by: req.user.id });
   } catch {
     return res.redirect(`/customer/orders/${o.id}`);
   }
-  refundPaidOrder(db, o);
+  try { refundPaidOrder(db, o); } catch {}
   voidPendingForOrder(db, o.id);
   o.paymentStatus = 'refunded';
-  for (const cart of db.carts || []) cart.printIds = cart.printIds.filter((id) => id !== o.id);
+  if (p) {
+    p.printIds = (p.printIds || []).filter((id) => id !== o.id);
+    if (p.printIds.length === 0 && (!p.items || p.items.length === 0)) {
+      p.status = p.paymentStatus === 'paid' ? 'REFUNDED' : 'CANCELLED';
+      p.paymentStatus = p.paymentStatus === 'paid' ? 'refunded' : 'pending';
+      p.history.push({ to: p.status, at: new Date().toISOString(), by: req.user.id });
+      const cart = (db.carts || []).find((c) => c.purchaseId === p.id);
+      if (cart) cart.purchaseId = null;
+    }
+  }
+  for (const cart of db.carts || []) cart.printIds = (cart.printIds || []).filter((id) => id !== o.id);
   saveDb(db);
   notifyState(o);
   res.redirect(`/customer/orders/${o.id}`);
