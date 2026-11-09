@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 900" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="meadowSky" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#93b7cb"/>
+      <stop offset="35%" stop-color="#b6d1de"/>
+      <stop offset="70%" stop-color="#dce7ed"/>
+      <stop offset="100%" stop-color="#f2f6f7"/>
+    </linearGradient>
+    <linearGradient id="meadowGrass1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#558137"/>
+      <stop offset="50%" stop-color="#3d6323"/>
+      <stop offset="100%" stop-color="#264214"/>
+    </linearGradient>
+    <linearGradient id="meadowGrass2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#699d45"/>
+      <stop offset="60%" stop-color="#49742c"/>
+      <stop offset="100%" stop-color="#2d4d19"/>
+    </linearGradient>
+    <linearGradient id="treeCanopyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#345e22"/>
+      <stop offset="60%" stop-color="#1f3d13"/>
+      <stop offset="100%" stop-color="#11220a"/>
+    </linearGradient>
+    <linearGradient id="treeHighlight" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#5a913f"/>
+      <stop offset="100%" stop-color="#30561e"/>
+    </linearGradient>
+    <linearGradient id="darkVignette" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#051408" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#051408" stop-opacity="0.3"/>
+      <stop offset="80%" stop-color="#051408" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#051408" stop-opacity="0.96"/>
+    </linearGradient>
+    <filter id="fluffyCloud">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="700" height="900" fill="url(#meadowSky)"/>
+
+  <!-- Dramatic Soft Clouds -->
+  <g filter="url(#fluffyCloud)" opacity="0.65">
+    <ellipse cx="200" cy="180" rx="220" ry="60" fill="#ffffff"/>
+    <ellipse cx="500" cy="220" rx="260" ry="70" fill="#ffffff"/>
+    <ellipse cx="350" cy="300" rx="300" ry="80" fill="#ffffff"/>
+  </g>
+
+  <!-- Rolling Hills Layer 1 -->
+  <path d="M-50,560 Q200,490 420,530 T750,550 L750,950 L-50,950 Z" fill="url(#meadowGrass2)"/>
+
+  <!-- Rolling Hills Layer 2 (Foreground) -->
+  <path d="M-50,610 Q280,540 540,580 T750,630 L750,950 L-50,950 Z" fill="url(#meadowGrass1)"/>
+
+  <!-- Solitary Lone Oak Tree in the center distance -->
+  <!-- Tree Shadow -->
+  <ellipse cx="350" cy="535" rx="55" ry="10" fill="#14280c" opacity="0.6"/>
+
+  <!-- Trunk & Branches -->
+  <path d="M344,534 Q347,510 345,490 Q341,475 330,460 L336,458 Q346,472 349,488 Q354,472 368,460 L372,464 Q357,480 353,495 Q355,512 356,534 Z" fill="#2d1c10"/>
+
+  <!-- Rich Foliage Crown of the Lone Tree -->
+  <g>
+    <!-- Base silhouette -->
+    <ellipse cx="350" cy="460" rx="60" ry="48" fill="url(#treeCanopyGrad)"/>
+    <ellipse cx="325" cy="450" rx="45" ry="38" fill="url(#treeCanopyGrad)"/>
+    <ellipse cx="375" cy="452" rx="48" ry="40" fill="url(#treeCanopyGrad)"/>
+    <ellipse cx="350" cy="432" rx="50" ry="42" fill="url(#treeCanopyGrad)"/>
+
+    <!-- Sunlit Highlights (top-left light source) -->
+    <ellipse cx="335" cy="438" rx="36" ry="28" fill="url(#treeHighlight)" opacity="0.85"/>
+    <ellipse cx="360" cy="430" rx="30" ry="24" fill="url(#treeHighlight)" opacity="0.75"/>
+    <ellipse cx="320" cy="460" rx="28" ry="22" fill="url(#treeHighlight)" opacity="0.6"/>
+  </g>
+
+  <!-- Dramatic Dark Vignette for Text Readability -->
+  <rect width="700" height="900" fill="url(#darkVignette)"/>
+</svg>

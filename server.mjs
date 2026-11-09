@@ -1915,30 +1915,49 @@ app.post('/customer/profile', requireRole('customer'), (req, res) => {
   res.redirect('/customer/profile');
 });
 
+app.get('/api/customer/addresses', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const mine = (db.addresses || []).filter((a) => a.customerId === req.user.id && !a.campusId && ['vapi', 'daman', 'sarigam', 'bhilad'].includes(String(a.area).toLowerCase()));
+  res.json({ addresses: mine });
+});
+
 app.post('/customer/addresses/add', requireRole('customer'), (req, res) => {
   const db = loadDb();
   let point;
-  try { point = addressPoint(zoneOf(req.body.area), req.body); } catch (error) { return res.status(400).send(oops(req.user,'/customer/profile#addresses',esc(error.message))); }
-  if (!point || !String(req.body.address || '').trim() || String(req.body.address).length > 200 || !normPhone(req.body.phone) || !/^[1-9]\d{5}$/.test(String(req.body.pin || '')) || !['Vapi','Daman','Sarigam','Bhilad'].includes(req.body.area)) return res.status(400).send(oops(req.user,'/customer/profile#addresses','Add a valid address, phone, PIN and locality.'));
-  db.addresses.push({
+  try { point = addressPoint(zoneOf(req.body.area), req.body); } catch (error) {
+    if (req.get('accept')?.includes('application/json')) return res.status(400).json({ error: error.message });
+    return res.status(400).send(oops(req.user, req.body.next || '/customer/profile#addresses', esc(error.message)));
+  }
+  if (!point || !String(req.body.address || '').trim() || String(req.body.address).length > 200 || !normPhone(req.body.phone) || !/^[1-9]\d{5}$/.test(String(req.body.pin || '')) || !['Vapi','Daman','Sarigam','Bhilad'].includes(req.body.area)) {
+    if (req.get('accept')?.includes('application/json')) return res.status(400).json({ error: 'Add a valid address, phone, PIN and locality.' });
+    return res.status(400).send(oops(req.user, req.body.next || '/customer/profile#addresses', 'Add a valid address, phone, PIN and locality.'));
+  }
+  const newAddress = {
     id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id,
-    ...point, label: String(req.body.label || 'Home').slice(0,40), name: req.user.name, phone: String(req.body.phone).slice(0, 20),
+    ...point, label: String(req.body.label || 'Home').slice(0, 40), name: String(req.body.name || req.user.name || '').slice(0, 60), phone: String(req.body.phone).slice(0, 20),
     address: String(req.body.address).slice(0, 200), area: req.body.area || 'Sarigam',
     landmark: String(req.body.landmark || '').slice(0, 100), pin: String(req.body.pin).slice(0, 10),
     isDefault: !db.addresses.some((a) => a.customerId === req.user.id)
-  });
-  if (!normPhone(req.user.phone)) db.users.find(u=>u.id===req.user.id).phone = '+91 ' + normPhone(req.body.phone);
+  };
+  db.addresses.push(newAddress);
+  if (!normPhone(req.user.phone)) db.users.find(u => u.id === req.user.id).phone = '+91 ' + normPhone(req.body.phone);
   saveDb(db);
-  res.redirect('/customer/profile#addresses');
+  if (req.get('accept')?.includes('application/json')) return res.json({ ok: true, address: newAddress });
+  res.redirect(req.body.next || '/customer/profile#addresses');
 });
 
 app.post('/customer/addresses/default', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const mine = db.addresses.filter((a) => a.customerId === req.user.id);
-  if (!mine.some((a) => a.id === req.body.id)) return res.redirect('/customer/profile#addresses');
+  const target = mine.find(a => a.id === req.body.id);
+  if (!target) {
+    if (req.get('accept')?.includes('application/json')) return res.status(404).json({ error: 'Address not found.' });
+    return res.redirect(req.body.next || '/customer/profile#addresses');
+  }
   mine.forEach((a) => { a.isDefault = a.id === req.body.id; });
   saveDb(db);
-  res.redirect('/customer/profile#addresses');
+  if (req.get('accept')?.includes('application/json')) return res.json({ ok: true, address: target });
+  res.redirect(req.body.next || '/customer/profile#addresses');
 });
 
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
@@ -2487,12 +2506,10 @@ app.get('/', (req, res) => {
   res.set('Cache-Control', 'private, no-store');
   res.set('Referrer-Policy', 'strict-origin');
   const db = loadDb();
-  const weekAgo = Date.now() - 7 * 864e5;
-  const pagesWeek = db.orders
-    .filter((o) => Date.parse(o.createdAt) >= weekAgo && o.status !== 'CANCELLED')
-    .reduce((s, o) => s + o.pages * o.copies, 0);
-  const queueDepth = db.orders.filter((o) => ['PRINT_QUEUE', 'PRINTING'].includes(o.status)).length;
-  res.send(landing({ signedIn: user?.role === 'customer', pagesWeek, pricing: db.pricing, queueDepth, maxMb: db.settings.order.maxFileMb, campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db) : [], reviews: publicReviews(db, user) }));
+  const pagesPrinted = db.orders
+    .filter((o) => o.paymentStatus === 'paid' && !['CANCELLED', 'REFUNDED'].includes(o.status))
+    .reduce((s, o) => s + (Number(o.pages) || 0) * (Number(o.copies) || 1), 0);
+  res.send(landing({ signedIn: user?.role === 'customer', pagesPrinted, pricing: db.pricing, maxMb: db.settings.order.maxFileMb, campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db) : [], reviews: publicReviews(db, user) }));
 });
 
 // Marketing pages — Grok workspace port (server-rendered, no auth).

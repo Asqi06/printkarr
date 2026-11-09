@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 900" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="hillSky" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#b8d5e5"/>
+      <stop offset="40%" stop-color="#d4e4ec"/>
+      <stop offset="65%" stop-color="#eaf1f4"/>
+      <stop offset="100%" stop-color="#f8faf7"/>
+    </linearGradient>
+    <linearGradient id="hillSun" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="grassGrad1" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#5a8b44"/>
+      <stop offset="35%" stop-color="#467332"/>
+      <stop offset="70%" stop-color="#315520"/>
+      <stop offset="100%" stop-color="#1e3814"/>
+    </linearGradient>
+    <linearGradient id="grassHighlight" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#7eb05b"/>
+      <stop offset="60%" stop-color="#5a8b44"/>
+      <stop offset="100%" stop-color="#3d6829"/>
+    </linearGradient>
+    <filter id="cloudSoft">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="900" fill="url(#hillSky)"/>
+
+  <!-- Soft Sunlight -->
+  <circle cx="580" cy="180" r="140" fill="url(#hillSun)"/>
+
+  <!-- Gentle Clouds -->
+  <g filter="url(#cloudSoft)" opacity="0.6">
+    <ellipse cx="250" cy="160" rx="160" ry="40" fill="#ffffff"/>
+    <ellipse cx="620" cy="220" rx="200" ry="50" fill="#ffffff"/>
+    <ellipse cx="400" cy="280" rx="240" ry="45" fill="#ffffff"/>
+  </g>
+
+  <!-- Lush Green Rolling Hill -->
+  <path d="M-50,480 Q250,420 500,430 T850,470 L850,950 L-50,950 Z" fill="url(#grassHighlight)"/>
+  <path d="M-50,510 Q280,440 550,460 T850,530 L850,950 L-50,950 Z" fill="url(#grassGrad1)"/>
+
+  <!-- Subtle Hill Texture / Micro Slopes -->
+  <path d="M-20,620 Q300,560 620,590 T820,660 L820,950 L-20,950 Z" fill="#28481b" opacity="0.45"/>
+
+  <!-- Minimalist Chair On The Crest -->
+  <!-- Chair Shadow -->
+  <ellipse cx="510" cy="436" rx="28" ry="6" fill="#1b3012" opacity="0.6"/>
+
+  <!-- Chair Backrest & Slats -->
+  <g stroke="#3a2e26" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Back frame tilted slightly left -->
+    <line x1="492" y1="365" x2="497" y2="415"/>
+    <line x1="518" y1="368" x2="522" y2="418"/>
+    <!-- Back slats -->
+    <line x1="494" y1="375" x2="519" y2="378"/>
+    <line x1="495" y1="388" x2="520" y2="391"/>
+    <line x1="496" y1="401" x2="521" y2="404"/>
+
+    <!-- Seat Platform -->
+    <path d="M490,415 L525,418 L530,427 L494,424 Z" fill="#4a3b30"/>
+
+    <!-- Front & Rear Legs -->
+    <line x1="494" y1="424" x2="492" y2="438"/>
+    <line x1="530" y1="427" x2="528" y2="440"/>
+    <line x1="497" y1="418" x2="502" y2="434"/>
+    <line x1="522" y1="418" x2="524" y2="436"/>
+  </g>
+
+  <!-- Distant birds / breeze accents -->
+  <path d="M180,240 Q188,234 196,240 Q204,234 212,240" fill="none" stroke="#688291" stroke-width="2" stroke-linecap="round"/>
+  <path d="M220,260 Q226,255 232,260 Q238,255 244,260" fill="none" stroke="#688291" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

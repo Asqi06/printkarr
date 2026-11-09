@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 480" width="100%" height="100%" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="skyGlow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#f4f9f4" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#fafbf9" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="branchWood" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d2218"/>
+      <stop offset="50%" stop-color="#4a3728"/>
+      <stop offset="100%" stop-color="#241a12"/>
+    </linearGradient>
+    <linearGradient id="leafDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b4332"/>
+      <stop offset="100%" stop-color="#2d6a4f"/>
+    </linearGradient>
+    <linearGradient id="leafMid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d6a4f"/>
+      <stop offset="100%" stop-color="#40916c"/>
+    </linearGradient>
+    <linearGradient id="leafLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#52b788"/>
+      <stop offset="100%" stop-color="#74c69d"/>
+    </linearGradient>
+    <filter id="softBlur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="480" fill="url(#skyGlow)"/>
+
+  <!-- Left Main Branch Network -->
+  <g id="left-canopy">
+    <path d="M-60,-20 Q60,40 140,110 T260,190 Q290,220 280,260 Q270,300 240,330 T210,390" fill="none" stroke="url(#branchWood)" stroke-width="32" stroke-linecap="round"/>
+    <path d="M120,95 Q200,80 280,120 T360,160" fill="none" stroke="url(#branchWood)" stroke-width="18" stroke-linecap="round"/>
+    <path d="M220,160 Q280,210 320,290" fill="none" stroke="url(#branchWood)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M70,50 Q120,160 160,250 T130,340" fill="none" stroke="url(#branchWood)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M-20,120 Q60,180 90,280" fill="none" stroke="url(#branchWood)" stroke-width="10" stroke-linecap="round"/>
+
+    <!-- Left Foliage Clusters (Dark background leaves, blurred for depth) -->
+    <g filter="url(#softBlur)" opacity="0.6">
+      <ellipse cx="60" cy="80" rx="90" ry="70" fill="url(#leafDark)" transform="rotate(-15 60 80)"/>
+      <ellipse cx="160" cy="120" rx="80" ry="65" fill="url(#leafDark)" transform="rotate(25 160 120)"/>
+      <ellipse cx="230" cy="220" rx="70" ry="60" fill="url(#leafDark)" transform="rotate(-30 230 220)"/>
+      <ellipse cx="120" cy="260" rx="65" ry="55" fill="url(#leafDark)" transform="rotate(10 120 260)"/>
+    </g>
+
+    <!-- Foreground Leaves Left -->
+    <g>
+      <!-- Leaf cluster 1 -->
+      <path d="M110,80 Q145,55 175,75 Q155,105 110,80 Z" fill="url(#leafMid)"/>
+      <path d="M130,60 Q170,45 190,70 Q160,95 130,60 Z" fill="url(#leafLight)"/>
+      <path d="M90,110 Q130,115 150,145 Q115,155 90,110 Z" fill="url(#leafDark)"/>
+      <path d="M150,120 Q190,110 215,135 Q185,160 150,120 Z" fill="url(#leafMid)"/>
+      <path d="M180,100 Q225,95 240,125 Q205,140 180,100 Z" fill="url(#leafLight)"/>
+
+      <!-- Hanging leaves around (200-300px) -->
+      <path d="M220,170 Q270,160 295,190 Q260,215 220,170 Z" fill="url(#leafMid)"/>
+      <path d="M250,185 Q300,195 310,230 Q270,240 250,185 Z" fill="url(#leafLight)"/>
+      <path d="M210,230 Q255,235 270,270 Q230,285 210,230 Z" fill="url(#leafDark)"/>
+      <path d="M240,270 Q285,285 285,325 Q250,330 240,270 Z" fill="url(#leafMid)"/>
+      <path d="M180,260 Q215,280 210,320 Q180,310 180,260 Z" fill="url(#leafLight)"/>
+      <path d="M140,290 Q175,325 160,365 Q135,340 140,290 Z" fill="url(#leafMid)"/>
+      <path d="M200,340 Q235,370 220,410 Q195,390 200,340 Z" fill="url(#leafDark)"/>
+
+      <!-- Delicate hanging vines / branch tips -->
+      <path d="M260,250 Q290,290 270,340 T240,410" fill="none" stroke="url(#branchWood)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M270,335 Q295,355 285,385 Q265,375 270,335 Z" fill="url(#leafLight)"/>
+      <path d="M245,380 Q270,405 255,435 Q235,420 245,380 Z" fill="url(#leafMid)"/>
+    </g>
+  </g>
+
+  <!-- Right Main Branch Network -->
+  <g id="right-canopy">
+    <path d="M1660,-30 Q1520,30 1420,95 T1310,180 Q1270,225 1285,275 Q1300,320 1340,360 T1360,420" fill="none" stroke="url(#branchWood)" stroke-width="30" stroke-linecap="round"/>
+    <path d="M1450,85 Q1360,85 1280,130 T1190,175" fill="none" stroke="url(#branchWood)" stroke-width="16" stroke-linecap="round"/>
+    <path d="M1330,165 Q1260,220 1220,300" fill="none" stroke="url(#branchWood)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M1510,40 Q1450,150 1410,240 T1430,330" fill="none" stroke="url(#branchWood)" stroke-width="14" stroke-linecap="round"/>
+
+    <!-- Right Foliage Clusters (Dark background leaves, blurred for depth) -->
+    <g filter="url(#softBlur)" opacity="0.6">
+      <ellipse cx="1520" cy="70" rx="90" ry="70" fill="url(#leafDark)" transform="rotate(20 1520 70)"/>
+      <ellipse cx="1400" cy="115" rx="85" ry="60" fill="url(#leafDark)" transform="rotate(-15 1400 115)"/>
+      <ellipse cx="1320" cy="205" rx="75" ry="65" fill="url(#leafDark)" transform="rotate(25 1320 205)"/>
+      <ellipse cx="1430" cy="255" rx="70" ry="55" fill="url(#leafDark)" transform="rotate(-10 1430 255)"/>
+    </g>
+
+    <!-- Foreground Leaves Right -->
+    <g>
+      <path d="M1440,75 Q1400,50 1370,70 Q1395,100 1440,75 Z" fill="url(#leafMid)"/>
+      <path d="M1410,55 Q1365,40 1345,65 Q1380,90 1410,55 Z" fill="url(#leafLight)"/>
+      <path d="M1460,105 Q1415,115 1395,145 Q1435,155 1460,105 Z" fill="url(#leafDark)"/>
+      <path d="M1380,120 Q1335,115 1310,140 Q1345,165 1380,120 Z" fill="url(#leafMid)"/>
+      <path d="M1340,100 Q1290,95 1275,125 Q1315,140 1340,100 Z" fill="url(#leafLight)"/>
+      <path d="M1295,160 Q1245,155 1220,185 Q1260,205 1295,160 Z" fill="url(#leafMid)"/>
+
+      <path d="M1280,205 Q1230,215 1220,250 Q1260,260 1280,205 Z" fill="url(#leafLight)"/>
+      <path d="M1310,250 Q1260,260 1250,295 Q1290,305 1310,250 Z" fill="url(#leafDark)"/>
+      <path d="M1250,280 Q1205,300 1215,340 Q1245,330 1250,280 Z" fill="url(#leafMid)"/>
+      <path d="M1320,330 Q1285,360 1300,400 Q1325,380 1320,330 Z" fill="url(#leafLight)"/>
+
+      <!-- Hanging vines right -->
+      <path d="M1275,230 Q1235,280 1250,335 T1285,410" fill="none" stroke="url(#branchWood)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M1245,325 Q1220,345 1230,375 Q1250,365 1245,325 Z" fill="url(#leafMid)"/>
+      <path d="M1275,370 Q1250,395 1265,425 Q1285,410 1275,370 Z" fill="url(#leafLight)"/>
+    </g>
+  </g>
+
+  <!-- Central delicate sunbeam / leaf accent -->
+  <g opacity="0.35">
+    <circle cx="800" cy="-40" r="280" fill="#fffbe6" filter="url(#softBlur)"/>
+  </g>
+</svg>

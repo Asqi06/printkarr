@@ -308,7 +308,7 @@ const collectedPage = publicViews.collectPage({state:'collected', message:'Order
 assert.match(collectedPage, /Pickup <em>confirmed/);
 assert.doesNotMatch(collectedPage, /Link <em>expired/);
 // A broken at-rule once swallowed every layout rule after the navigation.
-for (const file of ['qk-landing.css', 'design.css', 'customer.css', 'delivery-service.css', 'store.css', 'order-flow.css', 'site-overhaul.css']) {
+for (const file of ['qk-landing.css', 'design.css', 'customer.css', 'delivery-service.css', 'store.css', 'order-flow.css', 'site-overhaul.css', 'nature-overhaul.css']) {
   const css = readFileSync(new URL('../public/' + file, import.meta.url), 'utf8');
   const tokens = css.replace(/\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, '');
   const stack = [], pairs = { ')': '(', '}': '{', ']': '[' };
