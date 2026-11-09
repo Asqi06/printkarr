@@ -3922,7 +3922,7 @@ body.store-view {
 }
 
 /* --------------------------------------------------------------------------
-   17. App Workspace & Customer Pages (body.app-view)
+   17. App Workspace & Customer/Admin Pages (body.app-view)
    -------------------------------------------------------------------------- */
 
 body.app-view {
@@ -3938,11 +3938,16 @@ body.app-view {
   --pale: var(--pk-leaf-tint);
   background: var(--pk-canvas) !important;
   color: var(--pk-forest) !important;
+  font-family: var(--font-body, "DM Sans", system-ui, sans-serif) !important;
 }
 
+/* Header */
 body.app-view .pk-header {
-  background: var(--pk-canvas) !important;
+  background: rgba(247, 246, 240, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border-bottom: 1px solid var(--pk-line) !important;
+  box-shadow: 0 1px 3px rgba(20, 38, 26, 0.03) !important;
 }
 
 body.app-view .pk-logo .w {
@@ -3953,53 +3958,262 @@ body.app-view .pk-logo .b {
   color: var(--pk-orange) !important;
 }
 
+body.app-view .workspace-label {
+  border-left: 1px solid var(--pk-line) !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+}
+
+body.app-view .pk-contact {
+  background: #ffffff !important;
+  border: 1.5px solid var(--pk-line) !important;
+  border-radius: 999px !important;
+  color: var(--pk-forest) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  padding: 7px 14px !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+}
+
+body.app-view .pk-contact:hover {
+  border-color: var(--pk-forest) !important;
+}
+
+body.app-view [data-notification-count] {
+  background: var(--pk-orange) !important;
+  color: #ffffff !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  border-radius: 999px !important;
+  padding: 2px 7px !important;
+  margin-left: 4px !important;
+}
+
+body.app-view .account-name {
+  color: var(--pk-forest) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+body.app-view .account-avatar {
+  background: var(--pk-forest) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+body.app-view .pk-header-cta > form button.pk-contact {
+  background: transparent !important;
+  border: 1.5px solid var(--pk-line) !important;
+  border-radius: 999px !important;
+  color: var(--pk-forest-sub) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 6px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+body.app-view .pk-header-cta > form button.pk-contact:hover {
+  border-color: var(--pk-orange) !important;
+  color: var(--pk-orange) !important;
+  background: #ffffff !important;
+}
+
+/* Sidebar Navigation */
 body.app-view .app-sidebar {
-  background: var(--pk-canvas-deep) !important;
+  background: #ffffff !important;
   border-right: 1px solid var(--pk-line) !important;
+  padding: 28px 18px !important;
+}
+
+body.app-view .workspace-sidebar-brand {
+  font-family: var(--pk-serif) !important;
+  font-size: 24px !important;
+  color: var(--pk-forest) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.02em !important;
+  text-decoration: none !important;
+}
+
+body.app-view .workspace-sidebar-brand span {
+  color: var(--pk-orange) !important;
+}
+
+body.app-view .workspace-edition {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  text-transform: uppercase !important;
+  margin-top: 4px !important;
+}
+
+body.app-view .nav-section {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: var(--pk-muted, #7c9080) !important;
+  margin: 18px 0 6px !important;
+  padding-left: 12px !important;
+  display: block !important;
 }
 
 body.app-view .snav a {
-  color: var(--pk-forest) !important;
-  border-radius: 12px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 42px !important;
+  padding: 9px 14px !important;
+  border-radius: 12px !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  color: var(--pk-forest-sub, #4b6150) !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
 }
 
-body.app-view .snav a:hover,
-body.app-view .snav a.live {
-  background: var(--pk-white) !important;
+body.app-view .snav a:hover {
+  background: #f4f6f0 !important;
   color: var(--pk-forest) !important;
 }
 
 body.app-view .snav a.live {
-  border-left: 3px solid var(--pk-orange);
-  font-weight: 600;
+  background: var(--pk-forest) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-left: none !important;
+  box-shadow: 0 2px 8px rgba(20, 38, 26, 0.18) !important;
+}
+
+body.app-view .snav a.live .ui-icon {
+  color: var(--pk-leaf) !important;
 }
 
 body.app-view .sidebar-print {
   background: var(--pk-orange) !important;
-  border-color: var(--pk-orange) !important;
-  color: #fff !important;
+  border: none !important;
+  color: #ffffff !important;
   border-radius: 999px !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-top: 20px !important;
+  text-decoration: none !important;
+  box-shadow: 0 4px 14px rgba(196, 71, 15, 0.25) !important;
+  transition: all 0.15s ease !important;
 }
 
-body.app-view .card {
-  background: var(--pk-white);
-  border: 1px solid var(--pk-line);
-  border-radius: 20px;
-  box-shadow: var(--pk-shadow-soft);
+body.app-view .sidebar-print:hover {
+  background: var(--pk-orange-deep, #a83a0a) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(196, 71, 15, 0.35) !important;
+}
+
+body.app-view .sidebar-website {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--pk-forest-sub) !important;
+  text-decoration: none !important;
+  margin-top: 14px !important;
+  padding-left: 12px !important;
+  transition: color 0.15s ease !important;
+}
+
+body.app-view .sidebar-website:hover {
+  color: var(--pk-orange) !important;
+}
+
+/* Breadcrumb & Main Headings */
+body.app-view .workspace-breadcrumb {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--pk-forest-sub, #6b8270) !important;
+  margin-bottom: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.app-view .workspace-breadcrumb a {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+body.app-view .workspace-breadcrumb a:hover {
+  color: var(--pk-forest) !important;
+}
+
+body.app-view .workspace-breadcrumb span:last-child {
+  color: var(--pk-forest) !important;
+  font-weight: 700 !important;
 }
 
 body.app-view h1,
 body.app-view h2 {
   font-family: var(--pk-serif) !important;
   font-weight: 400 !important;
-  color: var(--pk-forest);
+  color: var(--pk-forest) !important;
 }
 
 body.app-view h1 em,
 body.app-view h2 em {
   font-family: var(--pk-serif) !important;
   font-style: italic !important;
-  color: var(--pk-orange);
+  color: var(--pk-orange) !important;
+}
+
+body.app-view .page-heading-row {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+  margin-bottom: 28px !important;
+  flex-wrap: wrap !important;
+}
+
+body.app-view .page-heading h1 {
+  font-size: clamp(32px, 4vw, 44px) !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+  margin: 0 0 6px !important;
+}
+
+body.app-view .page-heading p {
+  font-size: 14px !important;
+  color: var(--pk-forest-sub) !important;
+  line-height: 1.6 !important;
+  margin: 0 !important;
+}
+
+/* Cards */
+body.app-view .card {
+  background: var(--pk-white) !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 20px !important;
+  padding: 26px 28px !important;
+  box-shadow: var(--pk-shadow-soft) !important;
+}
+
+body.app-view .card .eyebrow {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  margin-bottom: 10px !important;
 }
 
 body.app-view .btn.loud {
@@ -4007,10 +4221,564 @@ body.app-view .btn.loud {
   border-color: var(--pk-orange) !important;
   color: #fff !important;
   border-radius: 999px !important;
+  font-weight: 700 !important;
+  transition: all 0.15s ease !important;
 }
 
 body.app-view .btn.loud:hover {
   background: var(--pk-orange-hover) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.app-view .btn.solid {
+  background: var(--pk-forest) !important;
+  border-color: var(--pk-forest) !important;
+  color: #ffffff !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+}
+
+body.app-view .btn.ghost {
+  background: #ffffff !important;
+  border: 1.5px solid var(--pk-line-strong) !important;
+  color: var(--pk-forest) !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+}
+
+body.app-view .btn.sun {
+  background: var(--pk-orange-soft) !important;
+  border: 1.5px solid rgba(196, 71, 15, 0.25) !important;
+  color: var(--pk-orange) !important;
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+}
+
+/* Customer Dashboard Cards */
+.app-customer .dashboard-welcome {
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 20px !important;
+  padding: 32px !important;
+  margin-bottom: 24px !important;
+  box-shadow: var(--pk-shadow-soft) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 24px !important;
+}
+
+.app-customer .dashboard-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  margin-bottom: 24px !important;
+}
+
+.app-customer .dashboard-start {
+  background: #ffffff !important;
+  border: 1.5px solid var(--pk-line) !important;
+  border-radius: 20px !important;
+  padding: 28px !important;
+  text-decoration: none !important;
+  color: var(--pk-forest) !important;
+  transition: all 0.15s ease !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 180px !important;
+}
+
+.app-customer .dashboard-start:hover {
+  border-color: var(--pk-forest) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--pk-shadow) !important;
+}
+
+.app-customer .dashboard-start h2 {
+  font-family: var(--pk-serif) !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
+  margin: 0 0 6px !important;
+}
+
+.app-customer .dashboard-start p {
+  font-size: 13px !important;
+  color: var(--pk-forest-sub) !important;
+  line-height: 1.5 !important;
+  margin: 0 0 16px !important;
+}
+
+.app-customer .dashboard-start .card-link {
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: var(--pk-orange) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.app-customer .dashboard-side {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  margin-bottom: 24px !important;
+}
+
+.app-customer .dashboard-action {
+  background: #ffffff !important;
+  border: 1.5px solid var(--pk-line) !important;
+  border-radius: 20px !important;
+  padding: 24px 28px !important;
+  text-decoration: none !important;
+  color: var(--pk-forest) !important;
+  transition: all 0.15s ease !important;
+}
+
+.app-customer .dashboard-action:hover {
+  border-color: var(--pk-forest) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--pk-shadow) !important;
+}
+
+.app-customer .dashboard-action .stat .v {
+  font-family: var(--pk-serif) !important;
+  font-size: 38px !important;
+  font-weight: 400 !important;
+  color: var(--pk-forest) !important;
+  line-height: 1 !important;
+  margin: 6px 0 !important;
+}
+
+/* Customer Orders & Rows */
+body.app-view .order-row {
+  background: #ffffff !important;
+  border: 1.5px solid var(--pk-line) !important;
+  border-left: 1.5px solid var(--pk-line) !important;
+  border-radius: 18px !important;
+  padding: 22px 26px !important;
+  margin: 16px 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 20px !important;
+  box-shadow: var(--pk-shadow-soft) !important;
+  transition: all 0.15s ease !important;
+}
+
+body.app-view .order-row:hover {
+  border-color: var(--pk-forest) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.app-view .order-id {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: var(--pk-forest-sub) !important;
+  text-transform: uppercase !important;
+  margin-bottom: 4px !important;
+}
+
+body.app-view .order-row h2 {
+  font-family: var(--font-body, 'DM Sans', sans-serif) !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+  margin: 0 0 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.app-view .order-row h2 > .ui-icon {
+  color: var(--pk-forest) !important;
+}
+
+body.app-view .order-meta {
+  font-size: 13px !important;
+  color: var(--pk-forest-sub) !important;
+  margin: 0 0 12px !important;
+}
+
+body.app-view .order-row-side > strong {
+  font-family: var(--pk-serif) !important;
+  font-size: 26px !important;
+  font-weight: 400 !important;
+  color: var(--pk-forest) !important;
+}
+
+/* Admin Operations Console */
+.ops-overview {
+  display: grid !important;
+  grid-template-columns: 1fr 1.25fr !important;
+  gap: 24px !important;
+  margin-bottom: 24px !important;
+}
+
+.ops-daily {
+  background: var(--pk-forest) !important;
+  border-radius: 20px !important;
+  padding: 32px !important;
+  color: #f7f6f0 !important;
+  min-height: 240px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 30px -10px rgba(20, 38, 26, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.ops-daily > .eyebrow {
+  color: var(--pk-leaf) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+}
+
+.ops-daily strong {
+  font-family: var(--pk-serif) !important;
+  font-size: 84px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  color: #ffffff !important;
+}
+
+.ops-daily > div > span {
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+  color: rgba(247, 246, 240, 0.88) !important;
+}
+
+.ops-daily > a {
+  color: var(--pk-leaf) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  text-decoration: none !important;
+}
+
+.ops-print-mark {
+  color: #ffffff !important;
+  opacity: 0.08 !important;
+}
+
+.ops-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 16px !important;
+}
+
+.ops-metrics > article {
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 16px !important;
+  padding: 22px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-shadow: var(--pk-shadow-soft) !important;
+  position: relative !important;
+}
+
+.ops-metrics > article > span {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--pk-forest-sub) !important;
+}
+
+.ops-metrics strong {
+  font-family: var(--pk-serif) !important;
+  font-size: 32px !important;
+  font-weight: 400 !important;
+  color: var(--pk-forest) !important;
+  line-height: 1 !important;
+}
+
+.ops-metrics .ui-icon {
+  position: absolute !important;
+  top: 20px !important;
+  right: 20px !important;
+  color: var(--pk-forest-sub) !important;
+  opacity: 0.45 !important;
+}
+
+.ops-delivered {
+  background: var(--pk-leaf-tint, #eaf7e4) !important;
+  border: 1px solid var(--pk-leaf) !important;
+  border-radius: 18px !important;
+  padding: 18px 24px !important;
+  margin: 20px 0 32px !important;
+  color: var(--pk-forest) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+.ops-check {
+  background: var(--pk-forest) !important;
+  color: #ffffff !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+.ops-delivered strong {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+}
+
+.ops-delivered p {
+  font-size: 12.5px !important;
+  color: var(--pk-forest-sub) !important;
+  margin: 2px 0 0 !important;
+}
+
+.ops-delivered > a {
+  margin-left: auto !important;
+  color: var(--pk-forest) !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Operations Launchpad */
+.ops-launchpad {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+.ops-launchpad > a {
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 16px !important;
+  padding: 22px !important;
+  text-decoration: none !important;
+  color: var(--pk-forest) !important;
+  transition: all 0.15s ease !important;
+  box-shadow: var(--pk-shadow-soft) !important;
+  position: relative !important;
+}
+
+.ops-launchpad > a:hover {
+  border-color: var(--pk-forest) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--pk-shadow) !important;
+}
+
+.launchpad-icon {
+  background: #f2f5ee !important;
+  color: var(--pk-forest) !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+  display: grid !important;
+  place-items: center !important;
+  margin-bottom: 14px !important;
+  transition: all 0.15s ease !important;
+}
+
+.ops-launchpad > a:hover .launchpad-icon {
+  background: var(--pk-orange-soft) !important;
+  color: var(--pk-orange) !important;
+}
+
+.ops-launchpad h3 {
+  font-size: 15.5px !important;
+  font-weight: 700 !important;
+  margin: 0 0 6px !important;
+  color: var(--pk-forest) !important;
+  letter-spacing: -0.01em !important;
+}
+
+.ops-launchpad p {
+  font-size: 12.5px !important;
+  color: var(--pk-forest-sub) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+/* Tables in Admin */
+.tblwrap {
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: var(--pk-shadow-soft) !important;
+  margin: 18px 0 !important;
+}
+
+.tbl {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.tbl th {
+  background: #f7f8f3 !important;
+  padding: 14px 18px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--pk-forest-sub) !important;
+  border-bottom: 1px solid var(--pk-line) !important;
+  text-align: left !important;
+}
+
+.tbl td {
+  padding: 16px 18px !important;
+  border-bottom: 1px solid var(--pk-line) !important;
+  font-size: 13.5px !important;
+  color: var(--pk-forest) !important;
+  vertical-align: middle !important;
+}
+
+.tbl tbody tr:hover {
+  background: #fafbf8 !important;
+}
+
+.tbl tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Filter Chips */
+.chips .chip {
+  background: #ffffff !important;
+  border: 1.5px solid #dce4d6 !important;
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--pk-forest) !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.chips .chip:hover {
+  border-color: var(--pk-forest) !important;
+  background: #fafbf8 !important;
+}
+
+.chips .chip.on {
+  background: var(--pk-forest) !important;
+  border-color: var(--pk-forest) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(20, 38, 26, 0.15) !important;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 11px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.badge.b-DELIVERED,
+.badge.b-PRINTED,
+.badge.b-COLLECTED {
+  background: var(--pk-leaf-tint, #eaf7e4) !important;
+  color: var(--pk-forest) !important;
+  border: 1px solid var(--pk-leaf) !important;
+}
+
+.badge.b-PRINTING,
+.badge.b-PRINT_QUEUE,
+.badge.b-CONFIRMED,
+.badge.b-OUT_FOR_DELIVERY,
+.badge.b-READY_FOR_PICKUP {
+  background: #fdf5ea !important;
+  color: #b45309 !important;
+  border: 1px solid #fed7aa !important;
+}
+
+.badge.b-CREATED,
+.badge.b-PAYMENT_PENDING {
+  background: #f3f5f0 !important;
+  color: var(--pk-forest-sub) !important;
+  border: 1px solid var(--pk-line) !important;
+}
+
+.badge.b-CANCELLED,
+.badge.b-PRINT_FAILED,
+.badge.b-DELIVERY_FAILED,
+.badge.b-REFUNDED {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca !important;
+}
+
+/* Forms in App Workspace */
+body.app-view .field input,
+body.app-view .field select,
+body.app-view .field textarea {
+  border: 1.5px solid #d8e0d2 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: var(--pk-forest) !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  min-height: 44px !important;
+}
+
+body.app-view .field input:focus,
+body.app-view .field select:focus,
+body.app-view .field textarea:focus {
+  border-color: var(--pk-forest) !important;
+  box-shadow: 0 0 0 3px rgba(20, 38, 26, 0.1) !important;
+  outline: none !important;
+}
+
+/* Mobile App Bar Refinements */
+@media (max-width: 900px) {
+  body.app-view .app-sidebar {
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid var(--pk-line) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 6px 30px rgba(20, 38, 26, 0.12) !important;
+  }
+
+  body.app-view.app-customer .snav a[data-mobile-primary].live {
+    background: var(--pk-orange-soft, #fdf0ea) !important;
+    color: var(--pk-orange) !important;
+    box-shadow: none !important;
+  }
+
+  .app-customer .dashboard-grid,
+  .app-customer .dashboard-side,
+  .ops-overview,
+  .ops-launchpad {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-customer .dashboard-welcome {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
 }
 
 /* --------------------------------------------------------------------------

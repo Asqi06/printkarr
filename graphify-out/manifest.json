@@ -1002,9 +1002,9 @@
     "semantic_hash": ""
   },
   "lib/views_customer.js": {
-    "mtime": 1794210857.1332648,
-    "seen": 1794212284.8887763,
-    "ast_hash": "a937e7ed2f46aa2372db987e3d4a94fc",
+    "mtime": 1794215430.3051152,
+    "seen": 1794215661.080339,
+    "ast_hash": "7d669e160bf14e654e6bb36e78426ca4",
     "semantic_hash": ""
   },
   "lib/views_order.js": {
