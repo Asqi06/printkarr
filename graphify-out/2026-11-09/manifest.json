@@ -990,9 +990,9 @@
     "semantic_hash": ""
   },
   "lib/views.js": {
-    "mtime": 1794033800.3311193,
-    "seen": 1794034332.0641844,
-    "ast_hash": "1e59b79acd2bde15a351a0ff1cfa27e9",
+    "mtime": 1794212015.7414875,
+    "seen": 1794212284.8886034,
+    "ast_hash": "f01649f7713d15d69217ce955017a062",
     "semantic_hash": ""
   },
   "lib/views_admin.js": {
@@ -1002,27 +1002,27 @@
     "semantic_hash": ""
   },
   "lib/views_customer.js": {
-    "mtime": 1794031777.5336144,
-    "seen": 1794031860.9892998,
-    "ast_hash": "4c8c930332821f43607777892838d83c",
+    "mtime": 1794210857.1332648,
+    "seen": 1794212284.8887763,
+    "ast_hash": "a937e7ed2f46aa2372db987e3d4a94fc",
     "semantic_hash": ""
   },
   "lib/views_order.js": {
-    "mtime": 1794033644.8741758,
-    "seen": 1794034332.0645773,
-    "ast_hash": "cbc3ffbee95f35ab438b5ae76f355f0f",
+    "mtime": 1794210849.4790318,
+    "seen": 1794212284.8887784,
+    "ast_hash": "55ad264828be8d6383dcbc5a14c382b6",
     "semantic_hash": ""
   },
   "lib/views_packs.js": {
-    "mtime": 1791549707.9452918,
-    "seen": 1791607190.4560692,
+    "mtime": 1794210857.1452937,
+    "seen": 1794212284.8887806,
     "ast_hash": "a4b3c534f73dd8680c89a300a15bd161",
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1794032646.3271844,
-    "seen": 1794032782.1526892,
-    "ast_hash": "253655f3a6005bb236e3351845181b25",
+    "mtime": 1794210761.300625,
+    "seen": 1794212284.8887906,
+    "ast_hash": "6a149657b15f2c947cfdfe098654ef7c",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1050,9 +1050,9 @@
     "semantic_hash": ""
   },
   "scripts/design-check.mjs": {
-    "mtime": 1794028539.6727002,
-    "seen": 1794030603.310426,
-    "ast_hash": "db680036532766c69c9f2c546abfba3b",
+    "mtime": 1794207863.6299047,
+    "seen": 1794212284.894302,
+    "ast_hash": "4000cf9151e0d50317b38d93c5adeb4d",
     "semantic_hash": ""
   },
   "scripts/test-print.mjs": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "server.mjs": {
-    "mtime": 1794034698.9805467,
-    "seen": 1794036011.5968637,
-    "ast_hash": "b15768a5193abfd7bdf2b3a775790564",
+    "mtime": 1794207813.0373056,
+    "seen": 1794212284.8981607,
+    "ast_hash": "8c6980f66301c71d45fa86990d0118af",
     "semantic_hash": ""
   },
   ".opencode/skills/graphify/SKILL.md": {
@@ -1986,9 +1986,9 @@
     "semantic_hash": ""
   },
   "lib/views_referrals.js": {
-    "mtime": 1791879936.5799098,
-    "seen": 1791885805.9638498,
-    "ast_hash": "150a5544bc64ffd830ed5ccb0ed80ae7",
+    "mtime": 1794210857.1546588,
+    "seen": 1794212284.8887942,
+    "ast_hash": "55c568592b8dcaeb2752c52223243b4a",
     "semantic_hash": ""
   },
   "favicon/about.txt": {
@@ -2880,9 +2880,9 @@
     "semantic_hash": ""
   },
   "lib/views_store.js": {
-    "mtime": 1794033726.745388,
-    "seen": 1794034332.0651674,
-    "ast_hash": "e057db86d4ebe6bc595ac143c341edf1",
+    "mtime": 1794210794.3987522,
+    "seen": 1794212284.8887973,
+    "ast_hash": "1e371b65af9bcfb75b5604549e009871",
     "semantic_hash": ""
   },
   "public/store.js": {
@@ -3852,9 +3852,9 @@
     "semantic_hash": ""
   },
   "public/studio.js": {
-    "mtime": 1791637733.077173,
-    "seen": 1791729514.0654068,
-    "ast_hash": "02b0f45214c246e144730681b7bae221",
+    "mtime": 1794208599.4948497,
+    "seen": 1794212284.8915122,
+    "ast_hash": "59d43a08114c83c97e07cdd288bef0f6",
     "semantic_hash": ""
   },
   "scripts/checklist-check.mjs": {
@@ -6003,6 +6003,96 @@
     "mtime": 1794033904.9758646,
     "seen": 1794034332.0696375,
     "ast_hash": "a2cae2ddf5c71852610dab64fd25e5aa",
+    "semantic_hash": ""
+  },
+  "public/Mist-Softened Botanical Frame.png": {
+    "mtime": 1794205491.626404,
+    "seen": 1794212285.023142,
+    "ast_hash": "c6c9dd41317a83ef78de662f01b7f594",
+    "semantic_hash": ""
+  },
+  "public/images/botanical-canopy.png": {
+    "mtime": 1794205491.626404,
+    "seen": 1794212285.0244164,
+    "ast_hash": "c6c9dd41317a83ef78de662f01b7f594",
+    "semantic_hash": ""
+  },
+  "public/images/leaf-card-bg.svg": {
+    "mtime": 1794204494.828581,
+    "seen": 1794212285.0269918,
+    "ast_hash": "efa9792ba8c0e2892b694156efbaa0a1",
+    "semantic_hash": ""
+  },
+  "public/images/lush-foliage.jpg": {
+    "mtime": 1794205756.743678,
+    "seen": 1794212285.026995,
+    "ast_hash": "f6b25d5f984a617df68f91e75361ebb9",
+    "semantic_hash": ""
+  },
+  "public/images/mist-botanical-frame.webp": {
+    "mtime": 1794208270.390952,
+    "seen": 1794212285.026997,
+    "ast_hash": "c402853320d516169ec20f27c349e9a1",
+    "semantic_hash": ""
+  },
+  "public/images/nature-canopy.svg": {
+    "mtime": 1794204476.2106552,
+    "seen": 1794212285.0269992,
+    "ast_hash": "f917751310c01cd9105c31bdf5a63ff0",
+    "semantic_hash": ""
+  },
+  "public/images/portrait-pro.jpg": {
+    "mtime": 1794205748.4938233,
+    "seen": 1794212285.0274327,
+    "ast_hash": "7d5da10ddf078593bff062125c76a1ab",
+    "semantic_hash": ""
+  },
+  "public/images/print-portrait.svg": {
+    "mtime": 1794204554.6010442,
+    "seen": 1794212285.0277967,
+    "ast_hash": "3710ecda694c1280eff4557e2b9b5377",
+    "semantic_hash": ""
+  },
+  "public/images/printkarr-logo-dark.png": {
+    "mtime": 1794211401.0118444,
+    "seen": 1794212285.0277996,
+    "ast_hash": "ab92037957ad7ce339c7854c22a73470",
+    "semantic_hash": ""
+  },
+  "public/images/printkarr-logo.png": {
+    "mtime": 1794211236.9610972,
+    "seen": 1794212285.0278015,
+    "ast_hash": "c9e548f78e293f5becedc21095fead64",
+    "semantic_hash": ""
+  },
+  "public/images/scenic-hill.jpg": {
+    "mtime": 1794205728.4416666,
+    "seen": 1794212285.0282097,
+    "ast_hash": "f99bb4a1447c1290e3fa5c63693d31c9",
+    "semantic_hash": ""
+  },
+  "public/images/scenic-hill.svg": {
+    "mtime": 1794204510.068833,
+    "seen": 1794212285.028213,
+    "ast_hash": "80b1aef9bc0ce8464cfbbb013cd7b046",
+    "semantic_hash": ""
+  },
+  "public/images/scenic-meadow.jpg": {
+    "mtime": 1794205768.1842453,
+    "seen": 1794212285.0282154,
+    "ast_hash": "f92760ff7c450b05dfbe8f1eaa323f9d",
+    "semantic_hash": ""
+  },
+  "public/images/scenic-meadow.svg": {
+    "mtime": 1794204529.2000937,
+    "seen": 1794212285.028217,
+    "ast_hash": "5f86cb7a6fe982f0c32bb481fa120cb5",
+    "semantic_hash": ""
+  },
+  "public/images/stationery-demo-hero.webp": {
+    "mtime": 1794207107.9714143,
+    "seen": 1794212285.0284376,
+    "ast_hash": "cece7be600ff7e3d5b62ce160c842468",
     "semantic_hash": ""
   }
 }

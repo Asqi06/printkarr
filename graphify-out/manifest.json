@@ -6094,5 +6094,11 @@
     "seen": 1794212285.0284376,
     "ast_hash": "cece7be600ff7e3d5b62ce160c842468",
     "semantic_hash": ""
+  },
+  "scripts/order-focus-nature-check.mjs": {
+    "mtime": 1794214606.217483,
+    "seen": 1794214745.8217888,
+    "ast_hash": "74079b4fda0a3cb31d50b36934273299",
+    "semantic_hash": ""
   }
 }

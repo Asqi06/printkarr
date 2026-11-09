@@ -30,6 +30,10 @@
    1. Shared public shell: palette, header, footer, mobile navigation
    -------------------------------------------------------------------------- */
 
+html {
+  overflow-x: clip;
+}
+
 body.public-site,
 body.signin-site {
   --bg: var(--pk-canvas);
@@ -58,6 +62,7 @@ body.signin-site {
   --font-editorial: var(--pk-serif);
   background: var(--pk-canvas);
   color: var(--pk-forest);
+  overflow-x: clip;
 }
 
 body.public-site .pk-page,
@@ -157,11 +162,28 @@ body[data-public-page="/"] .site-header .pk-logo-white {
 }
 
 /* Landing page header navigation links - centered, spaced, dark forest ink */
-body[data-public-page="/"] .site-header .site-links {
-  display: flex !important;
-  align-items: center !important;
-  gap: 32px !important;
-  margin: 0 auto !important;
+@media (min-width: 1050px) {
+  body[data-public-page="/"] .site-header .site-links {
+    display: flex !important;
+    align-items: center !important;
+    gap: 32px !important;
+    margin: 0 auto !important;
+  }
+}
+
+@media (max-width: 1049px) {
+  body.public-site .site-header .site-links,
+  body[data-public-page="/"] .site-header .site-links {
+    display: none !important;
+  }
+
+  body[data-public-page="/"] .site-header .header-actions {
+    margin-left: auto !important;
+  }
+
+  body[data-public-page="/"] .site-header .mobile-menu {
+    display: block !important;
+  }
 }
 
 body[data-public-page="/"] .site-header .site-links a,
@@ -2475,6 +2497,36 @@ body.public-site .pk-nature-page .rowlink {
   .pk-faq-grid > div > .pk-sub {
     max-width: 58ch;
   }
+
+  .public-site .grid.c3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .public-site .guide-rates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .public-site .guide-rates .card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .public-site .contact-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .store-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 32px 28px;
+  }
+
+  .cart-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 }
 
 @media (max-width: 800px) {
@@ -2761,6 +2813,189 @@ body.public-site .pk-nature-page .rowlink {
 
   body.public-site .pk-nature-page .customer-reviews {
     padding-block: 58px;
+  }
+
+  /* Mobile header styling */
+  body.public-site .site-header,
+  body[data-public-page="/"] .site-header {
+    padding: 0 16px !important;
+  }
+
+  body.public-site .site-header-inner,
+  body[data-public-page="/"] .site-header-inner {
+    height: 64px !important;
+    gap: 10px !important;
+  }
+
+  .site-header .pk-logo-img {
+    height: 22px !important;
+    max-width: 125px !important;
+  }
+
+  body.public-site .site-header .header-actions .account-link,
+  body[data-public-page="/"] .site-header .header-actions .account-link {
+    display: none !important;
+  }
+
+  body.public-site .site-header .header-actions > .btn,
+  body[data-public-page="/"] .site-header .header-actions > .btn {
+    font-size: 12px !important;
+    padding: 8px 14px !important;
+    min-height: 40px !important;
+  }
+
+  body.public-site .site-header .mobile-menu summary,
+  body[data-public-page="/"] .site-header .mobile-menu summary {
+    font-size: 12.5px !important;
+    min-height: 40px !important;
+    padding: 7px 13px !important;
+  }
+
+  /* Interior wrapper on mobile */
+  .pk-interior .interior-wrap,
+  .public-site .interior-wrap {
+    width: calc(100% - 32px);
+    padding: 24px 0 64px;
+  }
+
+  .interior-edition {
+    font-size: 10px;
+    letter-spacing: .1em;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+  }
+
+  .pk-page-hero h1,
+  .public-site .interior-wrap h1.display,
+  .public-site .service-guide h1.display {
+    font-size: clamp(30px, 7.5vw, 44px) !important;
+    line-height: 1.1 !important;
+    margin-bottom: 14px !important;
+  }
+
+  .pk-page-hero p.pk-hero-lede,
+  .public-site .interior-wrap > p:first-of-type:not(.eyebrow):not(.interior-edition) {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 22px;
+  }
+
+  /* Guide steps single-column reflow */
+  .public-site .guide-steps {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 24px 0 32px;
+  }
+
+  .public-site .guide-steps li {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  /* Cards on mobile */
+  .public-site .card {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  .public-site .contact-grid .card {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  /* Quotes and callouts */
+  .pk-quote-callout,
+  .about-quote {
+    padding: 22px 20px !important;
+    margin: 24px 0 !important;
+    font-size: 18px !important;
+    border-radius: 0 14px 14px 0;
+  }
+
+  /* Store hero on mobile */
+  .store-hero {
+    padding: 22px 18px;
+    border-radius: 18px;
+    gap: 20px;
+  }
+
+  .store-hero h1 {
+    font-size: clamp(28px, 7.5vw, 36px) !important;
+    margin: 8px 0 12px;
+  }
+
+  .store-chip-rail button {
+    min-height: 44px !important;
+    padding: 10px 16px !important;
+  }
+
+  /* Cart items on mobile */
+  .cart-item {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .cart-checkout {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+
+  /* Footer on mobile */
+  body.public-site .pk-footer,
+  body.signin-site .pk-footer {
+    padding: 48px var(--pk-pad, 16px) 110px !important;
+    overflow: hidden;
+  }
+
+  body.public-site .pk-footer-grid,
+  body.signin-site .pk-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  /* Floating app sidebar on mobile */
+  body.app-view .app-sidebar {
+    border-right: none !important;
+    border: 1px solid var(--pk-line) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .public-site .grid.c2,
+  .public-site .grid.c3 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .public-site .guide-rates {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin: 24px 0 32px;
+  }
+
+  .public-site .guide-rates .card {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  .public-site .guide-rates .card strong {
+    font-size: 38px !important;
+  }
+
+  .public-site .journal-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .public-site .journal-card {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
@@ -3845,5 +4080,1124 @@ body.signin-site .login-google:hover {
   .pk-nature-page,
   body.public-site {
     background: #fff !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   9. Focused Order Flow (Upload -> Settings & Delivery -> Payment)
+   -------------------------------------------------------------------------- */
+
+body.order-focus {
+  background: var(--pk-canvas) !important;
+  color: var(--pk-forest) !important;
+  font-family: var(--font-body, "DM Sans", system-ui, sans-serif) !important;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+}
+
+/* Header: elegant minimal bar on cream */
+body.order-focus .order-header {
+  max-width: 1200px !important;
+  width: 100% !important;
+  height: 72px !important;
+  margin: 0 auto !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--pk-line) !important;
+  box-shadow: none !important;
+}
+
+body.order-focus .order-back {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line-strong) !important;
+  color: var(--pk-forest) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 3px rgba(20, 38, 26, 0.04) !important;
+}
+
+body.order-focus .order-back:hover {
+  background: #ffffff !important;
+  border-color: var(--pk-forest) !important;
+  transform: translateX(-2px) !important;
+}
+
+body.order-focus .order-header .pk-logo {
+  display: inline-flex !important;
+  align-items: center !important;
+  text-decoration: none !important;
+}
+
+body.order-focus .order-header .pk-logo-img {
+  height: 24px !important;
+  width: auto !important;
+}
+
+body.order-focus .order-header > a:last-child {
+  color: var(--pk-forest) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 7px 16px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--pk-line-strong) !important;
+  background: #ffffff !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+  margin-left: 0 !important;
+  min-height: unset !important;
+}
+
+body.order-focus .order-header > a:last-child:hover {
+  border-color: var(--pk-forest) !important;
+}
+
+/* Stepper progress indicator */
+.order-steps {
+  max-width: 1200px !important;
+  width: 100% !important;
+  margin: 28px auto 28px !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  list-style: none !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+}
+
+.order-steps li {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+}
+
+.order-steps li:not(:first-child)::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 32px !important;
+  height: 1.5px !important;
+  background: var(--pk-line, #e2e7dc) !important;
+  margin-right: 8px !important;
+}
+
+.order-steps b {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  border: 1.5px solid var(--pk-line-strong, #d4dccf) !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+}
+
+.order-steps li.now {
+  color: var(--pk-forest) !important;
+  font-weight: 700 !important;
+}
+
+.order-steps li.now b {
+  background: var(--pk-forest) !important;
+  border-color: var(--pk-forest) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(20, 38, 26, 0.2) !important;
+}
+
+.order-steps li.done {
+  color: var(--pk-forest) !important;
+}
+
+.order-steps li.done b {
+  background: var(--pk-leaf) !important;
+  border-color: var(--pk-leaf-deep) !important;
+  color: var(--pk-forest) !important;
+}
+
+/* Main content wrapper - kill brutalist lime styles & old box shadow */
+body.order-focus .order-main {
+  max-width: 1200px !important;
+  width: calc(100% - 48px) !important;
+  margin: 0 auto !important;
+  padding: 0 0 64px !important;
+  background: transparent !important;
+  border: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  flex: 1;
+}
+
+/* Top Notification Strip */
+.qk-strip {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: var(--pk-forest) !important;
+  color: #f7f6f0 !important;
+  border-radius: 16px !important;
+  padding: 14px 20px !important;
+  margin: 0 0 24px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  box-shadow: 0 4px 18px rgba(20, 38, 26, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.qk-strip-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: var(--pk-orange) !important;
+  flex: none !important;
+  box-shadow: 0 0 0 3px rgba(196, 71, 15, 0.3) !important;
+}
+
+.qk-strip b {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  letter-spacing: 0.01em !important;
+}
+
+.qk-strip span {
+  color: rgba(247, 246, 240, 0.88) !important;
+  font-weight: 400 !important;
+}
+
+.qk-strip a {
+  margin-left: auto !important;
+  color: var(--pk-leaf) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-decoration: none !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(201, 240, 184, 0.35) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  transition: all 0.15s ease !important;
+}
+
+.qk-strip a:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border-color: var(--pk-leaf) !important;
+}
+
+/* Two-Column Grid */
+.pk-checkout-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.28fr) minmax(360px, 0.92fr) !important;
+  gap: 32px !important;
+  align-items: start !important;
+}
+
+.pk-col-main {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+  min-width: 0 !important;
+}
+
+.pk-col-side {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+  min-width: 0 !important;
+  position: sticky !important;
+  top: 24px !important;
+}
+
+/* Cards across checkout */
+body.order-focus .order-file,
+body.order-focus .order-section,
+body.order-focus .pk-slab,
+body.order-focus .order-quote,
+body.order-focus .qk-address-card {
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 20px !important;
+  padding: 26px 28px !important;
+  box-shadow: 0 4px 20px -8px rgba(20, 38, 26, 0.06) !important;
+  margin: 0 !important;
+}
+
+/* File header card */
+body.order-focus .order-file {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+}
+
+body.order-focus .order-file h1 {
+  font-family: var(--font-body, 'DM Sans', sans-serif) !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+  margin: 0 0 4px !important;
+  word-break: break-all !important;
+}
+
+body.order-focus .order-file p {
+  font-size: 13px !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  margin: 0 !important;
+  font-weight: 500 !important;
+}
+
+body.order-focus .order-file .order-text {
+  padding: 7px 16px !important;
+  border-radius: 999px !important;
+  border: 1.5px solid var(--pk-line-strong) !important;
+  background: var(--pk-canvas) !important;
+  color: var(--pk-forest) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+}
+
+body.order-focus .order-file .order-text:hover {
+  background: #ffffff !important;
+  border-color: var(--pk-forest) !important;
+}
+
+/* Section Headings */
+body.order-focus .order-section h2 {
+  font-family: var(--pk-serif, 'Instrument Serif', Georgia, serif) !important;
+  font-size: 26px !important;
+  font-weight: 400 !important;
+  color: var(--pk-forest) !important;
+  margin: 0 0 20px !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.15 !important;
+  text-transform: none !important;
+}
+
+body.order-focus .order-section h3 {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--pk-forest-sub, #4b6352) !important;
+  margin: 0 0 12px !important;
+}
+
+/* Legends & Print Setting Chips - Override blue studio styles */
+body.order-focus .order-choice legend {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--pk-forest-sub, #4b6352) !important;
+  margin-bottom: 10px !important;
+}
+
+body.order-focus .order-choice-hint {
+  font-size: 12px !important;
+  color: var(--pk-forest-sub, #647a69) !important;
+  margin: -4px 0 12px !important;
+}
+
+body.order-focus .order-choice .chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  margin-bottom: 18px !important;
+}
+
+body.order-focus .order-choice .chip-pick {
+  border: 1.5px solid #dce4d6 !important;
+  background: #ffffff !important;
+  color: var(--pk-forest) !important;
+  border-radius: 12px !important;
+  padding: 9px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 2px rgba(20, 38, 26, 0.02) !important;
+}
+
+body.order-focus .order-choice .chip-pick:hover {
+  border-color: var(--pk-forest) !important;
+  background: #fafbf8 !important;
+}
+
+/* Checked state: Deep Forest with leaf-tint checkmark */
+body.order-focus .order-choice .chip-pick:has(input:checked) {
+  background: var(--pk-forest) !important;
+  border-color: var(--pk-forest) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px -2px rgba(20, 38, 26, 0.22) !important;
+}
+
+.order-main .order-choice .chip-pick:has(input:checked)::after {
+  content: '✓' !important;
+  color: var(--pk-leaf) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  margin-left: 6px !important;
+  margin-right: 0 !important;
+}
+
+/* Preflight Alert */
+.pk-preflight-alert {
+  background: #f7faf5 !important;
+  border: 1.5px solid #d3e2cf !important;
+  border-radius: 14px !important;
+  padding: 14px 18px !important;
+  margin: 16px 0 !important;
+  font-size: 12.5px !important;
+  color: var(--pk-forest) !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  line-height: 1.5 !important;
+}
+
+.pk-alert-badge {
+  background: var(--pk-forest) !important;
+  color: #ffffff !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  letter-spacing: 0.04em !important;
+  white-space: nowrap !important;
+}
+
+/* Stepper row */
+body.order-focus .order-copy-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 0 6px !important;
+  border-top: 1px solid var(--pk-line) !important;
+  margin-top: 16px !important;
+  background: transparent !important;
+}
+
+body.order-focus .order-copy-row label {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+}
+
+body.order-focus .order-stepper {
+  display: inline-flex !important;
+  align-items: center !important;
+  border: 1.5px solid #d4ddd0 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(20, 38, 26, 0.04) !important;
+}
+
+body.order-focus .order-stepper button {
+  width: 38px !important;
+  height: 38px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--pk-forest) !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+  display: grid !important;
+  place-items: center !important;
+  line-height: 1 !important;
+}
+
+body.order-focus .order-stepper button:hover {
+  background: #f2f6ee !important;
+  color: var(--pk-orange) !important;
+}
+
+body.order-focus .order-stepper input {
+  width: 48px !important;
+  height: 38px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--pk-forest) !important;
+  font-size: 15.5px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+}
+
+/* Accordions and Inputs */
+body.order-focus .order-more {
+  background: #fafbf8 !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 14px !important;
+  padding: 4px 18px !important;
+  margin: 16px 0 0 !important;
+  transition: all 0.15s ease !important;
+}
+
+body.order-focus .order-more summary {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--pk-forest) !important;
+  cursor: pointer !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+body.order-focus .field input,
+body.order-focus .field select,
+body.order-focus .field textarea {
+  border: 1.5px solid #d8e0d2 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: var(--pk-forest) !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  min-height: 44px !important;
+}
+
+body.order-focus .field input:focus,
+body.order-focus .field select:focus,
+body.order-focus .field textarea:focus {
+  border-color: var(--pk-forest) !important;
+  box-shadow: 0 0 0 3px rgba(20, 38, 26, 0.1) !important;
+  outline: none !important;
+}
+
+body.order-focus .order-text {
+  background: none !important;
+  border: none !important;
+  color: var(--pk-forest) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  padding: 4px 0 !important;
+  transition: color 0.15s ease !important;
+}
+
+body.order-focus .order-text:hover {
+  color: var(--pk-orange) !important;
+}
+
+/* Frequently Added Stationery */
+.pk-aov-badge {
+  background: var(--pk-orange-soft, #fdf0ea) !important;
+  color: var(--pk-orange) !important;
+  border: 1px solid rgba(196, 71, 15, 0.22) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.05em !important;
+  display: inline-block !important;
+  margin-bottom: 8px !important;
+}
+
+.pk-aov-head h3 {
+  font-family: var(--pk-serif, 'Instrument Serif', Georgia, serif) !important;
+  font-size: 22px !important;
+  font-weight: 400 !important;
+  color: var(--pk-forest) !important;
+  margin: 0 0 4px !important;
+  line-height: 1.2 !important;
+}
+
+.pk-aov-head p.field-hint {
+  font-size: 12.5px !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  margin: 0 0 18px !important;
+}
+
+.pk-aov-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 14px !important;
+}
+
+.pk-aov-card {
+  background: #fafbf8 !important;
+  border: 1.5px solid #e2e8dc !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  transition: all 0.15s ease !important;
+}
+
+.pk-aov-card:hover {
+  border-color: var(--pk-forest) !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(20, 38, 26, 0.06) !important;
+}
+
+.pk-aov-icon {
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
+
+.pk-aov-tag {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  color: var(--pk-forest-sub, #5b7360) !important;
+}
+
+.pk-aov-info h4 {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+  margin: 2px 0 0 !important;
+  line-height: 1.3 !important;
+}
+
+.pk-aov-price {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--pk-forest) !important;
+}
+
+.pk-aov-add-btn {
+  background: var(--pk-forest) !important;
+  color: #ffffff !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 7px 16px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.pk-aov-add-btn:hover {
+  background: var(--pk-orange) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Rate Ladder */
+.pk-slab-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--pk-forest-sub, #4b6352) !important;
+  margin-bottom: 8px !important;
+}
+
+body.order-focus .pk-slab-track {
+  height: 6px !important;
+  background: #e5ede0 !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  margin: 8px 0 10px !important;
+}
+
+body.order-focus .pk-slab-track b {
+  background: var(--pk-forest) !important;
+}
+
+body.order-focus .pk-slab p {
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  margin: 0 !important;
+}
+
+/* Delivery Section & Radio Pick Cards */
+body.order-focus .route-where {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--pk-forest-sub, #4e6754) !important;
+  margin: 18px 0 8px !important;
+}
+
+body.order-focus .pick,
+.order-main .route-picks .pick {
+  background: #ffffff !important;
+  border: 1.5px solid #dce4d6 !important;
+  border-radius: 14px !important;
+  padding: 13px 16px !important;
+  margin-bottom: 10px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 2px rgba(20, 38, 26, 0.02) !important;
+}
+
+body.order-focus .pick:hover,
+.order-main .route-picks .pick:hover {
+  border-color: var(--pk-forest) !important;
+  background: #fafbf8 !important;
+}
+
+body.order-focus .pick:has(input:checked),
+.order-main .route-picks .pick:has(input:checked) {
+  background: #f4faef !important;
+  border-color: var(--pk-forest) !important;
+  box-shadow: inset 0 0 0 1px var(--pk-forest) !important;
+}
+
+.order-main .route-picks .pick:has(input:checked)::after {
+  content: '✓' !important;
+  color: var(--pk-forest) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+body.order-focus .pick b {
+  color: var(--pk-forest) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  display: block !important;
+  margin-bottom: 2px !important;
+}
+
+body.order-focus .pick small {
+  color: var(--pk-forest-sub, #586e5c) !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+  display: block !important;
+}
+
+/* Saved Address Card */
+body.order-focus .qk-address-card {
+  background: #fafbf8 !important;
+  border: 1.5px solid #dce4d6 !important;
+  border-radius: 14px !important;
+  padding: 16px 20px !important;
+  margin: 14px 0 10px !important;
+  position: relative !important;
+}
+
+.qk-address-card .qk-address-label {
+  background: var(--pk-leaf-tint, #eaf7e4) !important;
+  color: var(--pk-forest) !important;
+  border: 1px solid var(--pk-leaf) !important;
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  display: inline-block !important;
+  margin-bottom: 8px !important;
+}
+
+.qk-address-card b {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+  margin: 0 0 4px !important;
+  display: block !important;
+}
+
+.qk-address-card p {
+  font-size: 12.5px !important;
+  line-height: 1.5 !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  margin: 0 !important;
+}
+
+.qk-address-card .qk-change {
+  position: absolute !important;
+  right: 14px !important;
+  top: 14px !important;
+  border: 1.5px solid var(--pk-line-strong, #c8d3c1) !important;
+  background: #ffffff !important;
+  color: var(--pk-forest) !important;
+  border-radius: 999px !important;
+  padding: 4px 12px !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.qk-address-card .qk-change:hover {
+  border-color: var(--pk-forest) !important;
+  background: var(--pk-forest) !important;
+  color: #ffffff !important;
+}
+
+/* Price summary & checkout Continue */
+body.order-focus .order-price-lines {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 0 12px !important;
+  margin: 0 !important;
+  color: var(--pk-forest-sub, #4b6352) !important;
+  font-size: 13.5px !important;
+}
+
+body.order-focus .order-price-lines .sumrow,
+body.order-focus .order-price-lines > div {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+  padding: 6px 0 !important;
+  border: none !important;
+}
+
+body.order-focus .order-price-lines b {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+}
+
+body.order-focus .order-price-lines .sumrow.total {
+  border-top: 1px dashed var(--pk-line-strong, #d2dacb) !important;
+  padding-top: 14px !important;
+  margin-top: 8px !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--pk-forest) !important;
+}
+
+body.order-focus .order-main .order-continue {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-top: 14px !important;
+  padding: 16px 20px !important;
+  border-radius: 16px !important;
+  background: #fafbf8 !important;
+  border: 1.5px solid #dce4d6 !important;
+  position: static !important;
+  box-shadow: none !important;
+}
+
+body.order-focus .order-continue > div b,
+body.order-focus .order-continue > span {
+  font-family: var(--pk-serif, 'Instrument Serif', Georgia, serif) !important;
+  font-size: 32px !important;
+  line-height: 1 !important;
+  color: var(--pk-forest) !important;
+  font-weight: 400 !important;
+}
+
+body.order-focus .order-continue small {
+  font-size: 11px !important;
+  color: var(--pk-forest-sub, #647b69) !important;
+  font-family: var(--font-body, 'DM Sans', sans-serif) !important;
+  font-weight: 500 !important;
+  margin-top: 3px !important;
+  display: block !important;
+}
+
+body.order-focus .order-continue .btn,
+body.order-focus .order-continue button[type="submit"] {
+  background: var(--pk-orange) !important;
+  border-color: var(--pk-orange) !important;
+  color: #ffffff !important;
+  font-family: var(--font-body, 'DM Sans', sans-serif) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  border-radius: 999px !important;
+  min-height: 48px !important;
+  padding: 12px 28px !important;
+  box-shadow: 0 4px 18px rgba(196, 71, 15, 0.28) !important;
+  cursor: pointer !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+body.order-focus .order-continue .btn:hover,
+body.order-focus .order-continue button[type="submit"]:hover {
+  background: var(--pk-orange-deep, #a83a0a) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 22px rgba(196, 71, 15, 0.36) !important;
+}
+
+.pk-checkout-trust {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 16px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  margin: 14px 0 0 !important;
+}
+
+.pk-aux-links {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin-top: 14px !important;
+  align-items: center !important;
+}
+
+.pk-aux-links .order-text {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--pk-forest) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  padding: 4px 0 !important;
+  transition: color 0.15s ease !important;
+}
+
+.pk-aux-links .order-text:hover {
+  color: var(--pk-orange) !important;
+}
+
+/* Modal Preview Dialog */
+body.order-focus .order-preview {
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+  box-shadow: 0 24px 60px rgba(20, 38, 26, 0.2) !important;
+  max-width: min(840px, 92vw) !important;
+}
+
+body.order-focus .order-preview > div {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+  gap: 12px !important;
+}
+
+body.order-focus .order-preview button[data-close-preview] {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  border: 1px solid var(--pk-line) !important;
+  background: #ffffff !important;
+  cursor: pointer !important;
+  font-size: 18px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: var(--pk-forest) !important;
+}
+
+body.order-focus .login-err {
+  background: #fdf2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #b91c1c !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin: 12px 0 !important;
+}
+
+body.order-focus .order-line {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 0 !important;
+  border-top: 1px solid var(--pk-line) !important;
+}
+
+body.order-focus .order-line h2 {
+  font-size: 15px !important;
+  font-family: var(--font-body, 'DM Sans', sans-serif) !important;
+  margin: 0 !important;
+}
+
+body.order-focus .order-line p {
+  font-size: 13px !important;
+  color: var(--pk-forest-sub, #586e5c) !important;
+  margin: 2px 0 0 !important;
+}
+
+/* Order Footer */
+body.order-focus .order-footer {
+  max-width: 1200px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 24px 24px 48px !important;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 20px !important;
+  color: var(--pk-forest-sub, #728475) !important;
+  font-size: 12px !important;
+}
+
+body.order-focus .order-footer a {
+  color: var(--pk-forest-sub, #728475) !important;
+  text-decoration: none !important;
+}
+
+body.order-focus .order-footer a:hover {
+  color: var(--pk-forest) !important;
+  text-decoration: underline !important;
+}
+
+/* Step 1: Upload Step Polish */
+body.order-focus .order-upload .drop {
+  background: #fafbf8 !important;
+  border: 2px dashed #ccd6c5 !important;
+  border-radius: 20px !important;
+  padding: 48px 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 12px !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+body.order-focus .order-upload .drop:hover,
+body.order-focus .order-upload .drop.is-dragging {
+  border-color: var(--pk-forest) !important;
+  background: #f4faef !important;
+}
+
+body.order-focus .drop-arrow {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  background: var(--pk-leaf-tint) !important;
+  color: var(--pk-forest) !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 22px !important;
+  margin-bottom: 4px !important;
+}
+
+body.order-focus .pk-upload-pill {
+  background: var(--pk-orange) !important;
+  color: #ffffff !important;
+  border-radius: 999px !important;
+  padding: 10px 22px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  margin-top: 14px !important;
+  display: inline-block !important;
+  box-shadow: 0 4px 14px rgba(196, 71, 15, 0.25) !important;
+  transition: all 0.15s ease !important;
+}
+
+body.order-focus .pk-upload-pill:hover {
+  background: var(--pk-orange-deep) !important;
+  transform: translateY(-1px) !important;
+}
+
+body.order-focus .order-trust {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  margin: 24px 0 0 !important;
+}
+
+body.order-focus .order-trust span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--pk-forest) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--pk-line) !important;
+  border-radius: 999px !important;
+  padding: 7px 14px !important;
+}
+
+/* Responsive Breakpoints for Checkout */
+@media (max-width: 1024px) {
+  .pk-checkout-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  .pk-col-side {
+    position: static !important;
+  }
+
+  body.order-focus .order-main {
+    width: calc(100% - 32px) !important;
+    padding-bottom: 120px !important;
+  }
+
+  body.order-focus .order-main .order-continue {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: none !important;
+    border-top: 1px solid var(--pk-line) !important;
+    border-radius: 20px 20px 0 0 !important;
+    box-shadow: 0 -8px 24px rgba(20, 38, 26, 0.08) !important;
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom)) !important;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body.order-focus .order-header {
+    height: 60px !important;
+    padding: 0 16px !important;
+  }
+
+  .order-steps {
+    gap: 6px !important;
+    margin: 18px auto 20px !important;
+    padding: 0 16px !important;
+  }
+
+  .order-steps li span {
+    font-size: 11.5px !important;
+  }
+
+  body.order-focus .order-section,
+  body.order-focus .order-file,
+  body.order-focus .pk-slab,
+  body.order-focus .order-quote {
+    padding: 20px 18px !important;
+    border-radius: 16px !important;
+  }
+
+  .pk-aov-grid {
+    grid-template-columns: 1fr !important;
   }
 }
