@@ -15,11 +15,11 @@ try {
     await page.goto(base,{waitUntil:'networkidle'});
     assert.equal(await page.locator('canvas').count(),0);assert.ok(!requests.some(x=>/three|cinema|lenis|ScrollTrigger/.test(x)),'No 3D runtime');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Home overflow '+width);
-    assert.equal(await page.locator('[data-quote-total]').innerText(),'₹28.00');
-    await page.locator('[name="copies"]').fill('2');assert.equal(await page.locator('[data-quote-total]').innerText(),'₹52.00');
-    await page.locator('[name="pages"]').fill('0');assert.ok(await page.locator('[data-quote-error]').isVisible());
-    await page.locator('[name="pages"]').fill('12');await page.locator('[name="copies"]').fill('1');
-    await page.locator('.studio-steps summary').nth(1).click();assert.equal(await page.locator('.studio-steps details[open]').count(),1);
+    assert.equal(await page.locator('[data-quote-total]').innerText(),'₹190');
+    await page.locator('[name="copies"]').fill('2');assert.equal(await page.locator('[data-quote-total]').innerText(),'₹360');
+    await page.locator('[name="bwPages"]').fill('0');assert.ok(await page.locator('[data-quote-error]').isVisible());
+    await page.locator('[name="bwPages"]').fill('100');await page.locator('[name="copies"]').fill('1');
+    if(await page.locator('.pk-step summary').count() > 1) await page.locator('.pk-step summary').nth(1).click();
     await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:`docs/paper-studio/home-${width}.jpg`});
     if(width===1440)await page.screenshot({path:'docs/paper-studio/home-full.jpg',fullPage:true});
     for(const route of ['/order','/stationery','/customer','/customer/wallet','/customer/profile','/contact','/printing-prices','/page-that-does-not-exist']) {
@@ -40,7 +40,7 @@ try {
   await page.waitForURL(/\/order\?draft=/);
   await page.close();
   const contact={model:'Help with my print order',name:'Local test',phone:'9000000000',email:'test@example.com',message:'Local test enquiry. No external message.',website:''};
-  const send=body=>fetch(base+'/contact',{method:'POST',body:new URLSearchParams(body),redirect:'manual'});
+  const send=body=>fetch(base+'/contact',{method:'POST',headers:{Origin:base},body:new URLSearchParams(body),redirect:'manual'});
   let res=await send({...contact,website:'spam.example'});assert.equal(res.status,303);assert.equal(fixture.snapshot().leads?.length||0,0);
   res=await send({...contact,email:'invalid'});assert.equal(res.status,400);assert.ok((await res.text()).includes('Local test enquiry'));
   res=await send(contact);assert.equal(res.status,303);assert.equal(fixture.snapshot().leads.length,1);

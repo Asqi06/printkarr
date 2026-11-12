@@ -17,7 +17,7 @@ for(const route of ['/customer/orders/new/confirm','/order/options']){
  const start=serverSource.indexOf(`app.post('${route}'`), ending=/\n\}\)\)?;/.exec(serverSource.slice(start)), end=start+ending.index+ending[0].length;
  runInNewContext(serverSource.slice(start,end),{
   app:{post:(_route,...callbacks)=>{handler=callbacks.at(-1);}},requireRole:()=>()=>{},currentUser:()=>null,asyncHandler,
-  loadDb:()=>structuredClone(db),saveDb:next=>{db=structuredClone(next);},guestDraft:next=>next.drafts[0],
+  loadDb:()=>structuredClone(db),saveDb:next=>{db=structuredClone(next);},guestDraft:next=>next.drafts[0],profileComplete:()=>true,
   printPlan,splitMixedPdf:async()=>{await Promise.resolve();db.wallets.push({customerId:'customer',balance:725});throw new Error('Unreadable PDF');},
   fs:{readFileSync:()=>Buffer.from('pdf')},path:{join:()=>''},ROOT:'',DATA_DIR:'',
   campaignConfig:()=>({}),printQuoteExtras:()=>({}),optionsStep:()=>'',orderPage:()=>''

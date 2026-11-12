@@ -1096,6 +1096,14 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
   offerDevice(req, res);
   const gateDb = loadDb(), gateUser = gateDb.users.find((u) => u.id === req.user.id) || req.user;
   if (!profileComplete(gateDb, gateUser)) return res.redirect('/account/complete?next=/customer/orders/new');
+  if (!req.query.draft && !req.query.repeat && !req.query.fresh) {
+    const db = loadDb(), token = parseCookies(req.headers.cookie).pk_guest;
+    const draft = token && (db.drafts || []).filter(d => !d.customerId && d.guest === token).at(-1);
+    if (draft) {
+      if (!draft.customerId) { draft.customerId = req.user.id; delete draft.guest; saveDb(db); }
+      return res.redirect(`/customer/orders/new?draft=${encodeURIComponent(draft.id)}`);
+    }
+  }
   if (req.query.draft) {
     const db = loadDb();
     const d = (db.drafts || []).find((x) => x.id === req.query.draft && x.customerId === req.user.id);
@@ -2004,19 +2012,60 @@ function guestDraft(db, req) {
 app.get('/order', (req, res) => {
   const user = currentUser(req);
   if (user?.role === 'customer') return res.redirect('/customer/orders/new' + (req.query.shop ? '?shop=' + encodeURIComponent(req.query.shop) : ''));
-  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
-  res.append('Set-Cookie', `pk_next=${encodeURIComponent('/customer/orders/new')}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${secure}`);
-  res.redirect('/login');
+  offerDevice(req, res);
+  const db = loadDb();
+  const ref = String(req.query.ref || '').trim().toUpperCase();
+  if (/^[A-Z2-9]{6,12}$/.test(ref) && findReferrer(db, ref)) {
+    const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
+    res.append('Set-Cookie', `pk_ref=${ref}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure}`);
+  }
+  const d = req.query.draft ? guestDraft(db, req) : null;
+  if (req.query.draft && !d) return res.redirect('/order');
+  const shop = req.query.shop && (db.partners || []).find(s => s.id === req.query.shop && s.active);
+  if (req.query.shop && !shop) return res.status(404).send(oops(null, '/order', 'This shop is unavailable.'));
+  res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
-app.post('/order/upload', (req, res) => {
-  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
-  res.append('Set-Cookie', `pk_next=${encodeURIComponent('/customer/orders/new')}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${secure}`);
-  res.redirect('/login');
-});
+app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(307, '/customer/orders/new/upload') : next(), upload.single('doc'), asyncHandler(async (req, res) => {
+  if (!req.file) return res.send(orderPage({ draft: null, pricing: loadDb().pricing, error: 'No file arrived — try again.', maxMb: loadDb().settings.order.maxFileMb }));
+  if (req.file.size > maxUploadBytes()) {
+    try { fs.unlinkSync(req.file.path); } catch {}
+    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: `Choose a file no larger than ${maxUploadBytes() / 1024 / 1024} MB.`, maxMb: loadDb().settings.order.maxFileMb }));
+  }
+  let file = null;
+  try {
+    file = await analyzeUpload(req.file.originalname, fs.readFileSync(req.file.path));
+  } catch (error) {
+    try { fs.unlinkSync(req.file.path); } catch {}
+    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: error.message, maxMb: loadDb().settings.order.maxFileMb }));
+  }
+  const maxPages = Math.min(1000, loadDb().settings.order.maxPages || 1000);
+  if (file.pages > maxPages) {
+    try { fs.unlinkSync(req.file.path); } catch {}
+    return res.status(400).send(orderPage({ draft: null, pricing: loadDb().pricing, error: `Over ${maxPages} pages — split it.`, maxMb: loadDb().settings.order.maxFileMb }));
+  }
+  const db = loadDb();
+  db.drafts ||= [];
+  const t = guestToken(req, res);
+  const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
+  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/order','This shop is unavailable.'));}
+  const draft = {
+    preferredShopId: chosenShop?.id || null,
+    id: 'D' + crypto.randomUUID(), guest: t, customerId: null,
+    document: req.file.originalname.slice(0, 120), stored: req.file.filename,
+    pages: file.pages, fileType: file.fileType, fileExt: file.ext,
+    createdAt: new Date().toISOString()
+  };
+  db.drafts.push(draft);
+  saveDb(db);
+  res.redirect(`/order?draft=${draft.id}`);
+}));
 
-app.get('/order/:draft/preview', (req,res)=>{
-  res.redirect('/login');
+app.get('/order/:draft/preview', (req, res) => {
+  const d = guestDraft(loadDb(), { headers: req.headers, query: { draft: req.params.draft } });
+  if (!d || !d.stored || path.basename(d.stored) !== d.stored) return res.sendStatus(404);
+  res.set('Cache-Control', 'private, no-store');
+  res.type(mimeFor(d.fileExt)).sendFile(path.join(DATA_DIR, 'uploads', d.stored));
 });
 
 // Shared by the one-page guest checkout (/order/options submits contact along with
@@ -2064,20 +2113,147 @@ async function guestContactFlow(db, d, req) {
   return { email, otp: { mailed: otp.mailed, demo: otp.demo, error: otp.error } };
 }
 
-app.post('/order/options', (req, res) => {
-  res.redirect('/login');
-});
+app.post('/order/options', asyncHandler(async (req, res) => {
+  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  let db = loadDb();
+  let d = guestDraft(db, req);
+  if (!d) return res.redirect('/order');
+  d.form = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['printType','copies','sides','range','mixedPageType','mixedRange','splitMixed','orientation','binding','notes','area','deliverySlot','institutionName','institutionLocation','schoolMeeting','schoolPhone'].includes(key) && typeof value === 'string').map(([key, value]) => [key, value.slice(0, 6000)]));
+  const fail = (message) => { saveDb(db); return res.status(400).send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: message, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) })); };
+  let print;
+  try { print = printPlan({ ...req.body, range: d.fileType === 'image' ? '' : req.body.range }, d.pages); }
+  catch (error) { return fail(error.message); }
+  if (print.splitMixed) {
+    const form = d.form;
+    let splitError;
+    try { await splitMixedPdf(fs.readFileSync(path.join(DATA_DIR,'uploads',d.stored)), {...print,filePages:d.pages}); }
+    catch (error) { splitError = error; }
+    db = loadDb();
+    d = guestDraft(db, req);
+    if (!d) return res.redirect('/order');
+    d.form = form;
+    if (splitError) return fail('Could not split this PDF. Upload an unlocked, printable PDF.');
+  }
+  let plan;
+  let schoolAddress;
+  try { if (String(req.body.deliverySlot).startsWith('school') && req.body.institutionLocation) schoolAddress=institutionAddress(db,req.body,req.user?.id); } catch(error) { return fail(error.message); }
+  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), schoolAddress?.institutionName || req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
+  catch (error) { return fail(error.message); }
+  const campus = plan.campusId ? campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId) : null;
+  const area = schoolAddress ? {sarigam:'Sarigam',bhilad:'Bhilad',vapi:'Vapi',daman:'Daman'}[schoolAddress.area.toLowerCase()] : campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : plan.deliveryMode === 'pickup' ? 'Pickup' : ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
+  if (!area || area === 'Pickup') return fail('Choose a supported delivery area. Kiosks are in development.');
+  if (!campus && area === 'Pickup') plan = deliveryPlan(db, 'pickup');
+  d.selections = {
+    ...print, orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto', binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none', notes: String(req.body.notes || '').slice(0, 300),
+    area, zone: zoneOf(area), zoneLabel: area, ...plan, institutionAddress:schoolAddress, campusAddress: campus?.address, campusPin: campus?.pin, campusPoint: campus ? { lat: campus.lat, lng: campus.lng } : null
+  };
+  delete d.form;
+  saveDb(db);
+  res.redirect(`/order/phone?draft=${d.id}`);
+}));
 
 app.get('/order/phone', (req, res) => {
-  res.redirect('/login');
+  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  const db = loadDb();
+  const d = guestDraft(db, req);
+  if (!d || !d.selections) return res.redirect('/order');
+  res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: null, referral: parseCookies(req.headers.cookie).pk_ref }));
 });
 
-app.post('/order/otp-request', (req, res) => {
-  res.redirect('/login');
-});
+app.post('/order/otp-request', otpLimiter, asyncHandler(async (req, res) => {
+  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  const db = loadDb();
+  const d = guestDraft(db, req);
+  if (!d || !d.selections) return res.redirect('/order');
+  if (!req.body.resend) {
+    d.contactForm = Object.fromEntries(Object.entries(req.body).filter(([key, value]) => ['name','email','phone','address','pin','landmark','referral','localityId','deliveryLat','deliveryLng'].includes(key) && typeof value === 'string').map(([key,value]) => [key,value.slice(0,200)]));
+    saveDb(db);
+    const email = normEmail(req.body.email);
+    const phoneRaw = String(req.body.phone || '').replace(/\D/g, '');
+    const phone = phoneRaw ? normPhone(phoneRaw) : '';
+    if (!req.body.name || !email || (!d.selections.institutionAddress && !d.selections.campusId && d.selections.zone !== 'pickup' && (!req.body.address || !/^\d{6}$/.test(String(req.body.pin || ''))))) {
+      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Add your name and email, plus an address and PIN for delivery.' }));
+    }
+    if ((phoneRaw && !phone) || (d.selections.zone !== 'pickup' && !phone)) {
+      return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'That phone number looks off — enter a 10-digit contact number for delivery.' }));
+    }
+    let point;
+    try {
+      point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : addressPoint(d.selections.zone, d.selections.institutionAddress ? {} : req.body, d.selections.institutionAddress || {});
+      if (point) Object.assign(d.selections, fulfillmentFor(db, point, { ...d.selections, zone: d.selections.zone }, [d.selections]));
+      d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
+      d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
+    }
+    catch (error) { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: error.message })); }
+    d.contact = {
+      name: String(req.body.name).slice(0, 60), email,
+      phone: phone ? '+91 ' + phone : '',
+      address: d.selections.zone === 'pickup' ? d.selections.pickupAddress : d.selections.campusId ? d.selections.campusAddress : d.selections.institutionAddress?.address || String(req.body.address).slice(0, 200),
+      landmark: String(d.selections.institutionAddress?.landmark || req.body.landmark || '').slice(0, 100),
+      pin: d.selections.campusId ? d.selections.campusPin : d.selections.institutionAddress?.pin || String(req.body.pin || '').slice(0, 10), deliveryPoint: point,
+      referral: String(req.body.referral || '').trim().toUpperCase().slice(0, 12)
+    };
+    if (d.contact.referral) {
+      const existing = db.users.find((u) => String(u.email || '').toLowerCase() === email);
+      const q0 = quote({ ...d.selections, pages: d.selections.effPages, copies: d.selections.copies, printType: d.selections.printType, bwPages: d.selections.bwPages, colorPages: d.selections.colorPages, student: !!(existing && existing.student), zone: d.selections.zone, point });
+      const pv = validateReferral(db, existing || { id: '__new__' }, d.contact.referral, q0.subtotal);
+      if (!pv.ok) {
+        return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: pv.error }));
+      }
+    }
+    saveDb(db);
+  }
+  const email = d.contact.email;
+  const otp = await requestEmailOtp(email);
+  if (!otp.ok) return res.send(phonePage({ draft: { ...d, area: d.selections.area }, error: otp.error }));
+  res.send(otpPage({ draft: d, email, demoCode: otp.mailed ? null : otp.demo, mailError: otp.mailed ? null : otp.error, error: null }));
+}));
 
-app.post('/order/otp-verify', (req, res) => {
-  res.redirect('/login');
+app.post('/order/otp-verify', otpLimiter, (req, res) => {
+  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  let db = loadDb();
+  let d = guestDraft(db, req);
+  if (!d || !d.selections || !d.contact) return res.redirect('/order');
+  try { deliveryFeeFor(db.pricing, d.selections.zone, d.contact.deliveryPoint, d.selections); }
+  catch { return res.status(400).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Select a valid delivery point before confirming.' })); }
+  const v = verifyEmailOtp(d.contact.email, req.body.code);
+  if (!v.ok) return res.send(otpPage({ draft: d, email: d.contact.email, demoCode: null, mailError: null, error: v.error }));
+  db = loadDb(); d = guestDraft(db, req);
+  if (!d || !d.contact || !d.selections) return res.redirect('/order');
+  let user = db.users.find((u) => String(u.email || '').toLowerCase() === d.contact.email.toLowerCase());
+  if (user && user.role !== 'customer') return res.status(403).send(phonePage({ draft: { ...d, area: d.selections.area }, error: 'Use a customer account for this order.' }));
+  if (!user) {
+    user = {
+      id: 'CUS-' + crypto.randomUUID(), role: 'customer', name: d.contact.name,
+      email: d.contact.email, password: null,
+      phone: d.contact.phone || '', student: false
+    };
+    db.users.push(user);
+    db.wallets.push({ customerId: user.id, balance: 0 });
+  }
+  referralCodeFor(db, user);
+  const s = d.selections;
+  const address = {
+    id: 'ADR-' + crypto.randomUUID(), customerId: user.id, campusId: s.campusId, institutionName: s.institutionName, label: s.institutionDelivery || s.campusId ? 'School / College' : 'Home',
+    name: d.contact.name, phone: d.contact.phone || '', address: d.contact.address,
+    area: s.area, landmark: d.contact.landmark, pin: d.contact.pin,
+    ...d.contact.deliveryPoint, lat: d.contact.deliveryPoint?.lat ?? null, lng: d.contact.deliveryPoint?.lng ?? null, isDefault: !db.addresses.some(a => a.customerId === user.id && a.isDefault)
+  };
+  db.addresses.push(address);
+  if (d.contact.phone) user.phone = d.contact.phone;
+  d.customerId = user.id;
+  delete d.guest;
+  delete d.contactForm;
+  d.selections.addressId = address.id;
+  d.selections.deliveryPoint = d.contact.deliveryPoint;
+  if (d.contact.referral) {
+    const v = validateReferral(db, user, d.contact.referral, 0);
+    if (v.ok) createReferral(db, { referrerId: v.referrer.id, refereeId: user.id, code: d.contact.referral, friendDiscount: 0 });
+  }
+  saveDb(db);
+  const token = createSession(user.id);
+  res.setHeader('Set-Cookie', sessionCookie(req, token));
+  res.redirect(`/customer/orders/new/summary?draft=${d.id}`);
 });
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.

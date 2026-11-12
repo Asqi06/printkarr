@@ -14352,7 +14352,7 @@
       "file_type": "code",
       "norm_label": "finishgatewaypayment()",
       "source_file": "server.mjs",
-      "source_location": "L2409"
+      "source_location": "L2585"
     },
     {
       "id": "server_gatewaytarget",
@@ -14364,7 +14364,7 @@
       "file_type": "code",
       "norm_label": "gatewaytarget()",
       "source_file": "server.mjs",
-      "source_location": "L2400"
+      "source_location": "L2576"
     },
     {
       "id": "yxx1ubwmgrpapxo2_grok_workspace_vercel_output_functions_server_func_libs_tanstack_react_router_applysearchmiddleware",
@@ -22788,7 +22788,7 @@
       "file_type": "code",
       "norm_label": "agentauth()",
       "source_file": "server.mjs",
-      "source_location": "L2126"
+      "source_location": "L2302"
     },
     {
       "id": "server_agentjob",
@@ -22800,7 +22800,7 @@
       "file_type": "code",
       "norm_label": "agentjob()",
       "source_file": "server.mjs",
-      "source_location": "L2135"
+      "source_location": "L2311"
     },
     {
       "id": "server_agentstep",
@@ -22812,7 +22812,7 @@
       "file_type": "code",
       "norm_label": "agentstep()",
       "source_file": "server.mjs",
-      "source_location": "L2168"
+      "source_location": "L2344"
     },
     {
       "id": "server_baseurl",
@@ -22836,7 +22836,7 @@
       "file_type": "code",
       "norm_label": "bootstrap()",
       "source_file": "server.mjs",
-      "source_location": "L2644"
+      "source_location": "L2820"
     },
     {
       "id": "server_collecturl",
@@ -22848,7 +22848,7 @@
       "file_type": "code",
       "norm_label": "collecturl()",
       "source_file": "server.mjs",
-      "source_location": "L2287"
+      "source_location": "L2463"
     },
     {
       "id": "server_countpdfpages",
@@ -22944,7 +22944,7 @@
       "file_type": "code",
       "norm_label": "diskcheck()",
       "source_file": "server.mjs",
-      "source_location": "L2622"
+      "source_location": "L2798"
     },
     {
       "id": "server_finishprintatkiosk",
@@ -23100,7 +23100,7 @@
       "file_type": "code",
       "norm_label": "paymentnotifications()",
       "source_file": "server.mjs",
-      "source_location": "L2437"
+      "source_location": "L2613"
     },
     {
       "id": "server_profilecomplete",
@@ -23160,7 +23160,7 @@
       "file_type": "code",
       "norm_label": "referralstats()",
       "source_file": "server.mjs",
-      "source_location": "L1778"
+      "source_location": "L1786"
     },
     {
       "id": "server_refundpaidorder",
@@ -23220,7 +23220,7 @@
       "file_type": "code",
       "norm_label": "safetoken()",
       "source_file": "server.mjs",
-      "source_location": "L2261"
+      "source_location": "L2437"
     },
     {
       "id": "server_sameday",
@@ -23232,7 +23232,7 @@
       "file_type": "code",
       "norm_label": "sameday()",
       "source_file": "server.mjs",
-      "source_location": "L1987"
+      "source_location": "L1995"
     },
     {
       "id": "server_sessioncookie",
@@ -23256,7 +23256,7 @@
       "file_type": "code",
       "norm_label": "setheaders()",
       "source_file": "server.mjs",
-      "source_location": "L2581"
+      "source_location": "L2757"
     },
     {
       "id": "server_sharetokenfor",
@@ -23280,7 +23280,7 @@
       "file_type": "code",
       "norm_label": "siteorigin()",
       "source_file": "server.mjs",
-      "source_location": "L1906"
+      "source_location": "L1914"
     },
     {
       "id": "server_stafflogin",
@@ -23304,7 +23304,7 @@
       "file_type": "code",
       "norm_label": "start()",
       "source_file": "server.mjs",
-      "source_location": "L2718"
+      "source_location": "L2894"
     },
     {
       "id": "server_storagecheck",
@@ -23316,7 +23316,7 @@
       "file_type": "code",
       "norm_label": "storagecheck()",
       "source_file": "server.mjs",
-      "source_location": "L2601"
+      "source_location": "L2777"
     },
     {
       "id": "server_validatecoupon",
@@ -36768,7 +36768,7 @@
       "file_type": "code",
       "norm_label": "cataloguepage()",
       "source_file": "lib/views_store.js",
-      "source_location": "L388"
+      "source_location": "L389"
     },
     {
       "id": "lib_views_store_deliveryprogress",
@@ -36864,7 +36864,7 @@
       "file_type": "code",
       "norm_label": "purchasespage()",
       "source_file": "lib/views_store.js",
-      "source_location": "L322"
+      "source_location": "L323"
     },
     {
       "id": "lib_views_store_qtycolor",
@@ -65031,6 +65031,18 @@
       "source_location": "L30"
     },
     {
+      "id": "public_vendor_three_0_160_0_module_interleavedbufferattribute_count",
+      "label": ".count()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 47,
+      "community_name": "ref_node_assert",
+      "file_type": "code",
+      "norm_label": ".count()",
+      "source_file": "public/vendor/three-0.160.0.module.js",
+      "source_location": "L31308"
+    },
+    {
       "id": "scripts_analytics_check_analytics",
       "label": "analytics()",
       "_callable": true,
@@ -65292,7 +65304,7 @@
       "file_type": "code",
       "norm_label": "sendsplitdraft()",
       "source_file": "server.mjs",
-      "source_location": "L1296"
+      "source_location": "L1304"
     },
     {
       "id": "tmp_inspect_order_show",
@@ -70515,18 +70527,6 @@
       "source_location": "L19"
     },
     {
-      "id": "public_vendor_three_0_160_0_module_interleavedbufferattribute_count",
-      "label": ".count()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "reviews.test.js",
-      "file_type": "code",
-      "norm_label": ".count()",
-      "source_file": "public/vendor/three-0.160.0.module.js",
-      "source_location": "L31308"
-    },
-    {
       "id": "yxx1ubwmgrpapxo2_grok_workspace_src_lib_multiplayer_p2p_defaulticeservers",
       "label": "defaultIceServers()",
       "_callable": true,
@@ -71676,7 +71676,7 @@
       "file_type": "code",
       "norm_label": "storeerror()",
       "source_file": "lib/views_store.js",
-      "source_location": "L394"
+      "source_location": "L395"
     },
     {
       "id": "public_localities_distancefee",
@@ -71952,7 +71952,7 @@
       "file_type": "code",
       "norm_label": "guestcontactflow()",
       "source_file": "server.mjs",
-      "source_location": "L2025"
+      "source_location": "L2074"
     },
     {
       "id": "server_guestdraft",
@@ -71964,7 +71964,7 @@
       "file_type": "code",
       "norm_label": "guestdraft()",
       "source_file": "server.mjs",
-      "source_location": "L1998"
+      "source_location": "L2006"
     },
     {
       "id": "server_guesttoken",
@@ -71976,7 +71976,7 @@
       "file_type": "code",
       "norm_label": "guesttoken()",
       "source_file": "server.mjs",
-      "source_location": "L1990"
+      "source_location": "L1998"
     },
     {
       "id": "server_printquoteextras",
@@ -95305,7 +95305,7 @@
       "file_type": "code",
       "norm_label": "qrcache",
       "source_file": "server.mjs",
-      "source_location": "L2245"
+      "source_location": "L2421"
     },
     {
       "id": "server_razorpay",
@@ -103078,6 +103078,17 @@
       "source_location": "L16"
     },
     {
+      "id": "scripts_design_check_pages",
+      "label": "pages",
+      "_origin": "ast",
+      "community": 210,
+      "community_name": "esc",
+      "file_type": "code",
+      "norm_label": "pages",
+      "source_file": "scripts/design-check.mjs",
+      "source_location": "L30"
+    },
+    {
       "id": "scripts_purchases_cancellation_check",
       "label": "purchases-cancellation-check.mjs",
       "_origin": "ast",
@@ -103240,7 +103251,7 @@
       "file_type": "code",
       "norm_label": "contactlimiter",
       "source_file": "server.mjs",
-      "source_location": "L2549"
+      "source_location": "L2725"
     },
     {
       "id": "yxx1ubwmgrpapxo2_grok_workspace_grok_skills_og_references_favicon_and_icons",
@@ -112689,7 +112700,7 @@
       "file_type": "code",
       "norm_label": "app",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L13"
+      "source_location": "L14"
     },
     {
       "id": "scripts_checklist_check_db",
@@ -112700,7 +112711,7 @@
       "file_type": "code",
       "norm_label": "db",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L14"
+      "source_location": "L15"
     },
     {
       "id": "scripts_checklist_check_paid",
@@ -112711,7 +112722,7 @@
       "file_type": "code",
       "norm_label": "paid",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L17"
+      "source_location": "L18"
     },
     {
       "id": "scripts_checklist_check_server",
@@ -112722,7 +112733,7 @@
       "file_type": "code",
       "norm_label": "server",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L21"
+      "source_location": "L22"
     },
     {
       "id": "scripts_checklist_check_siteorigin",
@@ -112733,7 +112744,7 @@
       "file_type": "code",
       "norm_label": "siteorigin",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L15"
+      "source_location": "L16"
     },
     {
       "id": "scripts_checklist_check_source",
@@ -112744,18 +112755,7 @@
       "file_type": "code",
       "norm_label": "source",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L12"
-    },
-    {
-      "id": "scripts_design_check_pages",
-      "label": "pages",
-      "_origin": "ast",
-      "community": 51,
-      "community_name": "reviews.test.js",
-      "file_type": "code",
-      "norm_label": "pages",
-      "source_file": "scripts/design-check.mjs",
-      "source_location": "L30"
+      "source_location": "L13"
     },
     {
       "id": "scripts_seo_check",
@@ -128400,7 +128400,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L391",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -128412,7 +128412,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L391",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -128424,7 +128424,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L391",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -128436,7 +128436,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L391",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -128448,7 +128448,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L391",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -128880,7 +128880,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L217",
+      "source_location": "L218",
       "weight": 1.0
     },
     {
@@ -128892,7 +128892,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L227",
+      "source_location": "L228",
       "weight": 1.0
     },
     {
@@ -128904,7 +128904,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L312",
+      "source_location": "L313",
       "weight": 1.0
     },
     {
@@ -128916,7 +128916,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L335",
+      "source_location": "L336",
       "weight": 1.0
     },
     {
@@ -128928,7 +128928,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L343",
+      "source_location": "L344",
       "weight": 1.0
     },
     {
@@ -128940,7 +128940,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L347",
+      "source_location": "L348",
       "weight": 1.0
     },
     {
@@ -128952,7 +128952,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L348",
+      "source_location": "L349",
       "weight": 1.0
     },
     {
@@ -128964,7 +128964,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L358",
+      "source_location": "L359",
       "weight": 1.0
     },
     {
@@ -129144,7 +129144,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L395",
+      "source_location": "L396",
       "weight": 1.0
     },
     {
@@ -129156,7 +129156,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "lib/views_store.js",
-      "source_location": "L395",
+      "source_location": "L396",
       "weight": 1.0
     },
     {
@@ -173928,7 +173928,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2170",
+      "source_location": "L2346",
       "weight": 1.0
     },
     {
@@ -173940,7 +173940,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2172",
+      "source_location": "L2348",
       "weight": 1.0
     },
     {
@@ -173952,7 +173952,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2177",
+      "source_location": "L2353",
       "weight": 1.0
     },
     {
@@ -173964,7 +173964,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2179",
+      "source_location": "L2355",
       "weight": 1.0
     },
     {
@@ -173976,7 +173976,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2184",
+      "source_location": "L2360",
       "weight": 1.0
     },
     {
@@ -173988,7 +173988,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2185",
+      "source_location": "L2361",
       "weight": 1.0
     },
     {
@@ -174000,7 +174000,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2186",
+      "source_location": "L2362",
       "weight": 1.0
     },
     {
@@ -174012,7 +174012,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2646",
+      "source_location": "L2822",
       "weight": 1.0
     },
     {
@@ -174024,7 +174024,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2647",
+      "source_location": "L2823",
       "weight": 1.0
     },
     {
@@ -174036,7 +174036,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2648",
+      "source_location": "L2824",
       "weight": 1.0
     },
     {
@@ -174048,7 +174048,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2651",
+      "source_location": "L2827",
       "weight": 1.0
     },
     {
@@ -174060,7 +174060,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2651",
+      "source_location": "L2827",
       "weight": 1.0
     },
     {
@@ -174072,7 +174072,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2653",
+      "source_location": "L2829",
       "weight": 1.0
     },
     {
@@ -174084,7 +174084,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2658",
+      "source_location": "L2834",
       "weight": 1.0
     },
     {
@@ -174096,7 +174096,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2659",
+      "source_location": "L2835",
       "weight": 1.0
     },
     {
@@ -174108,7 +174108,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2663",
+      "source_location": "L2839",
       "weight": 1.0
     },
     {
@@ -174120,7 +174120,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2665",
+      "source_location": "L2841",
       "weight": 1.0
     },
     {
@@ -174132,7 +174132,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2666",
+      "source_location": "L2842",
       "weight": 1.0
     },
     {
@@ -174144,7 +174144,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2673",
+      "source_location": "L2849",
       "weight": 1.0
     },
     {
@@ -174156,7 +174156,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2677",
+      "source_location": "L2853",
       "weight": 1.0
     },
     {
@@ -174168,7 +174168,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2685",
+      "source_location": "L2861",
       "weight": 1.0
     },
     {
@@ -174180,7 +174180,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2689",
+      "source_location": "L2865",
       "weight": 1.0
     },
     {
@@ -174192,7 +174192,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2716",
+      "source_location": "L2892",
       "weight": 1.0
     },
     {
@@ -174204,7 +174204,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2288",
+      "source_location": "L2464",
       "weight": 1.0
     },
     {
@@ -174252,7 +174252,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2550",
+      "source_location": "L2726",
       "weight": 1.0
     },
     {
@@ -174384,7 +174384,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2410",
+      "source_location": "L2586",
       "weight": 1.0
     },
     {
@@ -174396,7 +174396,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2414",
+      "source_location": "L2590",
       "weight": 1.0
     },
     {
@@ -174408,7 +174408,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2415",
+      "source_location": "L2591",
       "weight": 1.0
     },
     {
@@ -174420,7 +174420,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2421",
+      "source_location": "L2597",
       "weight": 1.0
     },
     {
@@ -174432,7 +174432,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2422",
+      "source_location": "L2598",
       "weight": 1.0
     },
     {
@@ -174444,7 +174444,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2422",
+      "source_location": "L2598",
       "weight": 1.0
     },
     {
@@ -174456,7 +174456,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2424",
+      "source_location": "L2600",
       "weight": 1.0
     },
     {
@@ -174468,7 +174468,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2425",
+      "source_location": "L2601",
       "weight": 1.0
     },
     {
@@ -174480,7 +174480,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2428",
+      "source_location": "L2604",
       "weight": 1.0
     },
     {
@@ -174492,7 +174492,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2432",
+      "source_location": "L2608",
       "weight": 1.0
     },
     {
@@ -174552,7 +174552,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2027",
+      "source_location": "L2076",
       "weight": 1.0
     },
     {
@@ -174564,7 +174564,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2028",
+      "source_location": "L2077",
       "weight": 1.0
     },
     {
@@ -174576,7 +174576,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2030",
+      "source_location": "L2079",
       "weight": 1.0
     },
     {
@@ -174588,7 +174588,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2039",
+      "source_location": "L2088",
       "weight": 1.0
     },
     {
@@ -174600,7 +174600,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2040",
+      "source_location": "L2089",
       "weight": 1.0
     },
     {
@@ -174612,7 +174612,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2041",
+      "source_location": "L2090",
       "weight": 1.0
     },
     {
@@ -174624,7 +174624,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2057",
+      "source_location": "L2106",
       "weight": 1.0
     },
     {
@@ -174636,7 +174636,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2058",
+      "source_location": "L2107",
       "weight": 1.0
     },
     {
@@ -174648,7 +174648,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2062",
+      "source_location": "L2111",
       "weight": 1.0
     },
     {
@@ -174660,7 +174660,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1999",
+      "source_location": "L2007",
       "weight": 1.0
     },
     {
@@ -174672,7 +174672,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1991",
+      "source_location": "L1999",
       "weight": 1.0
     },
     {
@@ -174756,7 +174756,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2438",
+      "source_location": "L2614",
       "weight": 1.0
     },
     {
@@ -174996,7 +174996,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1299",
+      "source_location": "L1307",
       "weight": 1.0
     },
     {
@@ -175008,7 +175008,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1300",
+      "source_location": "L1308",
       "weight": 1.0
     },
     {
@@ -175020,7 +175020,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1907",
+      "source_location": "L1915",
       "weight": 1.0
     },
     {
@@ -175104,7 +175104,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2721",
+      "source_location": "L2897",
       "weight": 1.0
     },
     {
@@ -175116,7 +175116,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2734",
+      "source_location": "L2910",
       "weight": 1.0
     },
     {
@@ -175128,7 +175128,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2734",
+      "source_location": "L2910",
       "weight": 1.0
     },
     {
@@ -175140,7 +175140,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2741",
+      "source_location": "L2917",
       "weight": 1.0
     },
     {
@@ -175152,7 +175152,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2741",
+      "source_location": "L2917",
       "weight": 1.0
     },
     {
@@ -175164,7 +175164,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2745",
+      "source_location": "L2921",
       "weight": 1.0
     },
     {
@@ -175176,7 +175176,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2745",
+      "source_location": "L2921",
       "weight": 1.0
     },
     {
@@ -175188,7 +175188,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2745",
+      "source_location": "L2921",
       "weight": 1.0
     },
     {
@@ -175200,7 +175200,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2749",
+      "source_location": "L2925",
       "weight": 1.0
     },
     {
@@ -175212,7 +175212,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2605",
+      "source_location": "L2781",
       "weight": 1.0
     },
     {
@@ -175224,7 +175224,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2606",
+      "source_location": "L2782",
       "weight": 1.0
     },
     {
@@ -266076,7 +266076,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1296",
+      "source_location": "L1304",
       "weight": 1.0
     },
     {
@@ -266112,7 +266112,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1778",
+      "source_location": "L1786",
       "weight": 1.0
     },
     {
@@ -266124,7 +266124,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1906",
+      "source_location": "L1914",
       "weight": 1.0
     },
     {
@@ -266136,12 +266136,12 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L1987",
+      "source_location": "L1995",
       "weight": 1.0
     },
     {
       "source": "server_mjs_server",
-      "target": "server_guestdraft",
+      "target": "server_guesttoken",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -266153,6 +266153,18 @@
     },
     {
       "source": "server_mjs_server",
+      "target": "server_guestdraft",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "server.mjs",
+      "source_location": "L2006",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
       "target": "server_agentjob",
       "relation": "contains",
       "_origin": "ast",
@@ -266160,7 +266172,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2135",
+      "source_location": "L2311",
       "weight": 1.0
     },
     {
@@ -266172,7 +266184,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2261",
+      "source_location": "L2437",
       "weight": 1.0
     },
     {
@@ -266184,43 +266196,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "server.mjs",
-      "source_location": "L2287",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_gatewaytarget",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "server.mjs",
-      "source_location": "L2400",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_finishgatewaypayment",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "server.mjs",
-      "source_location": "L2409",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_paymentnotifications",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "server.mjs",
-      "source_location": "L2437",
+      "source_location": "L2463",
       "weight": 1.0
     },
     {
@@ -266233,6 +266209,42 @@
       "context": "call",
       "source_file": "server.mjs",
       "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
+      "target": "server_gatewaytarget",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "server.mjs",
+      "source_location": "L2576",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
+      "target": "server_finishgatewaypayment",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "server.mjs",
+      "source_location": "L2585",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
+      "target": "server_paymentnotifications",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "server.mjs",
+      "source_location": "L2613",
       "weight": 1.0
     },
     {
@@ -288107,6 +288119,18 @@
     },
     {
       "source": "scripts_checklist_check",
+      "target": "lib_security",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "scripts/checklist-check.mjs",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_checklist_check",
       "target": "ref_node_fs",
       "relation": "imports_from",
       "_origin": "ast",
@@ -304951,7 +304975,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/views_store.js",
-      "source_location": "L322",
+      "source_location": "L323",
       "weight": 1.0
     },
     {
@@ -304962,7 +304986,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/views_store.js",
-      "source_location": "L388",
+      "source_location": "L389",
       "weight": 1.0
     },
     {
@@ -304973,7 +304997,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "lib/views_store.js",
-      "source_location": "L394",
+      "source_location": "L395",
       "weight": 1.0
     },
     {
@@ -320307,7 +320331,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0
     },
     {
@@ -320318,7 +320342,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L13",
+      "source_location": "L14",
       "weight": 1.0
     },
     {
@@ -320329,7 +320353,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0
     },
     {
@@ -320340,7 +320364,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0
     },
     {
@@ -320351,7 +320375,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L17",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -320362,7 +320386,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0
     },
     {
@@ -322776,13 +322800,13 @@
     },
     {
       "source": "server_mjs_server",
-      "target": "server_guesttoken",
+      "target": "server_loginlimiter",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server.mjs",
-      "source_location": "L1990",
+      "source_location": "L207",
       "weight": 1.0
     },
     {
@@ -322793,18 +322817,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server.mjs",
-      "source_location": "L2025",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_loginlimiter",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server.mjs",
-      "source_location": "L207",
+      "source_location": "L2074",
       "weight": 1.0
     },
     {
@@ -322859,7 +322872,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server.mjs",
-      "source_location": "L2168",
+      "source_location": "L2344",
       "weight": 1.0
     },
     {
@@ -322870,40 +322883,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server.mjs",
-      "source_location": "L2245",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_contactlimiter",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server.mjs",
-      "source_location": "L2549",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_setheaders",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server.mjs",
-      "source_location": "L2581",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_storagecheck",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server.mjs",
-      "source_location": "L2601",
+      "source_location": "L2421",
       "weight": 1.0
     },
     {
@@ -322919,13 +322899,57 @@
     },
     {
       "source": "server_mjs_server",
+      "target": "server_login_for",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server.mjs",
+      "source_location": "L272",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
+      "target": "server_contactlimiter",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server.mjs",
+      "source_location": "L2725",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
+      "target": "server_setheaders",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server.mjs",
+      "source_location": "L2757",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
+      "target": "server_storagecheck",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server.mjs",
+      "source_location": "L2777",
+      "weight": 1.0
+    },
+    {
+      "source": "server_mjs_server",
       "target": "server_diskcheck",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server.mjs",
-      "source_location": "L2622",
+      "source_location": "L2798",
       "weight": 1.0
     },
     {
@@ -322936,7 +322960,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server.mjs",
-      "source_location": "L2644",
+      "source_location": "L2820",
       "weight": 1.0
     },
     {
@@ -322947,18 +322971,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server.mjs",
-      "source_location": "L2718",
-      "weight": 1.0
-    },
-    {
-      "source": "server_mjs_server",
-      "target": "server_login_for",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server.mjs",
-      "source_location": "L272",
+      "source_location": "L2894",
       "weight": 1.0
     },
     {
@@ -400763,7 +400776,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "server.mjs",
-      "source_location": "L2415",
+      "source_location": "L2591",
       "weight": 1.0
     },
     {
@@ -400787,7 +400800,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "server.mjs",
-      "source_location": "L1461",
+      "source_location": "L1469",
       "weight": 1.0
     },
     {
@@ -400811,7 +400824,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "server.mjs",
-      "source_location": "L2143",
+      "source_location": "L2319",
       "weight": 1.0
     },
     {
@@ -416284,7 +416297,7 @@
     },
     {
       "source": "scripts_checklist_check",
-      "target": "lib_auth_parsecookies",
+      "target": "lib_security_sameorigin",
       "relation": "indirect_call",
       "_origin": "ast",
       "confidence": "INFERRED",
@@ -416292,6 +416305,18 @@
       "context": "collection",
       "source_file": "scripts/checklist-check.mjs",
       "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_checklist_check",
+      "target": "lib_auth_parsecookies",
+      "relation": "indirect_call",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "collection",
+      "source_file": "scripts/checklist-check.mjs",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -416303,7 +416328,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -416315,7 +416340,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "scripts/checklist-check.mjs",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -417023,7 +417048,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "server.mjs",
-      "source_location": "L2084",
+      "source_location": "L2260",
       "weight": 1.0
     },
     {
@@ -417035,7 +417060,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "server.mjs",
-      "source_location": "L2084",
+      "source_location": "L2260",
       "weight": 1.0
     },
     {
@@ -417047,7 +417072,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "server.mjs",
-      "source_location": "L2084",
+      "source_location": "L2260",
       "weight": 1.0
     },
     {
@@ -417059,7 +417084,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "server.mjs",
-      "source_location": "L2084",
+      "source_location": "L2260",
       "weight": 1.0
     },
     {
@@ -417071,7 +417096,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "server.mjs",
-      "source_location": "L2084",
+      "source_location": "L2260",
       "weight": 1.0
     },
     {
@@ -423160,5 +423185,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ea8774fb1c9a8bb36cee6b9f34587f02a838bf06"
+  "built_at_commit": "dcd54a46aece25d31b28762939858a3abec8aa4d"
 }

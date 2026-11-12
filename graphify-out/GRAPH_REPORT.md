@@ -1,17 +1,17 @@
-# Graph Report - prntkr  (2026-11-09)
+# Graph Report - prntkr  (2026-11-12)
 
 ## Corpus Check
-- 447 files · ~3,298,082 words
+- 447 files · ~3,299,434 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 74 file(s) not represented in the graph (top: .log 24, .css 18, (none) 11)
 
 ## Summary
-- 10221 nodes · 25891 edges · 361 communities (268 shown, 93 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 2071 edges (avg confidence: 0.86)
+- 10221 nodes · 25893 edges · 361 communities (268 shown, 93 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 2072 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ea8774fb`
+- Built from commit: `dcd54a46`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -601,7 +601,7 @@ Nodes (95): createInlineCssPlaceholderAsset(), createInlineCssStyleAsset(), dehy
 
 ### Community 51 - "reviews.test.js"
 Cohesion: 0.06
-Nodes (29): deleteReview(), publicReviews(), saveReview(), discoveryRoutes(), escape(), PAGES, seoHead(), SITE (+21 more)
+Nodes (28): deleteReview(), publicReviews(), saveReview(), discoveryRoutes(), escape(), PAGES, seoHead(), SITE (+20 more)
 
 ### Community 52 - "P2PRoom"
 Cohesion: 0.08
@@ -1165,7 +1165,7 @@ Nodes (4): 9. Additional Options, Binding, Notes, Orientation
 
 ### Community 210 - "esc"
 Cohesion: 0.04
-Nodes (153): deliveryChoice(), installNotificationRoutes(), progressOf(), scriptNonce(), analyticsHead(), privateDescription(), purchaseAnalytics(), FREE_DELIVERY (+145 more)
+Nodes (154): deliveryChoice(), installNotificationRoutes(), progressOf(), scriptNonce(), analyticsHead(), privateDescription(), purchaseAnalytics(), FREE_DELIVERY (+146 more)
 
 ### Community 211 - "Favicon and PWA icons"
 Cohesion: 0.50
@@ -1477,7 +1477,7 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `gl()` connect `WebGLState` to `three.mjs`, `index-BmpwFe3l.js`, `get`, `.dispose`, `WebGLProgram`, `constructor`, `n`, `Sl`, `update`, `n`, `WebGLRenderer`, `constructor`?**
   _High betweenness centrality (0.092) - this node is a cross-community bridge._
-- **Why does `InterleavedBufferAttribute` connect `.normalize` to `reviews.test.js`, `public/vendor/three-0.160.0.module.js`, `BatchedMesh`, `.push`?**
+- **Why does `InterleavedBufferAttribute` connect `.normalize` to `public/vendor/three-0.160.0.module.js`, `BatchedMesh`, `.push`, `ref_node_assert`?**
   _High betweenness centrality (0.072) - this node is a cross-community bridge._
 - **Why does `constructor()` connect `constructor` to `three.mjs`, `.render`, `.render`, `r`, `copy`, `addToRenderList`, `get`, `warn`, `PropertyBinding`, `update`, `Path`, `WebGLBindingStates`, `_onChangeCallback`?**
   _High betweenness centrality (0.047) - this node is a cross-community bridge._

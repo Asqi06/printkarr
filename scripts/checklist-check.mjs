@@ -8,11 +8,12 @@ import {contactPage,contactThankYouPage,CONTACT_TOPICS,notFoundPage,landing,POST
 import {parseCookies} from '../lib/auth.js';
 import {blankDb} from '../lib/db.js';
 import {SITE,discoveryRoutes,purchaseAnalytics} from '../lib/seo.js';
+import {sameOrigin} from '../lib/security.js';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'file:///C:/Users/WELCOME/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
 const source=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8').replaceAll('\r\n','\n');
 const app=express();app.use(express.urlencoded({extended:false}));app.use(express.static('public',{index:false}));discoveryRoutes(app,POSTS);
 let failure=false,saves=0,db={leads:[]};
-const siteOrigin=runInNewContext(source.match(/function siteOrigin\(req, res, next\) \{[^]*?\n\}/)[0]+'\nsiteOrigin;',{SITE,URL});
+const siteOrigin=runInNewContext(source.match(/function siteOrigin\(req, res, next\) \{[^]*?\n\}/)[0]+'\nsiteOrigin;',{SITE,URL,sameOrigin});
 runInNewContext(source.slice(source.indexOf('const contactLimiter ='),source.indexOf("app.get('/blogs',")),{app,rateLimit,siteOrigin,parseCookies,contactPage,contactThankYouPage,CONTACT_TOPICS,loadDb:()=>structuredClone(db),saveDb:next=>{if(failure)throw Error('disk failure');db=next;saves++;}});
 const paid={id:'test-receipt',total:28,status:'PAID',paymentStatus:'paid'};
 app.get('/privacy-check',(_req,res)=>res.send(landing({pricing:blankDb().pricing}).replace('</main>',purchaseAnalytics(paid)+'<span data-contact-confirmed hidden></span></main>')));
@@ -23,7 +24,7 @@ const browser=await chromium.launch({channel:'msedge',headless:true});const prio
 try {
   const missing=await fetch(base+'/missing-page');assert.equal(missing.status,404);assert.ok((await missing.text()).includes('Back to Home'));
   const body={model:CONTACT_TOPICS[0],name:'Test Person',phone:'9000000000',email:'test@example.com',message:'A test enquiry',website:''};
-  const send=(fields,headers={})=>fetch(base+'/contact',{method:'POST',body:new URLSearchParams(fields),headers,redirect:'manual'});
+  const send=(fields,headers={})=>fetch(base+'/contact',{method:'POST',body:new URLSearchParams(fields),headers:{origin:'https://printkarr.in',...headers},redirect:'manual'});
   assert.equal((await send(body,{origin:'https://evil.example'})).status,403);assert.equal(saves,0);
   failure=true;let result=await send(body);assert.equal(result.status,503);assert.equal(result.headers.get('set-cookie'),null);assert.ok((await result.text()).includes('A test enquiry'));assert.equal(saves,0);
   failure=false;result=await send({...body,at:'fake',role:'admin'},{origin:'https://www.printkarr.in'});assert.equal(result.status,303);assert.equal(saves,1);assert.equal(db.leads[0].role,undefined);assert.notEqual(db.leads[0].at,'fake');

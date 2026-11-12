@@ -1008,9 +1008,9 @@
     "semantic_hash": ""
   },
   "lib/views_order.js": {
-    "mtime": 1794217054.213512,
-    "seen": 1794217552.6153479,
-    "ast_hash": "3332bf39e5877c348b47de6dcc4a1b44",
+    "mtime": 1794492292.3499327,
+    "seen": 1794493830.3056064,
+    "ast_hash": "92a9967fd26efdb4293e79cc9975d8bc",
     "semantic_hash": ""
   },
   "lib/views_packs.js": {
@@ -1020,9 +1020,9 @@
     "semantic_hash": ""
   },
   "lib/views_public.js": {
-    "mtime": 1794210761.300625,
-    "seen": 1794212284.8887906,
-    "ast_hash": "6a149657b15f2c947cfdfe098654ef7c",
+    "mtime": 1794493559.3041368,
+    "seen": 1794493830.305797,
+    "ast_hash": "3b90017522f314f658dd4875f191e036",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1062,9 +1062,9 @@
     "semantic_hash": ""
   },
   "server.mjs": {
-    "mtime": 1794216909.9028006,
-    "seen": 1794217552.6258347,
-    "ast_hash": "2cfdf1c07584dcbf0c7778e4aef12f31",
+    "mtime": 1794492233.9895923,
+    "seen": 1794493830.3152282,
+    "ast_hash": "98cc64ca905710d6fdd2d2c76a87b0eb",
     "semantic_hash": ""
   },
   ".opencode/skills/graphify/SKILL.md": {
@@ -2880,9 +2880,9 @@
     "semantic_hash": ""
   },
   "lib/views_store.js": {
-    "mtime": 1794217180.4817843,
-    "seen": 1794217552.6161985,
-    "ast_hash": "31ffab2cc4cac158dc02ae7dd0148eb8",
+    "mtime": 1794492340.1152043,
+    "seen": 1794493830.305988,
+    "ast_hash": "fead0d773373536a41ffbf31f6db0aa9",
     "semantic_hash": ""
   },
   "public/store.js": {
@@ -3648,9 +3648,9 @@
     "semantic_hash": ""
   },
   "scripts/split-print-check.mjs": {
-    "mtime": 1791881790.1679304,
-    "seen": 1791885805.972451,
-    "ast_hash": "686c2e249ea40cd8e87c6c3d24c82998",
+    "mtime": 1794491981.5119133,
+    "seen": 1794493830.3144827,
+    "ast_hash": "02ad1aed9d77e94f3bf34e9f8ecf31bb",
     "semantic_hash": ""
   },
   "docs/print-and-address-ux.md": {
@@ -3858,15 +3858,15 @@
     "semantic_hash": ""
   },
   "scripts/checklist-check.mjs": {
-    "mtime": 1791548720.9365757,
-    "seen": 1791548933.0218294,
-    "ast_hash": "99b1ec36623dc95ee5e31c554328740f",
+    "mtime": 1794491763.9696023,
+    "seen": 1794493830.3105536,
+    "ast_hash": "852fc480b69e72bf0d7f45824e76439b",
     "semantic_hash": ""
   },
   "scripts/studio-check.mjs": {
-    "mtime": 1793884499.2935088,
-    "seen": 1793884908.9351175,
-    "ast_hash": "64aec9400883c1f6d36b8011635d3815",
+    "mtime": 1794493399.4412212,
+    "seen": 1794493830.3148584,
+    "ast_hash": "2517b1e9b1b38afb4b921d21be730d16",
     "semantic_hash": ""
   },
   "tmp/add-chapters.mjs": {
@@ -4404,116 +4404,116 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/contact-1440.jpg": {
-    "mtime": 1791550604.4842174,
-    "seen": 1791607190.5317125,
+    "mtime": 1794494299.4382915,
+    "seen": 1794494371.1129956,
     "ast_hash": "ab3b152e223f103aa6cec97140533e8e",
     "semantic_hash": ""
   },
   "docs/paper-studio/contact-390.jpg": {
-    "mtime": 1791550625.799391,
-    "seen": 1791607190.5317152,
+    "mtime": 1794494299.4393225,
+    "seen": 1794494371.1129992,
     "ast_hash": "ee839fb2b9a0672b09869ab83d3ca1fc",
     "semantic_hash": ""
   },
   "docs/paper-studio/customer-1440.jpg": {
-    "mtime": 1791550602.013672,
-    "seen": 1791607190.531717,
+    "mtime": 1794494299.4423237,
+    "seen": 1794494371.1130018,
     "ast_hash": "60a62d2acbf3592d358636d97e439277",
     "semantic_hash": ""
   },
   "docs/paper-studio/customer-390.jpg": {
-    "mtime": 1791550623.4985664,
-    "seen": 1791607190.5317194,
+    "mtime": 1794494299.4433348,
+    "seen": 1794494371.113004,
     "ast_hash": "6ca2fe8c9f069eff361bd7ff8ba4904f",
     "semantic_hash": ""
   },
   "docs/paper-studio/customer-profile-1440.jpg": {
-    "mtime": 1791550603.6846263,
-    "seen": 1791607190.5317218,
+    "mtime": 1794494299.4463403,
+    "seen": 1794494371.1130066,
     "ast_hash": "caf560c0cf662fd1ee40893de53ebfd8",
     "semantic_hash": ""
   },
   "docs/paper-studio/customer-profile-390.jpg": {
-    "mtime": 1791550625.034192,
-    "seen": 1791607190.5317237,
+    "mtime": 1794494299.4474995,
+    "seen": 1794494371.113009,
     "ast_hash": "5920c99edd1b3b3ff90cbff5ba373680",
     "semantic_hash": ""
   },
   "docs/paper-studio/customer-wallet-1440.jpg": {
-    "mtime": 1791550602.8214622,
-    "seen": 1791607190.531726,
+    "mtime": 1794494299.4503343,
+    "seen": 1794494371.113011,
     "ast_hash": "faa7b34306ecc770d4b3ccaa1acb01b4",
     "semantic_hash": ""
   },
   "docs/paper-studio/customer-wallet-390.jpg": {
-    "mtime": 1791550624.2871954,
-    "seen": 1791607190.5317278,
+    "mtime": 1794494299.452034,
+    "seen": 1794494371.1130135,
     "ast_hash": "f6563c506ab12ed8924ab9ff6c21b307",
     "semantic_hash": ""
   },
   "docs/paper-studio/home-1440.jpg": {
-    "mtime": 1791550597.902801,
-    "seen": 1791607190.53173,
+    "mtime": 1794494299.455091,
+    "seen": 1794494371.1130157,
     "ast_hash": "3224dbecbb2885527f8be09d9078e21b",
     "semantic_hash": ""
   },
   "docs/paper-studio/home-320.jpg": {
-    "mtime": 1791550630.8920286,
-    "seen": 1791607190.5317316,
+    "mtime": 1794494299.4570932,
+    "seen": 1794494371.1130176,
     "ast_hash": "0f46736b2d19c87aeddf16f5b8f59375",
     "semantic_hash": ""
   },
   "docs/paper-studio/home-390.jpg": {
-    "mtime": 1791550620.1719165,
-    "seen": 1791607190.5317335,
+    "mtime": 1794494299.4580874,
+    "seen": 1794494371.1130195,
     "ast_hash": "6c6ce2d5270b3382b2931cf212d3ceed",
     "semantic_hash": ""
   },
   "docs/paper-studio/home-768.jpg": {
-    "mtime": 1791550609.6454904,
-    "seen": 1791607190.5317352,
+    "mtime": 1794494299.4611816,
+    "seen": 1794494371.1130214,
     "ast_hash": "64670d86bfbd98acbf52aeef5d1517c2",
     "semantic_hash": ""
   },
   "docs/paper-studio/home-full.jpg": {
-    "mtime": 1791550598.6918864,
-    "seen": 1791607190.531737,
+    "mtime": 1794494299.4703538,
+    "seen": 1794494371.1130233,
     "ast_hash": "a0e6e7a0a9b312c7e32a460e06fa2ded",
     "semantic_hash": ""
   },
   "docs/paper-studio/order-1440.jpg": {
-    "mtime": 1791550599.4403377,
-    "seen": 1791607190.531739,
+    "mtime": 1794494299.4717872,
+    "seen": 1794494371.1130254,
     "ast_hash": "1cb280da8be059e3f78d3d6d715b0c29",
     "semantic_hash": ""
   },
   "docs/paper-studio/order-390.jpg": {
-    "mtime": 1791550620.9642622,
-    "seen": 1791607190.5317407,
+    "mtime": 1794494299.472753,
+    "seen": 1794494371.1130278,
     "ast_hash": "13cd976f47d51867830e42779f89aa14",
     "semantic_hash": ""
   },
   "docs/paper-studio/page-that-does-not-exist-1440.jpg": {
-    "mtime": 1791550606.2505193,
-    "seen": 1791607190.5317428,
+    "mtime": 1794494299.4737527,
+    "seen": 1794494371.1130297,
     "ast_hash": "b59b8d5921815dec24660155673113bd",
     "semantic_hash": ""
   },
   "docs/paper-studio/page-that-does-not-exist-390.jpg": {
-    "mtime": 1791550627.31341,
-    "seen": 1791607190.5317442,
+    "mtime": 1794494299.4745128,
+    "seen": 1794494371.1130314,
     "ast_hash": "c255762b571e64d8058e0084ee064b78",
     "semantic_hash": ""
   },
   "docs/paper-studio/printing-prices-1440.jpg": {
-    "mtime": 1791550605.4812925,
-    "seen": 1791607190.5320601,
+    "mtime": 1794494299.4765325,
+    "seen": 1794494371.1557686,
     "ast_hash": "9d78b2e08efa6276d22015de0b80eee4",
     "semantic_hash": ""
   },
   "docs/paper-studio/printing-prices-390.jpg": {
-    "mtime": 1791550626.6034167,
-    "seen": 1791607190.5320625,
+    "mtime": 1794494299.477532,
+    "seen": 1794494371.1557796,
     "ast_hash": "aefa188dcb8a9bae880e36086e7f9a26",
     "semantic_hash": ""
   },
@@ -4530,14 +4530,14 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/stationery-1440.jpg": {
-    "mtime": 1791550600.331173,
-    "seen": 1791607190.5320673,
+    "mtime": 1794494299.4795277,
+    "seen": 1794494371.156358,
     "ast_hash": "ced401daeb6426584edb6be074086d28",
     "semantic_hash": ""
   },
   "docs/paper-studio/stationery-390.jpg": {
-    "mtime": 1791550621.8818812,
-    "seen": 1791607190.532069,
+    "mtime": 1794494299.4815333,
+    "seen": 1794494371.156361,
     "ast_hash": "61efba5f89714d37b212311345cd8e77",
     "semantic_hash": ""
   },
@@ -4560,9 +4560,9 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/page-inventory.json": {
-    "mtime": 1794026978.2046332,
-    "seen": 1794030603.2850869,
-    "ast_hash": "c76c7d66fa351fe82e041db70b157f3b",
+    "mtime": 1794493723.9641056,
+    "seen": 1794493830.2943697,
+    "ast_hash": "6b8711f856423838643d77771ef41fd6",
     "semantic_hash": ""
   },
   "scripts/order-stress-check.mjs": {
@@ -4710,8 +4710,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/404-1440.jpg": {
-    "mtime": 1794027026.531837,
-    "seen": 1794030603.4045029,
+    "mtime": 1794493723.9718688,
+    "seen": 1794493830.4157772,
     "ast_hash": "451e961f07a1dee56992422fc00bc37f",
     "semantic_hash": ""
   },
@@ -4722,20 +4722,20 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/about-1440.jpg": {
-    "mtime": 1794026989.1859179,
-    "seen": 1794030603.4045084,
+    "mtime": 1794493723.9774559,
+    "seen": 1794493830.4164913,
     "ast_hash": "87b39d3b8bb4a38713bce49d3ba3f8d7",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/about-390.jpg": {
-    "mtime": 1794027046.9507859,
-    "seen": 1794030603.4045103,
+    "mtime": 1794493723.9804738,
+    "seen": 1794493830.416508,
     "ast_hash": "50273c7f0c9ed0e4d7e1fef0880c4a28",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-1440.jpg": {
-    "mtime": 1794027013.0084035,
-    "seen": 1794030603.4045122,
+    "mtime": 1794493723.9847107,
+    "seen": 1794493830.4165206,
     "ast_hash": "6e3b9ab3403180921c4a158768902796",
     "semantic_hash": ""
   },
@@ -4746,8 +4746,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-analytics-1440.jpg": {
-    "mtime": 1794027017.3540006,
-    "seen": 1794030603.404517,
+    "mtime": 1794493723.987633,
+    "seen": 1794493830.4170015,
     "ast_hash": "2c4d4d6173ca8a17f29fa76a9b41e61b",
     "semantic_hash": ""
   },
@@ -4758,8 +4758,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-catalogue-1440.jpg": {
-    "mtime": 1794027021.6720395,
-    "seen": 1794030603.4045212,
+    "mtime": 1794493723.9924736,
+    "seen": 1794493830.4175534,
     "ast_hash": "12106b78afff232d6bffc59ab382f3f0",
     "semantic_hash": ""
   },
@@ -4770,8 +4770,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-catalogue-edit-1440.jpg": {
-    "mtime": 1794027030.180995,
-    "seen": 1794030603.4045246,
+    "mtime": 1794493723.9964733,
+    "seen": 1794493830.4179797,
     "ast_hash": "a3f756374485a5eb8af47b789fd63a3e",
     "semantic_hash": ""
   },
@@ -4782,8 +4782,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-classroom-qr-1440.jpg": {
-    "mtime": 1794027012.4476368,
-    "seen": 1794030603.4045281,
+    "mtime": 1794493724.0000322,
+    "seen": 1794493830.4184265,
     "ast_hash": "bbe40eb691468b1563a601e36c143d79",
     "semantic_hash": ""
   },
@@ -4794,8 +4794,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-coupons-1440.jpg": {
-    "mtime": 1794027015.8330152,
-    "seen": 1794030603.4045315,
+    "mtime": 1794493724.0034783,
+    "seen": 1794493830.418847,
     "ast_hash": "60274a157432f1bc560e8817f45c6683",
     "semantic_hash": ""
   },
@@ -4806,8 +4806,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-customer-files-1440.jpg": {
-    "mtime": 1794027006.4131494,
-    "seen": 1794030603.4045358,
+    "mtime": 1794493724.006478,
+    "seen": 1794493830.4192753,
     "ast_hash": "ed6c275a31df1f8db9df641ad2e9dd63",
     "semantic_hash": ""
   },
@@ -4818,8 +4818,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-customers-1440.jpg": {
-    "mtime": 1794027014.5140417,
-    "seen": 1794030603.4045398,
+    "mtime": 1794493724.0099096,
+    "seen": 1794493830.4196892,
     "ast_hash": "c502cf26e294b6ff0b6cec8086fa5803",
     "semantic_hash": ""
   },
@@ -4830,8 +4830,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-customers-populated-1440.jpg": {
-    "mtime": 1794027031.3234632,
-    "seen": 1794030603.4045448,
+    "mtime": 1794493724.012988,
+    "seen": 1794493830.4200995,
     "ast_hash": "f99e96d303f4f6dc920d2ed93c4ee845",
     "semantic_hash": ""
   },
@@ -4842,8 +4842,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-customers-preview-1440.jpg": {
-    "mtime": 1794027010.787505,
-    "seen": 1794030603.404549,
+    "mtime": 1794493724.015917,
+    "seen": 1794493830.4207494,
     "ast_hash": "b9a6fe7e3b8772f66c9c68df12d8bf51",
     "semantic_hash": ""
   },
@@ -4854,8 +4854,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-delivery-1440.jpg": {
-    "mtime": 1794027019.5500996,
-    "seen": 1794030603.404553,
+    "mtime": 1794493724.0199165,
+    "seen": 1794493830.4213629,
     "ast_hash": "7515c49c91d45761defa218e992a5f4d",
     "semantic_hash": ""
   },
@@ -4866,8 +4866,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-delivery-populated-1440.jpg": {
-    "mtime": 1794027036.8317375,
-    "seen": 1794030603.4045568,
+    "mtime": 1794493724.023916,
+    "seen": 1794493830.4217901,
     "ast_hash": "dd55127459ec8a553969ae1fbf5edaa3",
     "semantic_hash": ""
   },
@@ -4878,20 +4878,20 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-login-1440.jpg": {
-    "mtime": 1794026998.232336,
-    "seen": 1794030603.4045608,
+    "mtime": 1794493724.027137,
+    "seen": 1794493830.4222536,
     "ast_hash": "2e116671b203685e9a507bf18a62d91e",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-login-390.jpg": {
-    "mtime": 1794027055.9263139,
-    "seen": 1794030603.4045627,
+    "mtime": 1794493724.0296342,
+    "seen": 1794493830.4222581,
     "ast_hash": "a59ed5091100ca991ca81e284d82b67d",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-notifications-1440.jpg": {
-    "mtime": 1794027018.3478413,
-    "seen": 1794030603.4045644,
+    "mtime": 1794493724.0337365,
+    "seen": 1794493830.4222622,
     "ast_hash": "1e712ae10b4e91500485a901fc47b078",
     "semantic_hash": ""
   },
@@ -4902,8 +4902,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-orders-1440.jpg": {
-    "mtime": 1794027013.5749345,
-    "seen": 1794030603.404569,
+    "mtime": 1794493724.0372913,
+    "seen": 1794493830.4226837,
     "ast_hash": "ef0e69150a74838606e5147a5aaab24f",
     "semantic_hash": ""
   },
@@ -4914,8 +4914,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-orders-preview-1440.jpg": {
-    "mtime": 1794027010.2241805,
-    "seen": 1794030603.4045725,
+    "mtime": 1794493724.0400465,
+    "seen": 1794493830.4231048,
     "ast_hash": "6315b892315b9a7f872a85fb3c654af8",
     "semantic_hash": ""
   },
@@ -4926,8 +4926,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-packs-1440.jpg": {
-    "mtime": 1794027011.231519,
-    "seen": 1794030603.4045758,
+    "mtime": 1794493724.0436118,
+    "seen": 1794493830.4235163,
     "ast_hash": "33ddc72494f34a0aec73bda25d27fcd7",
     "semantic_hash": ""
   },
@@ -4938,8 +4938,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-partners-1440.jpg": {
-    "mtime": 1794027019.0106697,
-    "seen": 1794030603.4045794,
+    "mtime": 1794493724.0470552,
+    "seen": 1794493830.4239464,
     "ast_hash": "d2abb95fba00fcba8b9656b011c94513",
     "semantic_hash": ""
   },
@@ -4950,8 +4950,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-partners-populated-1440.jpg": {
-    "mtime": 1794027037.5077844,
-    "seen": 1794030603.4045835,
+    "mtime": 1794493724.0510461,
+    "seen": 1794493830.424367,
     "ast_hash": "0a0caf96c07748638b2aa930a4c0862c",
     "semantic_hash": ""
   },
@@ -4962,8 +4962,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-pricing-1440.jpg": {
-    "mtime": 1794027015.1768517,
-    "seen": 1794030603.4045873,
+    "mtime": 1794493724.0550826,
+    "seen": 1794493830.424969,
     "ast_hash": "c41951da1a2b41b048deb35e147ee518",
     "semantic_hash": ""
   },
@@ -4974,8 +4974,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-print-queue-1440.jpg": {
-    "mtime": 1794027014.0593529,
-    "seen": 1794030603.4045908,
+    "mtime": 1794493724.0583613,
+    "seen": 1794493830.4255493,
     "ast_hash": "f6f4c79d151b69ff51ad1aa74badd163",
     "semantic_hash": ""
   },
@@ -4986,8 +4986,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-print-queue-populated-1440.jpg": {
-    "mtime": 1794027031.81655,
-    "seen": 1794030603.4045947,
+    "mtime": 1794493724.0616083,
+    "seen": 1794493830.4259968,
     "ast_hash": "026e22e04fc2587889bcd63dd467f78f",
     "semantic_hash": ""
   },
@@ -4998,8 +4998,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-purchases-1440.jpg": {
-    "mtime": 1794027022.143581,
-    "seen": 1794030603.4045987,
+    "mtime": 1794493724.0643857,
+    "seen": 1794493830.426434,
     "ast_hash": "667721655cd75bc9c2fb408df5cec5b6",
     "semantic_hash": ""
   },
@@ -5010,8 +5010,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-purchases-created-1440.jpg": {
-    "mtime": 1794027034.1497307,
-    "seen": 1794030603.4046023,
+    "mtime": 1794493724.0690033,
+    "seen": 1794493830.4268496,
     "ast_hash": "57a68798ac91ba136eab56b68cb7ebb7",
     "semantic_hash": ""
   },
@@ -5022,8 +5022,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-purchases-paid-1440.jpg": {
-    "mtime": 1794027034.7525265,
-    "seen": 1794030603.4046066,
+    "mtime": 1794493724.0724137,
+    "seen": 1794493830.427456,
     "ast_hash": "aab9f91735d1140b3b3f55bab224df23",
     "semantic_hash": ""
   },
@@ -5034,8 +5034,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-purchases-populated-1440.jpg": {
-    "mtime": 1794027039.0630536,
-    "seen": 1794030603.4046097,
+    "mtime": 1794493724.0760958,
+    "seen": 1794493830.4278781,
     "ast_hash": "63e425655e3a3508d26740958d6dad6a",
     "semantic_hash": ""
   },
@@ -5046,8 +5046,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-purchases-refunded-1440.jpg": {
-    "mtime": 1794027035.2298875,
-    "seen": 1794030603.4046135,
+    "mtime": 1794493724.079582,
+    "seen": 1794493830.4283226,
     "ast_hash": "d8e7505bd42dabff12b2d057acce53bf",
     "semantic_hash": ""
   },
@@ -5058,8 +5058,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-referrals-1440.jpg": {
-    "mtime": 1794027011.8641324,
-    "seen": 1794030603.404618,
+    "mtime": 1794493724.0835476,
+    "seen": 1794493830.428736,
     "ast_hash": "c90cc4376119a219d66ae99ebfab837a",
     "semantic_hash": ""
   },
@@ -5070,8 +5070,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/admin-settings-1440.jpg": {
-    "mtime": 1794027016.7706203,
-    "seen": 1794030603.4046216,
+    "mtime": 1794493724.0865393,
+    "seen": 1794493830.4291775,
     "ast_hash": "492efc3e6391bcbf3cbcf13f0a3ea9d7",
     "semantic_hash": ""
   },
@@ -5082,44 +5082,44 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-1440.jpg": {
-    "mtime": 1794026991.8966377,
-    "seen": 1794030603.4046254,
+    "mtime": 1794493724.0905385,
+    "seen": 1794493830.4295893,
     "ast_hash": "b0dedee132cbe09dcdd6ebc907c118b7",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-390.jpg": {
-    "mtime": 1794027049.6927972,
-    "seen": 1794030603.404627,
+    "mtime": 1794493724.0945385,
+    "seen": 1794493830.429594,
     "ast_hash": "a82a360729f2098e300e5ca03485c551",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-admit-card-printing-checklist-1440.jpg": {
-    "mtime": 1794026994.301433,
-    "seen": 1794030603.404629,
+    "mtime": 1794493724.0985875,
+    "seen": 1794493830.429598,
     "ast_hash": "d362cf5ab430a38a82ad792adc30f309",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-admit-card-printing-checklist-390.jpg": {
-    "mtime": 1794027052.2416348,
-    "seen": 1794030603.4046311,
+    "mtime": 1794493724.1022418,
+    "seen": 1794493830.4296024,
     "ast_hash": "c7c9e166d55b8c238d9a1e0875b0051a",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-colleges-24-7-print-1440.jpg": {
-    "mtime": 1794026996.2734184,
-    "seen": 1794030603.4046328,
+    "mtime": 1794493724.1065412,
+    "seen": 1794493830.4296057,
     "ast_hash": "745fdb313251fbd59445bfca469fedf8",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-colleges-24-7-print-390.jpg": {
-    "mtime": 1794027054.256178,
-    "seen": 1794030603.4046352,
+    "mtime": 1794493724.1096547,
+    "seen": 1794493830.4296103,
     "ast_hash": "cb51b06152b79e0c79756dc9b546e105",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-missing-story-1440.jpg": {
-    "mtime": 1794027028.177433,
-    "seen": 1794030603.404637,
+    "mtime": 1794493724.1125522,
+    "seen": 1794493830.429614,
     "ast_hash": "7f541e17894308d67ee15f5668dd2038",
     "semantic_hash": ""
   },
@@ -5130,44 +5130,44 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-prepare-documents-for-printing-vapi-1440.jpg": {
-    "mtime": 1794026993.6924267,
-    "seen": 1794030603.4046407,
+    "mtime": 1794493724.1171985,
+    "seen": 1794493830.430043,
     "ast_hash": "f164d392027f979724a25c78fd28ea96",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-prepare-documents-for-printing-vapi-390.jpg": {
-    "mtime": 1794027051.6417463,
-    "seen": 1794030603.4046426,
+    "mtime": 1794493724.1201348,
+    "seen": 1794493830.430048,
     "ast_hash": "7fde436d28d549cf41a66d8b88399181",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-replacing-xerox-queues-1440.jpg": {
-    "mtime": 1794026995.6377468,
-    "seen": 1794030603.4046443,
+    "mtime": 1794493724.124135,
+    "seen": 1794493830.4300523,
     "ast_hash": "ffd278628c6c6b5f098f20a33a9919cc",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-replacing-xerox-queues-390.jpg": {
-    "mtime": 1794027053.5377162,
-    "seen": 1794030603.4046462,
+    "mtime": 1794493724.127957,
+    "seen": 1794493830.4300559,
     "ast_hash": "220d0cdcd414ee9b559d9b8302456d07",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-running-a-printkarr-kiosk-1440.jpg": {
-    "mtime": 1794026995.0232542,
-    "seen": 1794030603.4046483,
+    "mtime": 1794493724.1323104,
+    "seen": 1794493830.4300601,
     "ast_hash": "110d99a2fd7479bda3cf81ace1fe0694",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/blogs-running-a-printkarr-kiosk-390.jpg": {
-    "mtime": 1794027052.9293165,
-    "seen": 1794030603.40465,
+    "mtime": 1794493724.1348107,
+    "seen": 1794493830.4300637,
     "ast_hash": "de016886b7db4b26244d3724ae84b420",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/cart-1440.jpg": {
-    "mtime": 1794027023.9588313,
-    "seen": 1794030603.404652,
+    "mtime": 1794493724.1381772,
+    "seen": 1794493830.4300675,
     "ast_hash": "9d6e11d942e49f322f86c72547faf857",
     "semantic_hash": ""
   },
@@ -5178,8 +5178,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/cart-error-1440.jpg": {
-    "mtime": 1794027029.4984913,
-    "seen": 1794030603.4046562,
+    "mtime": 1794493724.141172,
+    "seen": 1794493830.4304798,
     "ast_hash": "e1541571288820cbc637e8aaf7756300",
     "semantic_hash": ""
   },
@@ -5190,20 +5190,20 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/contact-1440.jpg": {
-    "mtime": 1794026991.4981182,
-    "seen": 1794030603.4046597,
+    "mtime": 1794493724.144693,
+    "seen": 1794493830.4309998,
     "ast_hash": "be186128533b63b0e2368161e66a5040",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/contact-390.jpg": {
-    "mtime": 1794027049.128074,
-    "seen": 1794030603.4046617,
+    "mtime": 1794493724.147441,
+    "seen": 1794493830.4310062,
     "ast_hash": "4ca33b5e7d103d2ca51387bfb64a7183",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/contact-error-1440.jpg": {
-    "mtime": 1794027027.6956756,
-    "seen": 1794030603.4046638,
+    "mtime": 1794493724.1509147,
+    "seen": 1794493830.431011,
     "ast_hash": "7fc68d0baded67dd53554715115d8476",
     "semantic_hash": ""
   },
@@ -5214,8 +5214,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/contact-thank-you-1440.jpg": {
-    "mtime": 1794027027.0732222,
-    "seen": 1794030603.4046674,
+    "mtime": 1794493724.1540303,
+    "seen": 1794493830.4314399,
     "ast_hash": "5738d9b148b11875794d772c13380c0a",
     "semantic_hash": ""
   },
@@ -5226,32 +5226,32 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-1440.jpg": {
-    "mtime": 1794026998.9928877,
-    "seen": 1794030603.404671,
+    "mtime": 1794493724.1577463,
+    "seen": 1794493830.4318538,
     "ast_hash": "081400ad4ddf7909e350042c88eee760",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-390.jpg": {
-    "mtime": 1794027056.5175824,
-    "seen": 1794030603.4046726,
+    "mtime": 1794493724.1605358,
+    "seen": 1794493830.4318578,
     "ast_hash": "0321b723b181e6155c59adf0dc781351",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-active-1440.jpg": {
-    "mtime": 1794026999.5620928,
-    "seen": 1794030603.404674,
+    "mtime": 1794493724.1645765,
+    "seen": 1794493830.4318619,
     "ast_hash": "1dc2f933c7898bfceaafb03392978cd2",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-active-390.jpg": {
-    "mtime": 1794027057.1484494,
-    "seen": 1794030603.4046757,
+    "mtime": 1794493724.166996,
+    "seen": 1794493830.431866,
     "ast_hash": "46c6592631e80885a71ad95bea32ecf2",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-checkout-created-1440.jpg": {
-    "mtime": 1794027035.664931,
-    "seen": 1794030603.4046776,
+    "mtime": 1794493724.1701844,
+    "seen": 1794493830.43187,
     "ast_hash": "a1dee3d7f0fd264aac8d0ad5799c1c01",
     "semantic_hash": ""
   },
@@ -5262,20 +5262,20 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-checkout-offer-1440.jpg": {
-    "mtime": 1794027003.906111,
-    "seen": 1794030603.4046812,
+    "mtime": 1794493724.1740758,
+    "seen": 1794493830.4323127,
     "ast_hash": "57c084a19b37ec14594dc1f501574964",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-checkout-offer-390.jpg": {
-    "mtime": 1794027061.0498528,
-    "seen": 1794030603.404683,
+    "mtime": 1794493724.1765535,
+    "seen": 1794493830.4323177,
     "ast_hash": "eea396c1ee21bb38e12ef10ef049be8b",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-checkout-paid-1440.jpg": {
-    "mtime": 1794027036.1540685,
-    "seen": 1794030603.4046853,
+    "mtime": 1794493724.1795516,
+    "seen": 1794493830.4323223,
     "ast_hash": "5d47e86c228cb7999a5234ecbf07830e",
     "semantic_hash": ""
   },
@@ -5286,8 +5286,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-notifications-1440.jpg": {
-    "mtime": 1794027017.8762896,
-    "seen": 1794030603.4046888,
+    "mtime": 1794493724.1827836,
+    "seen": 1794493830.4327376,
     "ast_hash": "df5bfd825462215d4ed04e0586771f8b",
     "semantic_hash": ""
   },
@@ -5298,80 +5298,80 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-options-1440.jpg": {
-    "mtime": 1794027002.5119715,
-    "seen": 1794030603.4046922,
+    "mtime": 1794493724.1858127,
+    "seen": 1794493830.4331548,
     "ast_hash": "ef8db02ae541d4b5a41a8015630d35ec",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-options-390.jpg": {
-    "mtime": 1794027059.7105439,
-    "seen": 1794030603.404694,
+    "mtime": 1794493724.1877377,
+    "seen": 1794493830.4331603,
     "ast_hash": "702244955dd6dd874c86659bbee1f874",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-1440.jpg": {
-    "mtime": 1794027000.2187047,
-    "seen": 1794030603.4046957,
+    "mtime": 1794493724.1892292,
+    "seen": 1794493830.4331646,
     "ast_hash": "0b8fec4a3619bc8afce5dae3751d3682",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-390.jpg": {
-    "mtime": 1794027057.6284304,
-    "seen": 1794030603.4046974,
+    "mtime": 1794493724.1913402,
+    "seen": 1794493830.4331684,
     "ast_hash": "14d9348d256bc2e6d41b0e5d8d87be91",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-new-1440.jpg": {
-    "mtime": 1794027001.8381248,
-    "seen": 1794030603.4046988,
+    "mtime": 1794493724.1932282,
+    "seen": 1794493830.433172,
     "ast_hash": "a0194b53faab4151eae12abcb7d09dbd",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-new-390.jpg": {
-    "mtime": 1794027058.9927967,
-    "seen": 1794030603.4047008,
+    "mtime": 1794493724.1953104,
+    "seen": 1794493830.4331768,
     "ast_hash": "155503aa8df470cbb18193c8c2ebb7af",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-preview-1440.jpg": {
-    "mtime": 1794027000.8745599,
-    "seen": 1794030603.4047027,
+    "mtime": 1794493724.1974099,
+    "seen": 1794493830.4331803,
     "ast_hash": "3b83d958a87c7e3bdbb6bf16d8670c78",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-preview-390.jpg": {
-    "mtime": 1794027058.0298016,
-    "seen": 1794030603.4047046,
+    "mtime": 1794493724.1982214,
+    "seen": 1794493830.4331853,
     "ast_hash": "6fc2a98798452c77c59384e9b097c612",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-preview-pay-1440.jpg": {
-    "mtime": 1794027004.4017327,
-    "seen": 1794030603.4047062,
+    "mtime": 1794493724.2006464,
+    "seen": 1794493830.4331892,
     "ast_hash": "248d29c97cef9c7fe16003bb9da0e90e",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-preview-pay-390.jpg": {
-    "mtime": 1794027061.4178703,
-    "seen": 1794030603.4047081,
+    "mtime": 1794493724.201187,
+    "seen": 1794493830.4331925,
     "ast_hash": "eea396c1ee21bb38e12ef10ef049be8b",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-preview-scan-1440.jpg": {
-    "mtime": 1794027001.4243212,
-    "seen": 1794030603.4047098,
+    "mtime": 1794493724.2037592,
+    "seen": 1794493830.4331958,
     "ast_hash": "4fcfa51df39d9e597197669322e1e1e0",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-orders-preview-scan-390.jpg": {
-    "mtime": 1794027058.509605,
-    "seen": 1794030603.4047122,
+    "mtime": 1794493724.2043839,
+    "seen": 1794493830.4332006,
     "ast_hash": "1aaa1c5e912901abb1f6fa42c8921dd7",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-packs-1440.jpg": {
-    "mtime": 1794027007.68839,
-    "seen": 1794030603.4047136,
+    "mtime": 1794493724.2063825,
+    "seen": 1794493830.4332044,
     "ast_hash": "b44ad7034b1509f30095b6286b202b7d",
     "semantic_hash": ""
   },
@@ -5382,8 +5382,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-profile-1440.jpg": {
-    "mtime": 1794027009.6020539,
-    "seen": 1794030603.4047184,
+    "mtime": 1794493724.2083929,
+    "seen": 1794493830.4336796,
     "ast_hash": "daa5fc3026ecf5a58bf194229afbdf45",
     "semantic_hash": ""
   },
@@ -5394,8 +5394,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-purchases-1440.jpg": {
-    "mtime": 1794027022.6153524,
-    "seen": 1794030603.4047217,
+    "mtime": 1794493724.2103884,
+    "seen": 1794493830.4342897,
     "ast_hash": "3591f9c0635d4477855fccc182b3616d",
     "semantic_hash": ""
   },
@@ -5406,8 +5406,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-purchases-created-1440.jpg": {
-    "mtime": 1794027032.3947957,
-    "seen": 1794030603.404725,
+    "mtime": 1794493724.2121394,
+    "seen": 1794493830.4347172,
     "ast_hash": "e085171cd5f5bf32c1adfcae8a38e8a4",
     "semantic_hash": ""
   },
@@ -5418,8 +5418,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-purchases-paid-1440.jpg": {
-    "mtime": 1794027033.0607586,
-    "seen": 1794030603.4047284,
+    "mtime": 1794493724.2137043,
+    "seen": 1794493830.4351652,
     "ast_hash": "40f69e560fcb8d1c7a2e19460479f3ea",
     "semantic_hash": ""
   },
@@ -5430,8 +5430,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-purchases-populated-1440.jpg": {
-    "mtime": 1794027039.654116,
-    "seen": 1794030603.404732,
+    "mtime": 1794493724.214416,
+    "seen": 1794493830.4355845,
     "ast_hash": "ef37659259325d113620ae39dc4393e5",
     "semantic_hash": ""
   },
@@ -5442,8 +5442,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-purchases-refunded-1440.jpg": {
-    "mtime": 1794027033.5980215,
-    "seen": 1794030603.4047353,
+    "mtime": 1794493724.2162554,
+    "seen": 1794493830.4360092,
     "ast_hash": "f8ac5e02f32b421da1ce3043d9d7cb93",
     "semantic_hash": ""
   },
@@ -5454,8 +5454,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-referrals-1440.jpg": {
-    "mtime": 1794027006.9485211,
-    "seen": 1794030603.4047391,
+    "mtime": 1794493724.2171092,
+    "seen": 1794493830.436446,
     "ast_hash": "078ba9274f4f9a6e3cde706a864cec5e",
     "semantic_hash": ""
   },
@@ -5466,20 +5466,20 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-returning-1440.jpg": {
-    "mtime": 1794027003.167711,
-    "seen": 1794030603.4047425,
+    "mtime": 1794493724.2194057,
+    "seen": 1794493830.4368591,
     "ast_hash": "081400ad4ddf7909e350042c88eee760",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-returning-390.jpg": {
-    "mtime": 1794027060.4731302,
-    "seen": 1794030603.4047441,
+    "mtime": 1794493724.22011,
+    "seen": 1794493830.436865,
     "ast_hash": "0321b723b181e6155c59adf0dc781351",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-review-1440.jpg": {
-    "mtime": 1794027008.1796265,
-    "seen": 1794030603.404746,
+    "mtime": 1794493724.2210798,
+    "seen": 1794493830.4368703,
     "ast_hash": "121a01dfd666ca5c7ab867a3b014382d",
     "semantic_hash": ""
   },
@@ -5490,32 +5490,32 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-wallet-1440.jpg": {
-    "mtime": 1794027005.160796,
-    "seen": 1794030603.40475,
+    "mtime": 1794493724.2232869,
+    "seen": 1794493830.4372973,
     "ast_hash": "e49314ea7a757d085de3c64562c4229b",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-wallet-390.jpg": {
-    "mtime": 1794027062.0079002,
-    "seen": 1794030603.404753,
+    "mtime": 1794493724.2240798,
+    "seen": 1794493830.4373033,
     "ast_hash": "25d191ee6a266b42d4e5198d6fbe4245",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-wallet-files-1440.jpg": {
-    "mtime": 1794027005.8636124,
-    "seen": 1794030603.4047549,
+    "mtime": 1794493724.225998,
+    "seen": 1794493830.4373078,
     "ast_hash": "1634b61ae27aac1ebcf95e52767bdfd7",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-wallet-files-390.jpg": {
-    "mtime": 1794027062.5901392,
-    "seen": 1794030603.4047568,
+    "mtime": 1794493724.2270794,
+    "seen": 1794493830.4373116,
     "ast_hash": "049bb088acdec942b45bfd2b9a14e109",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/customer-wallet-live-1440.jpg": {
-    "mtime": 1794027008.827889,
-    "seen": 1794030603.4047587,
+    "mtime": 1794493724.228114,
+    "seen": 1794493830.437316,
     "ast_hash": "ae82c8b3ac83dd2a8c290dc613f60967",
     "semantic_hash": ""
   },
@@ -5526,80 +5526,80 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/franchise-1440.jpg": {
-    "mtime": 1794026990.2796752,
-    "seen": 1794030603.4047623,
+    "mtime": 1794493724.2290783,
+    "seen": 1794493830.4377313,
     "ast_hash": "b5817051cce47a2c87f7ad6044b097f1",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/franchise-390.jpg": {
-    "mtime": 1794027047.957116,
-    "seen": 1794030603.4047644,
+    "mtime": 1794493724.2300806,
+    "seen": 1794493830.4377365,
     "ast_hash": "542308ff13addace5d500646b66ba5a5",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/home-1440.jpg": {
-    "mtime": 1794026982.9661205,
-    "seen": 1794030603.4047666,
+    "mtime": 1794493724.2321134,
+    "seen": 1794493830.4377418,
     "ast_hash": "90ae9d5d02b1988bcdd231c0744a758f",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/home-390.jpg": {
-    "mtime": 1794027041.1099048,
-    "seen": 1794030603.404768,
+    "mtime": 1794493724.2331085,
+    "seen": 1794493830.4377482,
     "ast_hash": "3f202069e989a60f4ba014197596c5b4",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/how-it-works-1440.jpg": {
-    "mtime": 1794026989.7884371,
-    "seen": 1794030603.4047701,
+    "mtime": 1794493724.2351427,
+    "seen": 1794493830.4377568,
     "ast_hash": "c78ea00286562a9ac2adb16183ada3e8",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/how-it-works-390.jpg": {
-    "mtime": 1794027047.5415556,
-    "seen": 1794030603.404772,
+    "mtime": 1794493724.2363997,
+    "seen": 1794493830.437766,
     "ast_hash": "106eff58792b0fe99f80eccc9bda9ebe",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/kiosks-1440.jpg": {
-    "mtime": 1794026983.4936326,
-    "seen": 1794030603.404774,
+    "mtime": 1794493724.2371094,
+    "seen": 1794493830.4377759,
     "ast_hash": "b5817051cce47a2c87f7ad6044b097f1",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/kiosks-390.jpg": {
-    "mtime": 1794027041.6547413,
-    "seen": 1794030603.4047756,
+    "mtime": 1794493724.238082,
+    "seen": 1794493830.4377835,
     "ast_hash": "542308ff13addace5d500646b66ba5a5",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/login-1440.jpg": {
-    "mtime": 1794026997.2093863,
-    "seen": 1794030603.4047773,
+    "mtime": 1794493724.2401133,
+    "seen": 1794493830.4377882,
     "ast_hash": "d4fd9f02d72129a1f315e2fb51213f18",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/login-390.jpg": {
-    "mtime": 1794027055.0077343,
-    "seen": 1794030603.4047794,
+    "mtime": 1794493724.2413597,
+    "seen": 1794493830.4377925,
     "ast_hash": "39434a8a9e3462930244476237aa54ed",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/login-code-1440.jpg": {
-    "mtime": 1794026997.765949,
-    "seen": 1794030603.404782,
+    "mtime": 1794493724.24211,
+    "seen": 1794493830.4377968,
     "ast_hash": "02256cb612e75fe677c04a2bba9d8d88",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/login-code-390.jpg": {
-    "mtime": 1794027055.4901378,
-    "seen": 1794030603.404784,
+    "mtime": 1794493724.2431085,
+    "seen": 1794493830.437801,
     "ast_hash": "f202fa9100eb3ec6e180ec69f4c362bd",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/notifications-unsubscribe-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-1440.jpg": {
-    "mtime": 1794027024.4441545,
-    "seen": 1794030603.4047859,
+    "mtime": 1794493724.2441082,
+    "seen": 1794493830.437805,
     "ast_hash": "f345454410a84102251039542cbf39f3",
     "semantic_hash": ""
   },
@@ -5610,8 +5610,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/notifications-unsubscribed-1440.jpg": {
-    "mtime": 1794027024.8391058,
-    "seen": 1794030603.4047906,
+    "mtime": 1794493724.2458858,
+    "seen": 1794493830.4382799,
     "ast_hash": "2d6219e18ca90ecdb75daa346c7a4fdd",
     "semantic_hash": ""
   },
@@ -5622,80 +5622,80 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-1440.jpg": {
-    "mtime": 1794026985.560064,
-    "seen": 1794030603.4047942,
+    "mtime": 1794493724.2463932,
+    "seen": 1794493830.4387403,
     "ast_hash": "a0194b53faab4151eae12abcb7d09dbd",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-390.jpg": {
-    "mtime": 1794027043.3648121,
-    "seen": 1794030603.4047956,
+    "mtime": 1794493724.2474036,
+    "seen": 1794493830.4387453,
     "ast_hash": "155503aa8df470cbb18193c8c2ebb7af",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-college-1440.jpg": {
-    "mtime": 1794026987.07889,
-    "seen": 1794030603.4047978,
+    "mtime": 1794493724.248817,
+    "seen": 1794493830.4387503,
     "ast_hash": "ad1345d7501438307017bf535bde7363",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-college-390.jpg": {
-    "mtime": 1794027044.911881,
-    "seen": 1794030603.4048,
+    "mtime": 1794493724.2494333,
+    "seen": 1794493830.4387548,
     "ast_hash": "ee8c684060aecb9887d3bf269e7e4c97",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-local-1440.jpg": {
-    "mtime": 1794026987.443996,
-    "seen": 1794030603.4048018,
+    "mtime": 1794493724.2504046,
+    "seen": 1794493830.438759,
     "ast_hash": "ae08735aa0ea1bb3ebc777002b75e8d6",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-local-390.jpg": {
-    "mtime": 1794027045.3543353,
-    "seen": 1794030603.4048035,
+    "mtime": 1794493724.251475,
+    "seen": 1794493830.438763,
     "ast_hash": "4d6f184ea6a03f094a2894feca11ceb5",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-options-1440.jpg": {
-    "mtime": 1794026986.3971932,
-    "seen": 1794030603.4048057,
+    "mtime": 1794493724.2524016,
+    "seen": 1794493830.4387665,
     "ast_hash": "ef8db02ae541d4b5a41a8015630d35ec",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-options-390.jpg": {
-    "mtime": 1794027044.1602244,
-    "seen": 1794030603.4048073,
+    "mtime": 1794493724.2534015,
+    "seen": 1794493830.4387705,
     "ast_hash": "702244955dd6dd874c86659bbee1f874",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-phone-1440.jpg": {
-    "mtime": 1794026986.698772,
-    "seen": 1794030603.404809,
+    "mtime": 1794493724.2544017,
+    "seen": 1794493830.4387746,
     "ast_hash": "8712d289063674ecf55b8988466a98c8",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-phone-390.jpg": {
-    "mtime": 1794027044.5895238,
-    "seen": 1794030603.404811,
+    "mtime": 1794493724.2554018,
+    "seen": 1794493830.4387784,
     "ast_hash": "4548728d4f3e1ff3a6df650f958b822d",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-verify-1440.jpg": {
-    "mtime": 1794026987.6918557,
-    "seen": 1794030603.4048128,
+    "mtime": 1794493724.2564337,
+    "seen": 1794493830.4387817,
     "ast_hash": "32ae6dc71fdb1a8fbab2bd2e695b339d",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/order-verify-390.jpg": {
-    "mtime": 1794027045.7104418,
-    "seen": 1794030603.4048145,
+    "mtime": 1794493724.257816,
+    "seen": 1794493830.4387865,
     "ast_hash": "007f96ed450534137a84ad00b5f239a0",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/partner-1440.jpg": {
-    "mtime": 1794027020.0230017,
-    "seen": 1794030603.4048164,
+    "mtime": 1794493724.2584345,
+    "seen": 1794493830.4387903,
     "ast_hash": "2cd5d3ee75fdff95f26221d35cd80ba8",
     "semantic_hash": ""
   },
@@ -5706,8 +5706,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/partner-catalogue-1440.jpg": {
-    "mtime": 1794027021.0078046,
-    "seen": 1794030603.4048202,
+    "mtime": 1794493724.259403,
+    "seen": 1794493830.4392715,
     "ast_hash": "9cffc54ebe9dc0f34ae92f54642850c5",
     "semantic_hash": ""
   },
@@ -5718,8 +5718,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/partner-catalogue-edit-1440.jpg": {
-    "mtime": 1794027030.7477698,
-    "seen": 1794030603.4048233,
+    "mtime": 1794493724.2617652,
+    "seen": 1794493830.439905,
     "ast_hash": "86b5038729bdb4721e0539d9b9beb646",
     "semantic_hash": ""
   },
@@ -5730,8 +5730,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/partner-login-1440.jpg": {
-    "mtime": 1794027025.3807163,
-    "seen": 1794030603.4048269,
+    "mtime": 1794493724.2624342,
+    "seen": 1794493830.4404066,
     "ast_hash": "54323168f1d5076631b3b44dc1e41c55",
     "semantic_hash": ""
   },
@@ -5742,8 +5742,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/partner-populated-1440.jpg": {
-    "mtime": 1794027038.0200171,
-    "seen": 1794030603.404831,
+    "mtime": 1794493724.2634325,
+    "seen": 1794493830.4408662,
     "ast_hash": "84614be0a3c9b850d199bf3c88c1e15c",
     "semantic_hash": ""
   },
@@ -5754,56 +5754,56 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/printing-in-daman-1440.jpg": {
-    "mtime": 1794026984.1156301,
-    "seen": 1794030603.4048347,
+    "mtime": 1794493724.2657256,
+    "seen": 1794493830.4414508,
     "ast_hash": "67fad578483201eaa8cb28b7c52fdcb6",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/printing-in-daman-390.jpg": {
-    "mtime": 1794027042.1091793,
-    "seen": 1794030603.4048364,
+    "mtime": 1794493724.266884,
+    "seen": 1794493830.4414556,
     "ast_hash": "f5ff9c082fec6a4bd7dff7ff6bfd1cb9",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/printing-in-vapi-1440.jpg": {
-    "mtime": 1794026988.3939068,
-    "seen": 1794030603.4048378,
+    "mtime": 1794493724.2684388,
+    "seen": 1794493830.4414594,
     "ast_hash": "03ac61fb3e957f6927501cadd4347098",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/printing-in-vapi-390.jpg": {
-    "mtime": 1794027046.1973326,
-    "seen": 1794030603.40484,
+    "mtime": 1794493724.2694037,
+    "seen": 1794493830.441465,
     "ast_hash": "71f6cdfd7401d533bef47f247498a2fa",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/printing-prices-1440.jpg": {
-    "mtime": 1794026984.8312356,
-    "seen": 1794030603.404842,
+    "mtime": 1794493724.2704332,
+    "seen": 1794493830.4414701,
     "ast_hash": "ac104e5249cb1836b87a44eaebc71689",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/printing-prices-390.jpg": {
-    "mtime": 1794027042.7409258,
-    "seen": 1794030603.4048438,
+    "mtime": 1794493724.2714026,
+    "seen": 1794493830.4414737,
     "ast_hash": "2ffa323ece4313ed44e8d199d5aa1b3d",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/privacy-1440.jpg": {
-    "mtime": 1794026992.961671,
-    "seen": 1794030603.4048452,
+    "mtime": 1794493724.2734354,
+    "seen": 1794493830.4414773,
     "ast_hash": "6111f592d4c59e4aba38d97f89ed25ae",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/privacy-390.jpg": {
-    "mtime": 1794027050.9442017,
-    "seen": 1794030603.4048471,
+    "mtime": 1794493724.2750938,
+    "seen": 1794493830.4414806,
     "ast_hash": "8800f69728f712d77f1a62ae0273d8b2",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/rider-1440.jpg": {
-    "mtime": 1794027020.5251281,
-    "seen": 1794030603.4048486,
+    "mtime": 1794493724.2754033,
+    "seen": 1794493830.4414847,
     "ast_hash": "4de0656e91a929bbbcf398038311668e",
     "semantic_hash": ""
   },
@@ -5814,8 +5814,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/rider-login-1440.jpg": {
-    "mtime": 1794027025.9554167,
-    "seen": 1794030603.4048526,
+    "mtime": 1794493724.2764027,
+    "seen": 1794493830.4419255,
     "ast_hash": "fd91852dfa3d6e433bf67da8fd3add45",
     "semantic_hash": ""
   },
@@ -5826,8 +5826,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/rider-populated-1440.jpg": {
-    "mtime": 1794027038.5358396,
-    "seen": 1794030603.4048562,
+    "mtime": 1794493724.277619,
+    "seen": 1794493830.442374,
     "ast_hash": "ae231c8fc4ec4d43157e3a342db750e5",
     "semantic_hash": ""
   },
@@ -5850,8 +5850,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/stationery-1440.jpg": {
-    "mtime": 1794027023.4027736,
-    "seen": 1794030603.405291,
+    "mtime": 1794493724.279658,
+    "seen": 1794493830.4443762,
     "ast_hash": "fcae1f355a22557343a924f5393830b8",
     "semantic_hash": ""
   },
@@ -5862,8 +5862,8 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/stationery-catalogue-preview-1440.jpg": {
-    "mtime": 1794027028.9755547,
-    "seen": 1794030603.4052958,
+    "mtime": 1794493724.2806628,
+    "seen": 1794493830.4450696,
     "ast_hash": "3b262ba0e825cb21d39d91cfccc74cb2",
     "semantic_hash": ""
   },
@@ -5874,26 +5874,26 @@
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/terms-1440.jpg": {
-    "mtime": 1794026992.3912215,
-    "seen": 1794030603.4052997,
+    "mtime": 1794493724.283088,
+    "seen": 1794493830.4457517,
     "ast_hash": "b2d05301875ab41ef1b130b6c7ffd743",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/terms-390.jpg": {
-    "mtime": 1794027050.34369,
-    "seen": 1794030603.4053016,
+    "mtime": 1794493724.283629,
+    "seen": 1794493830.445764,
     "ast_hash": "134da0b9d658d1a1036fffd4cdea4fd2",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/xerox-1440.jpg": {
-    "mtime": 1794026990.8044965,
-    "seen": 1794030603.4053037,
+    "mtime": 1794493724.285627,
+    "seen": 1794493830.445777,
     "ast_hash": "b5f5499f3ad4fa79deed4398ad6eaf8f",
     "semantic_hash": ""
   },
   "docs/paper-studio/pages/xerox-390.jpg": {
-    "mtime": 1794027048.5101688,
-    "seen": 1794030603.405306,
+    "mtime": 1794493724.286627,
+    "seen": 1794493830.4457889,
     "ast_hash": "a33e2a7be3811eb8b28311e43d07b4c3",
     "semantic_hash": ""
   },

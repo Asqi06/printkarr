@@ -4022,6 +4022,27 @@ body.app-view .pk-header-cta > form button.pk-contact:hover {
   background: #ffffff !important;
 }
 
+@media (max-width: 480px) {
+  body.app-view .pk-header {
+    padding: 0 10px !important;
+  }
+  body.app-view .workspace-brand > .pk-logo img {
+    width: 105px !important;
+    height: auto !important;
+  }
+  body.app-view .pk-header-cta {
+    gap: 6px !important;
+  }
+  body.app-view .pk-contact {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+  body.app-view .app-account-menu summary {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+}
+
 /* Sidebar Navigation */
 body.app-view .app-sidebar {
   background: #ffffff !important;
