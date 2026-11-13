@@ -2028,6 +2028,7 @@ app.get('/order', (req, res) => {
   }
   const d = req.query.draft ? guestDraft(db, req) : null;
   if (req.query.draft && !d) return res.redirect('/order');
+  if (d) return res.redirect('/customer/orders/new');
   res.send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
@@ -2060,7 +2061,7 @@ app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(30
   };
   db.drafts.push(draft);
   saveDb(db);
-  res.redirect(`/order?draft=${draft.id}`);
+  res.redirect('/customer/orders/new');
 }));
 
 app.get('/order/:draft/preview', (req, res) => {
@@ -2115,7 +2116,9 @@ async function guestContactFlow(db, d, req) {
 }
 
 app.post('/order/options', asyncHandler(async (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  return res.redirect('/customer/orders/new');
+  /* Legacy guest checkout retained below for existing drafts; new orders now
+     continue through the signed-in customer flow and saved profile details. */
   let db = loadDb();
   let d = guestDraft(db, req);
   if (!d) return res.redirect('/order');
@@ -2153,7 +2156,7 @@ app.post('/order/options', asyncHandler(async (req, res) => {
 }));
 
 app.get('/order/phone', (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  return res.redirect('/customer/orders/new');
   const db = loadDb();
   const d = guestDraft(db, req);
   if (!d || !d.selections) return res.redirect('/order');
@@ -2161,7 +2164,7 @@ app.get('/order/phone', (req, res) => {
 });
 
 app.post('/order/otp-request', otpLimiter, asyncHandler(async (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  return res.redirect('/customer/orders/new');
   const db = loadDb();
   const d = guestDraft(db, req);
   if (!d || !d.selections) return res.redirect('/order');
@@ -2209,7 +2212,7 @@ app.post('/order/otp-request', otpLimiter, asyncHandler(async (req, res) => {
 }));
 
 app.post('/order/otp-verify', otpLimiter, (req, res) => {
-  if (currentUser(req)) return res.redirect('/customer/orders/new');
+  return res.redirect('/customer/orders/new');
   let db = loadDb();
   let d = guestDraft(db, req);
   if (!d || !d.selections || !d.contact) return res.redirect('/order');

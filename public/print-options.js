@@ -1,5 +1,31 @@
-import { printPricing, processingFee, collegeDeliveryFee, BULK_TIERS } from './print-pricing.js?v=20261010-mixed-calculator';
+import { printPricing, processingFee, BULK_TIERS } from './print-pricing.js?v=20261010-mixed-calculator';
 import { printPlan, packCovers, pageRange, compactRange } from './print-plan.js?v=20261007-split-print';
+import { LOCALITIES, kmBetween, distanceFee } from './localities.js';
+
+function deliveryCost(form, cfg, slot) {
+  const data = cfg.delivery || {};
+  const zoneOf = value => ({Vapi:'vapi',Daman:'daman',Sarigam:'sarigam',Bhilad:'bhilad'})[value] || value;
+  const selectedAddressId = form.querySelector('[name="selectAddressRadio"]:checked')?.value || form.elements.addressId?.value;
+  let address = (data.addresses || []).find(a => a.id === selectedAddressId);
+  if (slot.startsWith('school')) {
+    const selected = form.elements.institutionLocation?.value || '';
+    const [kind, id] = selected.split(':');
+    if (kind === 'address') address = (data.institutions || []).find(a => a.id === id);
+    else if (kind === 'campus') address = (data.campuses || []).find(a => a.id === id);
+    else if (kind === 'locality') {
+      const locality = LOCALITIES.find(item => item.id === id);
+      address = locality && {area: locality.zone, localityId: locality.id, lat: locality.lat, lng: locality.lng};
+    }
+  }
+  if (!address) return 0;
+  const zone = zoneOf(address.area || address.zone);
+  const origin = data.hubs?.[zone], locality = LOCALITIES.find(item => item.id === address.localityId && item.zone === zone);
+  if (!origin || !Number.isFinite(Number(address.lat)) || !Number.isFinite(Number(address.lng))) return 0;
+  const destination = locality || {lat: Number(address.lat), lng: Number(address.lng)};
+  const km = kmBetween(origin, destination) * 1.25;
+  const scheduled = slot !== 'express' && slot !== 'school-express';
+  return distanceFee(km, scheduled);
+}
 
 function initPrintOptions() {
 for (const quote of document.querySelectorAll('[data-print-quote]')) {
@@ -51,7 +77,7 @@ for (const quote of document.querySelectorAll('[data-print-quote]')) {
       }
       form.querySelector('[data-print-assignment]').textContent = `${plan.bwPages * plan.copies} B&W + ${plan.colorPages * plan.copies} colour pages · printing ₹${printing.toLocaleString('en-IN')}`;
       const slot = get('deliverySlot') || 'express';
-      const delivery = slot.startsWith('school') || slot.startsWith('college') ? collegeDeliveryFee(printedSides) : 0;
+      const delivery = deliveryCost(form, cfg, slot);
       const late = 0, surge = 0;
       const pack = (cfg.packs || []).some(p => packCovers(p, {bw:plan.bwPages * plan.copies,color:plan.colorPages * plan.copies}));
       const discount = pack ? printing : Math.min(printing, Math.min(Number(cfg.firstPrintPages || 0),plan.bwPages*plan.copies)*cfg.bw);
