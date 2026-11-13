@@ -4522,7 +4522,7 @@ body.app-view .order-row-side > strong {
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.08em !important;
-  color: var(--pk-forest-sub) !important;
+  color: var(--pk-muted, #59617e) !important;
 }
 
 .ops-metrics strong {
@@ -4537,7 +4537,7 @@ body.app-view .order-row-side > strong {
   position: absolute !important;
   top: 20px !important;
   right: 20px !important;
-  color: var(--pk-forest-sub) !important;
+  color: var(--pk-muted, #59617e) !important;
   opacity: 0.45 !important;
 }
 
