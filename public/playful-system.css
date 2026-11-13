@@ -1,0 +1,95 @@
+/* PrintKarr's shared visual system. Keep seasonal variations token-only. */
+:root {
+  --pk-canvas: #fff9ed;
+  --pk-canvas-deep: #fff0d2;
+  --pk-forest: #192044;
+  --pk-forest-mid: #293365;
+  --pk-muted: #59617e;
+  --pk-line: rgba(25, 32, 68, .13);
+  --pk-line-strong: rgba(25, 32, 68, .25);
+  --pk-white: #fffefa;
+  --pk-leaf: #d8f36a;
+  --pk-leaf-deep: #c3e846;
+  --pk-leaf-tint: #f1f8d8;
+  --pk-orange: #ed4f35;
+  --pk-orange-hover: #d73f29;
+  --pk-orange-soft: #fff0e9;
+  --pk-shadow: 0 18px 44px -28px rgba(25, 32, 68, .32), 0 3px 10px rgba(25, 32, 68, .06);
+  --pk-shadow-soft: 0 10px 24px -18px rgba(25, 32, 68, .26);
+}
+
+/* Festival palettes: set data-festival on <html> to activate a ready-made skin. */
+:root[data-festival="diwali"] { --pk-orange:#a32b20; --pk-orange-hover:#7e1f19; --pk-orange-soft:#fff0d4; --pk-leaf:#f3bd48; --pk-leaf-tint:#fff3d8; --pk-canvas:#fff7e8; --pk-line:rgba(163,43,32,.16); --pk-line-strong:rgba(163,43,32,.3); }
+:root[data-festival="holi"] { --pk-orange:#c32678; --pk-orange-hover:#a71b65; --pk-orange-soft:#fdeaf5; --pk-leaf:#b6e8fa; --pk-leaf-tint:#e8f8ff; --pk-canvas:#fff8fc; --pk-line:rgba(136,45,123,.16); --pk-line-strong:rgba(136,45,123,.3); }
+:root[data-festival="navratri"] { --pk-orange:#713cc4; --pk-orange-hover:#592ba3; --pk-orange-soft:#f4eaff; --pk-leaf:#f3bd48; --pk-leaf-tint:#fff5dc; --pk-canvas:#fcf8ff; --pk-line:rgba(113,60,196,.16); --pk-line-strong:rgba(113,60,196,.3); }
+:root[data-festival="christmas"] { --pk-orange:#bb3045; --pk-orange-hover:#982638; --pk-orange-soft:#ffedf0; --pk-leaf:#a8d891; --pk-leaf-tint:#edf7e9; --pk-canvas:#f7fbf4; --pk-line:rgba(78,120,72,.16); --pk-line-strong:rgba(78,120,72,.3); }
+
+body.public-site, body.signin-site, body.app-view, body.order-focus, body.store-view {
+  --bg: var(--pk-canvas);
+  --paper: var(--pk-white);
+  --ink: var(--pk-forest);
+  --navy: var(--pk-forest);
+  --primary: var(--pk-orange);
+  --blue-bright: var(--pk-orange-hover);
+  --color-blue-600: var(--pk-orange);
+  --color-blue-700: var(--pk-orange-hover);
+  --color-ink: var(--pk-forest);
+  --muted: var(--pk-muted);
+  --line: var(--pk-line);
+  --pale: var(--pk-leaf-tint);
+  --pale-2: #fffdf7;
+  --pale-deep: #e8edc8;
+  background-color: var(--pk-canvas);
+  color: var(--pk-forest);
+}
+
+.app-view { background: var(--pk-canvas); }
+.pk-header, .site-header { background: var(--pk-forest); color: var(--pk-white); }
+.app-sidebar { background: linear-gradient(180deg, var(--pk-canvas-deep), var(--pk-canvas)); border-right: 1px solid var(--pk-line); }
+.workspace-content { max-width: 1320px; }
+.page-heading h1, .display { color: var(--pk-forest); }
+.ops-overview { border-radius: 26px; background: var(--pk-forest); color: var(--pk-white); box-shadow: var(--pk-shadow); overflow: hidden; }
+.ops-daily { background: var(--pk-orange); color: white; }
+.ops-metrics article { background: color-mix(in srgb, var(--pk-white) 10%, transparent); border: 1px solid color-mix(in srgb, var(--pk-white) 16%, transparent); border-radius: 18px; }
+.ops-metrics article strong { color: var(--pk-leaf); }
+.ops-delivered { border: 1px solid var(--pk-line); border-radius: 18px; background: var(--pk-leaf-tint); }
+.card, .pk-card, .store-card { border: 1px solid var(--pk-line); }
+.btn.loud, .btn.primary, .product-add, .qk-pay { background: var(--pk-orange); color: #fff; border-color: transparent; box-shadow: 0 4px 0 color-mix(in srgb, var(--pk-orange-hover) 84%, var(--pk-leaf)); }
+.btn.loud:hover, .btn.primary:hover, .product-add:hover, .qk-pay:hover { background: var(--pk-orange-hover); }
+.badge, .chip.on, .store-chip-rail [aria-pressed="true"] { background: var(--pk-leaf-tint); color: var(--pk-forest); }
+.tbl thead { background: var(--pk-canvas-deep); color: var(--pk-forest); }
+.tbl tbody tr:hover { background: var(--pk-orange-soft); }
+.pk-cart-aov-meter, .qk-cart .qk-cart-head { border-radius: 18px; background: var(--pk-leaf-tint); }
+.qk-paybar { border-top: 1px solid var(--pk-line); background: color-mix(in srgb, var(--pk-white) 95%, transparent); }
+.product-card, .cart-suggest-card, .journal-card { transition: translate .18s ease, box-shadow .18s ease; }
+.product-card:hover, .cart-suggest-card:hover, .journal-card:hover { translate: 0 -3px; box-shadow: var(--pk-shadow); }
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid #3855ff;
+  outline-offset: 3px;
+}
+
+:where(.btn, button) { transition: color .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease, translate .16s ease, scale .16s ease; }
+:where(.btn:hover, button:not(:disabled):hover) { translate: 0 -2px; box-shadow: 0 8px 18px -12px rgba(25,32,68,.48); }
+:where(.btn:active, button:not(:disabled):active) { translate: 0 0; scale: .98; }
+.ui-icon { transition: translate .18s ease, rotate .18s ease; }
+.pk-card, .card, .store-card { border-radius: 20px; box-shadow: var(--pk-shadow-soft); }
+.badge, .chip { border-radius: 999px; }
+input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-radius: 12px; }
+
+/* Small, event-triggered movement only. No decorative loops. */
+@media (prefers-reduced-motion: no-preference) {
+  .btn.loud:hover .ui-icon, .btn.solid:hover .ui-icon { animation: pk-send .42s ease-out both; }
+  @keyframes pk-send { 0% { translate: 0 0; } 45% { translate: 9px -5px; } 46% { opacity: .25; } 47% { translate: -6px 5px; } 100% { translate: 0 0; opacity: 1; } }
+}
+
+@media (max-width: 760px) {
+  .ops-overview { border-radius: 20px; }
+  .ops-daily { border-radius: 0 0 18px 18px; }
+  .ops-metrics article { min-height: 100px; }
+  .workspace-content { padding-inline: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.btn, button, .ui-icon, .product-card, .cart-suggest-card, .journal-card) { transition: none; }
+}

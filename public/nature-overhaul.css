@@ -127,16 +127,26 @@ body.signin-site .site-header {
 }
 
 /* Landing page: transparent navbar floating over the hero canopy */
+body[data-public-page="/"] .site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 150px;
+  background: linear-gradient(180deg, rgba(247, 246, 240, .9) 0%, rgba(247, 246, 240, .55) 48%, rgba(247, 246, 240, 0) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
 body[data-public-page="/"] .site-header {
   position: absolute !important;
   top: 0;
   left: 0;
   right: 0;
   width: 100%;
-  background: rgba(247, 246, 240, 0.65) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid rgba(20, 38, 26, 0.08) !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid transparent !important;
   box-shadow: none !important;
   z-index: 50;
   padding: 0 var(--pk-pad, 24px) !important;
@@ -155,7 +165,7 @@ body[data-public-page="/"] .site-header-inner {
 /* Landing page header logo - dark forest ink on cream */
 body[data-public-page="/"] .site-header .pk-logo-dark {
   display: block !important;
-  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.75));
+  filter: drop-shadow(0 1px 2px rgba(247, 246, 240, .95)) drop-shadow(0 0 1px rgba(247, 246, 240, .9)) !important;
 }
 body[data-public-page="/"] .site-header .pk-logo-white {
   display: none !important;
@@ -187,13 +197,13 @@ body[data-public-page="/"] .site-header .pk-logo-white {
 }
 
 body[data-public-page="/"] .site-header .site-links a,
-body[data-public-page="/"] .site-header .header-actions > a {
+body[data-public-page="/"] .site-header .header-actions > a:not(.btn):not(.pk-btn) {
   color: var(--pk-forest) !important;
   font-size: 14.5px !important;
   font-weight: 600 !important;
   letter-spacing: -0.01em !important;
   text-decoration: none !important;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85) !important;
+  text-shadow: 0 1px 0 rgba(247, 246, 240, .95), 0 0 10px rgba(247, 246, 240, .85) !important;
   transition: color 0.15s ease !important;
 }
 
@@ -6300,3 +6310,353 @@ body.order-focus .order-trust span {
   gap: 10px;
 }
 
+
+/* --------------------------------------------------------------------------
+   20. Final consistency pass: transparent landing header, calmer sidebars,
+       editorial headings, and the compact customer mobile dock.
+   -------------------------------------------------------------------------- */
+
+/* Pack note + balanced pack card */
+.pk-packs { display: flex; flex-direction: column; }
+.pk-pack-list { display: flex; flex-direction: column; flex: 1; }
+.pk-pack { flex: 1; }
+.pk-packs-note {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-left: 2px solid var(--pk-orange);
+  border-radius: 0 10px 10px 0;
+  background: var(--pk-canvas-deep, #eef1e6);
+  color: var(--pk-muted);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+.pk-packs-note strong {
+  color: var(--pk-forest);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+/* Public interior headings and accents that studio.css still forces */
+body.public-site .interior-wrap h1,
+body.public-site .studio-message h1 {
+  font-family: var(--pk-serif) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.02em !important;
+}
+body.public-site .interior-wrap em {
+  font-family: var(--pk-serif) !important;
+  font-style: italic !important;
+  font-weight: inherit !important;
+}
+body.public-site .store-hero h1,
+body.public-site .cart-heading h1,
+body.public-site .empty-cart h2 {
+  font-family: var(--pk-serif) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.02em !important;
+}
+body.public-site .store-hero h1 em,
+body.public-site .cart-heading h1 em,
+body.public-site .empty-cart h2 em {
+  font-family: var(--pk-serif) !important;
+  font-style: italic !important;
+  font-weight: inherit !important;
+}
+body.public-site .interior-edition > span:last-child { color: var(--pk-orange) !important; }
+body.public-site .article-toc nav a:hover { color: var(--pk-orange) !important; }
+body.public-site .about-story .card.ink,
+body.app-view .card.ink {
+  background: var(--pk-forest) !important;
+  border-color: var(--pk-forest) !important;
+  color: #f0f3e8 !important;
+}
+body.public-site .about-story .card.ink h2,
+body.public-site .about-story .card.ink p,
+body.public-site .about-story .card.ink .stat .v,
+body.public-site .about-story .card.ink .stat .k,
+body.app-view .card.ink h2,
+body.app-view .card.ink p,
+body.app-view .card.ink .stat .v,
+body.app-view .card.ink .stat .k { color: #f0f3e8 !important; }
+body.public-site .about-story .card.ink .qk-label,
+body.public-site .about-story .card.ink .eyebrow,
+body.app-view .card.ink .eyebrow { color: var(--pk-leaf) !important; }
+
+/* Sign-in headings follow the same editorial system */
+body.signin-site .signin-panel h1,
+body.signin-site .signin-panel h1 em,
+body.signin-site .signin-visual h2 {
+  font-family: var(--pk-serif) !important;
+  font-weight: 400 !important;
+  letter-spacing: -.02em !important;
+}
+body.signin-site .signin-panel h1 em,
+body.signin-site .login-wrap em {
+  color: var(--pk-orange) !important;
+  font-style: italic !important;
+}
+
+/* Desktop sidebar: primary jobs stay visible, secondary tools fold away */
+body.app-view .snav-more {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--pk-line);
+}
+body.app-view .snav-more > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  color: var(--pk-forest-sub, #4b6150);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  list-style: none;
+  transition: background .15s ease, color .15s ease;
+}
+body.app-view .snav-more > summary::-webkit-details-marker { display: none; }
+body.app-view .snav-more > summary .ui-icon {
+  width: 15px;
+  height: 15px;
+  margin-left: auto;
+  transition: transform .18s ease;
+}
+body.app-view .snav-more[open] > summary .ui-icon { transform: rotate(180deg); }
+body.app-view .snav-more > summary:hover {
+  background: #f4f6f0;
+  color: var(--pk-forest);
+}
+body.app-view .snav-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 0 14px;
+  padding: 4px 0 0 8px;
+  border-left: 1px solid var(--pk-line);
+}
+body.app-view .snav-more-list a {
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+}
+body.app-view .app-sidebar .sidebar-print.btn {
+  background: var(--pk-orange) !important;
+  border: 0 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(196, 71, 15, .22) !important;
+}
+
+/* Customer phone: four-item dock, not a full-height drawer */
+@media (max-width: 900px) {
+  body.app-view.app-customer .app-sidebar {
+    inset: auto 12px calc(10px + env(safe-area-inset-bottom)) !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 5px !important;
+    border: 1px solid var(--pk-line) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, .97) !important;
+    box-shadow: 0 4px 24px rgba(20, 38, 26, .14) !important;
+  }
+  body.app-view.app-customer .app-sidebar .workspace-sidebar-brand,
+  body.app-view.app-customer .app-sidebar .workspace-edition,
+  body.app-view.app-customer .app-sidebar .sidebar-print,
+  body.app-view.app-customer .app-sidebar .sidebar-website,
+  body.app-view.app-customer .app-sidebar .snav .nav-section,
+  body.app-view.app-customer .app-sidebar .snav-more { display: none !important; }
+  body.app-view.app-customer .app-sidebar .snav {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body.app-view.app-customer .app-sidebar .snav > a { display: none !important; }
+  body.app-view.app-customer .app-sidebar .snav > a[data-mobile-primary] {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    min-height: 56px !important;
+    padding: 7px 2px !important;
+    border-radius: 10px !important;
+    color: var(--pk-muted) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+  }
+  body.app-view.app-customer .app-sidebar .snav > a[data-mobile-primary] .ui-icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  body.app-view.app-customer .app-sidebar .snav > a[data-mobile-primary].live {
+    background: var(--pk-orange-soft, #fdf0ea) !important;
+    color: var(--pk-orange) !important;
+    box-shadow: none !important;
+  }
+  body.app-view.app-customer .app-workspace .main {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+  }
+  body.app-view.app-customer .workspace-footer {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* App chrome: the public cart strip and floating display pill are not part of
+   the workspace; remove them so dashboard content and footers stay clear. */
+body.app-view .pk-cart-strip,
+body.app-view .pk-feel { display: none !important; }
+body.signin-site .customer-mobile-nav { display: none !important; }
+
+/* App accents: replace the last blue surfaces with the nature palette */
+body.app-view .wallet-overview {
+  background: var(--pk-forest) !important;
+  border: 0 !important;
+  color: #f0f3e8 !important;
+}
+body.app-view .wallet-overview:after { color: var(--pk-leaf) !important; opacity: .14; }
+body.app-view .wallet-overview .eyebrow,
+body.app-view .wallet-overview .field-hint,
+body.app-view .wallet-overview p,
+body.app-view .wallet-overview .wallet-breakdown { color: #dbe6d5 !important; }
+body.app-view .wallet-overview .wallet-balance,
+body.app-view .wallet-overview .wallet-breakdown strong { color: #ffffff !important; }
+body.app-view .wallet-breakdown { border-color: rgba(255, 255, 255, .22) !important; }
+body.app-view .wallet-nudge {
+  background: #edf2e4 !important;
+  border-color: var(--pk-line) !important;
+  color: var(--pk-forest-sub) !important;
+}
+body.app-view .offer-value { color: var(--pk-orange) !important; }
+body.app-view .pack-card { border-top-color: var(--pk-line-strong) !important; }
+body.app-view .pack-card.featured {
+  background: #f4f7ed !important;
+  border-color: var(--pk-line-strong) !important;
+  border-top-color: var(--pk-orange) !important;
+}
+body.app-view .pack-price {
+  color: var(--pk-forest) !important;
+  border-color: var(--pk-line) !important;
+}
+body.app-view .pack-card .pack-checkout > summary,
+body.app-view .pack-card summary.btn {
+  color: var(--pk-forest) !important;
+}
+body.app-view .referral-code {
+  color: var(--pk-forest) !important;
+  border-color: var(--pk-line-strong) !important;
+}
+body.app-view .referral-steps li:before {
+  background: var(--pk-orange-soft, #fdf0ea) !important;
+  color: var(--pk-orange) !important;
+}
+body.app-view .rowlink,
+body.app-view legend,
+body.app-view .profile-layout summary,
+body.app-view .address-add > summary { color: var(--pk-forest) !important; }
+body.app-view .rowlink:hover,
+body.app-view .profile-layout summary:hover { color: var(--pk-orange) !important; }
+body.app-view .pbar { background: #e8ede0 !important; }
+body.app-view .pbar > span { background: var(--pk-forest) !important; }
+body.app-view .card.ink .pbar > span { background: var(--pk-leaf) !important; }
+body.app-view.app-customer .dashboard-start > .ui-icon {
+  background: #eaf0d8 !important;
+  color: var(--pk-forest) !important;
+}
+body.app-view.app-customer .dashboard-stationery > .ui-icon {
+  background: #ffd8c8 !important;
+  color: var(--pk-orange) !important;
+}
+
+/* Store promise icons and the cart toast use the same accent system */
+body.public-site .store-promise .ui-icon { color: var(--pk-orange) !important; }
+body.public-site .store-toast a { color: var(--pk-leaf) !important; }
+
+/* Settings and pricing sheet numbers and selected chips */
+body.app-view .sheet-heading > span {
+  background: var(--pk-orange-soft, #fdf0ea) !important;
+  border-color: rgba(196, 71, 15, .2) !important;
+  color: var(--pk-orange) !important;
+}
+body.app-view .settings-sheet .chip.on {
+  background: #edf2e4 !important;
+  border-color: var(--pk-line-strong, #d2dacb) !important;
+  color: var(--pk-forest) !important;
+}
+
+@media (max-width: 359px) {
+  body[data-public-page="/"] .site-header .header-actions > .btn { display: none !important; }
+}
+
+/* Receipts, order tracks and checkout summaries */
+body.app-view .sumrow.total,
+body.app-view .sumrow.total span:last-child,
+body.order-focus .sumrow.total,
+body.order-focus .sumrow.total span:last-child,
+body.app-view .receipt-brand,
+body.order-focus .receipt-brand { color: var(--pk-forest) !important; }
+body.app-view .sumrow.disc,
+body.order-focus .sumrow.disc { background: #edf2e4 !important; color: var(--pk-forest) !important; }
+body.app-view .freebadge { background: var(--pk-forest) !important; color: #fff !important; }
+body.app-view .order-track-line { background: #e3eadc !important; }
+body.app-view .order-track-label { color: var(--pk-muted) !important; }
+body.app-view .order-track-step.active .order-track-label,
+body.app-view .order-track-step.done .order-track-label { color: var(--pk-forest) !important; }
+body.app-view .document-preview { background: #fafbf8 !important; border-color: var(--pk-line) !important; }
+body.app-view .document-preview > summary,
+body.app-view .document-preview-pages b { color: var(--pk-forest) !important; }
+body.app-view .document-preview > summary small,
+body.app-view .document-preview-pages { color: var(--pk-muted) !important; }
+body.app-view .document-preview iframe { border-color: var(--pk-line) !important; }
+body.app-view .document-preview > summary:focus-visible { outline-color: var(--pk-forest) !important; }
+body.app-view .checkout-payment { border-top-color: var(--pk-forest) !important; }
+body.app-view .profile-help { background: #edf2e4 !important; border: 1px solid var(--pk-line) !important; }
+body.app-view .card.stat,
+body.app-view .card.stat .v,
+body.app-view .card.sun,
+body.app-view .card.sun .v { color: var(--pk-forest) !important; }
+body.app-view .eyebrow.rv { color: var(--pk-orange) !important; }
+
+/* Order focus primary actions */
+body.order-focus .btn.loud,
+body.order-focus .btn.loud.big {
+  background: var(--pk-orange) !important;
+  border-color: var(--pk-orange) !important;
+  color: #fff !important;
+}
+body.order-focus .btn.loud:hover,
+body.order-focus .btn.loud.big:hover {
+  background: var(--pk-orange-hover) !important;
+  border-color: var(--pk-orange-hover) !important;
+}
+body.order-focus .rowlink { color: var(--pk-forest) !important; }
+body.order-focus .rowlink:hover { color: var(--pk-orange) !important; }
+
+/* Store catalogue and checkout chrome */
+body.public-site .product-heading > strong,
+body.store-view .product-heading > strong { color: var(--pk-forest) !important; }
+body.public-site .nearby-shop { border-left-color: var(--pk-forest) !important; }
+body.public-site .cart-print-icon,
+body.store-view .cart-print-icon { background: #eaf0d8 !important; color: var(--pk-forest) !important; border-color: var(--pk-line) !important; }
+body.public-site .empty-cart:before,
+body.store-view .empty-cart:before { color: var(--pk-orange) !important; }
+body.public-site .pk-checkout-footer,
+body.store-view .pk-checkout-footer,
+body.order-focus .pk-checkout-footer { background: var(--pk-canvas-deep) !important; border-color: var(--pk-line) !important; }
+body.public-site .pk-checkout-footlinks,
+body.public-site .pk-checkout-footlinks a,
+body.store-view .pk-checkout-footlinks,
+body.store-view .pk-checkout-footlinks a,
+body.order-focus .pk-checkout-footlinks,
+body.order-focus .pk-checkout-footlinks a { color: var(--pk-muted) !important; }

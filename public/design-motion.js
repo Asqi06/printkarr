@@ -41,8 +41,6 @@
       ['.comparison-notes>div', {x:[24,0], opacity:[.25,1]}, .65, .12],
       ['.referral-link', {scale:[.94,1], opacity:[.3,1]}, .7, 0],
       ['.qk-faq-list details', {y:[14,0], opacity:[.35,1]}, .5, .04],
-      ['.partner-model, .pk-host .img', {y:[30,0], opacity:[.3,1]}, .8, 0],
-      ['.kiosk-image, .xerox-hero>img', {y:[28,0], opacity:[.35,1]}, .8, 0],
       ['.interior-wrap h1, .pub-wrap>h1, .main>h1, .login-box h1', {y:[22,0], opacity:[.4,1]}, .55, 0],
       ['.main>.grid>.card, .wallet-overview, .dashboard-action', {y:[12,0], opacity:[.5,1]}, .35, .04]
     ];

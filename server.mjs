@@ -27,14 +27,13 @@ import {
   COOKIE, verifyCredentials, createSession, getSessionUser,
   destroySession, parseCookies, demoLoginOn, customerDestination, hashPassword, passwordMatches
 } from './lib/auth.js';
-import { layout, esc, loginPage, loginOtpPage, staffLoginPage, completeProfilePage } from './lib/views.js';
+import { layout, esc, loginPage, loginOtpPage, staffLoginPage, completeProfilePage, setFestivalTheme } from './lib/views.js';
 import { analyzeUpload, orderFile, mimeFor, splitMixedPdf } from './lib/files.js';
 import { saveReview, deleteReview, publicReviews } from './lib/reviews.js';
 import { addPrint, cartFor, cartItems, cartQuote, createPurchase, confirmPurchase, printNet, checkPackQuota, cancelPurchase } from './lib/store.js';
 import { installStoreRoutes } from './lib/store_routes.js';
-import { fulfillmentFor } from './lib/partners.js';
-import { installPartnerRoutes } from './lib/partner_routes.js';
-import { customerDashboard, ordersList, orderDetail, scanPage } from './lib/views_customer.js';
+import { installDeliveryRoutes } from './lib/delivery_routes.js';
+import { customerDashboard, ordersList, orderDetail } from './lib/views_customer.js';
 import { uploadStep, optionsStep, summaryStep, payStep, walletPage, profilePage } from './lib/views_order.js';
 import { canUseOwnerTestPrint } from './lib/owner-test.js';
 import { packsPage, packDashboardHtml, adminPacksPage } from './lib/views_packs.js';
@@ -47,11 +46,9 @@ import {
 } from './lib/referrals.js';
 import { PACKS, BOOKING_FEE, packById, mySubs, dueOf, leftOf, usableOf, coverFor, deductSides, newSub, ensurePackSubs } from './lib/packs.js';
 import { campaignConfig, validateCampaign, eligibleWalletOffers, walletOf, adminWalletCredit, debitWallet, refundWallet, topupTerms, applyTopup, claimWalletFiles, fulfilWalletFiles, deliveryPlan, deliveryChoice, validateDestination, institutionAddress, batchPrice, settleWallets } from './lib/campus.js';
-import { firstOffers, campusProgress, awardCampusMilestone } from './lib/offers.js';
-import { kioskLive, effectiveLive } from './lib/kiosk.js';
-import { collectTokenFor, findCollectToken, consumeCollectToken } from './lib/collect.js';
+import { firstOffers } from './lib/offers.js';
 import { emailConfigured } from './lib/email.js';
-import { POSTS, vapiPage, damanPage, printPricesPage, landing, kioskStatusPage, orderPage, phonePage, otpPage, collectPage, howItWorksPage, aboutPage, franchisePage, xeroxPage, contactPage, CONTACT_TOPICS, contactThankYouPage, notFoundPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
+import { POSTS, vapiPage, damanPage, printPricesPage, landing, orderPage, phonePage, otpPage, howItWorksPage, aboutPage, contactPage, CONTACT_TOPICS, contactThankYouPage, notFoundPage, blogsPage, blogArticlePage, termsPage, privacyPage } from './lib/views_public.js';
 import { discoveryRoutes, SITE } from './lib/seo.js';
 import QRCode from 'qrcode';
 import { buildOrderCover } from './agent/cover.js';
@@ -62,7 +59,7 @@ const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
 const PORT = process.env.PORT || 3000;
-const HOME = { customer: '/customer', admin: '/admin', partner: '/partner', rider: '/rider' };
+const HOME = { customer: '/customer', admin: '/admin', rider: '/rider' };
 
 // Google sign-in (production). Set GOOGLE_CLIENT_ID/SECRET to enable;
 // the button hides itself when keys are absent (local demo unaffected).
@@ -86,15 +83,7 @@ const RAZORPAY = {
 // Razorpay and funded wallets. Simulated UPI/wallet top-ups are refused.
 const LIVE_PAY = process.env.NODE_ENV === 'production' && !!(RAZORPAY.id && RAZORPAY.secret);
 const gatewayOn = () => !!(RAZORPAY.id && RAZORPAY.secret);
-// Runtime kiosk switch (admin toggle): live when the env forces it, or the
-// admin switched it on with a real gateway behind it.
 const livePayFor = () => LIVE_PAY || process.env.NODE_ENV === 'production';
-function kioskBlockers() {
-  const missing = [];
-  if (!gatewayOn()) missing.push('Razorpay keys (RAZORPAY_KEY_ID/SECRET)');
-  if (!emailConfigured()) missing.push('a mailer (RESEND_API_KEY or SMTP_USER/SMTP_PASS) for OTP codes');
-  return missing;
-}
 
 const oauthStates = new Map(); // state -> expiresAt (CSRF guard, 10 min)
 
@@ -167,13 +156,13 @@ function waForwardUrl(db, req, order) {
     `- ${order.document} (${order.pages} pages x${order.copies})`,
     `- ${printDescription(order)}, ${order.sides}, ${order.paper || 'A4'}${order.pageRange ? `, pages ${order.pageRange}` : ''}`,
     `- Customer: ${c.name || ''} ${c.phone || ''}`,
-    `- ${zoneOf(a.area) === 'pickup' ? 'Kiosk collection' : 'Drop'}: ${[a.address, a.area, a.pin].filter(Boolean).join(', ') || order.slot || ''}`,
+    `- Delivery: ${[a.address, a.area, a.pin].filter(Boolean).join(', ') || order.slot || ''}`,
     `- Slot: ${order.slot || ''}`,
     `- Printing Rs.${order.subtotal}, Delivery Rs.${order.deliveryFee}${order.couponDiscount ? `, Coupon -Rs.${order.couponDiscount}` : ''}, Total Rs.${order.total} (${order.paymentStatus})`,
     `- PDF: ${baseUrl(req)}/share/${tok}`
   ];
   const point = deliveryPoint(a.lat, a.lng);
-  if (point && zoneOf(a.area) !== 'pickup') lines.splice(5, 0, `- ${a.locationAccuracy === 'locality' ? 'Address search (locality approximate)' : 'Location'}: https://www.google.com/maps?q=${encodeURIComponent(a.locationAccuracy === 'locality' ? [a.address,a.area,a.pin].filter(Boolean).join(', ') : point.lat+','+point.lng)}`);
+  if (point) lines.splice(5, 0, `- ${a.locationAccuracy === 'locality' ? 'Address search (locality approximate)' : 'Location'}: https://www.google.com/maps?q=${encodeURIComponent(a.locationAccuracy === 'locality' ? [a.address,a.area,a.pin].filter(Boolean).join(', ') : point.lat+','+point.lng)}`);
   if (order.notes) lines.splice(4, 0, `- Note: ${order.notes}`);
   return `https://wa.me/${OWNER_WA}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
@@ -192,13 +181,10 @@ app.use(helmet({ contentSecurityPolicy: { directives: {
 } }, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
 app.use(compression());
 discoveryRoutes(app, POSTS);
-app.use(['/admin', '/customer', '/partner', '/rider', '/cart', '/order', '/login', '/logout', '/auth', '/api', '/share', '/c', '/qr.png'], (_req, res, next) => {
+app.use(['/admin', '/customer', '/rider', '/cart', '/order', '/login', '/logout', '/auth', '/api', '/share', '/c', '/qr.png'], (_req, res, next) => {
   res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   next();
 });
-app.get('/kiosks', (_req,res) => res.send(kioskStatusPage()));
-app.get(['/admin/qr','/qr.png','/c/:token','/customer/orders/:id/scan'], (_req,res) => res.redirect('/kiosks'));
-app.post('/c/:token/collect', (_req,res) => res.status(409).send('Kiosks are in development. Contact support for an existing order.'));
 app.get('/index.html', (_req, res) => res.redirect(301, '/'));
 morgan.token('safe-url', req => req.path.replace(/^(\/(?:share|c)\/)[^/]+/, '$1[redacted]'));
 app.use(morgan(':remote-addr :method :safe-url :status :response-time ms'));
@@ -241,7 +227,7 @@ app.use((req, res, next) => {
     res.status(503).send('Storage temporarily unavailable. Please retry.');
   });
 });
-app.use(['/admin', '/customer', '/partner', '/rider', '/order', '/cart', '/login', '/auth', '/api', '/share'], (_req, res, next) => {
+app.use(['/admin', '/customer', '/rider', '/order', '/cart', '/login', '/auth', '/api', '/share'], (_req, res, next) => {
   res.set('Cache-Control', 'private, no-store');
   next();
 });
@@ -269,7 +255,7 @@ function profileComplete(db, user) {
 
 const customerReturnTo = (req) => customerDestination(parseCookies(req.headers.cookie).pk_next);
 
-const LOGIN_FOR = { customer: '/login', admin: '/admin/login', partner: '/partner/login', rider: '/rider/login' };
+const LOGIN_FOR = { customer: '/login', admin: '/admin/login', rider: '/rider/login' };
 function requireRole(role) {
   return (req, res, next) => {
     const user = currentUser(req);
@@ -342,7 +328,7 @@ function staffLogin(role) {
 const adminLogin = staffLogin('admin');
 app.get('/admin/login', adminLogin.show);
 app.post('/admin/login', staffLimiter, staffAccountLimiter, asyncHandler(adminLogin.run));
-for (const role of ['partner','rider']) {
+for (const role of ['rider']) {
   const login = staffLogin(role);
   app.get(`/${role}/login`, login.show);
   app.post(`/${role}/login`, staffLimiter, staffAccountLimiter, asyncHandler(login.run));
@@ -578,28 +564,16 @@ app.get('/admin/orders/:id', requireRole('admin'), asyncHandler(async (req, res)
   const c = db.users.find((u) => u.id === o.customerId) || {};
   const a = db.addresses.find((x) => x.id === o.addressId) || {};
   const waUrl = waForwardUrl(db, req, o);
-  // Kiosk counter QR: shown while the order awaits pickup so the customer
-  // can scan it with their phone to confirm collection (Pi screen later).
-  let collectQr = null;
-  if (!o.purchaseId && o.status === 'READY_FOR_PICKUP' && (!o.deliveryZone || o.deliveryZone === 'pickup')) {
-    try {
-      collectQr = {
-        url: collectUrl(req, collectTokenFor(db, o.id)),
-        img: null
-      };
-      collectQr.img = await QRCode.toDataURL(collectQr.url, { width: 360, margin: 2 });
-    } catch { collectQr = null; }
-  }
   saveDb(db);
-  const queuePause = db.orders.find(x => !x.fulfillmentId && ['PRINTING', 'PRINT_FAILED'].includes(x.status));
-  res.send(adminOrderDetail(req.user, { ...o, queuePause: queuePause?.id }, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt, collectQr));
+  const queuePause = db.orders.find(x => ['PRINTING', 'PRINT_FAILED'].includes(x.status));
+  res.send(adminOrderDetail(req.user, { ...o, queuePause: queuePause?.id }, c, a, nextStates(o.status).filter(s => s !== 'RIDER_ASSIGNED'), waUrl, agentSeenAt));
 }));
 
-function finishPrintAtKiosk(db, order, by) {
+function finishPrintForDelivery(db, order, by) {
   order.printAwaitingVerification = false;
   transition(order, 'PRINTED', { by, note: 'printing finished' });
   const printed = { ...order };
-  transition(order, 'READY_FOR_PICKUP', { by, note: order.deliveryZone && order.deliveryZone !== 'pickup' ? 'ready for delivery' : 'ready at kiosk' });
+  transition(order, 'READY_FOR_PICKUP', { by, note: 'ready for delivery' });
   saveDb(db);
   notifyState(printed);
   notifyState(order);
@@ -639,7 +613,7 @@ app.post('/admin/orders/:id/transition', requireRole('admin'), (req, res) => {
     }
   }
   try {
-    if (to === 'PRINTED') finishPrintAtKiosk(db, o, req.user.id);
+    if (to === 'PRINTED') finishPrintForDelivery(db, o, req.user.id);
     else { transition(o, to, { by: req.user.id });if(to==='PRINTING'){o.printOwner='manual';o.printAgentActive=false;}if(['PRINT_QUEUE','PAYMENT_PENDING'].includes(to)){o.printOwner=null;o.printAgentActive=false;o.printAwaitingVerification=false;o.printStopRequested=false;if(to==='PRINT_QUEUE')o.printProgress=null;} }
   }
   catch { return res.status(400).send(oops(req.user, `/admin/orders/${o.id}`, `This job is now ${esc(o.status)}. Refresh and use the available next action.`)); }
@@ -715,7 +689,7 @@ app.get('/admin/customers/:id', requireRole('admin'), (req, res) => {
   if (!c) return res.status(404).send(oops(req.user, '/admin/customers', 'Customer <em>unknown.</em>'));
   const orders = db.orders.filter((o) => o.customerId === c.id).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const wallet = walletOf(db, c.id);
-  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id), db.walletTx.filter((t) => t.customerId === c.id && t.freeFiles), db.walletTx.filter(t=>t.customerId===c.id)));
+  res.send(customerDetailAdmin(req.user, c, orders, wallet, db.addresses.filter((a) => a.customerId === c.id), (db.packSubs || []).filter((s) => s.customerId === c.id), db.walletTx.filter((t) => t.customerId === c.id && t.freeFiles), db.walletTx.filter(t=>t.customerId===c.id), (db.purchases || []).filter((p) => p.customerId === c.id)));
 });
 
 app.post('/admin/customers/:id/files/:txId/fulfil', requireRole('admin'), siteOrigin, (req, res) => {
@@ -873,13 +847,14 @@ app.get('/admin/settings', requireRole('admin'), (req, res) => {
   const db = loadDb();
   campaignConfig(db);
   const demos = db.users.filter((u) => u.email.toLowerCase().endsWith('@demo.printkarr.in'));
-  res.send(settingsPage(req.user, db.settings, demos, { live: kioskLive(db), envLive: LIVE_PAY, blockers: kioskBlockers() }));
+  res.send(settingsPage(req.user, db.settings, demos));
 });
 
 app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
   const db = loadDb();
   try {
     const cfg = req.body.campaign ? JSON.parse(String(req.body.campaign)) : structuredClone(campaignConfig(db));
+      if (cfg?.delivery) delete cfg.delivery.pickup;
     if (!req.body.campaign) {
       cfg.bonusValidityDays = Number(req.body.bonusValidityDays);
       cfg.showPages = req.body.showPages === '1';
@@ -892,7 +867,6 @@ app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
       for (const key of ['enabled', 'guaranteeEnabled']) cfg.delivery[key] = req.body[`delivery-${key}`] === '1';
       for (const key of ['lateCredit']) cfg.delivery[key] = Number(req.body[`delivery-${key}`]);
       cfg.delivery.cutoff = req.body['delivery-cutoff'];
-      cfg.delivery.pickup = { enabled: req.body['pickup-enabled'] === '1', address: String(req.body['pickup-address'] || '').trim() };
       for (const zone of ['vapi', 'daman']) cfg.delivery.local[zone] = { enabled: req.body[`local-${zone}-enabled`] === '1', fee: 0, radiusKm: Number(req.body[`local-${zone}-radiusKm`]) };
       for (const o of cfg.delivery.slots) {
         for (const key of ['name', 'start', 'end', 'cutoff']) o[key] = req.body[`slot-${o.id}-${key}`];
@@ -901,24 +875,8 @@ app.post('/admin/settings/campaign', requireRole('admin'), (req, res) => {
       cfg.delivery.campuses = JSON.parse(String(req.body.campuses));
     }
     validateCampaign(cfg);
-    cfg.delivery.pickup.enabled = false;
     db.settings.campaign = cfg;
   } catch (error) { return res.status(400).send(oops(req.user, '/admin/settings', esc(error.message))); }
-  saveDb(db);
-  res.redirect('/admin/settings');
-});
-
-app.post('/admin/settings/kiosk', requireRole('admin'), (req, res) => {
-  const db = loadDb();
-  const wantLive = req.body.live === '1';
-  if (wantLive) {
-    const missing = kioskBlockers();
-    if (missing.length) {
-      return res.status(400).send(oops(req.user, '/admin/settings', `Can't go live yet — missing: <em>${missing.join(' · ')}</em>.`));
-    }
-  }
-  db.settings.kiosk ||= {};
-  db.settings.kiosk.live = wantLive;
   saveDb(db);
   res.redirect('/admin/settings');
 });
@@ -951,6 +909,16 @@ app.post('/admin/settings', requireRole('admin'), (req, res) => {
   s.order.minTotal = Math.round(minTotal * 100) / 100;
   saveDb(db);
   res.redirect('/admin/settings');
+});
+
+app.post('/admin/settings/theme', siteOrigin, requireRole('admin'), (req, res) => {
+  const theme = String(req.body.festivalTheme || '');
+  if (theme && !['diwali', 'holi', 'navratri', 'christmas'].includes(theme)) return res.status(400).send(oops(req.user, '/admin/settings#seasonal-design', 'Choose a listed festival palette.'));
+  const db = loadDb();
+  db.settings.festivalTheme = theme;
+  saveDb(db);
+  setFestivalTheme(theme);
+  res.redirect('/admin/settings#seasonal-design');
 });
 
 // ---- Customer (§5–§19) ----
@@ -998,7 +966,6 @@ function zoneOf(area) {
   if (a === 'bhilad') return 'bhilad';
   if (a === 'daman') return 'daman';
   if (a === 'sarigam') return 'sarigam';
-  if (a === 'pickup' || a === 'kiosk pickup' || a === 'classroom pickup') return 'pickup';
   return null;
 }
 function custOrders(db, customerId) {
@@ -1048,12 +1015,8 @@ function refundPaidOrder(db, order) {
 
 app.get('/customer', requireRole('customer'), (req, res) => {
   const db = loadDb();
-  const mine = custOrders(db, req.user.id);
-  const current = mine.find(ACTIVE) || null;
-  const notes = (db.notifications || []).filter((n) => n.customerId === req.user.id).sort((a, b) => b.at.localeCompare(a.at));
-  const lastDoc = mine.find((o) => o.status === 'DELIVERED') || null;
-  if (lastDoc) lastDoc.fileAvailable = fs.existsSync(path.join(DATA_DIR, 'uploads', orderFile(lastDoc.id, lastDoc.fileExt)));
-  res.send(customerDashboard(req.user, { current, pricing: db.pricing, notes, lastDoc, walletBalance: walletOf(db, req.user.id).balance, packsHtml: packDashboardHtml(mySubs(db, req.user.id)), campaign: campaignConfig(db), walletOffers: gatewayOn() || !livePayFor(db) ? eligibleWalletOffers(db, req.user.id) : [] }));
+  const current = custOrders(db, req.user.id).find(ACTIVE) || null;
+  res.send(customerDashboard(req.user, { current, walletBalance: walletOf(db, req.user.id).balance }));
 });
 
 app.get('/customer/orders', requireRole('customer'), (req, res) => {
@@ -1115,9 +1078,7 @@ app.get('/customer/orders/new', requireRole('customer'), (req, res) => {
   }
   const db = loadDb();
   const repeat = db.orders.find((o) => o.id === req.query.repeat && o.customerId === req.user.id);
-  const shop = req.query.shop && (db.partners || []).find(s=>s.id===req.query.shop && s.active);
-  if (req.query.shop && !shop) return res.status(404).send(oops(req.user,'/order','This shop is unavailable.'));
-  res.send(uploadStep(req.user, { shop, pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
+  res.send(uploadStep(req.user, { pricing: db.pricing, campaign: campaignConfig(db), maxMb: db.settings.order.maxFileMb, repeat }));
 });
 
 app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('doc'), asyncHandler(async (req, res) => {
@@ -1142,10 +1103,7 @@ app.post('/customer/orders/new/upload', requireRole('customer'), upload.single('
   const db = loadDb();
   db.drafts ||= [];
   const repeat = db.orders.find((o) => o.id === req.body.repeat && o.customerId === req.user.id);
-  const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
-  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/order','This shop is unavailable.'));}
   const draft = {
-    preferredShopId: chosenShop?.id || null,
     id: 'D' + crypto.randomUUID(), customerId: req.user.id,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
     pages: file.pages, fileType: file.fileType, fileExt: file.ext,
@@ -1184,7 +1142,7 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(a
   let plan;
   let schoolAddress;
   try { if (String(req.body.deliverySlot).startsWith('school') && req.body.institutionLocation) schoolAddress=institutionAddress(db,req.body,req.user?.id); } catch(error) { return fail(error.message); }
-  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), schoolAddress?.institutionName || req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
+  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose a supported delivery option.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), schoolAddress?.institutionName || req.body.institutionName); }
   catch (error) { return fail(error.message); }
   if (schoolAddress) {
     address = { ...schoolAddress, id: schoolAddress.id || 'ADR-' + crypto.randomUUID(), customerId: req.user.id, label:'School / College', name:req.user.name, phone:req.body.schoolPhone || schoolAddress.phone || req.user.phone, isDefault:schoolAddress.isDefault || false };
@@ -1197,10 +1155,6 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(a
     address = db.addresses.find((a) => a.customerId === req.user.id && a.campusId === campus.id);
     if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, campusId: campus.id, label: 'College', phone, name: req.user.name, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng }; db.addresses.push(address); }
     Object.assign(address, { phone, area: campus.zone, address: campus.address, pin: campus.pin, lat: campus.lat, lng: campus.lng });
-  } else if (plan.deliveryMode === 'pickup') {
-    address = db.addresses.find((a) => a.customerId === req.user.id && zoneOf(a.area) === 'pickup');
-    if (!address) { address = { id: 'ADR-' + crypto.randomUUID(), customerId: req.user.id, label: 'Kiosk', name: req.user.name, phone: req.user.phone || '', area: 'Kiosk pickup', pin: '' }; db.addresses.push(address); }
-    address.address = plan.pickupAddress;
   } else if (req.body.addressId === '__new') {
     const newZone = zoneOf(req.body.nn_area);
     if (!['vapi','daman','sarigam','bhilad'].includes(newZone) || !normPhone(req.body.nn_phone) || (typeof req.body.nn_address !== 'string' || !req.body.nn_address.trim() || !/^\d{6}$/.test(String(req.body.nn_pin || '')))) {
@@ -1216,16 +1170,16 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(a
     address = db.addresses.find((a) => a.id === req.body.addressId && a.customerId === req.user.id);
     if (!address) return fail('Pick a <em>delivery address.</em>');
   }
-  if (plan.deliveryMode !== 'pickup') {
+  {
     const phone = normPhone(schoolAddress ? address.phone : req.body.nn_phone || address.phone || req.user.phone);
     if (!phone) return fail('Enter a valid <em>contact phone.</em>');
     address.phone = '+91 ' + phone;
   }
   let zone = zoneOf(address.area);
   let point;
-  try { point = zone === 'pickup' ? null : plan.campusId ? deliveryPoint(address.lat, address.lng) : addressPoint(zone, schoolAddress ? {} : req.body, address); if (point) Object.assign(plan, fulfillmentFor(db, point, { ...plan, zone }, [print])); zone = deliveryFeeFor(db.pricing, zone, point, plan).zone; }
+  try { point = plan.campusId ? deliveryPoint(address.lat, address.lng) : addressPoint(zone, schoolAddress ? {} : req.body, address); zone = deliveryFeeFor(db.pricing, zone, point, plan).zone; }
   catch (error) { return fail(esc(error.message)); }
-  address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone];
+  address.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman' }[zone];
   Object.assign(address, point || {lat:null,lng:null});
   if (plan.institutionDelivery) { address = { ...address, institutionName: plan.institutionName, label: 'School / College' }; }
   const savedAddress=db.addresses.find(a=>a.id===address.id && a.customerId===req.user.id);
@@ -1237,10 +1191,10 @@ app.post('/customer/orders/new/confirm', requireRole('customer'), asyncHandler(a
     binding: ['staple', 'spiral', 'wiro', 'hardcover'].includes(req.body.binding) ? req.body.binding : 'none',
     notes: String(req.body.notes || '').slice(0, 300),
     addressId: address.id, zone, deliveryPoint: point,
-    zoneLabel: plan.campus || { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Kiosk pickup' }[zone],
+    zoneLabel: plan.campus || { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman' }[zone],
     ...plan
   };
-  if (plan.deliveryMode !== 'pickup') db.users.find(u => u.id === req.user.id).phone = address.phone;
+  db.users.find(u => u.id === req.user.id).phone = address.phone;
   delete d.form;
   saveDb(db);
   res.redirect(`/customer/orders/new/summary?draft=${d.id}${req.body.checkout==='1' ? '&'+new URLSearchParams({coupon:String(req.body.coupon || ''),referral:String(req.body.referral || '')}) : ''}`);
@@ -1266,7 +1220,7 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { if (s.deliveryPoint) Object.assign(plan, fulfillmentFor(db, s.deliveryPoint, { ...plan, zone: s.zone }, [s])); q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  try { q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
   q = { ...q, deliveryFee: batch.fee, total: Math.round((q.total - q.deliveryFee + batch.fee) * 100) / 100 };
@@ -1298,7 +1252,7 @@ app.get('/customer/orders/new/summary', requireRole('customer'), (req, res) => {
   try{final=cartQuote(db,{...cart,printIds:[...cart.printIds,temporary.id]},req.user.id,{addressId:s.addressId,deliverySlot:deliveryChoice(s)},validateCoupon);}
   catch(error){return res.status(400).send(oops(req.user,`/customer/orders/new?draft=${d.id}`,esc(error.message)));}
   const qShow={...q,subtotal:final.subtotal+(temporary.packDiscount || 0)+(temporary.firstPrintDiscount || 0)+(temporary.couponDiscount || 0)+ref.discount,bulkDiscount:final.bulkDiscount,processingFee:final.processingFee,printedSides:final.printedSides,firstPrintDiscount:temporary.firstPrintDiscount,packDiscount:temporary.packDiscount,couponDiscount:temporary.couponDiscount,deliveryFee:final.deliveryFee,lateNightFee:final.lateNightFee,surgeFee:final.surgeFee,total:final.total};
-  res.send(summaryStep(req.user,d,s,qShow,packCover,ref,{coupon:String(req.query.coupon || '').trim().slice(0,40),balance:walletOf(db,req.user.id).balance,gateway:gatewayOn(),prints:previous.prints.map(o=>({...o,net:printNet(o)})),items:previous.items,address:final.address,fulfillmentName:final.fulfillmentName}));
+  res.send(summaryStep(req.user,d,s,qShow,packCover,ref,{coupon:String(req.query.coupon || '').trim().slice(0,40),balance:walletOf(db,req.user.id).balance,gateway:gatewayOn(),prints:previous.prints.map(o=>({...o,net:printNet(o)})),items:previous.items,address:final.address}));
 });
 
 async function sendSplitDraft(req, res, draft) {
@@ -1363,7 +1317,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     Object.assign(address, { address: plan.campusAddress, pin: plan.campusPin, area: plan.campusZone, lat: plan.campusPoint.lat, lng: plan.campusPoint.lng });
   }
   let q;
-  try { if (s.deliveryPoint) Object.assign(plan, fulfillmentFor(db, s.deliveryPoint, { ...plan, zone: s.zone }, [s])); q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
+  try { q = quote({ ...plan, pages: s.effPages, copies: s.copies, printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, student: !!req.user.student, zone: s.zone, point: s.deliveryPoint }); }
   catch (error) { return res.status(400).send(oops(req.user, `/customer/orders/new?draft=${d.id}`, esc(error.message))); }
   const id = nextOrderId(db);
   const batch = batchPrice(db, req.user.id, { ...plan, offerDevice: parseCookies(req.headers.cookie).pk_offer_device }, q.subtotal, q.deliveryFee);
@@ -1394,7 +1348,7 @@ app.post('/customer/orders/new/place', requireRole('customer'), (req, res) => {
     id, draftId: d.id, customerId: req.user.id, document: d.document, pages: s.effPages, filePages: d.pages, fileType: d.fileType || 'pdf', fileExt: d.fileExt || 'pdf', copies: s.copies,
     printType: s.printType, bwPages: s.bwPages, colorPages: s.colorPages, bwRange: s.bwRange, colorRange: s.colorRange, mixedPageType: s.mixedPageType, mixedRange: s.mixedRange, splitMixed: s.splitMixed, sides: s.sides, paper: 'A4', orientation: s.orientation,
     binding: s.binding, notes: s.notes, pageRange: s.range,
-    addressId: s.addressId, preferredShopId: d.preferredShopId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
+    addressId: s.addressId, ...plan, firstBatchFree: batch.firstBatchFree, bonusValidityDays: campaignConfig(db).bonusValidityDays,
     pricingVersion:1,regularSubtotal:q.regularSubtotal,bulkDiscount:q.bulkDiscount,printedSides:q.printedSides,bwRate:q.bwRate,colorRate:q.colorRate,processingFee:q.processingFee,subtotal: q.subtotal, deliveryFee: q.deliveryFee, deliveryKm: q.deliveryKm, deliveryZone: q.deliveryZone, lateNightFee: q.lateNightFee, surgeFee: q.surgeFee, discount: q.studentDiscount,
     couponCode, couponDiscount, influencer, packSubId: packCover ? packCover.id : null, packDiscount,
     firstPrintDiscount: offers.print, firstDeliveryDiscount: offers.delivery,
@@ -1520,7 +1474,7 @@ app.post('/customer/orders/:id/demo-pay', requireRole('customer'), couponOnce, (
   if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
   if (!['CREATED','PAYMENT_PENDING'].includes(o.status)) return res.redirect(`/customer/orders/${o.id}`);
   if (!canUseOwnerTestPrint(tester, o)) {
-    return res.status(403).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'Test prints require an owner test credit, kiosk pickup and at most five sheets.'));
+    return res.status(403).send(oops(req.user, `/customer/orders/${o.id}/pay`, 'Test prints require an owner test credit and at most five sheets.'));
   }
   if (o.status === 'CREATED') transition(o, 'PAYMENT_PENDING', { by: req.user.id });
   tester.ownerTestPrintsLeft--;
@@ -1543,24 +1497,14 @@ app.get('/customer/orders/:id', requireRole('customer'), (req, res) => {
   res.send(orderDetail(req.user, o, null, waUrl, req.query.fresh === '1'));
 });
 
-// In-page pickup scanner: camera permission + QR decode happen here, then
-// the customer lands on the token collect page and still taps to confirm.
-app.get('/customer/orders/:id/scan', requireRole('customer'), (req, res) => {
-  const db = loadDb();
-  const o = db.orders.find((x) => x.id === req.params.id && x.customerId === req.user.id);
-  if (!o) return res.status(404).send(oops(req.user, '/customer/orders', 'Order <em>not found.</em>'));
-  if (o.status !== 'READY_FOR_PICKUP' || (o.deliveryZone && o.deliveryZone !== 'pickup')) return res.redirect(`/customer/orders/${o.id}`);
-  res.send(scanPage(req.user, o));
-});
-
-// Kiosk live status for polling (no rider)
+// Private order status for customer and admin tracking.
 app.get('/api/orders/:id/status', (req, res) => {
   const user = currentUser(req);
   if (!user) return res.status(401).json({ error: 'Not signed in.' });
   const db = loadDb();
   const o = db.orders.find(x => x.id === req.params.id);
   if (!o || (o.customerId !== user.id && user.role !== 'admin')) return res.status(404).json({ error: 'Not found.' });
-  const friendly = { CREATED:'Draft', PAYMENT_PENDING:'Awaiting payment', CONFIRMED:'Confirmed', PRINT_QUEUE:'In print queue', PRINTING:'Printing', PRINTED:'Printed', READY_FOR_PICKUP: o.deliveryZone && o.deliveryZone !== 'pickup' ? 'Ready for delivery' : 'Ready for pickup', DELIVERED: o.deliveryZone && o.deliveryZone !== 'pickup' ? 'Delivered' : 'Collected', CANCELLED:'Cancelled', PRINT_FAILED:'Print failed' }[o.status] || o.status;
+  const friendly = { CREATED:'Draft', PAYMENT_PENDING:'Awaiting payment', CONFIRMED:'Confirmed', PRINT_QUEUE:'In print queue', PRINTING:'Printing', PRINTED:'Printed', READY_FOR_PICKUP:'Ready for delivery', DELIVERED:'Delivered', CANCELLED:'Cancelled', PRINT_FAILED:'Print failed' }[o.status] || o.status;
   res.json({ status: o.status, friendly, updatedAt: o.updatedAt });
 });
 
@@ -1947,6 +1891,69 @@ app.post('/customer/profile', requireRole('customer'), (req, res) => {
   res.redirect('/customer/profile');
 });
 
+app.get('/customer/data/export', requireRole('customer'), (req, res) => {
+  const db = loadDb();
+  const u = db.users.find(x => x.id === req.user.id) || req.user;
+  const addresses = (db.addresses || []).filter(a => a.customerId === req.user.id);
+  const orders = (db.orders || []).filter(o => o.customerId === req.user.id).map(o => ({
+    id: o.id,
+    document: o.document,
+    pages: o.pages,
+    copies: o.copies,
+    printType: o.printType,
+    sides: o.sides,
+    status: o.status,
+    total: o.total,
+    createdAt: o.createdAt
+  }));
+  const purchases = (db.purchases || []).filter(p => p.customerId === req.user.id);
+  const wallet = (db.wallets || []).find(w => w.customerId === req.user.id);
+  const exportPayload = {
+    exportDate: new Date().toISOString(),
+    account: {
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      student: !!u.student,
+      createdAt: u.createdAt
+    },
+    addresses,
+    orders,
+    purchases,
+    wallet: wallet ? { balance: wallet.balance } : null
+  };
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="printkarr-data-${u.id}.json"`);
+  res.send(JSON.stringify(exportPayload, null, 2));
+});
+
+app.post('/customer/data/delete', requireRole('customer'), siteOrigin, (req, res) => {
+  if (req.body.confirmDelete !== '1') {
+    return res.status(400).send(oops(req.user, '/customer/profile#privacy-data', 'Confirmation is required to delete your account.'));
+  }
+  const db = loadDb();
+  const activeOrders = (db.orders || []).filter(o => o.customerId === req.user.id && ['CONFIRMED', 'PRINT_QUEUE', 'PRINTING', 'READY_FOR_PICKUP', 'OUT_FOR_DELIVERY'].includes(o.status));
+  if (activeOrders.length) {
+    return res.status(400).send(oops(req.user, '/customer/profile#privacy-data', 'You have active in-progress orders. Please wait for them to be delivered or cancel them before deleting your account.'));
+  }
+  const u = db.users.find(x => x.id === req.user.id);
+  if (u) {
+    u.name = 'Deleted Customer';
+    u.phone = '';
+    u.email = `deleted-${u.id}@deleted.printkarr.local`;
+    u.deleted = true;
+    u.deletedAt = new Date().toISOString();
+  }
+  db.addresses = (db.addresses || []).filter(a => a.customerId !== req.user.id);
+  db.notifications = (db.notifications || []).filter(n => n.customerId !== req.user.id);
+  saveDb(db);
+  destroySession(parseCookies(req.headers.cookie)[COOKIE]);
+  const secure = process.env.NODE_ENV === 'production' || req.protocol === 'https' ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`);
+  res.redirect('/?deleted=1');
+});
+
 app.get('/api/customer/addresses', requireRole('customer'), (req, res) => {
   const db = loadDb();
   const mine = (db.addresses || []).filter((a) => a.customerId === req.user.id && !a.campusId && ['vapi', 'daman', 'sarigam', 'bhilad'].includes(String(a.area).toLowerCase()));
@@ -2011,7 +2018,7 @@ function guestDraft(db, req) {
 
 app.get('/order', (req, res) => {
   const user = currentUser(req);
-  if (user?.role === 'customer') return res.redirect('/customer/orders/new' + (req.query.shop ? '?shop=' + encodeURIComponent(req.query.shop) : ''));
+  if (user?.role === 'customer') return res.redirect('/customer/orders/new');
   offerDevice(req, res);
   const db = loadDb();
   const ref = String(req.query.ref || '').trim().toUpperCase();
@@ -2021,9 +2028,7 @@ app.get('/order', (req, res) => {
   }
   const d = req.query.draft ? guestDraft(db, req) : null;
   if (req.query.draft && !d) return res.redirect('/order');
-  const shop = req.query.shop && (db.partners || []).find(s => s.id === req.query.shop && s.active);
-  if (req.query.shop && !shop) return res.status(404).send(oops(null, '/order', 'This shop is unavailable.'));
-  res.send(orderPage({ shop, draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
+  res.send(orderPage({ draft: d, pricing: db.pricing, campaign: campaignConfig(db), error: null, maxMb: db.settings.order.maxFileMb, surcharges: printQuoteExtras(db, null, req) }));
 });
 
 app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(307, '/customer/orders/new/upload') : next(), upload.single('doc'), asyncHandler(async (req, res) => {
@@ -2047,10 +2052,7 @@ app.post('/order/upload', (req, res, next) => currentUser(req) ? res.redirect(30
   const db = loadDb();
   db.drafts ||= [];
   const t = guestToken(req, res);
-  const chosenShop = req.body.shopId && (db.partners || []).find(s=>s.id===req.body.shopId && s.active);
-  if(req.body.shopId && !chosenShop){try{fs.unlinkSync(req.file.path);}catch{}return res.status(400).send(oops(req.user,'/order','This shop is unavailable.'));}
   const draft = {
-    preferredShopId: chosenShop?.id || null,
     id: 'D' + crypto.randomUUID(), guest: t, customerId: null,
     document: req.file.originalname.slice(0, 120), stored: req.file.filename,
     pages: file.pages, fileType: file.fileType, fileExt: file.ext,
@@ -2086,7 +2088,6 @@ async function guestContactFlow(db, d, req) {
   let point;
   try {
     point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : addressPoint(d.selections.zone, d.selections.institutionAddress ? {} : req.body, d.selections.institutionAddress || {});
-    if (point) Object.assign(d.selections, fulfillmentFor(db, point, { ...d.selections, zone: d.selections.zone }, [d.selections]));
     d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
     d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
   }
@@ -2137,12 +2138,11 @@ app.post('/order/options', asyncHandler(async (req, res) => {
   let plan;
   let schoolAddress;
   try { if (String(req.body.deliverySlot).startsWith('school') && req.body.institutionLocation) schoolAddress=institutionAddress(db,req.body,req.user?.id); } catch(error) { return fail(error.message); }
-  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose school / college delivery or delivery to your address. Kiosks are in development.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), schoolAddress?.institutionName || req.body.institutionName); plan.preferredShopId=d.preferredShopId; }
+  try { if (['college','college-express','pickup'].includes(req.body.deliverySlot)) throw new Error('Choose a supported delivery option.'); plan = validateDestination(deliveryPlan(db, req.body.deliverySlot, req.body.campusId), schoolAddress?.institutionName || req.body.institutionName); }
   catch (error) { return fail(error.message); }
   const campus = plan.campusId ? campaignConfig(db).delivery.campuses.find((c) => c.id === plan.campusId) : null;
-  const area = schoolAddress ? {sarigam:'Sarigam',bhilad:'Bhilad',vapi:'Vapi',daman:'Daman'}[schoolAddress.area.toLowerCase()] : campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : plan.deliveryMode === 'pickup' ? 'Pickup' : ['Sarigam', 'Vapi', 'Bhilad', 'Daman', 'Pickup'].includes(req.body.area) ? req.body.area : null;
-  if (!area || area === 'Pickup') return fail('Choose a supported delivery area. Kiosks are in development.');
-  if (!campus && area === 'Pickup') plan = deliveryPlan(db, 'pickup');
+  const area = schoolAddress ? {sarigam:'Sarigam',bhilad:'Bhilad',vapi:'Vapi',daman:'Daman'}[schoolAddress.area.toLowerCase()] : campus ? { sarigam: 'Sarigam', bhilad: 'Bhilad', vapi: 'Vapi', daman: 'Daman' }[campus.zone] : ['Sarigam', 'Vapi', 'Bhilad', 'Daman'].includes(req.body.area) ? req.body.area : null;
+  if (!area) return fail('Choose a supported delivery area.');
   d.selections = {
     ...print, orientation: ['portrait', 'landscape'].includes(req.body.orientation) ? req.body.orientation : 'auto', binding: ['staple', 'spiral'].includes(req.body.binding) ? req.body.binding : 'none', notes: String(req.body.notes || '').slice(0, 300),
     area, zone: zoneOf(area), zoneLabel: area, ...plan, institutionAddress:schoolAddress, campusAddress: campus?.address, campusPin: campus?.pin, campusPoint: campus ? { lat: campus.lat, lng: campus.lng } : null
@@ -2180,7 +2180,6 @@ app.post('/order/otp-request', otpLimiter, asyncHandler(async (req, res) => {
     let point;
     try {
       point = d.selections.zone === 'pickup' ? null : d.selections.campusId ? d.selections.campusPoint : addressPoint(d.selections.zone, d.selections.institutionAddress ? {} : req.body, d.selections.institutionAddress || {});
-      if (point) Object.assign(d.selections, fulfillmentFor(db, point, { ...d.selections, zone: d.selections.zone }, [d.selections]));
       d.selections.zone = deliveryFeeFor(db.pricing, d.selections.zone, point, d.selections).zone;
       d.selections.area = { sarigam: 'Sarigam', vapi: 'Vapi', bhilad: 'Bhilad', daman: 'Daman', pickup: 'Pickup' }[d.selections.zone];
     }
@@ -2258,7 +2257,7 @@ app.post('/order/otp-verify', otpLimiter, (req, res) => {
 
 // Upload errors (too big, wrong type) get a designed page, not a stack trace.
 installStoreRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin, validateCoupon, notifyState, restorePackQuota, voidPendingForOrder, qualifyForOrder, gateway: RAZORPAY });
-installPartnerRoutes(app, { loadDb, saveDb, requireRole, siteOrigin, uploadsDir: path.join(DATA_DIR,'uploads'), notifyState, qualifyForOrder });
+installDeliveryRoutes(app, { loadDb, saveDb, requireRole, siteOrigin, notifyState, qualifyForOrder });
 installNotificationRoutes(app, { loadDb, saveDb, currentUser, requireRole, siteOrigin });
 
 app.use((err, req, res, next) => {
@@ -2457,61 +2456,6 @@ app.get('/share/:token', (req, res) => {
   res.sendFile(p);
 });
 
-// Kiosk collection: the QR on the counter encodes one of these links. The
-// customer scans it with their phone and confirms pickup — no login, the
-// token IS the key. Single-use, order must still await pickup.
-function collectUrl(req, token) {
-  return `${baseUrl(req)}/c/${token}`;
-}
-app.get('/c/:token', (req, res) => {
-  const tok = safeToken(req.params.token);
-  const db = loadDb();
-  const found = tok ? findCollectToken(db, tok) : { ok: false, error: 'bad-link' };
-  if (!found.ok) {
-    const msg = { used: 'These prints were already collected. Enjoy!', expired: 'This pickup link has expired. Ask the kiosk counter for help.' }[found.error];
-    saveDb(db);
-    return res.status(found.error === 'bad-link' ? 400 : 410).send(collectPage({ state: found.error === 'used' ? 'collected' : 'dead', message: msg }));
-  }
-  const o = db.orders.find((x) => x.id === found.token.orderId);
-  if (!o || o.status !== 'READY_FOR_PICKUP') {
-    saveDb(db);
-    return res.status(410).send(collectPage({ state: 'dead', message: 'These prints are no longer awaiting pickup.' }));
-  }
-  const c = db.users.find((u) => u.id === o.customerId) || {};
-  saveDb(db);
-  res.send(collectPage({ state: 'ready', order: { ...o, collectToken: tok }, customerName: c.name }));
-});
-
-app.post('/c/:token/collect', (req, res) => {
-  const tok = safeToken(req.params.token);
-  const db = loadDb();
-  const found = tok ? findCollectToken(db, tok) : { ok: false, error: 'bad-link' };
-  if (!found.ok) {
-    const msg = { used: 'These prints were already collected. Enjoy!', expired: 'This pickup link has expired. Ask the kiosk counter for help.' }[found.error]
-      || 'This pickup link is no longer valid.';
-    saveDb(db);
-    return res.status(410).send(collectPage({ state: found.error === 'used' ? 'collected' : 'dead', message: msg }));
-  }
-  const o = db.orders.find((x) => x.id === found.token.orderId);
-  if (o?.purchaseId) return res.status(409).send(collectPage({ state: 'dead', message: 'This print belongs to a combined purchase. Ask the counter to hand over and confirm the whole basket together.' }));
-  const done = consumeCollectToken(db, tok, o);
-  if (!done.ok) {
-    saveDb(db);
-    return res.status(410).send(collectPage({ state: 'dead', message: 'These prints are no longer awaiting pickup.' }));
-  }
-  try {
-    transition(o, 'DELIVERED', { by: o.customerId, note: 'collected via kiosk QR' });
-  } catch {
-    saveDb(db);
-    return res.status(409).send(collectPage({ state: 'dead', message: 'These prints were already collected. Enjoy!' }));
-  }
-  qualifyForOrder(db, o);
-  settleWallets(db);
-  saveDb(db);
-  notifyState(o);
-  res.send(collectPage({ state: 'collected', message: `Order #${o.id} marked collected. Enjoy your prints!` }));
-});
-
 app.get('/api/agent/health', agentAuth, (_req, res) => {
   const db = loadDb();
   const queueDepth = db.orders.filter(o => ['PRINT_QUEUE','PRINTING'].includes(o.status)).length;
@@ -2545,8 +2489,7 @@ app.get('/api/ready/details', requireRole('admin'), (_req, res) => {
       razorpay: !!(RAZORPAY.id && RAZORPAY.secret),
       whatsappForward: !!OWNER_WA,
       google: !!GOOGLE.id
-    },
-    kiosk: { queueDepth: db.orders.filter(o=>['PRINT_QUEUE','PRINTING'].includes(o.status)).length, agentSeenAt: agentSeenAt||null }
+    }
   });
 });
 
@@ -2698,8 +2641,6 @@ app.post('/customer/orders/:id/razorpay-verify', requireRole('customer'), coupon
   res.redirect(`/customer/orders/${encodeURIComponent(req.params.id)}`);
 }));
 
-// Kiosk pickup — no rider tracking. Orders are collected at the counter.
-
 // The public home stays accessible to signed-in customers and review moderators.
 app.get('/', (req, res) => {
   const user = currentUser(req);
@@ -2718,8 +2659,6 @@ app.get('/printing-in-daman', (_req, res) => res.send(damanPage()));
 app.get('/printing-prices', (_req, res) => res.send(printPricesPage({ pricing:loadDb().pricing })));
 app.get('/how-it-works', (_req, res) => res.send(howItWorksPage()));
 app.get('/about', (_req, res) => res.send(aboutPage()));
-app.get('/franchise', (_req, res) => res.send(franchisePage()));
-app.get('/xerox', (_req, res) => res.send(xeroxPage()));
 // Public enquiries: bounded fields, honeypot, origin check and per-IP throttling.
 // ponytail: per-process limit resets on restart; use a shared rate-limit store before adding replicas.
 const contactLimiter = rateLimit({ windowMs: 15 * 60_000, max: 5, standardHeaders: 'draft-7', legacyHeaders: false,
@@ -2830,6 +2769,7 @@ async function bootstrap() {
   if (!store.ok) {
     throw new Error(`Storage unavailable: ${store.error}`);
   }
+  setFestivalTheme(loadDb().settings?.festivalTheme);
   console.log(`Storage OK — ${store.users} users, ${store.orders} orders.`);
   janitor(ROOT,undefined,DATA_FILE,path.join(DATA_DIR,'uploads')); // Remove expired/restored working files before accepting traffic.
   const vol = atlasEnabled ? { fresh: false } : diskCheck();

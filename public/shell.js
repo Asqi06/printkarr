@@ -50,6 +50,9 @@
     function remember() { try { localStorage.setItem(key, String(Date.now())); } catch { try { sessionStorage.setItem(key, String(Date.now())); } catch {} } }
     prompt.querySelectorAll('[data-wallet-dismiss]').forEach(function (button) { button.addEventListener('click', function () { prompt.close(); }); });
     prompt.addEventListener('close', remember);
+    if ('closedBy' in HTMLDialogElement.prototype) {
+      try { prompt.setAttribute('closedby', 'any'); } catch {}
+    }
     prompt.addEventListener('click', function (event) { var box = prompt.getBoundingClientRect(); if (event.target === prompt && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) prompt.close(); });
     prompt.addEventListener('change', function () {
       var selected = prompt.querySelector('[name="wallet-prompt-offer"]:checked');

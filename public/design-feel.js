@@ -33,6 +33,7 @@
   function applyTheme(theme) {
     currentTheme = theme === 'dark' ? 'dark' : 'light';
     root.setAttribute('data-theme', currentTheme);
+    root.style.colorScheme = currentTheme;
     paintMeta(currentTheme);
     syncControls();
   }
@@ -200,6 +201,13 @@
   window.PKFeel = {
     theme: function () { return currentTheme; },
     setTheme: function (theme) { store('pk-theme', theme); applyTheme(theme); },
+    festival: function () { return root.getAttribute('data-festival') || ''; },
+    setFestival: function (theme) {
+      var allowed = ['diwali', 'holi', 'navratri', 'christmas'];
+      if (allowed.indexOf(theme) < 0) { theme = ''; try { localStorage.removeItem('pk-festival'); } catch (e) {} }
+      else store('pk-festival', theme);
+      if (theme) root.setAttribute('data-festival', theme); else root.removeAttribute('data-festival');
+    },
     sound: function () { return soundOn; },
     setSound: function (on) { soundOn = !!on; store('pk-feel-sound', on ? '1' : '0'); syncControls(); }
   };

@@ -7,5 +7,8 @@
   if (dark !== 'dark' && dark !== 'light') {
     dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-  try { document.documentElement.setAttribute('data-theme', dark); } catch (e) {}
+  try {
+    document.documentElement.setAttribute('data-theme', dark);
+    document.documentElement.style.colorScheme = dark;
+  } catch (e) {}
 })();
